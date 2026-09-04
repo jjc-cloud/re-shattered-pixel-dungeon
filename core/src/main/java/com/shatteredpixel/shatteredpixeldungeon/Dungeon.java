@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon;
 
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
+
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
@@ -284,7 +286,14 @@ public class Dungeon {
 		Badges.reset();
 		
 		GamesInProgress.selectedClass.initHero( hero );
+		Armor startingArmor = hero.belongings.armor;
 		TestStart.apply();
+		// Test starts may replace the warrior's armor, which already carries his seal.
+		if (startingArmor != null && startingArmor != hero.belongings.armor
+				&& startingArmor.checkSeal() != null && hero.belongings.armor != null
+				&& hero.belongings.armor.checkSeal() == null) {
+			hero.belongings.armor.affixSeal(startingArmor.detachSeal());
+		}
 	}
 
 	public static boolean isChallenged( int mask ) {

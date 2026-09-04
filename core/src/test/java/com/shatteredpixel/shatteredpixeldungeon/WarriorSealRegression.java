@@ -110,6 +110,18 @@ public class WarriorSealRegression {
 		shield.act();
 		check(!shield.coolingDown(), "100-turn cooldown expires");
 		check(!seal.desc().contains("碎裂"), "updated text");
+		hero = hero(HeroSubClass.NONE);
+		com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor startingArmor = hero.belongings.armor;
+		seal = startingArmor.checkSeal();
+		hero.belongings.armor = new com.shatteredpixel.shatteredpixeldungeon.items.armor.ScaleArmor();
+		hero.belongings.armor.activate(hero);
+		hero.belongings.armor.affixSeal(startingArmor.detachSeal());
+		check(startingArmor.checkSeal() == null && hero.belongings.armor.checkSeal() == seal, "same seal transferred off discarded starting armor");
+		shield = hero.buff(BrokenSeal.WarriorShield.class);
+		check(shield.maxShield() == 11, "shield rebound to test starting scale armor");
+		hero.HP = 100;
+		hero.damage(1, enemy);
+		check(hero.HP == 100 && shield.shielding() == 10, "transferred seal actually protects the hero");
 		System.out.println("PASS: seal forms, pre-hit shields, cooldowns, actual HP thresholds and saved guard");
 	}
 
