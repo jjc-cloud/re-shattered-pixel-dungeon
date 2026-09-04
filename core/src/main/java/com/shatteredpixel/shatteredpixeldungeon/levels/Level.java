@@ -555,7 +555,8 @@ public abstract class Level implements Bundlable {
 
 	public LevelTransition getTransition(int cell){
 		for (LevelTransition transition : transitions){
-			if (transition.inside(cell)){
+			// This level may still be generating, before Dungeon.level is assigned.
+			if (transition.inside(cellToPoint(cell))){
 				return transition;
 			}
 		}
