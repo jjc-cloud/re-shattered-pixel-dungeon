@@ -497,6 +497,9 @@ public class Hero extends Char {
 	
 	@Override
 	public boolean attack(Char enemy, float dmgMulti, float dmgBonus, float accMulti) {
+		if (enemy != null && hasTalent(Talent.LIQUID_WILLPOWER)) {
+			Buff.affect(this, HoldFast.class).pos = pos;
+		}
 		boolean result = super.attack(enemy, dmgMulti, dmgBonus, accMulti);
 		if (!(belongings.attackingWeapon() instanceof MissileWeapon)){
 			if (buff(Talent.PreciseAssaultTracker.class) != null){
@@ -1463,7 +1466,7 @@ public class Hero extends Char {
 	
 	public void rest( boolean fullRest ) {
 		spendAndNextConstant( TIME_TO_REST );
-		if (hasTalent(Talent.HOLD_FAST)){
+		if (hasTalent(Talent.LIQUID_WILLPOWER)){
 			Buff.affect(this, HoldFast.class).pos = pos;
 		}
 		if (hasTalent(Talent.PATIENT_STRIKE)){
@@ -2292,9 +2295,11 @@ public class Hero extends Char {
 
 	@Override
 	public void move(int step, boolean travelling) {
+		int previousPos = pos;
 		boolean wasHighGrass = Dungeon.level.map[step] == Terrain.HIGH_GRASS;
 
 		super.move( step, travelling);
+		if (pos != previousPos) Buff.detach(this, HoldFast.class);
 		
 		if (!flying && travelling) {
 			if (Dungeon.level.water[pos]) {

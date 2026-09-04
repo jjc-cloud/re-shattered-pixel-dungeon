@@ -98,6 +98,8 @@ public enum Talent {
 	//Warrior T1
 	HEARTY_MEAL(0), VETERANS_INTUITION(1), PROVOKED_ANGER(2), IRON_WILL(3),
 	//Warrior T2
+	// Keep the legacy IDs so saved points stay in their original talent slots.
+	// LIQUID_WILLPOWER is now Hold Fast; HOLD_FAST is now Liquid Revival.
 	IRON_STOMACH(4), LIQUID_WILLPOWER(5), RUNIC_TRANSFERENCE(6), LETHAL_MOMENTUM(7), IMPROVISED_PROJECTILES(8),
 	//Warrior T3
 	HOLD_FAST(9, 3), STRONGMAN(10, 3),
@@ -706,11 +708,16 @@ public enum Talent {
 	}
 
 	public static void onPotionUsed( Hero hero, int cell, float factor ){
-		if (hero.hasTalent(LIQUID_WILLPOWER)){
-			// 6.5/10% of max HP
-			int shieldToGive = Math.round( factor * hero.HT * (0.030f + 0.035f*hero.pointsInTalent(LIQUID_WILLPOWER)));
-			hero.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(shieldToGive), FloatingText.SHIELDING);
-			Buff.affect(hero, Barrier.class).setShield(shieldToGive);
+		if (hero.hasTalent(HOLD_FAST)){
+			// Liquid Revival: 5/10/15% of max HP, preserving potion multipliers.
+			int healing = Math.min(hero.HT - hero.HP,
+					Math.round(factor * hero.HT * 0.05f * hero.pointsInTalent(HOLD_FAST)));
+			if (healing > 0) {
+				hero.HP += healing;
+				if (hero.sprite != null) {
+					hero.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(healing), FloatingText.HEALING);
+				}
+			}
 		}
 		if (hero.hasTalent(LIQUID_NATURE)){
 			ArrayList<Integer> grassCells = new ArrayList<>();
