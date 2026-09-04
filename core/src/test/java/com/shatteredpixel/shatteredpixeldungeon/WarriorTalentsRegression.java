@@ -9,6 +9,10 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.levels.SewerLevel;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfMagicMissile;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sword;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingStone;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicImmune;
 import com.watabou.noosa.Game;
 import com.watabou.utils.Bundle;
 
@@ -34,6 +38,27 @@ public class WarriorTalentsRegression {
 
 	public static void main(String[] args) {
 		Game.version = "regression-test";
+		com.badlogic.gdx.Gdx.app = (com.badlogic.gdx.Application)
+				java.lang.reflect.Proxy.newProxyInstance(WarriorTalentsRegression.class.getClassLoader(),
+						new Class[]{com.badlogic.gdx.Application.class}, (proxy, method, values) -> {
+							if (method.getName().equals("log")) return null;
+							throw new UnsupportedOperationException(method.getName());
+						});
+		// Load real Chinese messages for failed-cast checks without launching a window.
+		com.watabou.utils.GameSettings.set((com.badlogic.gdx.Preferences)
+				java.lang.reflect.Proxy.newProxyInstance(WarriorTalentsRegression.class.getClassLoader(),
+						new Class[]{com.badlogic.gdx.Preferences.class}, (proxy, method, values) -> {
+							if (method.getName().equals("getString")) return "zh";
+							throw new UnsupportedOperationException(method.getName());
+						}));
+		com.badlogic.gdx.Gdx.files = (com.badlogic.gdx.Files)
+				java.lang.reflect.Proxy.newProxyInstance(WarriorTalentsRegression.class.getClassLoader(),
+						new Class[]{com.badlogic.gdx.Files.class}, (proxy, method, values) -> {
+							if (method.getName().equals("internal")) {
+								return new com.badlogic.gdx.files.FileHandle("core/src/main/assets/" + values[0]);
+							}
+							throw new UnsupportedOperationException(method.getName());
+						});
 		Dungeon.level = new SewerLevel() {
 			@Override public void occupyCell(Char ch) { }
 		};
@@ -73,11 +98,38 @@ public class WarriorTalentsRegression {
 			check(hero.buff(HoldFast.class) != null, "attack attempt activates stance");
 			Talent.onPotionUsed(hero, hero.pos, 1f);
 			check(hero.HP == 100 && shield.shielding() == (rank == 1 ? 19 : 20), "tier two grants no potion healing or shield");
+			Buff.detach(hero, HoldFast.class);
+			hero.belongings.weapon = new Sword();
+			hero.attack(enemy);
+			check(hero.buff(HoldFast.class) != null, "equipped weapon activates stance");
+			Buff.detach(hero, HoldFast.class);
+			hero.shoot(enemy, new ThrowingStone());
+			check(hero.buff(HoldFast.class) != null, "thrown weapon activates stance");
+			Buff.detach(hero, HoldFast.class);
+			WandOfMagicMissile wand = new WandOfMagicMissile();
+			check(wand.beginZap(hero, enemy.pos), "charged wand accepted");
+			check(hero.buff(HoldFast.class) != null, "wand activates stance before effects");
+			Buff.detach(hero, HoldFast.class);
+			wand.curCharges = 0;
+			check(!wand.beginZap(hero, enemy.pos), "empty wand rejected");
+			check(hero.buff(HoldFast.class) == null, "empty wand grants no stance");
+			wand.curCharges = 1;
+			Buff.affect(hero, MagicImmune.class);
+			check(!wand.beginZap(hero, enemy.pos), "magic immunity rejects cast");
+			check(hero.buff(HoldFast.class) == null, "blocked magic grants no stance");
+			Buff.detach(hero, MagicImmune.class);
+			WandOfMagicMissile rejectedWand = new WandOfMagicMissile() {
+				@Override public boolean tryToZap(Hero owner, int target) { return false; }
+			};
+			check(!rejectedWand.beginZap(hero, enemy.pos), "wand-specific validation respected");
+			check(hero.buff(HoldFast.class) == null, "invalid target grants no stance");
 		}
 		for (int rank = 1; rank <= 3; rank++) {
 			Hero hero = hero(0, rank);
 			hero.rest(false);
 			check(hero.buff(HoldFast.class) == null, "tier three grants no stance");
+			check(new WandOfMagicMissile().beginZap(hero, 22), "wand without hold fast accepted");
+			check(hero.buff(HoldFast.class) == null, "wand requires tier two talent");
 			Talent.onPotionUsed(hero, hero.pos, 1f);
 			check(hero.HP == 100 + 10 * rank, "5/10/15 percent healing");
 			check(hero.buff(Barrier.class) == null, "healing does not grant shield");

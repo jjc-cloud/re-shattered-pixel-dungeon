@@ -138,7 +138,7 @@ public class WildMagic extends ArmorAbility {
 		hero.sprite.zap(cell);
 
 		float startTime = Game.timeTotal;
-		if (cur.tryToZap(hero, cell)) {
+		if (cur.beginZap(hero, cell)) {
 			if (!cur.cursed) {
 				cur.fx(aim, new Callback() {
 					@Override

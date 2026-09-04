@@ -30,6 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barrier;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Degrade;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.HoldFast;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LostInventory;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicImmune;
@@ -145,6 +146,15 @@ public abstract class Wand extends Item {
 			return 1f + ((Hero)attacker).pointsInTalent(Talent.EMPOWERED_STRIKE)/2f;
 		}
 		return 1f;
+	}
+
+	// Start a committed cast only after all wand-specific validation succeeds.
+	public final boolean beginZap(Hero owner, int target) {
+		if (!tryToZap(owner, target)) return false;
+		if (owner.hasTalent(Talent.LIQUID_WILLPOWER)) {
+			Buff.affect(owner, HoldFast.class).pos = owner.pos;
+		}
+		return true;
 	}
 
 	public boolean tryToZap( Hero owner, int target ){
@@ -715,7 +725,7 @@ public abstract class Wand extends Item {
 				else
 					QuickSlotButton.target(Actor.findChar(cell));
 				
-				if (curWand.tryToZap(curUser, target)) {
+				if (curWand.beginZap(curUser, target)) {
 					
 					curUser.busy();
 
