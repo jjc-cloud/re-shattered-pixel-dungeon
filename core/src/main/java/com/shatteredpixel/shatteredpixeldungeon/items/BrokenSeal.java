@@ -30,6 +30,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ShieldBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Belongings;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
@@ -69,6 +72,16 @@ public class BrokenSeal extends Item {
 
 	private Armor.Glyph glyph;
 
+	// Same item type and save identity; the warrior's subclass unlocks its full form.
+	public static boolean isComplete() {
+		return isComplete(Dungeon.hero);
+	}
+
+	private static boolean isComplete(Hero hero) {
+		return hero != null && hero.heroClass == HeroClass.WARRIOR
+				&& (hero.subClass == HeroSubClass.GLADIATOR || hero.subClass == HeroSubClass.BERSERKER);
+	}
+
 	public boolean canTransferGlyph(){
 		if (glyph == null){
 			return false;
@@ -94,7 +107,8 @@ public class BrokenSeal extends Item {
 
 	public int maxShield( int armTier, int armLvl ){
 		// 5-15, based on equip tier and iron will
-		return 3 + 2*armTier + Dungeon.hero.pointsInTalent(Talent.IRON_WILL);
+		return 3 + 2*armTier + Dungeon.hero.pointsInTalent(Talent.IRON_WILL)
+				+ (isComplete() ? Math.round(Dungeon.hero.HT * 0.25f) : 0);
 	}
 
 	@Override
@@ -184,7 +198,15 @@ public class BrokenSeal extends Item {
 
 	@Override
 	public String name() {
-		return glyph != null ? glyph.name( super.name() ) : super.name();
+		String name = isComplete() ? Messages.get(this, "complete_name") : super.name();
+		return glyph != null ? glyph.name(name) : name;
+	}
+
+	@Override
+	public String desc() {
+		if (!isComplete()) return super.desc();
+		return Messages.get(this, "complete_desc") + "\n\n" + Messages.get(this,
+				Dungeon.hero.subClass == HeroSubClass.GLADIATOR ? "gladiator_desc" : "berserker_desc");
 	}
 
 	@Override
@@ -258,11 +280,65 @@ public class BrokenSeal extends Item {
 		private float turnsSinceEnemies = 0;
 		private int initialShield = 0;
 
-		private static int COOLDOWN_START = 150;
+		private int gladiatorDamage;
+		private float berserkerLoss;
+		private boolean guardReady;
+
+		private int cooldownDuration() {
+			return target instanceof Hero && isComplete((Hero)target) ? 100 : 150;
+		}
+
+		public void updateForm() {
+			cooldown = Math.max(-cooldownDuration(), Math.min(cooldown, cooldownDuration()));
+			BuffIndicator.refreshHero();
+		}
+
+		public boolean completeSealEquipped() {
+			return target instanceof Hero && isComplete((Hero)target)
+					&& armor != null && armor.isEquipped((Hero)target) && armor.checkSeal() != null;
+		}
+
+		// Called after damage mitigation, before shields are consumed.
+		public boolean blockEnemyAttack(int damage, Object source) {
+			if (damage <= 0 || !guardReady || !completeSealEquipped()
+					|| ((Hero)target).subClass != HeroSubClass.BERSERKER || !enemyAttack(source)) return false;
+			guardReady = false;
+			cooldown = 0;
+			activate();
+			return true;
+		}
+
+		private boolean enemyAttack(Object source) {
+			if (source instanceof Char) return ((Char)source).alignment == Char.Alignment.ENEMY;
+			// Ranged monster attacks use nested damage markers (e.g. DarkBolt).
+			for (Class<?> type = source.getClass().getEnclosingClass(); type != null; type = type.getEnclosingClass()) {
+				if (Mob.class.isAssignableFrom(type)) return true;
+			}
+			return false;
+		}
+
+		// Only actual HP loss counts, never damage absorbed by any shield.
+		public void onHealthLost(int loss) {
+			if (loss <= 0 || !completeSealEquipped()) return;
+			if (((Hero)target).subClass == HeroSubClass.GLADIATOR) {
+				gladiatorDamage += loss;
+				if (gladiatorDamage >= 25) {
+					gladiatorDamage %= 25;
+					cooldown = 0;
+				}
+			} else if (((Hero)target).subClass == HeroSubClass.BERSERKER) {
+				berserkerLoss += loss / (float)target.HT;
+				if (berserkerLoss + 0.000001f >= 0.6f) {
+					berserkerLoss = Math.max(0, (berserkerLoss + 0.000001f) % 0.6f);
+					guardReady = true;
+				}
+			}
+			BuffIndicator.refreshHero();
+		}
 
 		@Override
 		public int icon() {
-			if (coolingDown() || shielding() > 0 || cooldown < 0){
+			if (coolingDown() || shielding() > 0 || cooldown < 0 || guardReady){
 				return BuffIndicator.SEAL_SHIELD;
 			} else {
 				return BuffIndicator.NONE;
@@ -272,7 +348,9 @@ public class BrokenSeal extends Item {
 		@Override
 		public void tintIcon(Image icon) {
 			icon.resetColor();
-			if (coolingDown() && shielding() == 0){
+			if (guardReady && completeSealEquipped()) {
+				icon.hardlight(1f, 0.8f, 0.2f);
+			} else if (coolingDown() && shielding() == 0){
 				icon.brightness(0.3f);
 			} else if (cooldown < 0) {
 				icon.invert();
@@ -284,9 +362,9 @@ public class BrokenSeal extends Item {
 			if (shielding() > 0){
 				return GameMath.gate(0, 1f - shielding()/(float)initialShield, 1);
 			} else if (coolingDown()){
-				return GameMath.gate(0, cooldown / (float)COOLDOWN_START, 1);
+				return GameMath.gate(0, cooldown / (float)cooldownDuration(), 1);
 			} else if (cooldown < 0) {
-				return GameMath.gate(0, (COOLDOWN_START+cooldown) / (float)COOLDOWN_START, 1);
+				return GameMath.gate(0, (cooldownDuration()+cooldown) / (float)cooldownDuration(), 1);
 			} else {
 				return 0;
 			}
@@ -305,17 +383,29 @@ public class BrokenSeal extends Item {
 
 		@Override
 		public String desc() {
+			String description;
 			if (shielding() > 0) {
-				return Messages.get(this, "desc_active", shielding(), cooldown);
+				description = Messages.get(this, "desc_active", shielding(), cooldown);
 			} else if (cooldown < 0) {
-				return Messages.get(this, "desc_negative_cooldown", cooldown);
+				description = Messages.get(this, "desc_negative_cooldown", cooldown, cooldownDuration());
 			} else {
-				return Messages.get(this, "desc_cooldown", cooldown);
+				description = Messages.get(this, "desc_cooldown", cooldown);
 			}
+			if (completeSealEquipped()) {
+				if (((Hero)target).subClass == HeroSubClass.GLADIATOR) {
+					description += "\n\n" + Messages.get(this, "gladiator_progress", gladiatorDamage);
+				} else {
+					description += "\n\n" + Messages.get(this, "berserker_progress", Math.round(berserkerLoss * 100));
+					if (guardReady) description += "\n\n" + Messages.get(this, "guard_ready");
+				}
+			}
+			return description;
 		}
 
 		@Override
 		public synchronized boolean act() {
+			// Also handles upgraded seals loaded from an older save.
+			updateForm();
 			if (cooldown > 0 && Regeneration.regenOn()){
 				cooldown--;
 			}
@@ -327,7 +417,7 @@ public class BrokenSeal extends Item {
 						if (cooldown > 0) {
 							float percentLeft = shielding() / (float)initialShield;
 							//max of 50% cooldown refund
-							cooldown = Math.max(0, (int)(cooldown - COOLDOWN_START * (percentLeft / 2f)));
+							cooldown = Math.max(0, (int)(cooldown - cooldownDuration() * (percentLeft / 2f)));
 						}
 						decShield(shielding());
 					}
@@ -346,7 +436,7 @@ public class BrokenSeal extends Item {
 
 		public synchronized void activate() {
 			incShield(maxShield());
-			cooldown = Math.max(0, cooldown+COOLDOWN_START);
+			cooldown = Math.max(0, cooldown+cooldownDuration());
 			turnsSinceEnemies = 0;
 			initialShield = maxShield();
 		}
@@ -356,8 +446,8 @@ public class BrokenSeal extends Item {
 		}
 
 		public void reduceCooldown(float percentage){
-			cooldown -= Math.round(COOLDOWN_START*percentage);
-			cooldown = Math.max(cooldown, -COOLDOWN_START);
+			cooldown -= Math.round(cooldownDuration()*percentage);
+			cooldown = Math.max(cooldown, -cooldownDuration());
 		}
 
 		public synchronized void setArmor(Armor arm){
@@ -380,6 +470,9 @@ public class BrokenSeal extends Item {
 		public static final String COOLDOWN = "cooldown";
 		public static final String TURNS_SINCE_ENEMIES = "turns_since_enemies";
 		public static final String INITIAL_SHIELD = "initial_shield";
+		private static final String GLADIATOR_DAMAGE = "gladiator_damage";
+		private static final String BERSERKER_LOSS = "berserker_loss";
+		private static final String GUARD_READY = "guard_ready";
 
 		@Override
 		public void storeInBundle(Bundle bundle) {
@@ -387,11 +480,17 @@ public class BrokenSeal extends Item {
 			bundle.put(COOLDOWN, cooldown);
 			bundle.put(TURNS_SINCE_ENEMIES, turnsSinceEnemies);
 			bundle.put(INITIAL_SHIELD, initialShield);
+			bundle.put(GLADIATOR_DAMAGE, gladiatorDamage);
+			bundle.put(BERSERKER_LOSS, berserkerLoss);
+			bundle.put(GUARD_READY, guardReady);
 		}
 
 		@Override
 		public void restoreFromBundle(Bundle bundle) {
 			super.restoreFromBundle(bundle);
+			gladiatorDamage = bundle.getInt(GLADIATOR_DAMAGE);
+			berserkerLoss = bundle.getFloat(BERSERKER_LOSS);
+			guardReady = bundle.getBoolean(GUARD_READY);
 			if (bundle.contains(COOLDOWN)) {
 				cooldown = bundle.getInt(COOLDOWN);
 				turnsSinceEnemies = bundle.getFloat(TURNS_SINCE_ENEMIES);

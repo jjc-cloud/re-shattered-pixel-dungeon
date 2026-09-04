@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
+import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
@@ -247,6 +248,15 @@ public class ItemSprite extends MovieClip {
 	}
 
 	public void frame( int image ){
+		// Retain the original item index for all inventory, heap and dialog callers.
+		if (image == ItemSpriteSheet.SEAL) {
+			texture(Assets.Sprites.BROKEN_SEAL);
+			int left = BrokenSeal.isComplete() ? 13 : 0;
+			frame(texture.uvRect(left, 0, left + 13, 16));
+			perspectiveRaise = 5 / 16f;
+			return;
+		}
+		texture(Assets.Sprites.ITEMS);
 		frame( ItemSpriteSheet.film.get( image ));
 
 		float height = ItemSpriteSheet.film.height( image );

@@ -101,6 +101,9 @@ public class TengusMask extends Item {
 		
 		curUser.subClass = way;
 		Talent.initSubclassTalents(curUser);
+		BrokenSeal.WarriorShield sealShield = curUser.buff(BrokenSeal.WarriorShield.class);
+		if (sealShield != null) sealShield.updateForm();
+		Item.updateQuickslot();
 
 		if (way == HeroSubClass.ASSASSIN && curUser.invisible > 0){
 			Buff.affect(curUser, Preparation.class);
