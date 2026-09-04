@@ -60,9 +60,9 @@ public class WarriorSealRegression {
 		seal = hero.belongings.armor.checkSeal();
 		shield = hero.buff(BrokenSeal.WarriorShield.class);
 		check(BrokenSeal.isComplete() && seal.name().equals("完整纹章"), "complete form with original item class");
-		check(shield.maxShield() == 55, "base plus 25 percent max HP");
-		hero.damage(10, enemy);
-		check(hero.HP == 200 && shield.shielding() == 45, "complete shield at full health");
+		check(shield.maxShield() == 5, "no innate max HP bonus on complete seal");
+		hero.damage(1, enemy);
+		check(hero.HP == 200 && shield.shielding() == 4, "complete shield at full health");
 		check(state(shield).getInt("cooldown") == 100, "complete cooldown");
 		check(state(shield).getInt("gladiator_damage") == 0, "absorbed damage does not count");
 		shield.decShield(shield.shielding());
@@ -71,7 +71,7 @@ public class WarriorSealRegression {
 		hero.damage(1, enemy);
 		check(!shield.coolingDown(), "25 HP resets cooldown");
 		hero.damage(1, enemy);
-		check(shield.shielding() == 54 && shield.coolingDown(), "next hit triggers refreshed shield");
+		check(shield.shielding() == 4 && shield.coolingDown(), "next hit triggers refreshed shield");
 
 		hero = hero(HeroSubClass.BERSERKER);
 		shield = hero.buff(BrokenSeal.WarriorShield.class);
@@ -94,10 +94,10 @@ public class WarriorSealRegression {
 		check(hero.HP == hp - 1 && state(shield).getBoolean("guard_ready"), "environment does not consume guard");
 		hp = hero.HP;
 		hero.damage(999, enemy);
-		check(hero.HP == hp && shield.shielding() == 55, "guard negates lethal attack and grants full shield");
+		check(hero.HP == hp && shield.shielding() == 5, "guard negates lethal attack and grants full shield");
 		check(!state(shield).getBoolean("guard_ready") && state(shield).getInt("cooldown") == 100, "guard consumed once");
 		hero.damage(1, enemy);
-		check(shield.shielding() == 54, "next attack consumes shield normally");
+		check(shield.shielding() == 4, "next attack consumes shield normally");
 		shield.onHealthLost(120);
 		check(shield.blockEnemyAttack(5, new Warlock.DarkBolt()), "enemy magic can consume guard");
 		shield.onHealthLost(120);
@@ -122,6 +122,22 @@ public class WarriorSealRegression {
 		hero.HP = 100;
 		hero.damage(1, enemy);
 		check(hero.HP == 100 && shield.shielding() == 10, "transferred seal actually protects the hero");
+		for (HeroSubClass subclass : new HeroSubClass[]{HeroSubClass.NONE, HeroSubClass.GLADIATOR, HeroSubClass.BERSERKER}) {
+			hero = hero(subclass);
+			shield = hero.buff(BrokenSeal.WarriorShield.class);
+			for (int rank = 0; rank <= 2; rank++) {
+				hero.talents.get(0).put(Talent.IRON_WILL, rank);
+				check(shield.maxShield() == 5 + 20 * rank, "Iron Will adds 0/10/20 percent in both forms");
+			}
+			hero.HT = 150;
+			check(shield.maxShield() == 35, "Iron Will follows current max HP");
+		}
+		hero.heroClass = HeroClass.MAGE;
+		hero.belongings.armor = null;
+		hero.talents.get(0).put(Talent.IRON_WILL, 1);
+		check(shield.maxShield() == 15, "metamorphed Iron Will rank one");
+		hero.talents.get(0).put(Talent.IRON_WILL, 2);
+		check(shield.maxShield() == 30, "metamorphed Iron Will rank two");
 		System.out.println("PASS: seal forms, pre-hit shields, cooldowns, actual HP thresholds and saved guard");
 	}
 
