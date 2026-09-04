@@ -634,7 +634,8 @@ public class Armor extends EquipableItem {
 		}
 
 		if (seal != null) {
-			info += "\n\n" + Messages.get(Armor.class, "seal_attached", seal.maxShield(tier, level()));
+			info += "\n\n" + Messages.get(Armor.class,
+					BrokenSeal.isComplete() ? "complete_seal_attached" : "seal_attached", seal.maxShield(tier, level()));
 		}
 		
 		return info;

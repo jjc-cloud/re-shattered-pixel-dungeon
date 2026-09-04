@@ -935,16 +935,22 @@ public abstract class Char extends Actor {
 		}
 
 		BrokenSeal.WarriorShield shield = buff(BrokenSeal.WarriorShield.class);
+		if (shield != null && shield.blockEnemyAttack(dmg, src)) {
+			if (sprite != null) sprite.showStatusWithIcon(CharSprite.POSITIVE,
+					Integer.toString(shield.maxShield()), FloatingText.SHIELDING);
+			return;
+		}
 		if (!(src instanceof Hunger)
 				&& dmg > 0
 				//either HP is already half or below (ignoring shield)
 				// or the hit will reduce it to half or below
-				&& (HP <= HT/2 || HP + shielding() - dmg <= HT/2)
-				&& shield != null && !shield.coolingDown()){
-			sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(buff(BrokenSeal.WarriorShield.class).maxShield()), FloatingText.SHIELDING);
+				&& shield != null && shield.maxShield() > 0 && !shield.coolingDown()
+				&& (shield.completeSealEquipped() || HP <= HT/2 || HP + shielding() - dmg <= HT/2)){
+			if (sprite != null) sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(shield.maxShield()), FloatingText.SHIELDING);
 			shield.activate();
 		}
 
+		int healthBeforeHit = HP;
 		int shielded = dmg;
 		dmg = ShieldBuff.processDamage(this, dmg, src);
 		shielded -= dmg;
@@ -1025,6 +1031,7 @@ public abstract class Char extends Actor {
 		}
 
 		if (HP < 0) HP = 0;
+		if (shield != null) shield.onHealthLost(Math.max(0, healthBeforeHit - HP));
 
 		if (!isAlive()) {
 			die( src );

@@ -115,8 +115,8 @@ public class TitleScene extends PixelScene {
 		align(title);
 
 		if (landscape()){
-			leftFB = placeTorch(title.x + 30, title.y + 35);
-			rightFB = placeTorch(title.x + title.width - 30, title.y + 35);
+			leftFB = placeTorch(title.x + 16, title.y + 70);
+			rightFB = placeTorch(title.x + title.width - 16, title.y + 70);
 		} else {
 			leftFB = placeTorch(title.x + 16, title.y + 70);
 			rightFB = placeTorch(title.x + title.width - 16, title.y + 70);

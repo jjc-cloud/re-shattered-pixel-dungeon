@@ -39,22 +39,19 @@ public class BannerSprites {
 		Image icon = new Image( Assets.Interfaces.BANNERS );
 		switch (type) {
 			case TITLE_PORT:
-				icon.frame( icon.texture.uvRect( 0, 0, 139, 100 ) );
+			case TITLE_LAND:
+				// The replacement atlas has one title shared by both orientations.
+				icon.frame( icon.texture.uvRect( 0, 0, 130, 92 ) );
 				break;
 			case TITLE_GLOW_PORT:
-				icon.frame( icon.texture.uvRect( 139, 0, 278, 100 ) );
-				break;
-			case TITLE_LAND:
-				icon.frame( icon.texture.uvRect( 0, 100, 240, 157) );
-				break;
 			case TITLE_GLOW_LAND:
-				icon.frame( icon.texture.uvRect( 240, 100, 480, 157 ) );
+				icon.frame( icon.texture.uvRect( 130, 0, 256, 92 ) );
 				break;
 			case BOSS_SLAIN:
-				icon.frame( icon.texture.uvRect( 0, 157, 127, 225 ) );
+				icon.frame( icon.texture.uvRect( 0, 92, 128, 126 ) );
 				break;
 			case GAME_OVER:
-				icon.frame( icon.texture.uvRect( 128, 157, 256, 192 ) );
+				icon.frame( icon.texture.uvRect( 0, 126, 128, 160 ) );
 				break;
 		}
 		return icon;
