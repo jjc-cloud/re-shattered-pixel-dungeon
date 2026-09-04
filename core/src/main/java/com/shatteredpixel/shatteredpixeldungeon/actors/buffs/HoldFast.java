@@ -51,7 +51,7 @@ public class HoldFast extends Buff {
 
 	public int armorBonus(){
 		if (pos == target.pos && target instanceof Hero){
-			return Random.NormalIntRange(((Hero) target).pointsInTalent(Talent.HOLD_FAST), 2*((Hero) target).pointsInTalent(Talent.HOLD_FAST));
+			return Random.NormalIntRange(((Hero) target).pointsInTalent(Talent.LIQUID_WILLPOWER), 2*((Hero) target).pointsInTalent(Talent.LIQUID_WILLPOWER));
 		} else {
 			detach();
 			return 0;
@@ -61,12 +61,10 @@ public class HoldFast extends Buff {
 	public static float buffDecayFactor(Char target){
 		HoldFast buff = target.buff(HoldFast.class);
 		if (buff != null && target.pos == buff.pos && target instanceof Hero){
-			switch (((Hero) target).pointsInTalent(Talent.HOLD_FAST)){
+			switch (((Hero) target).pointsInTalent(Talent.LIQUID_WILLPOWER)){
 				case 1:
 					return 0.5f;
 				case 2:
-					return 0.25f;
-				case 3:
 					return 0;
 			}
 
@@ -89,9 +87,9 @@ public class HoldFast extends Buff {
 	@Override
 	public String desc() {
 		return Messages.get(this, "desc",
-				Dungeon.hero.pointsInTalent(Talent.HOLD_FAST),
-				2*Dungeon.hero.pointsInTalent(Talent.HOLD_FAST),
-				25 + 25*Dungeon.hero.pointsInTalent(Talent.HOLD_FAST));
+				Dungeon.hero.pointsInTalent(Talent.LIQUID_WILLPOWER),
+				2*Dungeon.hero.pointsInTalent(Talent.LIQUID_WILLPOWER),
+				50*Dungeon.hero.pointsInTalent(Talent.LIQUID_WILLPOWER));
 	}
 
 	private static final String POS = "pos";
