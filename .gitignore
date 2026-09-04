@@ -21,3 +21,6 @@ local.properties
 
 #agent files
 AGENTS.md
+
+#test files
+core\src\main\java\com\shatteredpixel\shatteredpixeldungeon\TestStart.java

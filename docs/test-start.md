@@ -2,7 +2,7 @@
 
 配置文件：`core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/TestStart.java`。
 
-将 `ENABLED` 改成 `true` 并重新编译，然后创建新游戏。默认值为 `false`，发布前保持关闭。
+将 `ENABLED` 改成 `true` 并重新编译，然后创建新游戏。默认值为 `false`，发布前保持开启。
 `START_DEPTH`、`START_LEVEL`、`START_STRENGTH` 分别控制开局楼层、等级和力量。
 默认测试配置是 16 楼、25 级、18 力量，装备巨剑和鳞甲，携带天狗面具、15 张升级卷轴、5 张嬗变卷轴、20 张蜕变卷轴。
 

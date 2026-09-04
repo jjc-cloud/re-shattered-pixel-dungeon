@@ -36,6 +36,9 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Greatsword;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTransmutation;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfMetamorphosis;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Rat;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WornDartTrap;
+
 /**
  * Compile-time test start configuration.
  * <p>
@@ -133,6 +136,9 @@ public class TestStart {
 		if (!ENABLED || Dungeon.branch != 0) return;
 
 		// Add spawnMobs(...) and spawnTraps(...) calls here.
+		spawnMobs(level, START_DEPTH, Rat::new, 3);
+		spawnTraps(level, START_DEPTH, WornDartTrap::new, 2, false);
+		
 	}
 
 	/** Returns the number placed; stops when no suitable empty floor remains. */
