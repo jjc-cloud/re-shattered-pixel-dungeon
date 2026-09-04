@@ -284,6 +284,7 @@ public class Dungeon {
 		Badges.reset();
 		
 		GamesInProgress.selectedClass.initHero( hero );
+		TestStart.apply();
 	}
 
 	public static boolean isChallenged( int mask ) {
@@ -396,6 +397,7 @@ public class Dungeon {
 		Statistics.qualifiedForBossRemainsBadge = false;
 		
 		level.create();
+		TestStart.applyToLevel(level);
 		
 		if (branch == 0) Statistics.qualifiedForNoKilling = !bossLevel();
 		Statistics.qualifiedForBossChallengeBadge = false;

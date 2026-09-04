@@ -213,6 +213,14 @@ public class Hero extends Char {
 	private int attackSkill = 10;
 	private int defenseSkill = 5;
 
+	public void setAttackSkill(int value) {
+		attackSkill = value;
+	}
+
+	public void setDefenseSkill(int value) {
+		defenseSkill = value;
+	}
+
 	public boolean ready = false;
 	public boolean damageInterrupt = true;
 	public HeroAction curAction = null;
