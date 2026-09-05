@@ -1659,7 +1659,11 @@ public class Hero extends Char {
 
 		int preHP = HP + shielding();
 		if (src instanceof Hunger) preHP -= shielding();
-		super.damage( dmg, src );
+		try {
+			super.damage( dmg, src );
+		} finally {
+			if (berserk != null) berserk.resolvePendingDamageRage();
+		}
 		int postHP = HP + shielding();
 		if (src instanceof Hunger) postHP -= shielding();
 		int effectiveDamage = preHP - postHP;
