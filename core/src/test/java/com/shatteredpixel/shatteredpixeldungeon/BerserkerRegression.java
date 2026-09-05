@@ -13,6 +13,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClothArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sword;
 import com.watabou.utils.Bundle;
+import com.shatteredpixel.shatteredpixeldungeon.ui.ActionIndicator;
 
 /** Standalone checks for the berserker rage controller. */
 public class BerserkerRegression {
@@ -80,6 +81,8 @@ public class BerserkerRegression {
 			checkClose(rage.power(), rank + 1f, "natural rage cap rank " + rank);
 			rage.forceRage(4f);
 			checkClose(rage.power(), 4f, "forced rage ignores natural cap rank " + rank);
+			rage.gainRage(0.1f);
+			checkClose(rage.power(), 4f, "gaining rage cannot clamp forced rage to natural cap rank " + rank);
 		}
 
 		float[] enchantCaps = {1f, 1.5f, 2.25f, 3f};
@@ -136,6 +139,11 @@ public class BerserkerRegression {
 		checkClose(frenzyDecay.power(), 3.5f, "frenzy rage does not decay");
 
 		Berserk manual = rage(3.5f);
+		ActionIndicator.clearAction();
+		manual.fx(true);
+		if (ActionIndicator.action != manual) {
+			throw new AssertionError("berserker rage control uses the shared action indicator");
+		}
 		float before = Dungeon.hero.cooldown();
 		manual.doAction();
 		checkClose(manual.power(), 2.5f, "manual action removes one hundred percent rage");
