@@ -500,7 +500,10 @@ public class Hero extends Char {
 		if (enemy != null && hasTalent(Talent.LIQUID_WILLPOWER)) {
 			Buff.affect(this, HoldFast.class).pos = pos;
 		}
+		int enemyHP = enemy == null ? 0 : enemy.HP;
 		boolean result = super.attack(enemy, dmgMulti, dmgBonus, accMulti);
+		Berserk berserk = buff(Berserk.class);
+		if (berserk != null && enemy != null) berserk.onAttackResolved(enemyHP, enemy.HP);
 		if (!(belongings.attackingWeapon() instanceof MissileWeapon)){
 			if (buff(Talent.PreciseAssaultTracker.class) != null){
 				buff(Talent.PreciseAssaultTracker.class).detach();
@@ -562,6 +565,8 @@ public class Hero extends Char {
 			accuracy *= 1.50f;
 		}
 		
+		Berserk berserk = buff(Berserk.class);
+		if (berserk != null) accuracy *= berserk.accuracyMultiplier();
 		if (!RingOfForce.fightingUnarmed(this)) {
 			return Math.max(1, Math.round(attackSkill * accuracy * wep.accuracyFactor( this, target )));
 		} else {
@@ -612,6 +617,8 @@ public class Hero extends Char {
 			}
 		}
 
+		Berserk berserk = buff(Berserk.class);
+		if (berserk != null) evasion *= berserk.evasionMultiplier();
 		return Math.max(1, Math.round(evasion));
 	}
 
@@ -648,7 +655,7 @@ public class Hero extends Char {
 	public int drRoll() {
 		int dr = super.drRoll();
 
-		if (belongings.armor() != null) {
+		if (belongings.armor() != null && subClass != HeroSubClass.BERSERKER) {
 			int armDr = Random.NormalIntRange( belongings.armor().DRMin(), belongings.armor().DRMax());
 			if (STR() < belongings.armor().STRReq()){
 				armDr -= 2*(belongings.armor().STRReq() - STR());
@@ -740,6 +747,8 @@ public class Hero extends Char {
 		}
 
 		speed = AscensionChallenge.modifyHeroSpeed(speed);
+		Berserk berserk = buff(Berserk.class);
+		if (berserk != null) speed *= berserk.speedMultiplier();
 		
 		return speed;
 		
@@ -1548,11 +1557,6 @@ public class Hero extends Char {
 	@Override
 	public int defenseProc( Char enemy, int damage ) {
 		
-		if (damage > 0 && subClass == HeroSubClass.BERSERKER){
-			Berserk berserk = Buff.affect(this, Berserk.class);
-			berserk.damage(damage);
-		}
-		
 		if (belongings.armor() != null) {
 			damage = belongings.armor().proc( enemy, this, damage );
 		} else {
@@ -1593,6 +1597,8 @@ public class Hero extends Char {
 				|| buff(TimeStasis.class) != null) {
 			return;
 		}
+		Berserk berserk = buff(Berserk.class);
+		if (berserk != null) dmg = Math.round(berserk.modifyIncomingDamage(dmg, src));
 
 		//TODO hero cannot take damage in the vault tester area
 		if (Dungeon.depth > 15 && Dungeon.branch == 1){

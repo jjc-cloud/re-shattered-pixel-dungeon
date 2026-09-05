@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Combo;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Berserk;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.HoldFast;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Regeneration;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ShieldBuff;
@@ -461,7 +462,12 @@ public class BrokenSeal extends Item {
 			}
 
 			if (armor != null && armor.isEquipped((Hero)target) && armor.checkSeal() != null) {
-				return armor.checkSeal().maxShield(armor.tier, armor.level());
+				int result = armor.checkSeal().maxShield(armor.tier, armor.level());
+				if (((Hero) target).subClass == HeroSubClass.BERSERKER) {
+					Berserk rage = target.buff(Berserk.class);
+					if (rage != null) result += Math.round(armor.DRMax() * rage.power());
+				}
+				return result;
 			} else {
 				return 0;
 			}

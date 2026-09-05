@@ -77,11 +77,13 @@ public class WarriorSealRegression {
 		shield = hero.buff(BrokenSeal.WarriorShield.class);
 		hero.damage(1, enemy);
 		shield.decShield(shield.shielding());
-		for (int i = 0; i < 11; i++) { hero.HP = 200; hero.damage(10, enemy); }
-		check(!state(shield).getBoolean("guard_ready"), "55 percent not enough");
+		for (int i = 0; i < 9; i++) { hero.HP = 200; hero.damage(10, enemy); }
 		hero.HP = 200;
-		hero.damage(10, enemy);
-		check(state(shield).getBoolean("guard_ready"), "60 percent arms guard");
+		hero.damage(8, enemy);
+		check(!state(shield).getBoolean("guard_ready"), "49 percent not enough");
+		hero.HP = 200;
+		hero.damage(2, enemy);
+		check(state(shield).getBoolean("guard_ready"), "50 percent arms guard");
 		Bundle saved = state(shield);
 		shield.detach();
 		shield = new BrokenSeal.WarriorShield();
