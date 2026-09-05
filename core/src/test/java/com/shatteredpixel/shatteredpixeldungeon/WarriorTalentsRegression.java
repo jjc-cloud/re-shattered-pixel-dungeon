@@ -13,6 +13,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfMagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sword;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingStone;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicImmune;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Regeneration;
 import com.watabou.noosa.Game;
 import com.watabou.utils.Bundle;
 
@@ -63,6 +64,26 @@ public class WarriorTalentsRegression {
 			@Override public void occupyCell(Char ch) { }
 		};
 		Dungeon.level.setSize(9, 9);
+		Hero regenHero = hero(0, 0);
+		regenHero.HP = 100;
+		Regeneration regeneration = Buff.affect(regenHero, Regeneration.class);
+		for (int i = 0; i < 5; i++) regeneration.act();
+		check(regenHero.HP == 101, "warrior gains one extra point from five turns at 200 max HP");
+		for (int i = 0; i < 5; i++) regeneration.act();
+		check(regenHero.HP == 103, "warrior extra regeneration accumulates independently from base regeneration");
+
+		regenHero = hero(0, 0);
+		regenHero.HP = 100;
+		regeneration = Buff.affect(regenHero, Regeneration.class);
+		for (int i = 0; i < 4; i++) regeneration.act();
+		Bundle regenState = new Bundle();
+		regeneration.storeInBundle(regenState);
+		regeneration.detach();
+		regeneration = new Regeneration();
+		regeneration.restoreFromBundle(regenState);
+		regeneration.attachTo(regenHero);
+		regeneration.act();
+		check(regenHero.HP == 101, "warrior fractional extra regeneration survives save and restore");
 		check(Talent.LIQUID_WILLPOWER.maxPoints() == 2, "tier two ranks");
 		check(Talent.HOLD_FAST.maxPoints() == 3, "tier three ranks");
 		for (int rank = 1; rank <= 2; rank++) {
