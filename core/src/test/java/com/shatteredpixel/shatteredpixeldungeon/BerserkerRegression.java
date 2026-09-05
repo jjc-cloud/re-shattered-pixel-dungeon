@@ -12,6 +12,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClothArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sword;
+import com.watabou.utils.Bundle;
 
 /** Standalone checks for the berserker rage controller. */
 public class BerserkerRegression {
@@ -91,6 +92,18 @@ public class BerserkerRegression {
 			rage.gainRage(3f);
 			checkClose(rage.enchantFactor(1f), enchantCaps[rank], "catalyst cap rank " + rank);
 		}
+		Hero lateTalentHero = hero(3, 0);
+		Berserk lateTalent = Buff.affect(lateTalentHero, Berserk.class);
+		lateTalent.consumeDeathDefiance();
+		lateTalentHero.talents.get(2).put(Talent.DEATHLESS_FURY, 1);
+		if (lateTalent.levelsUntilDeathDefiance() != 3) {
+			throw new AssertionError("late deathless fury investment starts a three-level cooldown");
+		}
+		lateTalent.onHeroLevelUp();
+		lateTalent.onHeroLevelUp();
+		if (lateTalent.deathDefianceAvailable()) throw new AssertionError("late talent recharge is not early");
+		lateTalent.onHeroLevelUp();
+		if (!lateTalent.deathDefianceAvailable()) throw new AssertionError("late talent recharges after three levels");
 
 		Hero catalystHero = hero(3, 2);
 		Berserk catalyst = Buff.affect(catalystHero, Berserk.class);
@@ -193,8 +206,17 @@ public class BerserkerRegression {
 		checkClose(deathRage.damageMultiplierWithDeathShield(), 6f,
 				"death shield independently multiplies posture damage");
 		if (deathRage.deathDefianceAvailable()) throw new AssertionError("death defiance is consumed");
+		Bundle deathShieldState = new Bundle();
+		deathShield.storeInBundle(deathShieldState);
+		if (!deathShieldState.getBoolean("death_shield")) throw new AssertionError("death shield marker is saved");
 		deathShield.decShield(deathShield.shielding());
 		if (deathShield.isDeathShield()) throw new AssertionError("depleted death shield clears marker");
+		deathShield.activateDeathShield();
+		deathShield.activate();
+		if (deathShield.isDeathShield()) throw new AssertionError("normal seal activation replaces death marker");
+		deathShield.activateDeathShield();
+		deathShield.setArmor(null);
+		if (deathShield.isDeathShield()) throw new AssertionError("removing seal armor clears death marker");
 
 		Hero unsealed = hero(3, 0);
 		Berserk unsealedRage = Buff.affect(unsealed, Berserk.class);

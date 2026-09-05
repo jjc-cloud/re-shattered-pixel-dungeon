@@ -1021,9 +1021,15 @@ public class GameScene extends PixelScene {
 		}
 
 		if (scene.tagRage) {
-			scene.rage.setRect(tagLeft, pos - Tag.SIZE, tagWidth, Tag.SIZE);
-			scene.rage.flip(tagsOnLeft);
-			pos = scene.rage.top();
+			if (tagsOnLeft) {
+				scene.rage.setRect(tagLeft, pos - Tag.SIZE, tagWidth, Tag.SIZE);
+				scene.rage.flip(true);
+				pos = scene.rage.top();
+			} else {
+				float ragePos = SPDSettings.interfaceSize() > 0 ? scene.status.top() : scene.toolbar.top();
+				scene.rage.setRect(0, ragePos - Tag.SIZE, Tag.SIZE + insets.left, Tag.SIZE);
+				scene.rage.flip(true);
+			}
 		}
 
 		if (scene.tagResume) {

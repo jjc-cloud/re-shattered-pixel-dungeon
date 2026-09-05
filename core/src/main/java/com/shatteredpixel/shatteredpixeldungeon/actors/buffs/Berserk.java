@@ -22,6 +22,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Hunger;
 import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
 import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs.AntiMagic;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -167,8 +168,10 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 	}
 
 	public float modifyIncomingDamage(int rawDamage, Object source) {
-		float multiplier = !(source instanceof Char) && isEnemyDamageSource(source) ? incomingDamageMultiplier() : 1f;
+		boolean indirectEnemyDamage = !(source instanceof Char) && isEnemyDamageSource(source);
+		float multiplier = indirectEnemyDamage ? incomingDamageMultiplier() : 1f;
 		if (source instanceof Hunger) gainRage(rawDamage * 0.01f);
+		else if (indirectEnemyDamage && !AntiMagic.RESISTS.contains(source.getClass())) gainRage(rawDamage * 0.01f);
 		return rawDamage * multiplier;
 	}
 
@@ -213,7 +216,10 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 	}
 
 	public int levelsUntilDeathDefiance() {
-		return levelsUntilDefiance;
+		if (deathDefianceAvailable) return 0;
+		int rank = ((Hero) target).pointsInTalent(Talent.DEATHLESS_FURY);
+		if (rank == 0) return 0;
+		return levelsUntilDefiance <= 0 ? 4 - rank : Math.min(levelsUntilDefiance, 4 - rank);
 	}
 
 	public void consumeDeathDefiance() {
@@ -224,7 +230,11 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 	}
 
 	public void onHeroLevelUp() {
-		if (deathDefianceAvailable || levelsUntilDefiance <= 0) return;
+		if (deathDefianceAvailable) return;
+		int rank = ((Hero) target).pointsInTalent(Talent.DEATHLESS_FURY);
+		if (rank == 0) return;
+		if (levelsUntilDefiance <= 0) levelsUntilDefiance = 4 - rank;
+		else levelsUntilDefiance = Math.min(levelsUntilDefiance, 4 - rank);
 		if (--levelsUntilDefiance <= 0) deathDefianceAvailable = true;
 		BuffIndicator.refreshHero();
 	}
