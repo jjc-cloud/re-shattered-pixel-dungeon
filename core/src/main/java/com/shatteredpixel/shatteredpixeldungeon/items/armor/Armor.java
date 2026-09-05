@@ -732,11 +732,6 @@ public class Armor extends EquipableItem {
 		if (glyph == null || !glyph.curse()) curseInfusionBonus = false;
 		this.glyph = glyph;
 		updateQuickslot();
-		//the hero needs runic transference to actually transfer, but we still attach the glyph here
-		// in case they take that talent in the future
-		if (seal != null){
-			seal.setGlyph(glyph);
-		}
 		if (glyph != null && isIdentified() && Dungeon.hero != null
 				&& Dungeon.hero.isAlive() && Dungeon.hero.belongings.contains(this)){
 			Catalog.setSeen(glyph.getClass());
@@ -746,11 +741,33 @@ public class Armor extends EquipableItem {
 	}
 
 	public Armor inscribe() {
-
-		Class<? extends Glyph> oldGlyphClass = glyph != null ? glyph.getClass() : null;
+		Glyph currentGlyph = glyphForEffect();
+		Class<? extends Glyph> oldGlyphClass = currentGlyph != null ? currentGlyph.getClass() : null;
 		Glyph gl = Glyph.random( oldGlyphClass );
 
-		return inscribe( gl );
+		return inscribeFromEffect( gl );
+	}
+
+	public Glyph glyphForEffect() {
+		return seal != null ? seal.getGlyph() : glyph;
+	}
+
+	public boolean hasCurseGlyphForEffect() {
+		Glyph effectGlyph = glyphForEffect();
+		return effectGlyph != null && effectGlyph.curse();
+	}
+
+	public Armor inscribeFromEffect(Glyph glyph) {
+		if (seal == null) return inscribe(glyph);
+		if (glyph == null || !glyph.curse()) curseInfusionBonus = false;
+		seal.setGlyph(glyph);
+		updateQuickslot();
+		if (glyph != null && isIdentified() && Dungeon.hero != null
+				&& Dungeon.hero.isAlive() && Dungeon.hero.belongings.contains(this)){
+			Catalog.setSeen(glyph.getClass());
+			Statistics.itemTypesDiscovered.add(glyph.getClass());
+		}
+		return this;
 	}
 
 	public boolean hasGlyph(Class<?extends Glyph> type, Char owner) {

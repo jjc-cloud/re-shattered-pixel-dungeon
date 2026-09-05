@@ -90,7 +90,7 @@ public class ScrollOfRemoveCurse extends InventoryScroll {
 		} else if (item instanceof Weapon){
 			return ((Weapon)item).hasCurseEnchant();
 		} else if (item instanceof Armor){
-			return ((Armor)item).hasCurseGlyph();
+			return ((Armor)item).hasCurseGlyphForEffect();
 		} else {
 			return false;
 		}
@@ -134,8 +134,8 @@ public class ScrollOfRemoveCurse extends InventoryScroll {
 			}
 			if (item instanceof Armor){
 				Armor a = (Armor) item;
-				if (a.hasCurseGlyph()){
-					a.inscribe(null);
+				if (a.hasCurseGlyphForEffect()){
+					a.inscribeFromEffect(null);
 					procced = true;
 				}
 			}
