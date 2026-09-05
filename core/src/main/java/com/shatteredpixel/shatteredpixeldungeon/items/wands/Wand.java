@@ -27,6 +27,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barrier;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Berserk;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Degrade;
@@ -79,6 +80,7 @@ public abstract class Wand extends Item {
 	public static final String AC_ZAP	= "ZAP";
 
 	private static final float TIME_TO_ZAP	= 1f;
+	private boolean normalZap;
 	
 	public int maxCharges = initialCharges();
 	public int curCharges = maxCharges;
@@ -549,7 +551,10 @@ public abstract class Wand extends Item {
 		Invisibility.dispel();
 		updateQuickslot();
 
-		curUser.spendAndNext( TIME_TO_ZAP );
+		Berserk rage = curUser.buff(Berserk.class);
+		float delay = normalZap && rage != null ? rage.normalWandShotDelay() : TIME_TO_ZAP;
+		normalZap = false;
+		curUser.spendAndNext(delay);
 	}
 	
 	@Override
@@ -717,6 +722,7 @@ public abstract class Wand extends Item {
 					return;
 				}
 
+				curWand.normalZap = true;
 				curUser.sprite.zap(cell);
 
 				//attempts to target the cell aimed at if something is there, otherwise targets the collision pos.

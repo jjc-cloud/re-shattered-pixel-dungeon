@@ -284,6 +284,7 @@ public class BrokenSeal extends Item {
 		private int gladiatorDamage;
 		private float berserkerLoss;
 		private boolean guardReady;
+		private boolean deathShield;
 
 		private int cooldownDuration() {
 			return target instanceof Hero && isComplete((Hero)target) ? 100 : 150;
@@ -436,10 +437,37 @@ public class BrokenSeal extends Item {
 		}
 
 		public synchronized void activate() {
+			deathShield = false;
 			incShield(maxShield());
 			cooldown = Math.max(0, cooldown+cooldownDuration());
 			turnsSinceEnemies = 0;
 			initialShield = maxShield();
+		}
+
+		public synchronized void activateDeathShield() {
+			if (shielding() > 0) decShield(shielding());
+			incShield(maxShield());
+			cooldown = Math.max(0, cooldown + cooldownDuration());
+			turnsSinceEnemies = 0;
+			initialShield = shielding();
+			deathShield = shielding() > 0;
+		}
+
+		public boolean isDeathShield() {
+			return deathShield && shielding() > 0 && completeSealEquipped();
+		}
+
+		@Override
+		public void decShield(int amount) {
+			super.decShield(amount);
+			if (shielding() <= 0) deathShield = false;
+		}
+
+		@Override
+		public int absorbDamage(int damage) {
+			int result = super.absorbDamage(damage);
+			if (shielding() <= 0) deathShield = false;
+			return result;
 		}
 
 		public boolean coolingDown(){
@@ -453,6 +481,7 @@ public class BrokenSeal extends Item {
 
 		public synchronized void setArmor(Armor arm){
 			armor = arm;
+			if (arm == null || target instanceof Hero && !arm.isEquipped((Hero) target)) deathShield = false;
 		}
 
 		public synchronized int maxShield() {
@@ -479,6 +508,7 @@ public class BrokenSeal extends Item {
 		private static final String GLADIATOR_DAMAGE = "gladiator_damage";
 		private static final String BERSERKER_LOSS = "berserker_loss";
 		private static final String GUARD_READY = "guard_ready";
+		private static final String DEATH_SHIELD = "death_shield";
 
 		@Override
 		public void storeInBundle(Bundle bundle) {
@@ -489,6 +519,7 @@ public class BrokenSeal extends Item {
 			bundle.put(GLADIATOR_DAMAGE, gladiatorDamage);
 			bundle.put(BERSERKER_LOSS, berserkerLoss);
 			bundle.put(GUARD_READY, guardReady);
+			bundle.put(DEATH_SHIELD, deathShield);
 		}
 
 		@Override
@@ -497,6 +528,7 @@ public class BrokenSeal extends Item {
 			gladiatorDamage = bundle.getInt(GLADIATOR_DAMAGE);
 			berserkerLoss = bundle.getFloat(BERSERKER_LOSS);
 			guardReady = bundle.getBoolean(GUARD_READY);
+			deathShield = bundle.getBoolean(DEATH_SHIELD);
 			if (bundle.contains(COOLDOWN)) {
 				cooldown = bundle.getInt(COOLDOWN);
 				turnsSinceEnemies = bundle.getFloat(TURNS_SINCE_ENEMIES);
