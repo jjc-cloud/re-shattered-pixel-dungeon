@@ -192,6 +192,8 @@ public class BerserkerRegression {
 				new com.shatteredpixel.shatteredpixeldungeon.actors.Char() { };
 		enemy.alignment = com.shatteredpixel.shatteredpixeldungeon.actors.Char.Alignment.ENEMY;
 		checkClose(defenseRage.modifyPhysicalIncomingDamage(20, enemy), 20, "zero-rage enemy damage multiplier");
+		checkClose(defenseRage.power(), 0f, "physical damage rage waits until damage resolution");
+		defenseRage.resolvePendingDamageRage();
 		checkClose(defenseRage.power(), 0.2f, "physical damage grants rage from raw damage");
 		defenseRage.forceRage(1f);
 		checkClose(defenseRage.modifyIncomingDamage(10, new Warlock.DarkBolt()), 12.5f,
@@ -199,6 +201,8 @@ public class BerserkerRegression {
 		checkClose(defenseRage.power(), 1f, "enemy magic does not grant rage");
 		defenseRage.forceRage(0f);
 		checkClose(defenseRage.modifyIncomingDamage(5, new Hunger()), 5f, "hunger is not posture-amplified");
+		checkClose(defenseRage.power(), 0f, "hunger rage waits until damage resolution");
+		defenseRage.resolvePendingDamageRage();
 		checkClose(defenseRage.power(), 0.05f, "hunger grants one percent rage per raw damage");
 
 		Hero dying = hero(3, 0);
@@ -241,6 +245,31 @@ public class BerserkerRegression {
 		saneDeath.HP = 0;
 		if (saneDeath.isAlive()) throw new AssertionError("sane stance dies without death defiance");
 		if (!saneDeathRage.deathDefianceAvailable()) throw new AssertionError("sane death does not consume defiance");
+
+		Hero angerCrossing = hero(3, 0);
+		angerCrossing.belongings.armor = new ClothArmor();
+		angerCrossing.belongings.armor.affixSeal(new BrokenSeal());
+		Berserk angerCrossingRage = Buff.affect(angerCrossing, Berserk.class);
+		angerCrossingRage.forceRage(1.9f);
+		angerCrossing.HP = 10;
+		angerCrossing.damageInterrupt = false;
+		int lethalDamage = angerCrossing.defenseProc(enemy, 1000);
+		checkClose(angerCrossingRage.power(), 1.9f, "incoming rage waits until death resolution");
+		angerCrossing.damage(lethalDamage, enemy);
+		if (!angerCrossing.isAlive()) throw new AssertionError("pre-hit angry stance defies death after crossing sane threshold");
+		checkClose(angerCrossing.HP, 50, "cross-threshold death defiance restores half health");
+		checkClose(angerCrossingRage.power(), 4f, "pending rage cannot lower forced death rage");
+
+		Hero sanityCrossing = hero(3, 0);
+		sanityCrossing.belongings.armor = new ClothArmor();
+		sanityCrossing.belongings.armor.affixSeal(new BrokenSeal());
+		Berserk sanityCrossingRage = Buff.affect(sanityCrossing, Berserk.class);
+		sanityCrossingRage.forceRage(2.9f);
+		sanityCrossing.defenseProc(enemy, 20);
+		checkClose(sanityCrossingRage.power(), 2.9f, "sane stance remains current through lethal resolution");
+		sanityCrossing.HP = 0;
+		if (sanityCrossing.isAlive()) throw new AssertionError("pre-hit sane stance dies after crossing berserk threshold");
+		if (!sanityCrossingRage.deathDefianceAvailable()) throw new AssertionError("cross-threshold sane death preserves defiance");
 
 		for (int rank = 1; rank <= 3; rank++) {
 			Hero rechargeHero = hero(3, 0);

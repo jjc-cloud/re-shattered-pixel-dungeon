@@ -44,6 +44,8 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 
 	public int powerLossBuffer;
 	private float power;
+	private float pendingDamageRage;
+	private Object pendingDamageSource;
 	private boolean deathDefianceAvailable = true;
 	private int levelsUntilDefiance;
 
@@ -179,15 +181,34 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 	public float modifyIncomingDamage(int rawDamage, Object source) {
 		boolean indirectEnemyDamage = !(source instanceof Char) && isEnemyDamageSource(source);
 		float multiplier = indirectEnemyDamage ? incomingDamageMultiplier() : 1f;
-		if (source instanceof Hunger) gainRage(rawDamage * 0.01f);
-		else if (indirectEnemyDamage && !AntiMagic.RESISTS.contains(source.getClass())) gainRage(rawDamage * 0.01f);
+		if (source instanceof Char) {
+			if (pendingDamageSource != source) queueDamageRage(0f, source);
+		} else if (source instanceof Hunger) {
+			queueDamageRage(rawDamage * 0.01f, source);
+		} else if (indirectEnemyDamage && !AntiMagic.RESISTS.contains(source.getClass())) {
+			queueDamageRage(rawDamage * 0.01f, source);
+		} else {
+			queueDamageRage(0f, source);
+		}
 		return rawDamage * multiplier;
 	}
 
 	public float modifyPhysicalIncomingDamage(int rawDamage, Char source) {
 		float multiplier = isEnemyDamageSource(source) ? incomingDamageMultiplier() : 1f;
-		gainRage(rawDamage * 0.01f);
+		queueDamageRage(rawDamage * 0.01f, source);
 		return rawDamage * multiplier;
+	}
+
+	private void queueDamageRage(float amount, Object source) {
+		pendingDamageRage = Math.max(0f, amount);
+		pendingDamageSource = source;
+	}
+
+	public void resolvePendingDamageRage() {
+		float amount = pendingDamageRage;
+		pendingDamageRage = 0f;
+		pendingDamageSource = null;
+		if (amount > 0f && target != null && target.HP > 0) gainRage(amount);
 	}
 
 	public static boolean isEnemyDamageSource(Object source) {
