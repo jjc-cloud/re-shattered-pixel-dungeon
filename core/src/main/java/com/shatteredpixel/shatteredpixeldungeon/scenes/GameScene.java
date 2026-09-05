@@ -101,7 +101,6 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.LootIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.MenuPane;
 import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ResumeIndicator;
-import com.shatteredpixel.shatteredpixeldungeon.ui.RageIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RightClickMenu;
 import com.shatteredpixel.shatteredpixeldungeon.ui.StatusPane;
 import com.shatteredpixel.shatteredpixeldungeon.ui.StyledButton;
@@ -207,7 +206,6 @@ public class GameScene extends PixelScene {
 	private AttackIndicator attack;
 	private LootIndicator loot;
 	private ActionIndicator action;
-	private RageIndicator rage;
 	private ResumeIndicator resume;
 
 	{
@@ -489,9 +487,6 @@ public class GameScene extends PixelScene {
 		action = new ActionIndicator();
 		action.camera = uiCamera;
 		add( action );
-		rage = new RageIndicator();
-		rage.camera = uiCamera;
-		add(rage);
 
 		loot = new LootIndicator();
 		loot.camera = uiCamera;
@@ -901,7 +896,6 @@ public class GameScene extends PixelScene {
 			tagAttack = attack.active;
 			tagLoot = loot.visible;
 			tagAction = action.visible;
-			tagRage = rage.visible;
 			tagResume = resume.visible;
 
 			layoutTags();
@@ -909,19 +903,16 @@ public class GameScene extends PixelScene {
 		} else if (tagAttack != attack.active ||
 				tagLoot != loot.visible ||
 				tagAction != action.visible ||
-				tagRage != rage.visible ||
 				tagResume != resume.visible) {
 
 			boolean tagAppearing = (attack.active && !tagAttack) ||
 									(loot.visible && !tagLoot) ||
 									(action.visible && !tagAction) ||
-									(rage.visible && !tagRage) ||
 									(resume.visible && !tagResume);
 
 			tagAttack = attack.active;
 			tagLoot = loot.visible;
 			tagAction = action.visible;
-			tagRage = rage.visible;
 			tagResume = resume.visible;
 
 			//if a new tag appears, re-layout tags immediately
@@ -955,7 +946,6 @@ public class GameScene extends PixelScene {
 	private boolean tagAttack    = false;
 	private boolean tagLoot      = false;
 	private boolean tagAction    = false;
-	private boolean tagRage      = false;
 	private boolean tagResume    = false;
 
 	public static void layoutTags() {
@@ -1018,18 +1008,6 @@ public class GameScene extends PixelScene {
 			scene.action.setRect( tagLeft, pos - Tag.SIZE, tagWidth, Tag.SIZE );
 			scene.action.flip(tagsOnLeft);
 			pos = scene.action.top();
-		}
-
-		if (scene.tagRage) {
-			if (tagsOnLeft) {
-				scene.rage.setRect(tagLeft, pos - Tag.SIZE, tagWidth, Tag.SIZE);
-				scene.rage.flip(true);
-				pos = scene.rage.top();
-			} else {
-				float ragePos = SPDSettings.interfaceSize() > 0 ? scene.status.top() : scene.toolbar.top();
-				scene.rage.setRect(0, ragePos - Tag.SIZE, Tag.SIZE + insets.left, Tag.SIZE);
-				scene.rage.flip(true);
-			}
 		}
 
 		if (scene.tagResume) {

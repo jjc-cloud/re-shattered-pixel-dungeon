@@ -26,7 +26,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs.AntiMagic;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ActionIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HeroIcon;
@@ -83,8 +82,21 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 			power = Math.max(0f, power - decay);
 		}
 		BuffIndicator.refreshHero();
+		if (ActionIndicator.action != this) ActionIndicator.setAction(this);
+		else ActionIndicator.refresh();
 		spend(TICK);
 		return true;
+	}
+
+	@Override
+	public void fx(boolean on) {
+		if (on) ActionIndicator.setAction(this);
+	}
+
+	@Override
+	public void detach() {
+		super.detach();
+		ActionIndicator.clearAction(this);
 	}
 
 	public float power() {
@@ -97,15 +109,17 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 
 	public void gainRage(float amount) {
 		if (amount <= 0f) return;
-		power = Math.min(maxPower(), power + amount);
+		power = Math.max(power, Math.min(maxPower(), power + amount));
 		powerLossBuffer = 3;
 		BuffIndicator.refreshHero();
+		ActionIndicator.refresh();
 	}
 
 	public void forceRage(float amount) {
 		power = GameMath.gate(0f, amount, 4f);
 		powerLossBuffer = 3;
 		BuffIndicator.refreshHero();
+		ActionIndicator.refresh();
 	}
 
 	public float damageMultiplier() {
@@ -254,10 +268,19 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 	}
 
 	@Override
+	public Visual primaryVisual() {
+		Image icon = new HeroIcon(this);
+		tintIcon(icon);
+		return icon;
+	}
+
+	@Override
 	public Visual secondaryVisual() {
 		BitmapText text = new BitmapText(PixelScene.pixelFont);
 		text.text((int) (power * 100f) + "%");
-		text.hardlight(CharSprite.POSITIVE);
+		if (power >= 3f) text.hardlight(0xFF0000);
+		else if (power >= 2f) text.hardlight(0xFFFFFF);
+		else text.hardlight(0xFF8000);
 		text.measure();
 		return text;
 	}
@@ -274,6 +297,7 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 		if (power <= 0f || !(target instanceof Hero)) return;
 		power = Math.max(0f, power - 1f);
 		BuffIndicator.refreshHero();
+		ActionIndicator.refresh();
 		((Hero) target).spendAndNextConstant(TICK);
 	}
 
