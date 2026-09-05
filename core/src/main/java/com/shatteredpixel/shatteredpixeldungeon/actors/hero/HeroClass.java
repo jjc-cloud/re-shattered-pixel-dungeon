@@ -74,7 +74,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Dagger;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Gloves;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Rapier;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WornShortsword;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WarriorsShortsword;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingKnife;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingSpike;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingStone;
@@ -172,7 +172,7 @@ public enum HeroClass {
 	}
 
 	private static void initWarrior( Hero hero ) {
-		(hero.belongings.weapon = new WornShortsword()).identify();
+		(hero.belongings.weapon = new WarriorsShortsword()).identify();
 		ThrowingStone stones = new ThrowingStone();
 		stones.identify().collect();
 
