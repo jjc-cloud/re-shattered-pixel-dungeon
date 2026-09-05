@@ -123,38 +123,33 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 	}
 
 	public float damageMultiplier() {
-		if (power < 1f) return 1f + 0.5f * power;
-		if (power < 2f) return 1.5f + power - 1f;
-		if (power < 3f) return 2.5f - 1.5f * (power - 2f);
-		return 1f + 3f * (power - 3f);
+		if (power < 2f) return 1f + 0.5f * power;
+		if (power < 3f) return 2f - 0.5f * (power - 2f);
+		return 1.5f + power - 3f;
 	}
 
 	public float incomingDamageMultiplier() {
-		if (power < 1f) return 1f + 0.25f * power;
-		if (power < 2f) return 1.25f + 0.25f * (power - 1f);
-		if (power < 3f) return 1.5f - 0.5f * (power - 2f);
-		return 1f + power - 3f;
+		if (power < 2f) return 1f + 0.25f * power;
+		if (power < 3f) return 1f;
+		return 1.5f + 0.5f * (power - 3f);
 	}
 
 	public float accuracyMultiplier() {
-		if (power < 1f) return 1f;
-		if (power < 2f) return 1f + 0.5f * (power - 1f);
-		if (power < 3f) return 1.5f + power - 2f;
-		return 2.5f + 2.5f * (power - 3f);
+		if (power < 2f) return 1f + 0.25f * power;
+		if (power < 3f) return 1.5f + 0.5f * (power - 2f);
+		return 2f + 3f * (power - 3f);
 	}
 
 	public float evasionMultiplier() {
-		if (power < 1f) return 1f;
-		if (power < 2f) return 0.8f;
-		if (power < 3f) return 1f;
+		if (power < 2f) return 1f - 0.1f * power;
+		if (power < 3f) return 0.8f + 0.2f * (power - 2f);
 		return 0.2f;
 	}
 
 	public float speedMultiplier() {
-		if (power < 1f) return 1f;
-		if (power < 2f) return 1f + 0.25f * (power - 1f);
-		if (power < 3f) return 1.25f + 0.25f * (power - 2f);
-		return 1.5f + power - 3f;
+		if (power < 2f) return 1f;
+		if (power < 3f) return 1f + 0.25f * (power - 2f);
+		return 1.25f + 0.25f * (power - 3f);
 	}
 
 	public float enchantFactor(float factor) {
@@ -211,6 +206,7 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 
 	public boolean berserking() {
 		if (!(target instanceof Hero) || target.HP > 0 || !deathDefianceAvailable) return false;
+		if (power >= 2f && power < 3f) return false;
 		BrokenSeal.WarriorShield shield = target.buff(BrokenSeal.WarriorShield.class);
 		if (shield == null || !shield.completeSealEquipped()) return false;
 		consumeDeathDefiance();
@@ -328,8 +324,7 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 	public String name() {
 		if (power >= 3f) return Messages.get(this, "berserk");
 		if (power >= 2f) return Messages.get(this, "sane");
-		if (power >= 1f) return Messages.get(this, "angered");
-		return Messages.get(this, "base");
+		return Messages.get(this, "angered");
 	}
 
 	@Override

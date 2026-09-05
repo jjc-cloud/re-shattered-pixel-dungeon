@@ -64,15 +64,16 @@ public class BerserkerRegression {
 	public static void main(String[] args) {
 		WarriorTalentsRegression.main(args);
 
-		checkFactors(0f,   1f,    1f,     1f,    1f,   1f);
-		checkFactors(0.5f, 1.25f, 1.125f, 1f,    1f,   1f);
-		checkFactors(1f,   1.5f,  1.25f,  1f,    0.8f, 1f);
-		checkFactors(1.5f, 2f,    1.375f, 1.25f, 0.8f, 1.125f);
-		checkFactors(2f,   2.5f,  1.5f,   1.5f,  1f,   1.25f);
-		checkFactors(2.5f, 1.75f, 1.25f,  2f,    1f,   1.375f);
-		checkFactors(3f,   1f,    1f,     2.5f,  0.2f, 1.5f);
-		checkFactors(3.5f, 2.5f,  1.5f,   3.75f, 0.2f, 2f);
-		checkFactors(4f,   4f,    2f,     5f,    0.2f, 2.5f);
+		checkFactors(0f,   1f,    1f,     1f,     1f,    1f);
+		checkFactors(0.5f, 1.25f, 1.125f, 1.125f, 0.95f, 1f);
+		checkFactors(1f,   1.5f,  1.25f,  1.25f,  0.9f,  1f);
+		checkFactors(1.5f, 1.75f, 1.375f, 1.375f, 0.85f, 1f);
+		checkFactors(2f,   2f,    1f,     1.5f,   0.8f,  1f);
+		checkFactors(2.5f, 1.75f, 1f,     1.75f,  0.9f,  1.125f);
+		checkFactors(3f,   1.5f,  1.5f,   2f,     0.2f,  1.25f);
+		checkFactors(3.5f, 2f,    1.75f,  3.5f,   0.2f,  1.375f);
+		checkFactors(4f,   2.5f,  2f,     5f,     0.2f,  1.5f);
+		if (!rage(0f).name().equals("愤怒姿态")) throw new AssertionError("zero rage displays angry stance");
 
 		for (int rank = 0; rank <= 3; rank++) {
 			Hero hero = hero(rank, 0);
@@ -211,7 +212,7 @@ public class BerserkerRegression {
 		checkClose(dying.HP, 50, "death defiance restores half maximum health");
 		checkClose(deathRage.power(), 4f, "death defiance forces four hundred percent rage");
 		if (!deathShield.isDeathShield()) throw new AssertionError("death refresh marks its shield");
-		checkClose(deathRage.damageMultiplierWithDeathShield(), 6f,
+		checkClose(deathRage.damageMultiplierWithDeathShield(), 3.75f,
 				"death shield independently multiplies posture damage");
 		if (deathRage.deathDefianceAvailable()) throw new AssertionError("death defiance is consumed");
 		Bundle deathShieldState = new Bundle();
@@ -231,6 +232,15 @@ public class BerserkerRegression {
 		unsealed.HP = 0;
 		if (unsealed.isAlive()) throw new AssertionError("death defiance requires an equipped seal");
 		if (!unsealedRage.deathDefianceAvailable()) throw new AssertionError("failed defiance is not consumed");
+
+		Hero saneDeath = hero(3, 0);
+		saneDeath.belongings.armor = new ClothArmor();
+		saneDeath.belongings.armor.affixSeal(new BrokenSeal());
+		Berserk saneDeathRage = Buff.affect(saneDeath, Berserk.class);
+		saneDeathRage.forceRage(2.5f);
+		saneDeath.HP = 0;
+		if (saneDeath.isAlive()) throw new AssertionError("sane stance dies without death defiance");
+		if (!saneDeathRage.deathDefianceAvailable()) throw new AssertionError("sane death does not consume defiance");
 
 		for (int rank = 1; rank <= 3; rank++) {
 			Hero rechargeHero = hero(3, 0);
