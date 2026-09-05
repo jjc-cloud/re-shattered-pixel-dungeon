@@ -330,8 +330,8 @@ public class BrokenSeal extends Item {
 				}
 			} else if (((Hero)target).subClass == HeroSubClass.BERSERKER) {
 				berserkerLoss += loss / (float)target.HT;
-				if (berserkerLoss + 0.000001f >= 0.5f) {
-					berserkerLoss = Math.max(0, (berserkerLoss + 0.000001f) % 0.5f);
+				if (berserkerLoss + 0.000001f >= 0.7f) {
+					berserkerLoss = Math.max(0, (berserkerLoss + 0.000001f) % 0.7f);
 					guardReady = true;
 				}
 			}
