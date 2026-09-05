@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Berserk;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Preparation;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
@@ -101,6 +102,10 @@ public class TengusMask extends Item {
 		
 		curUser.subClass = way;
 		Talent.initSubclassTalents(curUser);
+		if (way == HeroSubClass.BERSERKER) {
+			Buff.affect(curUser, Berserk.class);
+			Buff.affect(curUser, Berserk.DeathDefianceIndicator.class);
+		}
 		BrokenSeal.WarriorShield sealShield = curUser.buff(BrokenSeal.WarriorShield.class);
 		if (sealShield != null) sealShield.updateForm();
 		Item.updateQuickslot();

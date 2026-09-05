@@ -102,6 +102,8 @@ public class HeroicLeap extends ArmorAbility {
 								int damage = Hero.heroDamageIntRange(hero.pointsInTalent(Talent.BODY_SLAM), 4*hero.pointsInTalent(Talent.BODY_SLAM));
 								damage += Math.round(hero.drRoll()*0.25f*hero.pointsInTalent(Talent.BODY_SLAM));
 								damage -= mob.drRoll();
+								com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Berserk rage = hero.buff(com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Berserk.class);
+								if (rage != null) damage = Math.round(rage.damageFactor(damage));
 								mob.damage(damage, hero);
 							}
 							if (mob.pos == hero.pos + i && hero.hasTalent(Talent.IMPACT_WAVE)){

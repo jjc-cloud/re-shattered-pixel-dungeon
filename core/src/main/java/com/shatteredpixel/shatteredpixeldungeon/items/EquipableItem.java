@@ -25,7 +25,11 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicImmune;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Berserk;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Document;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -123,7 +127,10 @@ public abstract class EquipableItem extends Item {
 
 	public boolean doUnequip( Hero hero, boolean collect, boolean single ) {
 
-		if (cursed
+		boolean catalystRelease = (this instanceof Weapon || this instanceof Armor)
+				&& hero.buff(Berserk.class) != null
+				&& hero.pointsInTalent(Talent.ENRAGED_CATALYST) >= 3;
+		if (cursed && !catalystRelease
 				&& hero.buff(MagicImmune.class) == null
 				&& (!hero.belongings.lostInventory() || keptThroughLostInventory())) {
 			GLog.w(Messages.get(EquipableItem.class, "unequip_cursed"));

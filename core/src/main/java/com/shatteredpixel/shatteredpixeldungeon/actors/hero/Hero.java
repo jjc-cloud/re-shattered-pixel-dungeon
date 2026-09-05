@@ -348,6 +348,10 @@ public class Hero extends Char {
 		STR = bundle.getInt( STRENGTH );
 
 		belongings.restoreFromBundle( bundle );
+		if (subClass == HeroSubClass.BERSERKER) {
+			if (buff(Berserk.class) == null) Buff.affect(this, Berserk.class);
+			if (buff(Berserk.DeathDefianceIndicator.class) == null) Buff.affect(this, Berserk.DeathDefianceIndicator.class);
+		}
 	}
 	
 	public static void preview( GamesInProgress.Info info, Bundle bundle ) {
@@ -1556,6 +1560,8 @@ public class Hero extends Char {
 	
 	@Override
 	public int defenseProc( Char enemy, int damage ) {
+		Berserk rage = buff(Berserk.class);
+		if (rage != null) damage = Math.round(rage.modifyPhysicalIncomingDamage(damage, enemy));
 		
 		if (belongings.armor() != null) {
 			damage = belongings.armor().proc( enemy, this, damage );
@@ -2039,6 +2045,7 @@ public class Hero extends Char {
 
 			if (lvl < MAX_LEVEL) {
 				lvl++;
+				if (berserk != null) berserk.onHeroLevelUp();
 				levelUp = true;
 				
 				if (buff(ElixirOfMight.HTBoost.class) != null){

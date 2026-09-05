@@ -7,8 +7,11 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Warlock;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Hunger;
 import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClothArmor;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sword;
 
 /** Standalone checks for the berserker rage controller. */
 public class BerserkerRegression {
@@ -89,6 +92,23 @@ public class BerserkerRegression {
 			checkClose(rage.enchantFactor(1f), enchantCaps[rank], "catalyst cap rank " + rank);
 		}
 
+		Hero catalystHero = hero(3, 2);
+		Berserk catalyst = Buff.affect(catalystHero, Berserk.class);
+		catalyst.forceRage(2f);
+		checkClose(Armor.Glyph.genericProcChanceMultiplier(catalystHero), 2.25f,
+				"catalyst applies to armor glyphs and curses");
+		checkClose(catalyst.normalWandShotDelay(), 0f, "rank two catalyst makes normal wand shots instant");
+		Sword cursedWeapon = new Sword();
+		cursedWeapon.cursed = true;
+		catalystHero.belongings.weapon = cursedWeapon;
+		if (cursedWeapon.doUnequip(catalystHero, false, false)) {
+			throw new AssertionError("rank two catalyst cannot remove cursed weapons");
+		}
+		catalystHero.talents.get(2).put(Talent.ENRAGED_CATALYST, 3);
+		if (!cursedWeapon.doUnequip(catalystHero, false, false)) {
+			throw new AssertionError("rank three catalyst removes cursed weapons");
+		}
+
 		Berserk normalDecay = rage(1f);
 		normalDecay.powerLossBuffer = 0;
 		normalDecay.act();
@@ -114,6 +134,8 @@ public class BerserkerRegression {
 		checkClose(attackRage.damageFactor(10f), 15f, "attack uses pre-attack stance damage");
 		attackRage.onAttackResolved(100, 85);
 		checkClose(attackRage.power(), 1.075f, "attack rage uses actual HP loss");
+		attackRage.onAttackResolved(85, 85);
+		checkClose(attackRage.power(), 1.075f, "target shielding grants no attack rage");
 
 		Hero armored = hero(3, 0);
 		armored.belongings.armor = new ClothArmor();
@@ -130,8 +152,13 @@ public class BerserkerRegression {
 		int original = sealed.belongings.armor.checkSeal().maxShield(
 				sealed.belongings.armor.tier, sealed.belongings.armor.level());
 		int armorMaximum = sealed.belongings.armor.DRMax();
-		Buff.affect(sealed, Berserk.class).forceRage(2f);
-		checkClose(shield.maxShield(), original + 2 * armorMaximum, "seal adds lost armor DR at trigger rage");
+		Berserk sealRage = Buff.affect(sealed, Berserk.class);
+		for (float shieldRage : new float[]{0f, 1f, 2f, 4f}) {
+			sealRage.forceRage(shieldRage);
+			checkClose(shield.maxShield(), original + Math.round(shieldRage * armorMaximum),
+					"seal adds lost armor DR at trigger rage " + shieldRage);
+		}
+		sealRage.forceRage(2f);
 		shield.activate();
 		int triggeredShield = shield.shielding();
 		Buff.affect(sealed, Berserk.class).forceRage(4f);
@@ -142,12 +169,50 @@ public class BerserkerRegression {
 		com.shatteredpixel.shatteredpixeldungeon.actors.Char enemy =
 				new com.shatteredpixel.shatteredpixeldungeon.actors.Char() { };
 		enemy.alignment = com.shatteredpixel.shatteredpixeldungeon.actors.Char.Alignment.ENEMY;
-		checkClose(defenseRage.modifyIncomingDamage(20, enemy), 20, "zero-rage enemy damage multiplier");
+		checkClose(defenseRage.modifyPhysicalIncomingDamage(20, enemy), 20, "zero-rage enemy damage multiplier");
 		checkClose(defenseRage.power(), 0.2f, "physical damage grants rage from raw damage");
 		defenseRage.forceRage(1f);
 		checkClose(defenseRage.modifyIncomingDamage(10, new Warlock.DarkBolt()), 12.5f,
 				"enemy magic receives posture multiplier");
 		checkClose(defenseRage.power(), 1f, "enemy magic does not grant rage");
+		defenseRage.forceRage(0f);
+		checkClose(defenseRage.modifyIncomingDamage(5, new Hunger()), 5f, "hunger is not posture-amplified");
+		checkClose(defenseRage.power(), 0.05f, "hunger grants one percent rage per raw damage");
+
+		Hero dying = hero(3, 0);
+		dying.belongings.armor = new ClothArmor();
+		dying.belongings.armor.upgrade(5);
+		dying.belongings.armor.affixSeal(new BrokenSeal());
+		Berserk deathRage = Buff.affect(dying, Berserk.class);
+		BrokenSeal.WarriorShield deathShield = dying.buff(BrokenSeal.WarriorShield.class);
+		dying.HP = 0;
+		if (!dying.isAlive()) throw new AssertionError("equipped seal permits death defiance");
+		checkClose(dying.HP, 50, "death defiance restores half maximum health");
+		checkClose(deathRage.power(), 4f, "death defiance forces four hundred percent rage");
+		if (!deathShield.isDeathShield()) throw new AssertionError("death refresh marks its shield");
+		checkClose(deathRage.damageMultiplierWithDeathShield(), 6f,
+				"death shield independently multiplies posture damage");
+		if (deathRage.deathDefianceAvailable()) throw new AssertionError("death defiance is consumed");
+		deathShield.decShield(deathShield.shielding());
+		if (deathShield.isDeathShield()) throw new AssertionError("depleted death shield clears marker");
+
+		Hero unsealed = hero(3, 0);
+		Berserk unsealedRage = Buff.affect(unsealed, Berserk.class);
+		unsealed.HP = 0;
+		if (unsealed.isAlive()) throw new AssertionError("death defiance requires an equipped seal");
+		if (!unsealedRage.deathDefianceAvailable()) throw new AssertionError("failed defiance is not consumed");
+
+		for (int rank = 1; rank <= 3; rank++) {
+			Hero rechargeHero = hero(3, 0);
+			rechargeHero.talents.get(2).put(Talent.DEATHLESS_FURY, rank);
+			Berserk recharge = Buff.affect(rechargeHero, Berserk.class);
+			recharge.consumeDeathDefiance();
+			int interval = 4 - rank;
+			for (int i = 1; i < interval; i++) recharge.onHeroLevelUp();
+			if (recharge.deathDefianceAvailable()) throw new AssertionError("deathless fury recharges too early rank " + rank);
+			recharge.onHeroLevelUp();
+			if (!recharge.deathDefianceAvailable()) throw new AssertionError("deathless fury recharge rank " + rank);
+		}
 
 		System.out.println("PASS: berserker rage caps, stance factors, decay and catalyst scaling");
 	}
