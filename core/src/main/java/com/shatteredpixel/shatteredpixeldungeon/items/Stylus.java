@@ -89,7 +89,7 @@ public class Stylus extends Item {
 		if (!armor.cursedKnown){
 			GLog.w( Messages.get(this, "identify"));
 			return;
-		} else if (armor.cursed || armor.hasCurseGlyph()){
+		} else if (armor.cursed || armor.hasCurseGlyphForEffect()){
 			GLog.w( Messages.get(this, "cursed"));
 			return;
 		}

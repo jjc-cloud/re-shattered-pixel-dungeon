@@ -10,11 +10,14 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.levels.SewerLevel;
 import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
+import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClothArmor;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRemoveCurse;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfMagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sword;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingStone;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.CursingTrap;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicImmune;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Regeneration;
 import com.watabou.noosa.Game;
@@ -39,6 +42,10 @@ public class WarriorTalentsRegression {
 			return damage;
 		}
 		@Override public com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite.Glowing glowing() { return null; }
+	}
+
+	public static class CursedCarriedGlyph extends CarriedGlyph {
+		@Override public boolean curse() { return true; }
 	}
 
 	public static class TestHero extends Hero {
@@ -117,6 +124,51 @@ public class WarriorTalentsRegression {
 		matchingArmor.proc(new Char() { }, glyphHero, 10);
 		check(matchingPrimary.procs == 1 && matchingCarried.procs == 0,
 				"matching glyph is strengthened instead of processed twice");
+
+		ClothArmor randomEffectArmor = new ClothArmor();
+		PrimaryGlyph preservedByRandomEffect = new PrimaryGlyph();
+		CarriedGlyph replacedCarriedGlyph = new CarriedGlyph();
+		randomEffectArmor.inscribe(preservedByRandomEffect);
+		BrokenSeal randomEffectSeal = new BrokenSeal();
+		randomEffectSeal.setGlyph(replacedCarriedGlyph);
+		randomEffectArmor.affixSeal(randomEffectSeal);
+		randomEffectArmor.inscribe();
+		check(randomEffectArmor.glyph == preservedByRandomEffect,
+				"random inscription effects target the attached seal only");
+		check(randomEffectSeal.getGlyph() != replacedCarriedGlyph,
+				"random inscription effects replace the carried glyph");
+
+		ClothArmor selectedEffectArmor = new ClothArmor();
+		PrimaryGlyph preservedBySelectedEffect = new PrimaryGlyph();
+		selectedEffectArmor.inscribe(preservedBySelectedEffect);
+		BrokenSeal selectedEffectSeal = new BrokenSeal();
+		selectedEffectArmor.affixSeal(selectedEffectSeal);
+		CarriedGlyph selectedGlyph = new CarriedGlyph();
+		selectedEffectArmor.inscribeFromEffect(selectedGlyph);
+		check(selectedEffectArmor.glyph == preservedBySelectedEffect && selectedEffectSeal.getGlyph() == selectedGlyph,
+				"selected inscription effects target the attached seal only");
+
+		ClothArmor trappedArmor = new ClothArmor();
+		PrimaryGlyph preservedByTrap = new PrimaryGlyph();
+		trappedArmor.inscribe(preservedByTrap);
+		BrokenSeal trappedSeal = new BrokenSeal();
+		trappedArmor.affixSeal(trappedSeal);
+		triggerCursingTrap(trappedArmor);
+		check(trappedArmor.glyph == preservedByTrap && trappedSeal.getGlyph() != null
+					&& trappedSeal.getGlyph().curse(),
+				"cursing trap targets an empty attached seal even when armor has a glyph");
+
+		ClothArmor cursedCarriedArmor = new ClothArmor();
+		PrimaryGlyph preservedWhenCleansed = new PrimaryGlyph();
+		cursedCarriedArmor.inscribe(preservedWhenCleansed);
+		BrokenSeal cursedCarriedSeal = new BrokenSeal();
+		cursedCarriedSeal.setGlyph(new CursedCarriedGlyph());
+		cursedCarriedArmor.affixSeal(cursedCarriedSeal);
+		initializeBadges();
+		check(ScrollOfRemoveCurse.uncurse(null, cursedCarriedArmor),
+				"remove curse recognizes a cursed carried glyph");
+		check(cursedCarriedArmor.glyph == preservedWhenCleansed && cursedCarriedSeal.getGlyph() == null,
+				"remove curse clears only the cursed carried glyph");
 
 		Hero regenHero = hero(0, 0);
 		regenHero.HP = 100;
@@ -222,5 +274,27 @@ public class WarriorTalentsRegression {
 
 	private static void check(boolean condition, String message) {
 		if (!condition) throw new AssertionError(message);
+	}
+
+	private static void initializeBadges() {
+		try {
+			java.lang.reflect.Field global = Badges.class.getDeclaredField("global");
+			global.setAccessible(true);
+			java.util.HashSet<Badges.Badge> badges = new java.util.HashSet<>();
+			badges.add(Badges.Badge.UNLOCK_CLERIC);
+			global.set(null, badges);
+		} catch (ReflectiveOperationException e) {
+			throw new AssertionError("unable to initialize badges for regression", e);
+		}
+	}
+
+	private static void triggerCursingTrap(Armor armor) {
+		try {
+			java.lang.reflect.Method curse = CursingTrap.class.getDeclaredMethod("curse", Item.class);
+			curse.setAccessible(true);
+			curse.invoke(null, armor);
+		} catch (ReflectiveOperationException e) {
+			throw new AssertionError("unable to trigger cursing trap for regression", e);
+		}
 	}
 }
