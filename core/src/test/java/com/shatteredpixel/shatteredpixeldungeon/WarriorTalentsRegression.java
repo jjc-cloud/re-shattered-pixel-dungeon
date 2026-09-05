@@ -9,6 +9,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.levels.SewerLevel;
+import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClothArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfMagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sword;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingStone;
@@ -19,6 +22,24 @@ import com.watabou.utils.Bundle;
 
 /** Run main with the core test runtime classpath; no graphics context required. */
 public class WarriorTalentsRegression {
+
+	public static class PrimaryGlyph extends Armor.Glyph {
+		int procs;
+		@Override public int proc(Armor armor, Char attacker, Char defender, int damage) {
+			procs++;
+			return damage;
+		}
+		@Override public com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite.Glowing glowing() { return null; }
+	}
+
+	public static class CarriedGlyph extends Armor.Glyph {
+		int procs;
+		@Override public int proc(Armor armor, Char attacker, Char defender, int damage) {
+			procs++;
+			return damage;
+		}
+		@Override public com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite.Glowing glowing() { return null; }
+	}
 
 	public static class TestHero extends Hero {
 		@Override public void spendAndNextConstant(float time) { spendConstant(time); }
@@ -64,6 +85,39 @@ public class WarriorTalentsRegression {
 			@Override public void occupyCell(Char ch) { }
 		};
 		Dungeon.level.setSize(9, 9);
+
+		Hero glyphHero = hero(0, 0);
+		glyphHero.talents.get(1).put(Talent.RUNIC_TRANSFERENCE, 2);
+		ClothArmor dualArmor = new ClothArmor();
+		PrimaryGlyph primary = new PrimaryGlyph();
+		CarriedGlyph carried = new CarriedGlyph();
+		dualArmor.inscribe(primary);
+		BrokenSeal dualSeal = new BrokenSeal();
+		dualSeal.setGlyph(carried);
+		dualArmor.affixSeal(dualSeal);
+		glyphHero.belongings.armor = dualArmor;
+		check(dualArmor.glyph == primary, "affixing a carried glyph preserves the armor glyph");
+		check(dualArmor.hasGlyph(PrimaryGlyph.class, glyphHero), "armor glyph remains active");
+		check(dualArmor.hasGlyph(CarriedGlyph.class, glyphHero), "carried glyph is active separately");
+		dualArmor.proc(new Char() { }, glyphHero, 10);
+		check(primary.procs == 1 && carried.procs == 1, "different armor and carried glyphs both proc");
+		dualArmor.detachSeal();
+		check(dualArmor.glyph == primary, "detaching the seal preserves the armor glyph");
+
+		ClothArmor matchingArmor = new ClothArmor();
+		PrimaryGlyph matchingPrimary = new PrimaryGlyph();
+		PrimaryGlyph matchingCarried = new PrimaryGlyph();
+		matchingArmor.inscribe(matchingPrimary);
+		BrokenSeal matchingSeal = new BrokenSeal();
+		matchingSeal.setGlyph(matchingCarried);
+		matchingArmor.affixSeal(matchingSeal);
+		glyphHero.belongings.armor = matchingArmor;
+		check(Armor.Glyph.genericProcChanceMultiplier(glyphHero) == 1.5f,
+				"matching carried glyph increases glyph strength by fifty percent");
+		matchingArmor.proc(new Char() { }, glyphHero, 10);
+		check(matchingPrimary.procs == 1 && matchingCarried.procs == 0,
+				"matching glyph is strengthened instead of processed twice");
+
 		Hero regenHero = hero(0, 0);
 		regenHero.HP = 100;
 		Regeneration regeneration = Buff.affect(regenHero, Regeneration.class);

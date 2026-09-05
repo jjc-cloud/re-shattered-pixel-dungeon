@@ -312,9 +312,6 @@ public class Armor extends EquipableItem {
 			level(newLevel);
 			Badges.validateItemLevelAquired(this);
 		}
-		if (seal.getGlyph() != null){
-			inscribe(seal.getGlyph());
-		}
 		if (isEquipped(Dungeon.hero)){
 			Buff.affect(Dungeon.hero, BrokenSeal.WarriorShield.class).setArmor(this);
 		}
@@ -334,9 +331,7 @@ public class Armor extends EquipableItem {
 			if (detaching.level() > 0){
 				degrade();
 			}
-			if (detaching.canTransferGlyph()){
-				inscribe(null);
-			} else {
+			if (!detaching.canTransferGlyph()){
 				detaching.setGlyph(null);
 			}
 			return detaching;
@@ -499,12 +494,14 @@ public class Armor extends EquipableItem {
 	public int proc( Char attacker, Char defender, int damage ) {
 
 		if (defender.buff(MagicImmune.class) == null) {
+			Glyph carriedGlyph = carriedGlyph(defender);
 			Glyph trinityGlyph = null;
 			//only when it's the hero or a char that uses the hero's armor
 			if (Dungeon.hero.buff(BodyForm.BodyFormBuff.class) != null
 					&& (defender == Dungeon.hero || defender instanceof PrismaticImage || defender instanceof ShadowClone.ShadowAlly)){
 				trinityGlyph = Dungeon.hero.buff(BodyForm.BodyFormBuff.class).glyph();
-				if (glyph != null && trinityGlyph != null && trinityGlyph.getClass() == glyph.getClass()){
+				if (trinityGlyph != null && ((glyph != null && trinityGlyph.getClass() == glyph.getClass())
+						|| (carriedGlyph != null && trinityGlyph.getClass() == carriedGlyph.getClass()))){
 					trinityGlyph = null;
 				}
 			}
@@ -515,6 +512,10 @@ public class Armor extends EquipableItem {
 						(((Hero) defender).subClass == HeroSubClass.PALADIN || hasCurseGlyph())){
 					damage = glyph.proc( this, attacker, defender, damage );
 				}
+				if (carriedGlyph != null && (glyph == null || carriedGlyph.getClass() != glyph.getClass())
+						&& (((Hero) defender).subClass == HeroSubClass.PALADIN || carriedGlyph.curse())){
+					damage = carriedGlyph.proc(this, attacker, defender, damage);
+				}
 				if (trinityGlyph != null){
 					damage = trinityGlyph.proc( this, attacker, defender, damage );
 				}
@@ -524,6 +525,9 @@ public class Armor extends EquipableItem {
 			} else {
 				if (glyph != null) {
 					damage = glyph.proc(this, attacker, defender, damage);
+				}
+				if (carriedGlyph != null && (glyph == null || carriedGlyph.getClass() != glyph.getClass())){
+					damage = carriedGlyph.proc(this, attacker, defender, damage);
 				}
 				if (trinityGlyph != null){
 					damage = trinityGlyph.proc( this, attacker, defender, damage );
@@ -759,6 +763,8 @@ public class Armor extends EquipableItem {
 				&& owner.buff(HolyWard.HolyArmBuff.class) != null
 				&& ((Hero) owner).subClass != HeroSubClass.PALADIN){
 			return false;
+		} else if (carriedGlyph(owner) != null && carriedGlyph(owner).getClass().equals(type)){
+			return true;
 		} else if (owner.buff(BodyForm.BodyFormBuff.class) != null
 				&& owner.buff(BodyForm.BodyFormBuff.class).glyph() != null
 				&& owner.buff(BodyForm.BodyFormBuff.class).glyph().getClass().equals(type)){
@@ -768,6 +774,18 @@ public class Armor extends EquipableItem {
 		} else {
 			return false;
 		}
+	}
+
+	private Glyph carriedGlyph(Char owner) {
+		if (seal != null && seal.canTransferGlyph() && owner instanceof Hero && isEquipped((Hero) owner)) {
+			return seal.getGlyph();
+		}
+		return null;
+	}
+
+	private boolean matchingCarriedGlyph(Hero owner) {
+		Glyph carried = carriedGlyph(owner);
+		return glyph != null && carried != null && glyph.getClass() == carried.getClass();
 	}
 
 	//these are not used to process specific glyph effects, so magic immune doesn't affect them
@@ -822,6 +840,10 @@ public class Armor extends EquipableItem {
 
 		public static float genericProcChanceMultiplier( Char defender ){
 			float multi = RingOfArcana.enchantPowerMultiplier(defender);
+			if (defender instanceof Hero) {
+				Armor armor = ((Hero) defender).belongings.armor();
+				if (armor != null && armor.matchingCarriedGlyph((Hero) defender)) multi *= 1.5f;
+			}
 			Berserk rage = defender.buff(Berserk.class);
 			if (rage != null) multi = rage.enchantFactor(multi);
 
