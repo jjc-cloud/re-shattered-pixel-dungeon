@@ -41,7 +41,6 @@ public class Regeneration extends Buff {
 	}
 
 	private float partialRegen = 0f;
-	private float warriorPartialRegen = 0f;
 
 	private static final float REGENERATION_DELAY = 10; //1HP every 10 turns
 	
@@ -87,11 +86,7 @@ public class Regeneration extends Buff {
 				partialRegen += 1f / delay;
 
 				if (((Hero) target).heroClass == HeroClass.WARRIOR) {
-					warriorPartialRegen += target.HT / 1000f;
-					if (warriorPartialRegen >= 1f) {
-						target.HP += (int) warriorPartialRegen;
-						warriorPartialRegen -= (int) warriorPartialRegen;
-					}
+					partialRegen += target.HT / 1000f;
 				}
 
 				if (partialRegen >= 1) {
@@ -138,13 +133,12 @@ public class Regeneration extends Buff {
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
 		bundle.put(PARTIAL_REGEN, partialRegen);
-		bundle.put(WARRIOR_PARTIAL_REGEN, warriorPartialRegen);
 	}
 
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
-		partialRegen = bundle.getFloat(PARTIAL_REGEN);
-		warriorPartialRegen = bundle.getFloat(WARRIOR_PARTIAL_REGEN);
+		// Merge the separate warrior progress from older saves into natural regeneration.
+		partialRegen = bundle.getFloat(PARTIAL_REGEN) + bundle.getFloat(WARRIOR_PARTIAL_REGEN);
 	}
 }

@@ -182,6 +182,7 @@ public class WarriorTalentsRegression {
 		regenHero.HP = 100;
 		regeneration = Buff.affect(regenHero, Regeneration.class);
 		for (int i = 0; i < 4; i++) regeneration.act();
+		check(regenHero.HP == 101, "warrior bonus shares natural regeneration progress");
 		Bundle regenState = new Bundle();
 		regeneration.storeInBundle(regenState);
 		regeneration.detach();
@@ -190,6 +191,27 @@ public class WarriorTalentsRegression {
 		regeneration.attachTo(regenHero);
 		regeneration.act();
 		check(regenHero.HP == 101, "warrior fractional extra regeneration survives save and restore");
+		regenState = new Bundle();
+		regenState.put(Regeneration.PARTIAL_REGEN, 0.4f);
+		regenState.put(Regeneration.WARRIOR_PARTIAL_REGEN, 0.8f);
+		regeneration.restoreFromBundle(regenState);
+		regeneration.act();
+		check(regenHero.HP == 102, "legacy warrior progress merges into natural regeneration");
+		Bundle migratedRegen = new Bundle();
+		regeneration.storeInBundle(migratedRegen);
+		check(!migratedRegen.contains(Regeneration.WARRIOR_PARTIAL_REGEN), "new saves use one regeneration counter");
+		regeneration.restoreFromBundle(migratedRegen);
+		regenHero.HP = regenHero.HT - 1;
+		regenHero.resting = true;
+		for (int i = 0; i < 3; i++) regeneration.act();
+		check(regenHero.HP == regenHero.HT && !regenHero.resting, "combined regeneration caps health and ends resting");
+		regenHero = hero(0, 0);
+		regenHero.heroClass = HeroClass.MAGE;
+		regeneration = Buff.affect(regenHero, Regeneration.class);
+		for (int i = 0; i < 9; i++) regeneration.act();
+		check(regenHero.HP == 100, "other classes retain natural regeneration delay");
+		regeneration.act();
+		check(regenHero.HP == 101, "other classes heal one health every ten turns");
 		check(Talent.LIQUID_WILLPOWER.maxPoints() == 2, "tier two ranks");
 		check(Talent.HOLD_FAST.maxPoints() == 3, "tier three ranks");
 		for (int rank = 1; rank <= 2; rank++) {
