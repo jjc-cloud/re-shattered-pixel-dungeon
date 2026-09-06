@@ -214,7 +214,7 @@ public class InventoryPane extends Component {
 
 		float left = x+4;
 		for (int slot = 0; slot < equipped.size(); slot++) {
-			InventorySlot i = equipped.get(Dungeon.hero.hasWeaponSlots() ? slot : (slot + 1) % equipped.size());
+			InventorySlot i = equipped.get(Dungeon.hero.hasWeaponSlots() || slot == 4 ? slot : (slot + 1) % 4);
 			i.setRect(left, y+4, SLOT_WIDTH, SLOT_HEIGHT);
 			left = i.right()+1;
 		}
