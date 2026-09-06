@@ -36,7 +36,7 @@ public class WarriorSealRegression {
 	}
 
 	public static void main(String[] args) {
-		WarriorTalentsRegression.main(args); // headless resources and level fixture
+		WarriorTalentsRegression.setupHeadless(); // resources only; do not run unrelated talent tests
 		Char enemy = new Char() { };
 		enemy.alignment = Char.Alignment.ENEMY;
 		enemy.pos = 22;
@@ -77,13 +77,13 @@ public class WarriorSealRegression {
 		shield = hero.buff(BrokenSeal.WarriorShield.class);
 		hero.damage(1, enemy);
 		shield.decShield(shield.shielding());
-		for (int i = 0; i < 9; i++) { hero.HP = 200; hero.damage(10, enemy); }
+		for (int i = 0; i < 13; i++) { hero.HP = 200; hero.damage(10, enemy); }
 		hero.HP = 200;
 		hero.damage(8, enemy);
-		check(!state(shield).getBoolean("guard_ready"), "49 percent not enough");
+		check(!state(shield).getBoolean("guard_ready"), "69 percent not enough");
 		hero.HP = 200;
 		hero.damage(2, enemy);
-		check(state(shield).getBoolean("guard_ready"), "50 percent arms guard");
+		check(state(shield).getBoolean("guard_ready"), "70 percent arms guard");
 		Bundle saved = state(shield);
 		shield.detach();
 		shield = new BrokenSeal.WarriorShield();
@@ -100,9 +100,9 @@ public class WarriorSealRegression {
 		check(!state(shield).getBoolean("guard_ready") && state(shield).getInt("cooldown") == 100, "guard consumed once");
 		hero.damage(1, enemy);
 		check(shield.shielding() == 4, "next attack consumes shield normally");
-		shield.onHealthLost(120);
+		shield.onHealthLost(140);
 		check(shield.blockEnemyAttack(5, new Warlock.DarkBolt()), "enemy magic can consume guard");
-		shield.onHealthLost(120);
+		shield.onHealthLost(140);
 		shield.setArmor(null);
 		check(!shield.blockEnemyAttack(5, enemy), "unequipped seal cannot guard");
 		shield.setArmor(hero.belongings.armor);
@@ -111,7 +111,7 @@ public class WarriorSealRegression {
 		check(shield.coolingDown(), "100-turn cooldown not finished at 99");
 		shield.act();
 		check(!shield.coolingDown(), "100-turn cooldown expires");
-		check(!seal.desc().contains("碎裂"), "updated text");
+		check(seal.desc().contains("最大生命值70%"), "current guard threshold description");
 		hero = hero(HeroSubClass.NONE);
 		com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor startingArmor = hero.belongings.armor;
 		seal = startingArmor.checkSeal();

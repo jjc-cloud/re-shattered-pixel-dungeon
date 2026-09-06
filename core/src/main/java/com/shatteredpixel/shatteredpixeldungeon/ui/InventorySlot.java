@@ -82,6 +82,7 @@ public class InventorySlot extends ItemSlot {
 					item == Dungeon.hero.belongings.artifact ||
 					item == Dungeon.hero.belongings.misc ||
 					item == Dungeon.hero.belongings.ring ||
+					item == Dungeon.hero.belongings.extraMisc ||
 					item == Dungeon.hero.belongings.secondWep;
 
 			bg.texture( TextureCache.createSolid( equipped ? EQUIPPED : NORMAL ) );

@@ -65,7 +65,7 @@ public class WarriorTalentsRegression {
 		return hero;
 	}
 
-	public static void main(String[] args) {
+	public static void setupHeadless() {
 		Game.version = "regression-test";
 		com.badlogic.gdx.Gdx.app = (com.badlogic.gdx.Application)
 				java.lang.reflect.Proxy.newProxyInstance(WarriorTalentsRegression.class.getClassLoader(),
@@ -92,6 +92,13 @@ public class WarriorTalentsRegression {
 			@Override public void occupyCell(Char ch) { }
 		};
 		Dungeon.level.setSize(9, 9);
+		Dungeon.depth = 1;
+		Dungeon.branch = 0;
+		initializeBadges();
+	}
+
+	public static void main(String[] args) {
+		setupHeadless();
 
 		Hero glyphHero = hero(0, 0);
 		glyphHero.talents.get(1).put(Talent.RUNIC_TRANSFERENCE, 2);

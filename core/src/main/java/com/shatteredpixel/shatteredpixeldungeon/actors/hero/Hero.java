@@ -166,6 +166,7 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.HeroSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator;
+import com.shatteredpixel.shatteredpixeldungeon.ui.ActionIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.StatusPane;
@@ -206,6 +207,26 @@ public class Hero extends Char {
 	
 	public HeroClass heroClass = HeroClass.ROGUE;
 	public HeroSubClass subClass = HeroSubClass.NONE;
+
+	public boolean hasWeaponSlots() {
+		return subClass != HeroSubClass.MONK;
+	}
+
+	public boolean hasSecondWeaponSlot() {
+		return heroClass == HeroClass.DUELIST && hasWeaponSlots();
+	}
+
+	public void removeMonkWeapons() {
+		if (hasWeaponSlots()) return;
+		KindOfWeapon primary = belongings.weapon;
+		KindOfWeapon secondary = belongings.secondWep;
+		// Release the secondary backpack capacity before collecting either weapon.
+		belongings.weapon = belongings.secondWep = null;
+		if (primary != null) primary.unequipForMonk(this);
+		if (secondary != null) secondary.unequipForMonk(this);
+		MeleeWeapon.Charger charger = buff(MeleeWeapon.Charger.class);
+		if (charger != null) ActionIndicator.clearAction(charger);
+	}
 	public ArmorAbility armorAbility = null;
 	public ArrayList<LinkedHashMap<Talent, Integer>> talents = new ArrayList<>();
 	public LinkedHashMap<Talent, Talent> metamorphedTalents = new LinkedHashMap<>();
@@ -853,6 +874,7 @@ public class Hero extends Char {
 	
 	@Override
 	public boolean act() {
+		removeMonkWeapons();
 		
 		//calls to dungeon.observe will also update hero's local FOV.
 		fieldOfView = Dungeon.level.heroFOV;
@@ -2350,7 +2372,7 @@ public class Hero extends Char {
 		boolean wasEnemy = attackTarget.alignment == Alignment.ENEMY
 				|| (attackTarget instanceof Mimic && attackTarget.alignment == Alignment.NEUTRAL);
 
-		boolean hit = attack(attackTarget);
+		boolean hit = attackWithWeapons(attackTarget);
 		
 		Invisibility.dispel();
 		spend( attackDelay() );
@@ -2367,6 +2389,30 @@ public class Hero extends Char {
 		attackTarget = null;
 
 		super.onAttackComplete();
+	}
+
+	public boolean attackWithWeapons(Char target) {
+		boolean hit = attack(target);
+		if (target != null && subClass == HeroSubClass.CHAMPION && isAlive() && target.isAlive()
+				&& belongings.weapon() != null && belongings.secondWep() instanceof Weapon
+				&& belongings.thrownWeapon == null && belongings.abilityWeapon == null
+				&& !RingOfForce.fightingUnarmed(this)) {
+			Weapon secondary = (Weapon) belongings.secondWep();
+			if (secondary.STRReq() <= STR() && secondary.canReach(this, target.pos)) {
+				boolean wasEnemy = target.alignment == Alignment.ENEMY
+						|| (target instanceof Mimic && target.alignment == Alignment.NEUTRAL);
+				belongings.abilityWeapon = secondary;
+				try {
+					boolean secondaryHit = attack(target, 0.5f, 0f, 1f);
+					if (secondaryHit && wasEnemy) {
+						Buff.affect(this, Sai.ComboStrikeTracker.class).addHit();
+					}
+				} finally {
+					belongings.abilityWeapon = null;
+				}
+			}
+		}
+		return hit;
 	}
 	
 	@Override
@@ -2557,6 +2603,13 @@ public class Hero extends Char {
 						//unintentional door detection scales from 20% at floor 0 to 0% at floor 20
 						} else {
 							chance = 0.2f - (Dungeon.depth / 100f);
+						}
+
+						if (heroClass == HeroClass.ROGUE && !intentional && !foresight && !cursed
+								&& (trap == null || trap.canBeSearched)) {
+							// Preserve the pre-v0.6.2 rogue awareness advantage without weakening modern trap detection.
+							double awarenessLevel = (1 + Math.min(lvl, 9)) * 0.5;
+							chance = Math.max(0f, chance) + (float) (Math.pow(0.90, awarenessLevel) - Math.pow(0.85, awarenessLevel));
 						}
 
 						//don't want to let the player search though hidden doors in tutorial

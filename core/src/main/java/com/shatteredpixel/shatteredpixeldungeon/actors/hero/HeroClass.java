@@ -75,6 +75,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Gloves;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Rapier;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WarriorsShortsword;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WornShortsword;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingKnife;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingSpike;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingStone;
@@ -234,6 +235,8 @@ public enum HeroClass {
 
 		(hero.belongings.weapon = new Rapier()).identify();
 		hero.belongings.weapon.activate(hero);
+		(hero.belongings.secondWep = new WornShortsword()).identify();
+		hero.belongings.secondWep.activate(hero);
 
 		ThrowingSpike spikes = new ThrowingSpike();
 		spikes.quantity(2).identify().collect(); //set quantity is 3, but Duelist starts with 2

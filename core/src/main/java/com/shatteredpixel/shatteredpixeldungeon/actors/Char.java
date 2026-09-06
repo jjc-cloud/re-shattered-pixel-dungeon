@@ -960,6 +960,10 @@ public abstract class Char extends Actor {
 		int shielded = dmg;
 		dmg = ShieldBuff.processDamage(this, dmg, src);
 		shielded -= dmg;
+		if (this instanceof Hero && ((Hero) this).heroClass == HeroClass.CLERIC
+				&& Berserk.isEnemyDamageSource(src)) {
+			dmg = (int) (dmg * 115L / 100L);
+		}
 		HP -= dmg;
 
 		if (HP > 0 && buff(Grim.GrimTracker.class) != null){
@@ -1250,6 +1254,7 @@ public abstract class Char extends Actor {
 	
 	public float stealth() {
 		float stealth = 0;
+		if (this instanceof Hero && ((Hero) this).heroClass == HeroClass.HUNTRESS) stealth += 2;
 
 		stealth += Obfuscation.stealthBoost(this, glyphLevel(Obfuscation.class));
 
