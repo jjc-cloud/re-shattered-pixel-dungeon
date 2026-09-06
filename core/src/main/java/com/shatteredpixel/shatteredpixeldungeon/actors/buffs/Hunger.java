@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.SaltCube;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Document;
@@ -78,7 +79,7 @@ public class Hunger extends Buff implements Hero.Doom {
 
 			if (isStarving()) {
 
-				partialDamage += target.HT/1000f;
+				partialDamage += target.HT/1000f / (hero.heroClass == HeroClass.ROGUE ? 1.2f : 1f);
 
 				if (partialDamage > 1){
 					target.damage( (int)partialDamage, this);
@@ -87,7 +88,7 @@ public class Hunger extends Buff implements Hero.Doom {
 				
 			} else {
 
-				float hungerDelay = 1f;
+				float hungerDelay = hero.heroClass == HeroClass.ROGUE ? 1.2f : 1f;
 				if (target.buff(Shadows.class) != null){
 					hungerDelay *= 1.5f;
 				}

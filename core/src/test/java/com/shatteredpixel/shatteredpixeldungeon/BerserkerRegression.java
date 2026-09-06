@@ -62,7 +62,7 @@ public class BerserkerRegression {
 	}
 
 	public static void main(String[] args) {
-		WarriorTalentsRegression.main(args);
+		WarriorTalentsRegression.setupHeadless();
 
 		checkFactors(0f,   1f,    1f,     1f,     1f,    1f);
 		checkFactors(0.5f, 1.25f, 1.125f, 1.125f, 0.95f, 1f);
@@ -73,7 +73,7 @@ public class BerserkerRegression {
 		checkFactors(3f,   1.5f,  1.5f,   2f,     0.2f,  1.25f);
 		checkFactors(3.5f, 2f,    1.75f,  3.5f,   0.2f,  1.375f);
 		checkFactors(4f,   2.5f,  2f,     5f,     0.2f,  1.5f);
-		if (!rage(0f).name().equals("愤怒姿态")) throw new AssertionError("zero rage displays angry stance");
+		if (!rage(0f).name().equals("愤怒")) throw new AssertionError("zero rage displays current anger name");
 
 		for (int rank = 0; rank <= 3; rank++) {
 			Hero hero = hero(rank, 0);

@@ -860,7 +860,9 @@ public abstract class Wand extends Item {
 			missingCharges = Math.max(0, missingCharges);
 
 			float turnsToCharge = (float) (BASE_CHARGE_DELAY
-					+ (SCALING_CHARGE_ADDITION * Math.pow(scalingFactor, missingCharges)));
+					+ (SCALING_CHARGE_ADDITION * Math.pow(
+							target instanceof Hero && ((Hero) target).heroClass == HeroClass.MAGE
+									? MagesStaff.STAFF_SCALE_FACTOR : scalingFactor, missingCharges)));
 
 			if (Regeneration.regenOn())
 				partialCharge += (1f/turnsToCharge) * RingOfEnergy.wandChargeMultiplier(target);

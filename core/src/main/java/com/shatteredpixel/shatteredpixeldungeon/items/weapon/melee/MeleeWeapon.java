@@ -73,6 +73,7 @@ public class MeleeWeapon extends Weapon {
 
 	@Override
 	public String defaultAction() {
+		if (Dungeon.hero != null && !Dungeon.hero.hasWeaponSlots()) return super.defaultAction();
 		if (Dungeon.hero != null && (Dungeon.hero.heroClass == HeroClass.DUELIST
 			|| Dungeon.hero.hasTalent(Talent.SWIFT_EQUIP))){
 			return AC_ABILITY;
@@ -101,6 +102,7 @@ public class MeleeWeapon extends Weapon {
 
 	@Override
 	public void execute(Hero hero, String action) {
+		if (!hero.hasWeaponSlots() && action.equals(AC_ABILITY)) return;
 		super.execute(hero, action);
 
 		if (action.equals(AC_ABILITY)){
@@ -454,7 +456,7 @@ public class MeleeWeapon extends Weapon {
 				partialCharge = 0;
 			}
 
-			if (ActionIndicator.action != this && Dungeon.hero.subClass == HeroSubClass.CHAMPION) {
+			if (ActionIndicator.action != this && Dungeon.hero.hasSecondWeaponSlot()) {
 				ActionIndicator.setAction(this);
 			}
 
@@ -464,7 +466,7 @@ public class MeleeWeapon extends Weapon {
 
 		@Override
 		public void fx(boolean on) {
-			if (on && Dungeon.hero.subClass == HeroSubClass.CHAMPION) {
+			if (on && Dungeon.hero.hasSecondWeaponSlot()) {
 				ActionIndicator.setAction(this);
 			}
 		}
@@ -558,7 +560,7 @@ public class MeleeWeapon extends Weapon {
 
 		@Override
 		public void doAction() {
-			if (Dungeon.hero.subClass != HeroSubClass.CHAMPION){
+			if (!Dungeon.hero.hasSecondWeaponSlot()){
 				return;
 			}
 

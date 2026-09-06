@@ -244,11 +244,16 @@ public class WndBag extends WndTabbed {
 		
 		// Equipped items
 		Belongings stuff = Dungeon.hero.belongings;
-		placeItem( stuff.weapon != null ? stuff.weapon : new Placeholder( ItemSpriteSheet.WEAPON_HOLDER ) );
+		if (Dungeon.hero.hasWeaponSlots()) {
+			placeItem( stuff.weapon != null ? stuff.weapon : new Placeholder( ItemSpriteSheet.WEAPON_HOLDER ) );
+		}
 		placeItem( stuff.armor != null ? stuff.armor : new Placeholder( ItemSpriteSheet.ARMOR_HOLDER ) );
 		placeItem( stuff.artifact != null ? stuff.artifact : new Placeholder( ItemSpriteSheet.ARTIFACT_HOLDER ) );
 		placeItem( stuff.misc != null ? stuff.misc : new Placeholder( ItemSpriteSheet.SOMETHING ) );
 		placeItem( stuff.ring != null ? stuff.ring : new Placeholder( ItemSpriteSheet.RING_HOLDER ) );
+		if (!Dungeon.hero.hasWeaponSlots()) {
+			placeItem(stuff.extraMisc != null ? stuff.extraMisc : new Placeholder(ItemSpriteSheet.SOMETHING));
+		}
 
 		int equipped = 5;
 
@@ -256,10 +261,11 @@ public class WndBag extends WndTabbed {
 		if (container != Dungeon.hero.belongings.backpack){
 			placeItem(container);
 			count--; //don't count this one, as it's not actually inside of itself
-		} else if (stuff.secondWep != null) {
+		} else if (Dungeon.hero.hasSecondWeaponSlot()
+				&& (stuff.secondWep != null || container.items.size() < container.capacity())) {
 			//second weapon always goes to the front of view on main bag
-			placeItem(stuff.secondWep);
-			equipped++;
+			placeItem(stuff.secondWep != null ? stuff.secondWep : new Placeholder(ItemSpriteSheet.WEAPON_HOLDER));
+			if (stuff.secondWep != null) equipped++;
 		}
 
 		// Items in the bag, except other containers (they have tags at the bottom)

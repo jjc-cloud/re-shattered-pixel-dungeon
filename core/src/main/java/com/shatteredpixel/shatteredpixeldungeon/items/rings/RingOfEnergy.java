@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
@@ -63,6 +64,11 @@ public class RingOfEnergy extends Ring {
 	
 	public static float wandChargeMultiplier( Char target ){
 		float bonus = (float)Math.pow(1.175, getBuffedBonus(target, Energy.class));
+		if (target instanceof Hero) {
+			Hero hero = (Hero) target;
+			if (hero.heroClass == HeroClass.ROGUE) bonus *= 0.85f;
+			if (hero.subClass == HeroSubClass.MONK) bonus *= 1.2f;
+		}
 
 		if (target instanceof Hero && ((Hero) target).heroClass != HeroClass.CLERIC && ((Hero) target).hasTalent(Talent.LIGHT_READING)){
 			bonus *= 1f + (0.2f * ((Hero) target).pointsInTalent(Talent.LIGHT_READING)/3f);
@@ -73,6 +79,12 @@ public class RingOfEnergy extends Ring {
 
 	public static float artifactChargeMultiplier( Char target ){
 		float bonus = (float)Math.pow(1.175, getBuffedBonus(target, Energy.class));
+		if (target instanceof Hero) {
+			Hero hero = (Hero) target;
+			if (hero.heroClass == HeroClass.MAGE) bonus *= 0.85f;
+			if (hero.heroClass == HeroClass.CLERIC) bonus *= 1.15f;
+			if (hero.subClass == HeroSubClass.MONK) bonus *= 1.2f;
+		}
 
 		if (target instanceof Hero && ((Hero) target).heroClass != HeroClass.ROGUE && ((Hero) target).hasTalent(Talent.LIGHT_CLOAK)){
 			bonus *= 1f + (0.2f * ((Hero) target).pointsInTalent(Talent.LIGHT_CLOAK)/3f);

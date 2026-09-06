@@ -101,6 +101,7 @@ public class TengusMask extends Item {
 		curUser.busy();
 		
 		curUser.subClass = way;
+		curUser.removeMonkWeapons();
 		Talent.initSubclassTalents(curUser);
 		if (way == HeroSubClass.BERSERKER) {
 			Buff.affect(curUser, Berserk.class);

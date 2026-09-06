@@ -41,14 +41,31 @@ import com.watabou.utils.BArray;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
+import java.util.ArrayList;
+
 abstract public class KindOfWeapon extends EquipableItem {
+
+	@Override
+	public ArrayList<String> actions(Hero hero) {
+		ArrayList<String> actions = super.actions(hero);
+		if (!hero.hasWeaponSlots()) actions.remove(AC_EQUIP);
+		return actions;
+	}
+
+	public void unequipForMonk(Hero hero) {
+		if (hero.belongings.weapon == this) hero.belongings.weapon = null;
+		if (hero.belongings.secondWep == this) hero.belongings.secondWep = null;
+		onDetach();
+		if (!collect(hero.belongings.backpack)) Dungeon.level.drop(this, hero.pos);
+		updateQuickslot();
+	}
 
 	protected String hitSound = Assets.Sounds.HIT;
 	protected float hitSoundPitch = 1f;
 	
 	@Override
 	public void execute(Hero hero, String action) {
-		if (hero.subClass == HeroSubClass.CHAMPION && action.equals(AC_EQUIP)){
+		if (hero.hasSecondWeaponSlot() && action.equals(AC_EQUIP)){
 			usesTargeting = false;
 			String primaryName = Messages.titleCase(hero.belongings.weapon != null ? hero.belongings.weapon.trueName() : Messages.get(KindOfWeapon.class, "empty"));
 			String secondaryName = Messages.titleCase(hero.belongings.secondWep != null ? hero.belongings.secondWep.trueName() : Messages.get(KindOfWeapon.class, "empty"));
@@ -104,6 +121,7 @@ abstract public class KindOfWeapon extends EquipableItem {
 	
 	@Override
 	public boolean doEquip( Hero hero ) {
+		if (!hero.hasWeaponSlots()) return false;
 
 		isSwiftEquipping = false;
 		if (hero.belongings.contains(this) && hero.hasTalent(Talent.SWIFT_EQUIP)){
@@ -159,6 +177,7 @@ abstract public class KindOfWeapon extends EquipableItem {
 	}
 
 	public boolean equipSecondary( Hero hero ){
+		if (!hero.hasSecondWeaponSlot()) return false;
 
 		isSwiftEquipping = false;
 		if (hero.belongings.contains(this) && hero.hasTalent(Talent.SWIFT_EQUIP)){

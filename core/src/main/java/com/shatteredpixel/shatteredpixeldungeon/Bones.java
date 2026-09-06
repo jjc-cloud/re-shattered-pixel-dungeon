@@ -95,6 +95,10 @@ public class Bones {
 		if (Random.Int(3) != 0) {
 			switch (Random.Int(7)) {
 				case 0:
+					if (!hero.hasWeaponSlots()) {
+						item = hero.belongings.extraMisc;
+						break;
+					}
 					item = hero.belongings.weapon;
 					//if the hero has two weapons (champion), pick the stronger one
 					if (hero.belongings.secondWep != null &&

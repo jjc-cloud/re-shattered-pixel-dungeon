@@ -213,7 +213,8 @@ public class InventoryPane extends Component {
 		bg.size(width, height);
 
 		float left = x+4;
-		for (InventorySlot i : equipped){
+		for (int slot = 0; slot < equipped.size(); slot++) {
+			InventorySlot i = equipped.get(Dungeon.hero.hasWeaponSlots() ? slot : (slot + 1) % equipped.size());
 			i.setRect(left, y+4, SLOT_WIDTH, SLOT_HEIGHT);
 			left = i.right()+1;
 		}
@@ -298,6 +299,9 @@ public class InventoryPane extends Component {
 		}
 
 		equipped.get(0).item(stuff.weapon == null ? new WndBag.Placeholder( ItemSpriteSheet.WEAPON_HOLDER ) : stuff.weapon);
+		if (!Dungeon.hero.hasWeaponSlots()) {
+			equipped.get(0).item(stuff.extraMisc == null ? new WndBag.Placeholder(ItemSpriteSheet.SOMETHING) : stuff.extraMisc);
+		}
 		equipped.get(1).item(stuff.armor == null ? new WndBag.Placeholder( ItemSpriteSheet.ARMOR_HOLDER ) : stuff.armor);
 		equipped.get(2).item(stuff.artifact == null ? new WndBag.Placeholder( ItemSpriteSheet.ARTIFACT_HOLDER ) : stuff.artifact);
 		equipped.get(3).item(stuff.misc == null ? new WndBag.Placeholder( ItemSpriteSheet.SOMETHING ) : stuff.misc);
@@ -305,8 +309,9 @@ public class InventoryPane extends Component {
 
 		ArrayList<Item> items = (ArrayList<Item>) lastBag.items.clone();
 
-		if (lastBag == stuff.backpack && stuff.secondWep != null){
-			items.add(0, stuff.secondWep);
+		if (lastBag == stuff.backpack && Dungeon.hero.hasSecondWeaponSlot()
+				&& (stuff.secondWep != null || items.size() < stuff.backpack.capacity())){
+			items.add(0, stuff.secondWep != null ? stuff.secondWep : new WndBag.Placeholder(ItemSpriteSheet.WEAPON_HOLDER));
 		}
 
 		int j = 0;
@@ -365,6 +370,7 @@ public class InventoryPane extends Component {
 		for (InventorySlot b : bagItems){
 			b.enable(lastEnabled
 					&& b.item() != null
+					&& !(b.item() instanceof WndBag.Placeholder)
 					&& (selector == null || selector.itemSelectable(b.item()))
 					&& (!lostInvent || b.item().keptThroughLostInventory()));
 		}
@@ -459,6 +465,7 @@ public class InventoryPane extends Component {
 			for (InventorySlot b : bagItems){
 				b.enable(lastEnabled
 						&& b.item() != null
+						&& !(b.item() instanceof WndBag.Placeholder)
 						&& (selector == null || selector.itemSelectable(b.item()))
 						&& (!lostInvent || b.item().keptThroughLostInventory()));
 			}

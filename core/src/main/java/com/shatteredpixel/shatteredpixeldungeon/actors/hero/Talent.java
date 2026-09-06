@@ -69,7 +69,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ShardOfOblivion;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Gloves;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
@@ -514,6 +513,9 @@ public enum Talent {
 			if (hero.belongings.misc instanceof Ring && !ShardOfOblivion.passiveIDDisabled()) {
 				hero.belongings.misc.identify();
 			}
+			if (hero.belongings.extraMisc instanceof Ring && !ShardOfOblivion.passiveIDDisabled()) {
+				hero.belongings.extraMisc.identify();
+			}
 			for (Item item : Dungeon.hero.belongings){
 				if (item instanceof Ring){
 					((Ring) item).setKnown();
@@ -523,6 +525,7 @@ public enum Talent {
 		if (talent == THIEFS_INTUITION && hero.pointsInTalent(THIEFS_INTUITION) == 1){
 			if (hero.belongings.ring instanceof Ring) hero.belongings.ring.setKnown();
 			if (hero.belongings.misc instanceof Ring) ((Ring) hero.belongings.misc).setKnown();
+			if (hero.belongings.extraMisc instanceof Ring) ((Ring) hero.belongings.extraMisc).setKnown();
 		}
 		if (talent == ADVENTURERS_INTUITION && hero.pointsInTalent(ADVENTURERS_INTUITION) == 2){
 			if (hero.belongings.weapon() != null && !ShardOfOblivion.passiveIDDisabled()){
@@ -555,10 +558,6 @@ public enum Talent {
 
 		if (talent == UNENCUMBERED_SPIRIT && hero.pointsInTalent(talent) == 3){
 			Item toGive = new ClothArmor().identify();
-			if (!toGive.collect()){
-				Dungeon.level.drop(toGive, hero.pos).sprite.drop();
-			}
-			toGive = new Gloves().identify();
 			if (!toGive.collect()){
 				Dungeon.level.drop(toGive, hero.pos).sprite.drop();
 			}
