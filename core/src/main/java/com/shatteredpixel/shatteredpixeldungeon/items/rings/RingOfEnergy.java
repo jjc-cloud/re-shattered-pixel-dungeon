@@ -82,7 +82,7 @@ public class RingOfEnergy extends Ring {
 		if (target instanceof Hero) {
 			Hero hero = (Hero) target;
 			if (hero.heroClass == HeroClass.MAGE) bonus *= 0.85f;
-			if (hero.heroClass == HeroClass.CLERIC) bonus *= 1.15f;
+			if (hero.heroClass == HeroClass.CLERIC) bonus *= 1.2f;
 			if (hero.subClass == HeroSubClass.MONK) bonus *= 1.2f;
 		}
 
