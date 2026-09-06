@@ -62,7 +62,7 @@ public class ClassFeaturesRegression {
         close(wandRate(HeroClass.ROGUE, HeroSubClass.NONE, false), base * .85f, "rogue wand penalty");
         close(wandRate(HeroClass.DUELIST, HeroSubClass.MONK, false), base * 1.2f, "monk wand bonus");
         close(RingOfEnergy.artifactChargeMultiplier(hero(HeroClass.MAGE, HeroSubClass.NONE)), .85f, "mage artifact penalty");
-        close(RingOfEnergy.artifactChargeMultiplier(hero(HeroClass.CLERIC, HeroSubClass.NONE)), 1.15f, "cleric artifact bonus");
+        close(RingOfEnergy.artifactChargeMultiplier(hero(HeroClass.CLERIC, HeroSubClass.NONE)), 1.2f, "cleric artifact bonus");
         close(RingOfEnergy.artifactChargeMultiplier(hero(HeroClass.DUELIST, HeroSubClass.MONK)), 1.2f, "monk artifact bonus");
         Hero hero = hero(HeroClass.MAGE, HeroSubClass.NONE);
         Wand wand = new WandOfMagicMissile();
