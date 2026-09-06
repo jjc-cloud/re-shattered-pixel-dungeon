@@ -537,6 +537,7 @@ public class Hero extends Char {
 				buff(Talent.LiquidAgilACCTracker.class).detach();
 			}
 		}
+		if (belongings.abilityWeapon != null && !secondaryAttack) attackSecondaryWeapon(enemy);
 		return result;
 	}
 
@@ -2391,28 +2392,37 @@ public class Hero extends Char {
 		super.onAttackComplete();
 	}
 
+	private boolean secondaryAttack;
+
 	public boolean attackWithWeapons(Char target) {
 		boolean hit = attack(target);
+		if (belongings.abilityWeapon == null) attackSecondaryWeapon(target);
+		return hit;
+	}
+
+	private void attackSecondaryWeapon(Char target) {
 		if (target != null && subClass == HeroSubClass.CHAMPION && isAlive() && target.isAlive()
 				&& belongings.weapon() != null && belongings.secondWep() instanceof Weapon
-				&& belongings.thrownWeapon == null && belongings.abilityWeapon == null
+				&& belongings.thrownWeapon == null && !secondaryAttack
 				&& !RingOfForce.fightingUnarmed(this)) {
 			Weapon secondary = (Weapon) belongings.secondWep();
 			if (secondary.STRReq() <= STR() && secondary.canReach(this, target.pos)) {
 				boolean wasEnemy = target.alignment == Alignment.ENEMY
 						|| (target instanceof Mimic && target.alignment == Alignment.NEUTRAL);
+				KindOfWeapon abilityWeapon = belongings.abilityWeapon;
 				belongings.abilityWeapon = secondary;
+				secondaryAttack = true;
 				try {
 					boolean secondaryHit = attack(target, 0.5f, 0f, 1f);
 					if (secondaryHit && wasEnemy) {
 						Buff.affect(this, Sai.ComboStrikeTracker.class).addHit();
 					}
 				} finally {
-					belongings.abilityWeapon = null;
+					belongings.abilityWeapon = abilityWeapon;
+					secondaryAttack = false;
 				}
 			}
 		}
-		return hit;
 	}
 	
 	@Override
