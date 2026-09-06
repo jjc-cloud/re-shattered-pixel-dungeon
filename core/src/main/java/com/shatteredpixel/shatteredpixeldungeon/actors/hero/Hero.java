@@ -537,7 +537,7 @@ public class Hero extends Char {
 				buff(Talent.LiquidAgilACCTracker.class).detach();
 			}
 		}
-		if (belongings.abilityWeapon != null && !secondaryAttack) attackSecondaryWeapon(enemy);
+		if (belongings.abilityWeapon != null && !secondaryAttack) attackOtherWeapon(enemy);
 		return result;
 	}
 
@@ -2396,25 +2396,27 @@ public class Hero extends Char {
 
 	public boolean attackWithWeapons(Char target) {
 		boolean hit = attack(target);
-		if (belongings.abilityWeapon == null) attackSecondaryWeapon(target);
+		if (belongings.abilityWeapon == null) attackOtherWeapon(target);
 		return hit;
 	}
 
-	private void attackSecondaryWeapon(Char target) {
+	private void attackOtherWeapon(Char target) {
 		if (target != null && subClass == HeroSubClass.CHAMPION && isAlive() && target.isAlive()
-				&& belongings.weapon() != null && belongings.secondWep() instanceof Weapon
+				&& belongings.weapon() instanceof Weapon && belongings.secondWep() instanceof Weapon
 				&& belongings.thrownWeapon == null && !secondaryAttack
 				&& !RingOfForce.fightingUnarmed(this)) {
-			Weapon secondary = (Weapon) belongings.secondWep();
-			if (secondary.STRReq() <= STR() && secondary.canReach(this, target.pos)) {
+			Weapon followup = belongings.attackingWeapon() == belongings.secondWep()
+					? (Weapon) belongings.weapon()
+					: (Weapon) belongings.secondWep();
+			if (followup.STRReq() <= STR() && followup.canReach(this, target.pos)) {
 				boolean wasEnemy = target.alignment == Alignment.ENEMY
 						|| (target instanceof Mimic && target.alignment == Alignment.NEUTRAL);
 				KindOfWeapon abilityWeapon = belongings.abilityWeapon;
-				belongings.abilityWeapon = secondary;
+				belongings.abilityWeapon = followup;
 				secondaryAttack = true;
 				try {
-					boolean secondaryHit = attack(target, 0.5f, 0f, 1f);
-					if (secondaryHit && wasEnemy) {
+					boolean followupHit = attack(target, 0.5f, 0f, 1f);
+					if (followupHit && wasEnemy) {
 						Buff.affect(this, Sai.ComboStrikeTracker.class).addHit();
 					}
 				} finally {
