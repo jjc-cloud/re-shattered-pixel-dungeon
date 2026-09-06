@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.windows;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.ArmorAbility;
 import com.shatteredpixel.shatteredpixeldungeon.items.KingsCrown;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
@@ -48,6 +49,9 @@ public class WndChooseAbility extends Window {
 	public WndChooseAbility(final KingsCrown crown, final Armor armor, final Hero hero){
 
 		super();
+		ArmorAbility[] classAbilities = hero.heroClass.armorAbilities();
+		final ArmorAbility[] abilities = hero.subClass == HeroSubClass.MONK
+				? new ArmorAbility[]{classAbilities[0], classAbilities[2]} : classAbilities;
 
 		//crown can be null if hero is choosing from armor
 		IconTitle titlebar = new IconTitle();
@@ -70,7 +74,7 @@ public class WndChooseAbility extends Window {
 						super.onSelect(index);
 						if (index == 0){
 							WndChooseAbility.this.hide();
-							ArmorAbility abil = Random.oneOf(hero.heroClass.armorAbilities());
+							ArmorAbility abil = Random.oneOf(abilities);
 							crown.upgradeArmor(hero, armor, abil);
 							GameScene.show(new WndInfoArmorAbility(hero.heroClass, abil));
 						}
@@ -104,7 +108,7 @@ public class WndChooseAbility extends Window {
 		add( body );
 
 		float pos = body.bottom() + 3*GAP;
-		for (ArmorAbility ability : hero.heroClass.armorAbilities()) {
+		for (ArmorAbility ability : abilities) {
 
 			RedButton abilityButton = new RedButton(ability.shortDesc(), 6){
 				@Override
