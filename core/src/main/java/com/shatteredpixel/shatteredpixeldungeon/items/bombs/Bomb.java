@@ -391,11 +391,20 @@ public class Bomb extends Item {
 		
 		@Override
 		public boolean testIngredients(ArrayList<Item> ingredients) {
+			return testIngredients(ingredients, true);
+		}
+
+		@Override
+		public boolean testIngredientsExperimental(ArrayList<Item> ingredients) {
+			return testIngredients(ingredients, false);
+		}
+
+		private boolean testIngredients(ArrayList<Item> ingredients, boolean requireIdentified) {
 			boolean bomb = false;
 			boolean ingredient = false;
 			
 			for (Item i : ingredients){
-				if (!i.isIdentified()) return false;
+				if (requireIdentified && !i.isIdentified()) return false;
 				if (i.getClass().equals(Bomb.class)){
 					bomb = true;
 				} else if (validIngredients.containsKey(i.getClass())){
