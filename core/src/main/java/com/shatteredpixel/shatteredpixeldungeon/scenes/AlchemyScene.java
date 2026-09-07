@@ -420,9 +420,11 @@ public class AlchemyScene extends PixelScene {
 			}
 		};
 		experimentalEnergyMinus.setRect(inputs[0].right() + 2, inputs[0].top() + 8, 14, 12);
+		experimentalEnergyMinus.textColor(0xFFFF00);
 		add(experimentalEnergyMinus);
 
 		experimentalEnergyText = PixelScene.renderTextBlock(6);
+		experimentalEnergyText.hardlight(0x44CCFF);
 		add(experimentalEnergyText);
 
 		experimentalEnergyPlus = new RedButton("+") {
@@ -433,6 +435,7 @@ public class AlchemyScene extends PixelScene {
 			}
 		};
 		experimentalEnergyPlus.setRect(inputs[0].right() + 34, inputs[0].top() + 8, 14, 12);
+		experimentalEnergyPlus.textColor(0xFFFF00);
 		add(experimentalEnergyPlus);
 
 		smokeEmitter = new Emitter();
@@ -1066,7 +1069,7 @@ public class AlchemyScene extends PixelScene {
 
 		private static final int WIDTH = 120;
 		private final RedButton[] categories = new RedButton[3];
-		private final Component grid = new Component();
+		private Component grid;
 		private int selectedCategory = experimentalCategory;
 		private float gridTop;
 
@@ -1082,8 +1085,8 @@ public class AlchemyScene extends PixelScene {
 			prompt.setPos(0, title.bottom()+2);
 			add(prompt);
 
-			int[] icons = {ItemSpriteSheet.BOMB_HOLDER, ItemSpriteSheet.ELIXIR_HOLDER,
-					ItemSpriteSheet.SPELL_HOLDER};
+			int[] icons = {ItemSpriteSheet.HOLY_BOMB, ItemSpriteSheet.ELIXIR_MIGHT,
+					ItemSpriteSheet.SUMMON_ELE};
 			for (int i = 0; i < categories.length; i++) {
 				final int category = i;
 				categories[i] = new RedButton("") {
@@ -1104,13 +1107,18 @@ public class AlchemyScene extends PixelScene {
 			}
 
 			gridTop = categories[0].bottom()+2;
-			grid.setRect(0, gridTop, WIDTH, 0);
-			add(grid);
 			rebuild();
 		}
 
 		private void rebuild() {
-			grid.clear();
+			if (grid != null) {
+				// 清空容器不会注销旧按钮的点击监听，重建前必须销毁。
+				grid.destroy();
+				erase(grid);
+			}
+			grid = new Component();
+			grid.setRect(0, gridTop, WIDTH, 0);
+			add(grid);
 			for (int i = 0; i < categories.length; i++) categories[i].enable(i != selectedCategory);
 
 			ArrayList<Item> items = Recipe.experimentalOutputs(selectedCategory);
