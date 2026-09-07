@@ -384,6 +384,8 @@ public class QuickRecipe extends Component {
 				result.add(new QuickRecipe(new SummonElemental.Recipe()));
 				result.add(new QuickRecipe(new BeaconOfReturning.Recipe()));
 				return result;
+			case 9:
+				return result;
 		}
 	}
 	
