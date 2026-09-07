@@ -419,7 +419,8 @@ public class AlchemyScene extends PixelScene {
 				updateState();
 			}
 		};
-		experimentalEnergyMinus.setRect(inputs[0].right() + 2, inputs[0].top() + 8, 14, 12);
+		float experimentalEnergyCenter = combines[0].left() + combines[0].width()/2f;
+		experimentalEnergyMinus.setRect(experimentalEnergyCenter - 34, inputs[0].top() + 8, 14, 12);
 		experimentalEnergyMinus.textColor(0xFFFF00);
 		add(experimentalEnergyMinus);
 
@@ -434,7 +435,7 @@ public class AlchemyScene extends PixelScene {
 				updateState();
 			}
 		};
-		experimentalEnergyPlus.setRect(inputs[0].right() + 34, inputs[0].top() + 8, 14, 12);
+		experimentalEnergyPlus.setRect(experimentalEnergyCenter + 20, inputs[0].top() + 8, 14, 12);
 		experimentalEnergyPlus.textColor(0xFFFF00);
 		add(experimentalEnergyPlus);
 
@@ -784,7 +785,7 @@ public class AlchemyScene extends PixelScene {
 		experimentalEnergyPlus.enable(experimentalEnergy < availableEnergy());
 		experimentalEnergyText.text(Integer.toString(experimentalEnergy));
 		experimentalEnergyText.setPos(
-				inputs[0].right() + 25 - experimentalEnergyText.width()/2f,
+				experimentalEnergyMinus.left() + 34 - experimentalEnergyText.width()/2f,
 				experimentalEnergyMinus.top() + (experimentalEnergyMinus.height() - experimentalEnergyText.height())/2f);
 	}
 	
@@ -1068,6 +1069,7 @@ public class AlchemyScene extends PixelScene {
 	private class WndExperimentalOutput extends Window {
 
 		private static final int WIDTH = 120;
+		private static final int GRID_HEIGHT = 60;
 		private final RedButton[] categories = new RedButton[3];
 		private Component grid;
 		private int selectedCategory = experimentalCategory;
@@ -1107,6 +1109,7 @@ public class AlchemyScene extends PixelScene {
 			}
 
 			gridTop = categories[0].bottom()+2;
+			resize(WIDTH, (int)(gridTop + GRID_HEIGHT));
 			rebuild();
 		}
 
@@ -1117,7 +1120,7 @@ public class AlchemyScene extends PixelScene {
 				erase(grid);
 			}
 			grid = new Component();
-			grid.setRect(0, gridTop, WIDTH, 0);
+			grid.setRect(0, gridTop, WIDTH, GRID_HEIGHT);
 			add(grid);
 			for (int i = 0; i < categories.length; i++) categories[i].enable(i != selectedCategory);
 
@@ -1153,9 +1156,6 @@ public class AlchemyScene extends PixelScene {
 					left = 0;
 				}
 			}
-			if (left > 0) top += 20;
-			grid.setSize(WIDTH, top);
-			resize(WIDTH, (int)(gridTop + top));
 		}
 	}
 
