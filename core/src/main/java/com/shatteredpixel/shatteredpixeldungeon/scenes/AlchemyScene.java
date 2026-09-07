@@ -419,7 +419,7 @@ public class AlchemyScene extends PixelScene {
 				updateState();
 			}
 		};
-		experimentalEnergyMinus.setRect(combines[0].left() - 1, inputs[0].top() - 14, 14, 12);
+		experimentalEnergyMinus.setRect(inputs[0].right() + 2, inputs[0].top() + 8, 14, 12);
 		add(experimentalEnergyMinus);
 
 		experimentalEnergyText = PixelScene.renderTextBlock(6);
@@ -432,7 +432,7 @@ public class AlchemyScene extends PixelScene {
 				updateState();
 			}
 		};
-		experimentalEnergyPlus.setRect(combines[0].right() - 13, inputs[0].top() - 14, 14, 12);
+		experimentalEnergyPlus.setRect(inputs[0].right() + 34, inputs[0].top() + 8, 14, 12);
 		add(experimentalEnergyPlus);
 
 		smokeEmitter = new Emitter();
@@ -779,9 +779,9 @@ public class AlchemyScene extends PixelScene {
 		experimentalEnergyMinus.visible = experimentalEnergyPlus.visible = experimentalEnergyText.visible = true;
 		experimentalEnergyMinus.enable(experimentalEnergy > 0);
 		experimentalEnergyPlus.enable(experimentalEnergy < availableEnergy());
-		experimentalEnergyText.text(Messages.get(AlchemyScene.class, "invested_energy", experimentalEnergy));
+		experimentalEnergyText.text(Integer.toString(experimentalEnergy));
 		experimentalEnergyText.setPos(
-				combines[0].left() + (combines[0].width() - experimentalEnergyText.width())/2f,
+				inputs[0].right() + 25 - experimentalEnergyText.width()/2f,
 				experimentalEnergyMinus.top() + (experimentalEnergyMinus.height() - experimentalEnergyText.height())/2f);
 	}
 	
@@ -1104,6 +1104,7 @@ public class AlchemyScene extends PixelScene {
 			}
 
 			gridTop = categories[0].bottom()+2;
+			grid.setRect(0, gridTop, WIDTH, 0);
 			add(grid);
 			rebuild();
 		}
@@ -1136,7 +1137,7 @@ public class AlchemyScene extends PixelScene {
 					}
 				};
 				button.item(displayExperimentalOutput(output, selectedCategory));
-				button.setRect(left, top, 19, 19);
+				button.setRect(grid.left()+left, grid.top()+top, 19, 19);
 				grid.add(button);
 				left += 20;
 				if (left > WIDTH-19) {
@@ -1145,7 +1146,7 @@ public class AlchemyScene extends PixelScene {
 				}
 			}
 			if (left > 0) top += 20;
-			grid.setRect(0, gridTop, WIDTH, top);
+			grid.setSize(WIDTH, top);
 			resize(WIDTH, (int)(gridTop + top));
 		}
 	}
@@ -1456,8 +1457,10 @@ public class AlchemyScene extends PixelScene {
 							if (experimentalGuideFound(experimentalCategory)) {
 								AlchemyScene.this.addToFront(new WndInfoItem(experimentalLastResult));
 							}
-						} else {
+						} else if (experimentalOutput == null) {
 							AlchemyScene.this.addToFront(new WndExperimentalOutput());
+						} else if (experimentalGuideFound(experimentalCategory)) {
+							AlchemyScene.this.addToFront(new WndInfoItem(experimentalOutput));
 						}
 					} else if (visible && item != null && item.trueName() != null){
 						AlchemyScene.this.addToFront(new WndInfoItem(item));
