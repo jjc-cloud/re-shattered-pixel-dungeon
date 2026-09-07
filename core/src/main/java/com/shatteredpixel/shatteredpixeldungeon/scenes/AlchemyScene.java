@@ -50,6 +50,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.ExitButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.IconButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ItemSlot;
+import com.shatteredpixel.shatteredpixeldungeon.ui.ItemButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RadialMenu;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
@@ -93,6 +94,15 @@ public class AlchemyScene extends PixelScene {
 
 	private IconButton cancel;
 	private IconButton repeat;
+	private IconTitle title;
+	private boolean experimentalMode;
+	private int experimentalEnergy;
+	private int experimentalCategory = Recipe.EXPERIMENTAL_BOMBS;
+	private Item experimentalOutput;
+	private Item experimentalLastResult;
+	private RedButton experimentalEnergyMinus;
+	private RedButton experimentalEnergyPlus;
+	private RenderedTextBlock experimentalEnergyText;
 	private static ArrayList<Item> lastIngredients = new ArrayList<>();
 	private static Recipe lastRecipe = null;
 
@@ -171,7 +181,7 @@ public class AlchemyScene extends PixelScene {
 		lowerBubbles = new Emitter();
 		add(lowerBubbles);
 		
-		IconTitle title = new IconTitle(Icons.ALCHEMY.get(), Messages.get(this, "title") );
+		title = new IconTitle(Icons.ALCHEMY.get(), Messages.get(this, "title") );
 		title.setSize(200, 0);
 		title.setPos(
 				insets.left + (w - title.reqWidth()) / 2f,
@@ -402,6 +412,29 @@ public class AlchemyScene extends PixelScene {
 			add(outputs[i]);
 		}
 
+		experimentalEnergyMinus = new RedButton("-") {
+			@Override
+			protected void onClick() {
+				experimentalEnergy = Math.max(0, experimentalEnergy - 1);
+				updateState();
+			}
+		};
+		experimentalEnergyMinus.setRect(combines[0].left() - 1, inputs[0].top() - 14, 14, 12);
+		add(experimentalEnergyMinus);
+
+		experimentalEnergyText = PixelScene.renderTextBlock(6);
+		add(experimentalEnergyText);
+
+		experimentalEnergyPlus = new RedButton("+") {
+			@Override
+			protected void onClick() {
+				experimentalEnergy = Math.min(availableEnergy(), experimentalEnergy + 1);
+				updateState();
+			}
+		};
+		experimentalEnergyPlus.setRect(combines[0].right() - 13, inputs[0].top() - 14, 14, 12);
+		add(experimentalEnergyPlus);
+
 		smokeEmitter = new Emitter();
 		smokeEmitter.pos(outputs[0].left() + (BTN_SIZE-16)/2f, outputs[0].top() + (BTN_SIZE-16)/2f, 16, 16);
 		smokeEmitter.autoKill = false;
@@ -529,9 +562,34 @@ public class AlchemyScene extends PixelScene {
 		};
 		btnGuide.icon(new ItemSprite(ItemSpriteSheet.ALCH_PAGE));
 		btnGuide.setSize(btnGuide.reqWidth()+4, 18);
-		btnGuide.setPos(centerW - btnGuide.width()/2f, energyAdd.top()- btnGuide.height()-2);
+
+		StyledButton btnExperimental = new StyledButton(Chrome.Type.TOAST_TR,
+				Messages.get(AlchemyScene.class, "alchemy")) {
+			@Override
+			protected void onClick() {
+				clearSlots();
+				experimentalMode = !experimentalMode;
+				experimentalEnergy = 0;
+				experimentalOutput = null;
+				experimentalLastResult = null;
+				title.label(Messages.get(AlchemyScene.class,
+						experimentalMode ? "experimental_title" : "title"));
+				title.setPos((Camera.main.width - title.reqWidth())/2f, title.top());
+				align(title);
+				updateState();
+			}
+		};
+		btnExperimental.icon(new ItemSprite(ItemSpriteSheet.ENERGY));
+		btnExperimental.setSize(btnExperimental.reqWidth()+4, 18);
+		float buttonsLeft = centerW - (btnGuide.width() + btnExperimental.width() + 2)/2f;
+		btnGuide.setPos(buttonsLeft, energyAdd.top()- btnGuide.height()-2);
 		align(btnGuide);
 		add(btnGuide);
+		btnExperimental.setPos(btnGuide.right()+2, btnGuide.top());
+		align(btnExperimental);
+		add(btnExperimental);
+
+		updateState();
 
 		TrinketCatalyst cata = Dungeon.hero.belongings.getItem(TrinketCatalyst.class);
 		if (cata != null && cata.hasRolledTrinkets()){
@@ -607,8 +665,15 @@ public class AlchemyScene extends PixelScene {
 	private void updateState(){
 
 		repeat.enable(false);
+		repeat.visible = !experimentalMode;
 
 		ArrayList<Item> ingredients = filterInput(Item.class);
+		if (experimentalMode) {
+			updateExperimentalState(ingredients);
+			return;
+		}
+
+		experimentalEnergyMinus.visible = experimentalEnergyPlus.visible = experimentalEnergyText.visible = false;
 		ArrayList<Recipe> recipes = Recipe.findRecipes(ingredients);
 
 		//disables / hides unneeded buttons
@@ -673,8 +738,58 @@ public class AlchemyScene extends PixelScene {
 		}
 
 	}
+
+	private int availableEnergy() {
+		return Dungeon.energy + (toolkit == null ? 0 : toolkit.availableEnergy());
+	}
+
+	private void updateExperimentalState(ArrayList<Item> ingredients) {
+		experimentalLastResult = null;
+		experimentalEnergy = Math.min(experimentalEnergy, availableEnergy());
+		cancel.enable(!ingredients.isEmpty() || experimentalOutput != null || experimentalEnergy > 0);
+		repeat.visible = false;
+		energyAddBlinking = false;
+
+		for (int i = 1; i < combines.length; i++) {
+			combines[i].enable(false);
+			combines[i].visible = false;
+			outputs[i].visible = false;
+			outputs[i].item(null);
+		}
+
+		combines[0].visible = true;
+		combines[0].setRect(combines[0].left(), inputs[1].top()+5, 30, 20);
+		combines[0].enable(!ingredients.isEmpty() && experimentalOutput != null);
+		outputs[0].visible = true;
+		outputs[0].setRect(outputs[0].left(), inputs[1].top(), BTN_SIZE, BTN_SIZE);
+		outputs[0].item(experimentalOutput == null
+				? new WndBag.Placeholder(ItemSpriteSheet.SOMETHING) {
+					@Override
+					public String name() {
+						return Messages.get(AlchemyScene.class, "select_output");
+					}
+
+					@Override
+					public String info() {
+						return "";
+					}
+				}
+				: displayExperimentalOutput(experimentalOutput, experimentalCategory));
+
+		experimentalEnergyMinus.visible = experimentalEnergyPlus.visible = experimentalEnergyText.visible = true;
+		experimentalEnergyMinus.enable(experimentalEnergy > 0);
+		experimentalEnergyPlus.enable(experimentalEnergy < availableEnergy());
+		experimentalEnergyText.text(Messages.get(AlchemyScene.class, "invested_energy", experimentalEnergy));
+		experimentalEnergyText.setPos(
+				combines[0].left() + (combines[0].width() - experimentalEnergyText.width())/2f,
+				experimentalEnergyMinus.top() + (experimentalEnergyMinus.height() - experimentalEnergyText.height())/2f);
+	}
 	
 	private void combine( int slot ){
+		if (experimentalMode) {
+			combineExperimental();
+			return;
+		}
 		
 		ArrayList<Item> ingredients = filterInput(Item.class);
 		if (ingredients.isEmpty()) return;
@@ -693,27 +808,7 @@ public class AlchemyScene extends PixelScene {
 		
 		if (recipe != null){
 			int cost = recipe.cost(ingredients);
-			if (toolkit != null){
-				cost = toolkit.consumeEnergy(cost);
-			}
-			Catalog.countUses(EnergyCrystal.class, cost);
-			Dungeon.energy -= cost;
-
-			String energyText = Messages.get(AlchemyScene.class, "energy") + " " + Dungeon.energy;
-			if (toolkit != null){
-				energyText += "+" + toolkit.availableEnergy();
-			}
-			energyLeft.text(energyText);
-			energyLeft.setPos(
-					centerW - energyLeft.width()/2,
-					energyLeft.top()
-			);
-
-			energyIcon.x = energyLeft.left() - energyIcon.width();
-			align(energyIcon);
-
-			energyAdd.setPos(energyLeft.right(), energyAdd.top());
-			align(energyAdd);
+			consumeEnergy(cost);
 			
 			result = recipe.brew(ingredients);
 		}
@@ -748,6 +843,63 @@ public class AlchemyScene extends PixelScene {
 
 		if (alchGuide != null){
 			alchGuide.updateList();
+		}
+	}
+
+	private void combineExperimental() {
+		ArrayList<Item> ingredients = filterInput(Item.class);
+		if (ingredients.isEmpty() || experimentalOutput == null) return;
+
+		Recipe recipe = Recipe.findExperimentalRecipe(ingredients, experimentalOutput,
+				experimentalEnergy, experimentalCategory);
+		consumeEnergy(experimentalEnergy);
+
+		if (recipe != null) {
+			for (Item ingredient : ingredients) ingredient.identify();
+			Item result = recipe.brew(ingredients);
+			experimentalOutput = null;
+			experimentalEnergy = 0;
+			if (result != null) craftItem(ingredients, result);
+		} else {
+			bubbleEmitter.start(Speck.factory(Speck.BUBBLE), 0.01f, 100);
+			smokeEmitter.burst(Speck.factory(Speck.WOOL), 10);
+			Sample.INSTANCE.play(Assets.Sounds.PUFF);
+			for (InputButton input : inputs) {
+				if (input != null && input.item() != null) input.item(null);
+			}
+			experimentalOutput = null;
+			experimentalEnergy = 0;
+			saveAlchemyState();
+			updateState();
+		}
+	}
+
+	private void consumeEnergy(int amount) {
+		if (toolkit != null) amount = toolkit.consumeEnergy(amount);
+		Catalog.countUses(EnergyCrystal.class, amount);
+		Dungeon.energy -= amount;
+		refreshEnergyDisplay();
+	}
+
+	private void refreshEnergyDisplay() {
+		String energyText = Messages.get(AlchemyScene.class, "energy") + " " + Dungeon.energy;
+		if (toolkit != null) energyText += "+" + toolkit.availableEnergy();
+		energyLeft.text(energyText);
+		energyLeft.setPos(centerW - energyLeft.width()/2, energyLeft.top());
+		energyIcon.x = energyLeft.left() - energyIcon.width();
+		align(energyIcon);
+		energyAdd.setPos(energyLeft.right(), energyAdd.top());
+		align(energyAdd);
+	}
+
+	private void saveAlchemyState() {
+		saveNeeded = false;
+		try {
+			Dungeon.saveAll();
+			Badges.saveGlobal();
+			Journal.saveGlobal();
+		} catch (IOException e) {
+			ShatteredPixelDungeon.reportException(e);
 		}
 	}
 
@@ -789,7 +941,8 @@ public class AlchemyScene extends PixelScene {
 		updateState();
 		//we reset the quantity in case the result was merged into another stack in the backpack
 		result.quantity(resultQuantity);
-		outputs[0].item(result);
+		if (experimentalMode) experimentalLastResult = result;
+		outputs[0].item(experimentalMode ? displayExperimentalOutput(result, experimentalCategory) : result);
 	}
 	
 	public void populate(ArrayList<Item> toFind, Belongings inventory){
@@ -867,10 +1020,133 @@ public class AlchemyScene extends PixelScene {
 				}
 			}
 		}
+		if (experimentalMode) {
+			experimentalOutput = null;
+			experimentalLastResult = null;
+			experimentalEnergy = 0;
+		}
 		cancel.enable(false);
 		repeat.enable(lastRecipe != null);
 		if (alchGuide != null){
 			alchGuide.updateList();
+		}
+	}
+
+	private boolean experimentalGuideFound(int category) {
+		int[] pages = {5, 7, 8};
+		return category >= 0 && category < pages.length
+				&& Document.ALCHEMY_GUIDE.isPageFound(pages[category]);
+	}
+
+	private Item displayExperimentalOutput(final Item output, int category) {
+		if (experimentalGuideFound(category)) return output;
+		return new Item() {
+			{
+				image = output.image();
+			}
+
+			@Override
+			public String name() {
+				return Messages.get(AlchemyScene.class, "unknown_output");
+			}
+
+			@Override
+			public String info() {
+				return "";
+			}
+
+			@Override
+			public ItemSprite.Glowing glowing() {
+				return output.glowing();
+			}
+		};
+	}
+
+	private class WndExperimentalOutput extends Window {
+
+		private static final int WIDTH = 120;
+		private final RedButton[] categories = new RedButton[3];
+		private final Component grid = new Component();
+		private int selectedCategory = experimentalCategory;
+		private float gridTop;
+
+		private WndExperimentalOutput() {
+			IconTitle title = new IconTitle(new ItemSprite(ItemSpriteSheet.ENERGY),
+					Messages.get(AlchemyScene.class, "select_output"));
+			title.setRect(0, 0, WIDTH, 0);
+			add(title);
+
+			RenderedTextBlock prompt = PixelScene.renderTextBlock(
+					Messages.get(AlchemyScene.class, "select_output_prompt"), 6);
+			prompt.maxWidth(WIDTH);
+			prompt.setPos(0, title.bottom()+2);
+			add(prompt);
+
+			int[] icons = {ItemSpriteSheet.BOMB_HOLDER, ItemSpriteSheet.ELIXIR_HOLDER,
+					ItemSpriteSheet.SPELL_HOLDER};
+			for (int i = 0; i < categories.length; i++) {
+				final int category = i;
+				categories[i] = new RedButton("") {
+					@Override
+					protected void onClick() {
+						selectedCategory = category;
+						rebuild();
+					}
+
+					@Override
+					protected String hoverText() {
+						return Messages.get(AlchemyScene.class, "output_category_" + category);
+					}
+				};
+				categories[i].icon(new ItemSprite(icons[i]));
+				categories[i].setRect(i*WIDTH/3f, prompt.bottom()+2, WIDTH/3f, 18);
+				add(categories[i]);
+			}
+
+			gridTop = categories[0].bottom()+2;
+			add(grid);
+			rebuild();
+		}
+
+		private void rebuild() {
+			grid.clear();
+			for (int i = 0; i < categories.length; i++) categories[i].enable(i != selectedCategory);
+
+			ArrayList<Item> items = Recipe.experimentalOutputs(selectedCategory);
+			int left = 0;
+			int top = 0;
+			for (final Item output : items) {
+				ItemButton button = new ItemButton() {
+					@Override
+					protected void onClick() {
+						experimentalCategory = selectedCategory;
+						experimentalOutput = output;
+						experimentalLastResult = null;
+						WndExperimentalOutput.this.hide();
+						updateState();
+					}
+
+					@Override
+					protected boolean onLongClick() {
+						if (experimentalGuideFound(selectedCategory)) {
+							AlchemyScene.this.addToFront(new WndInfoItem(output));
+							return true;
+						}
+						return false;
+					}
+				};
+				button.item(displayExperimentalOutput(output, selectedCategory));
+				button.setRect(left, top, 19, 19);
+				grid.add(button);
+				left += 20;
+				if (left > WIDTH-19) {
+					top += 20;
+					left = 0;
+				}
+			}
+			if (left > 0) top += 20;
+			grid.setRect(0, gridTop, WIDTH, top);
+			resize(WIDTH, (int)(gridTop + top));
 		}
 	}
 
@@ -1175,9 +1451,29 @@ public class AlchemyScene extends PixelScene {
 				@Override
 				protected void onClick() {
 					super.onClick();
-					if (visible && item != null && item.trueName() != null){
+					if (experimentalMode && OutputSlot.this == outputs[0]) {
+						if (experimentalLastResult != null) {
+							if (experimentalGuideFound(experimentalCategory)) {
+								AlchemyScene.this.addToFront(new WndInfoItem(experimentalLastResult));
+							}
+						} else {
+							AlchemyScene.this.addToFront(new WndExperimentalOutput());
+						}
+					} else if (visible && item != null && item.trueName() != null){
 						AlchemyScene.this.addToFront(new WndInfoItem(item));
 					}
+				}
+
+				@Override
+				protected boolean onLongClick() {
+					if (experimentalMode && OutputSlot.this == outputs[0]
+							&& (experimentalOutput != null || experimentalLastResult != null)
+							&& experimentalGuideFound(experimentalCategory)) {
+						AlchemyScene.this.addToFront(new WndInfoItem(
+								experimentalLastResult != null ? experimentalLastResult : experimentalOutput));
+						return true;
+					}
+					return false;
 				}
 			};
 			slot.item(null);

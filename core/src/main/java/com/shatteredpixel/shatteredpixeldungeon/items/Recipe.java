@@ -66,6 +66,14 @@ import java.util.ArrayList;
 public abstract class Recipe {
 	
 	public abstract boolean testIngredients(ArrayList<Item> ingredients);
+
+	/**
+	 * Ingredient check used by experimental alchemy. Unlike ordinary alchemy,
+	 * this must not require the hero to already know an ingredient's identity.
+	 */
+	public boolean testIngredientsExperimental(ArrayList<Item> ingredients) {
+		return testIngredients(ingredients);
+	}
 	
 	public abstract int cost(ArrayList<Item> ingredients);
 	
@@ -99,11 +107,20 @@ public abstract class Recipe {
 		
 		@Override
 		public boolean testIngredients(ArrayList<Item> ingredients) {
+			return testIngredients(ingredients, true);
+		}
+
+		@Override
+		public boolean testIngredientsExperimental(ArrayList<Item> ingredients) {
+			return testIngredients(ingredients, false);
+		}
+
+		private boolean testIngredients(ArrayList<Item> ingredients, boolean requireIdentified) {
 			
 			int[] needed = inQuantity.clone();
 			
 			for (Item ingredient : ingredients){
-				if (!ingredient.isIdentified()) return false;
+				if (requireIdentified && !ingredient.isIdentified()) return false;
 				for (int i = 0; i < inputs.length; i++){
 					if (ingredient.getClass() == inputs[i]){
 						needed[i] -= ingredient.quantity();
@@ -218,6 +235,72 @@ public abstract class Recipe {
 		new StewedMeat.threeMeat(),
 		new MeatPie.Recipe()
 	};
+
+	public static final int EXPERIMENTAL_BOMBS = 0;
+	public static final int EXPERIMENTAL_BREWS = 1;
+	public static final int EXPERIMENTAL_SPELLS = 2;
+
+	private static final Recipe[][] experimentalRecipes = new Recipe[][]{
+			{
+					new Bomb.EnhanceBomb()
+			},
+			{
+					new UnstableBrew.Recipe(), new CausticBrew.Recipe(),
+					new BlizzardBrew.Recipe(), new ShockingBrew.Recipe(),
+					new InfernalBrew.Recipe(), new AquaBrew.Recipe(),
+					new ElixirOfHoneyedHealing.Recipe(), new ElixirOfAquaticRejuvenation.Recipe(),
+					new ElixirOfArcaneArmor.Recipe(), new ElixirOfIcyTouch.Recipe(),
+					new ElixirOfToxicEssence.Recipe(), new ElixirOfDragonsBlood.Recipe(),
+					new ElixirOfFeatherFall.Recipe(), new ElixirOfMight.Recipe()
+			},
+			{
+					new UnstableSpell.Recipe(), new WildEnergy.Recipe(),
+					new TelekineticGrab.Recipe(), new PhaseShift.Recipe(),
+					new Alchemize.Recipe(), new CurseInfusion.Recipe(),
+					new MagicalInfusion.Recipe(), new Recycle.Recipe(),
+					new ReclaimTrap.Recipe(), new SummonElemental.Recipe(),
+					new BeaconOfReturning.Recipe()
+			}
+	};
+
+	public static ArrayList<Item> experimentalOutputs(int category) {
+		ArrayList<Item> result = new ArrayList<>();
+		if (category < 0 || category >= experimentalRecipes.length) return result;
+
+		if (category == EXPERIMENTAL_BOMBS) {
+			for (Class<? extends Bomb> output : Bomb.EnhanceBomb.validIngredients.values()) {
+				result.add(Reflection.newInstance(output));
+			}
+		} else {
+			for (Recipe recipe : experimentalRecipes[category]) {
+				result.add(recipe.sampleOutput(null));
+			}
+		}
+		return result;
+	}
+
+	public static Recipe findExperimentalRecipe(ArrayList<Item> ingredients, Item output,
+			int energy, int category) {
+		if (output == null || category < 0 || category >= experimentalRecipes.length) return null;
+
+		for (Recipe recipe : experimentalRecipes[category]) {
+			if (ingredients.size() == experimentalIngredientSlots(recipe, category)
+					&& recipe.testIngredientsExperimental(ingredients) && recipe.cost(ingredients) == energy) {
+				Item expected = recipe.sampleOutput(ingredients);
+				if (expected != null && expected.getClass() == output.getClass()) return recipe;
+			}
+		}
+		return null;
+	}
+
+	private static int experimentalIngredientSlots(Recipe recipe, int category) {
+		if (recipe instanceof SimpleRecipe) return ((SimpleRecipe) recipe).inputs.length;
+		if (category == EXPERIMENTAL_BOMBS || recipe instanceof UnstableBrew.Recipe
+				|| recipe instanceof UnstableSpell.Recipe || recipe instanceof Alchemize.Recipe) {
+			return 2;
+		}
+		return 1;
+	}
 	
 	public static ArrayList<Recipe> findRecipes(ArrayList<Item> ingredients){
 
