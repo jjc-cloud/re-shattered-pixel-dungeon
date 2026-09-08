@@ -20,7 +20,7 @@ local.properties
 *.idea
 
 #agent files
-AGENTS.md
+/AGENTS.md
 
 #test files
 /core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/TestStart.java
