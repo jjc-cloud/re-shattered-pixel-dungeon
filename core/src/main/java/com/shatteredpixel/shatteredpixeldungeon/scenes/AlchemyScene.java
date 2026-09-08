@@ -420,7 +420,7 @@ public class AlchemyScene extends PixelScene {
 			}
 		};
 		float experimentalEnergyCenter = combines[0].left() + combines[0].width()/2f;
-		experimentalEnergyMinus.setRect(experimentalEnergyCenter - 23, inputs[0].top() + 8, 14, 12);
+		experimentalEnergyMinus.setRect(experimentalEnergyCenter - 20, inputs[0].top() + 8, 14, 12);
 		experimentalEnergyMinus.textColor(0xFFFF00);
 		add(experimentalEnergyMinus);
 
@@ -785,7 +785,7 @@ public class AlchemyScene extends PixelScene {
 		experimentalEnergyPlus.enable(experimentalEnergy < availableEnergy());
 		experimentalEnergyText.text(Integer.toString(experimentalEnergy));
 		experimentalEnergyText.setPos(
-				experimentalEnergyMinus.left() + 25 - experimentalEnergyText.width()/2f,
+				experimentalEnergyMinus.left() + 22 - experimentalEnergyText.width()/2f,
 				experimentalEnergyMinus.top() + (experimentalEnergyMinus.height() - experimentalEnergyText.height())/2f);
 	}
 	
