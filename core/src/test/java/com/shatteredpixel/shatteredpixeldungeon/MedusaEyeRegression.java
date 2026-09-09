@@ -8,9 +8,13 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invulnerability;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Eye;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.MedusaEye;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.MobSpawner;
+import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfElements;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.PotionOfCleansing;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfPetrification;
 import com.watabou.utils.Bundle;
+
+import java.util.Arrays;
 
 /** Headless checks for lethal progress, resistance, action timing, and targeting. */
 public class MedusaEyeRegression {
@@ -58,6 +62,17 @@ public class MedusaEyeRegression {
 		check(victim.isAlive(), "four applications do not kill");
 		Petrification.apply(victim);
 		check(!victim.isAlive() && victim.deathCause instanceof Petrification, "fifth application kills with stone cause");
+
+		Victim wandTarget = new Victim();
+		Petrification.apply(wandTarget, 0.5f);
+		near(wandTarget.buff(Petrification.class).progress(), 0.5f, "wand adds fifty percent progress");
+		Petrification.apply(wandTarget, 0.5f);
+		check(!wandTarget.isAlive() && wandTarget.deathCause instanceof Petrification,
+				"second wand application completes petrification");
+		check(Arrays.asList(Generator.Category.WAND.classes).contains(WandOfPetrification.class),
+				"petrification wand is registered for generation");
+		check(Generator.Category.WAND.classes.length == Generator.Category.WAND.probs.length,
+				"wand generation classes and probabilities stay aligned");
 
 		Victim resistant = new Victim();
 		resistant.resistStone();

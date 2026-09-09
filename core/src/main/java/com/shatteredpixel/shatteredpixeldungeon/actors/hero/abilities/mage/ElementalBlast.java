@@ -41,6 +41,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Frost;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Paralysis;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Petrification;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Recharging;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Roots;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
@@ -64,6 +65,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfFrost;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLightning;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLivingEarth;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfMagicMissile;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfPetrification;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfPrismaticLight;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfRegrowth;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfTransfusion;
@@ -104,6 +106,7 @@ public class ElementalBlast extends ArmorAbility {
 		effectTypes.put(WandOfTransfusion.class,    MagicMissile.BLOOD_CONE);
 		effectTypes.put(WandOfCorruption.class,     MagicMissile.SHADOW_CONE);
 		effectTypes.put(WandOfRegrowth.class,       MagicMissile.FOLIAGE_CONE);
+		effectTypes.put(WandOfPetrification.class,  MagicMissile.RAINBOW_CONE);
 	}
 
 	private static final HashMap<Class<?extends Wand>, Float> damageFactors = new HashMap<>();
@@ -121,6 +124,7 @@ public class ElementalBlast extends ArmorAbility {
 		damageFactors.put(WandOfTransfusion.class,      0f);
 		damageFactors.put(WandOfCorruption.class,       0f);
 		damageFactors.put(WandOfRegrowth.class,         0f);
+		damageFactors.put(WandOfPetrification.class,    0f);
 	}
 
 	{
@@ -378,6 +382,13 @@ public class ElementalBlast extends ArmorAbility {
 								} else if (finalWandCls == WandOfRegrowth.class){
 									if (mob.alignment != Char.Alignment.ALLY) {
 										Buff.prolong( mob, Roots.class, effectMulti*Roots.DURATION );
+										charsHit++;
+									}
+
+								//*** Wand of Petrification ***
+								} else if (finalWandCls == WandOfPetrification.class){
+									if (mob.alignment != Char.Alignment.ALLY
+											&& Petrification.apply(mob, 0.3f * effectMulti)) {
 										charsHit++;
 									}
 								}

@@ -7,8 +7,15 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicImmune;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Petrification;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.*;
+import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
+import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
+import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WornShortsword;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.Dart;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.PotionOfCleansing;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfSirensSong;
+import com.shatteredpixel.shatteredpixeldungeon.levels.SewerLevel;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.watabou.utils.Bundle;
 import java.util.Arrays;
@@ -30,6 +37,18 @@ public class PetrifiedStatueRegression {
 		TestRat() { fieldOfView = new boolean[81]; Arrays.fill(fieldOfView, true); }
 		Char choose() { return chooseEnemy(); }
 	}
+	public static class TestStatue extends PetrifiedStatue {
+		void pushItems() { act(); }
+	}
+	public static class TestLevel extends SewerLevel {
+		@Override public void occupyCell(Char ch) { }
+		@Override public Heap drop(Item item, int cell) {
+			Heap heap = heaps.get(cell);
+			if (heap == null) throw new AssertionError("item was pushed onto an unexpected cell");
+			heap.drop(item);
+			return heap;
+		}
+	}
 	public static class MeleeHero extends Hero {
 		@Override public int attackSkill(Char target) { return INFINITE_ACCURACY; }
 		@Override public int damageRoll() { return 10; }
@@ -46,10 +65,31 @@ public class PetrifiedStatueRegression {
 					if (method.getName().equals("log") || method.getName().equals("postRunnable")) return null;
 					throw new UnsupportedOperationException(method.getName());
 				});
+		Dungeon.level = new TestLevel(); Dungeon.level.setSize(9, 9);
 		Dungeon.hero = new Hero(); Dungeon.hero.pos = 60;
 		Dungeon.level.mobs = new java.util.HashSet<>();
+		Dungeon.level.heaps = new com.watabou.utils.SparseArray<>();
 		Arrays.fill(Dungeon.level.passable, true);
 		Arrays.fill(Dungeon.level.heroFOV, true);
+		Arrays.fill(Dungeon.level.passable, false);
+		Dungeon.level.passable[21] = true;
+		Dungeon.level.pit[19] = true;
+		Heap blocked = new Heap(); blocked.pos = 20;
+		blocked.drop(new WornShortsword()); blocked.drop(new Dart());
+		Dungeon.level.heaps.put(blocked.pos, blocked);
+		Heap destination = new Heap(); destination.pos = 21; destination.drop(new Gold());
+		destination.sprite = new ItemSprite() {
+			@Override public void place(int cell) { }
+			@Override public void drop(int from) { }
+		};
+		Dungeon.level.heaps.put(destination.pos, destination);
+		TestStatue itemPusher = new TestStatue(); itemPusher.pos = 20; itemPusher.pushItems();
+		check(Dungeon.level.heaps.get(20) == null && destination.size() == 3,
+				"statue pushes every ordinary item off its cell");
+		check(Dungeon.level.heaps.get(19) == null, "statue never pushes items into a pit");
+		Dungeon.level.heaps.remove(21);
+		Dungeon.level.pit[19] = false;
+		Arrays.fill(Dungeon.level.passable, true);
 		Victim victim = new Victim();
 		victim.sprite = new RatSprite();
 		Actor.add(victim);

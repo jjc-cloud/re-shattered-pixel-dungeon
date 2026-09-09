@@ -761,6 +761,10 @@ public abstract class Char extends Actor {
 		return damage;
 	}
 
+	protected int incomingDamageProc(int damage, Object source) {
+		return damage;
+	}
+
 	//Returns the level a glyph is at for a char, or -1 if they are not benefitting from that glyph
 	//This function is needed as (unlike enchantments) many glyphs trigger in a variety of cases
 	public int glyphLevel(Class<? extends Armor.Glyph> cls){
@@ -936,6 +940,8 @@ public abstract class Char extends Actor {
 			}
 			if (dmg < 0) dmg = 0;
 		}
+
+		dmg = incomingDamageProc(dmg, src);
 		
 		if (buff( Paralysis.class ) != null) {
 			buff( Paralysis.class ).processDamage(dmg);

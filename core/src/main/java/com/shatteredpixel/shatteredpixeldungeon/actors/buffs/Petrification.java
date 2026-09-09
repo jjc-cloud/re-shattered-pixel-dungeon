@@ -30,10 +30,14 @@ public class Petrification extends Buff implements Hero.Doom {
 	}
 
 	public static boolean apply(Char victim) {
+		return apply(victim, 0.2f);
+	}
+
+	public static boolean apply(Char victim, float amount) {
 		if (!canAffect(victim)) return false;
 		Petrification buff = Buff.affect(victim, Petrification.class);
 		if (buff.target != victim) return false;
-		buff.progress += victim.resist(Petrification.class) * 0.2f;
+		buff.progress += victim.resist(Petrification.class) * amount;
 		BuffIndicator.refreshHero();
 		if (buff.progress >= 1f) {
 			Buff.detach(victim, Petrification.class);
