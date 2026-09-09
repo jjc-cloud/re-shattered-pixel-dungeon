@@ -84,6 +84,14 @@ public class Eye extends Mob {
 	}
 	
 	private Ballistica beam;
+
+	protected boolean canMeleeAttack(Char enemy) {
+		return super.canAttack(enemy);
+	}
+
+	protected boolean doMeleeAttack(Char enemy) {
+		return super.doAttack(enemy);
+	}
 	private int beamTarget = -1;
 	private int beamCooldown;
 	public boolean beamCharged;

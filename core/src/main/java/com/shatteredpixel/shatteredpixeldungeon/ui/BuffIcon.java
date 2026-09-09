@@ -54,6 +54,8 @@ public class BuffIcon extends Image {
 	}
 
 	public void refresh(int icon){
+		// A buff may replace its image texture, so restore the atlas before framing.
+		texture(large ? Assets.Interfaces.BUFFS_LARGE : Assets.Interfaces.BUFFS_SMALL);
 		if (large){
 			if (largeFilm == null) largeFilm = new TextureFilm(texture, LRG_SIZE, LRG_SIZE);
 			frame(largeFilm.get(icon));
