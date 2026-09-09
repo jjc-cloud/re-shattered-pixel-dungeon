@@ -1585,6 +1585,12 @@ public class Hero extends Char {
 	public int defenseProc( Char enemy, int damage ) {
 		Berserk rage = buff(Berserk.class);
 		if (rage != null) damage = Math.round(rage.modifyPhysicalIncomingDamage(damage, enemy));
+
+		//metamorphed iron will logic
+		if (heroClass != HeroClass.WARRIOR && hasTalent(Talent.IRON_WILL)){
+			damage -= 2 + pointsInTalent(Talent.IRON_WILL);
+			damage = Math.max(0, damage);
+		}
 		
 		if (belongings.armor() != null) {
 			damage = belongings.armor().proc( enemy, this, damage );
