@@ -46,7 +46,7 @@ public class WandOfPetrification extends DamageWand {
 	}
 	
 	@Override
-	protected void onZap(Ballistica bolt) {
+	public void onZap(Ballistica bolt) {
 		boolean hit = false;
 		
 		for (int c : bolt.subPath(1, bolt.dist)) {
@@ -57,7 +57,7 @@ public class WandOfPetrification extends DamageWand {
 				// Apply Petrification effect
 				if (Petrification.canAffect(ch)) {
 					Petrification petrification = Buff.affect(ch, Petrification.class);
-					petrification.progress += 0.5f; // 50%石化负面
+					petrification.progress = Math.min(1f, petrification.progress() + 0.5f); // 50%石化负面
 					
 					// No particle effect as requested
 				}
@@ -78,7 +78,7 @@ public class WandOfPetrification extends DamageWand {
 			Petrification petrification = Buff.affect(defender, Petrification.class);
 			// 10% + 魔杖等级 * 5%石化负面
 			float bonus = 0.1f + staff.buffedLvl() * 0.05f;
-			petrification.progress += bonus;
+			petrification.progress = Math.min(1f, petrification.progress() + bonus);
 		}
 	}
 	
