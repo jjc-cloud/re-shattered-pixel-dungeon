@@ -1586,12 +1586,6 @@ public class Hero extends Char {
 		Berserk rage = buff(Berserk.class);
 		if (rage != null) damage = Math.round(rage.modifyPhysicalIncomingDamage(damage, enemy));
 
-		//metamorphed iron will logic
-		if (heroClass != HeroClass.WARRIOR && hasTalent(Talent.IRON_WILL)){
-			damage -= 2 + pointsInTalent(Talent.IRON_WILL);
-			damage = Math.max(0, damage);
-		}
-		
 		if (belongings.armor() != null) {
 			damage = belongings.armor().proc( enemy, this, damage );
 		} else {
@@ -1611,6 +1605,16 @@ public class Hero extends Char {
 		}
 		
 		return super.defenseProc( enemy, damage );
+	}
+
+	@Override
+	protected int incomingDamageProc(int damage, Object source) {
+		damage = super.incomingDamageProc(damage, source);
+		if (damage > 0 && heroClass != HeroClass.WARRIOR && hasTalent(Talent.IRON_WILL)
+				&& Berserk.isEnemyDamageSource(source)) {
+			damage = Math.max(0, damage - 2 - pointsInTalent(Talent.IRON_WILL));
+		}
+		return damage;
 	}
 
 	@Override

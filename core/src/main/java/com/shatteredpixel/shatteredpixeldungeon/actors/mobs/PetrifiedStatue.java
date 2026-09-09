@@ -5,6 +5,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Petrification;
+import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
@@ -52,7 +53,19 @@ public class PetrifiedStatue extends Mob {
 			source.killAndErase();
 		}
 		GameScene.add(statue);
+		statue.throwAllItems();
 		return statue;
+	}
+
+	private void throwAllItems() {
+		Heap heap = Dungeon.level.heaps.get(pos);
+		while (heap != null && !heap.isEmpty()) {
+			int oldSize = heap.size();
+			throwItems();
+			Heap remaining = Dungeon.level.heaps.get(pos);
+			if (remaining == heap && remaining.size() == oldSize) break;
+			heap = remaining;
+		}
 	}
 
 	@Override public CharSprite sprite() { return new PetrifiedStatueSprite(this); }
@@ -60,7 +73,7 @@ public class PetrifiedStatue extends Mob {
 	@Override public String description() { return Messages.get(this, "desc"); }
 	@Override public boolean heroShouldInteract() { return false; }
 	@Override public boolean interact(Char other) { return false; }
-	@Override protected boolean act() { diactivate(); return true; }
+	@Override protected boolean act() { throwAllItems(); diactivate(); return true; }
 	@Override protected void onAdd() { }
 	@Override public void aggro(Char enemy) { }
 	@Override public void beckon(int cell) { }

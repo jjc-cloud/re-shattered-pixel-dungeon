@@ -136,11 +136,32 @@ public class WarriorSealRegression {
 		}
 		hero.heroClass = HeroClass.MAGE;
 		hero.belongings.armor = null;
+		shield.detach();
 		hero.talents.get(0).put(Talent.IRON_WILL, 1);
-		check(hero.defenseProc(enemy, 10) == 7, "metamorphed Iron Will rank one reduces physical damage by 3");
+		hero.HP = 100;
+		hero.damage(hero.defenseProc(enemy, 10), enemy);
+		check(hero.HP == 93, "metamorphed Iron Will rank one reduces enemy physical damage by 3");
+		hero.HP = 100;
+		hero.damage(10, new Warlock.DarkBolt());
+		check(hero.HP == 93, "metamorphed Iron Will rank one reduces enemy magic damage by 3");
+		hero.HP = 100;
+		hero.damage(10, new Object());
+		check(hero.HP == 90, "metamorphed Iron Will does not reduce environment damage");
+		Char ally = new Char() { };
+		ally.alignment = Char.Alignment.ALLY;
+		hero.HP = 100;
+		hero.damage(10, ally);
+		check(hero.HP == 90, "metamorphed Iron Will does not reduce ally damage");
 		hero.talents.get(0).put(Talent.IRON_WILL, 2);
-		check(hero.defenseProc(enemy, 10) == 6, "metamorphed Iron Will rank two reduces physical damage by 4");
-		check(hero.defenseProc(enemy, 2) == 0, "metamorphed Iron Will cannot heal via negative damage");
+		hero.HP = 100;
+		hero.damage(10, enemy);
+		check(hero.HP == 94, "metamorphed Iron Will rank two reduces enemy damage by 4");
+		hero.damage(2, enemy);
+		check(hero.HP == 94, "metamorphed Iron Will cannot heal via negative damage");
+		hero.heroClass = HeroClass.WARRIOR;
+		hero.HP = 100;
+		hero.damage(10, enemy);
+		check(hero.HP == 90, "native Warrior does not gain the metamorphosis damage reduction");
 		System.out.println("PASS: seal forms, pre-hit shields, cooldowns, actual HP thresholds and saved guard");
 	}
 

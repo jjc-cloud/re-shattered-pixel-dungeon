@@ -25,124 +25,59 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Petrification;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Beam;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
-import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
-import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Callback;
 import com.watabou.utils.PointF;
 import com.watabou.utils.Random;
-import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 
-public class WandOfPetrification extends DamageWand {
-	
+public class WandOfPetrification extends Wand {
+
+	private static final float ZAP_PROGRESS = 0.5f;
+
 	{
 		image = ItemSpriteSheet.WAND_PETRIFICATION;
 	}
-	
+
 	@Override
 	public void onZap(Ballistica bolt) {
-		boolean hit = false;
-		
-		for (int c : bolt.subPath(1, bolt.dist)) {
-			Char ch = Actor.findChar(c);
-			if (ch != null) {
-				hit = true;
-				
-				// Apply Petrification effect
-				if (Petrification.canAffect(ch)) {
-					Petrification petrification = Buff.affect(ch, Petrification.class);
-					try {
-						// Use reflection to set private progress field
-						java.lang.reflect.Field field = Petrification.class.getDeclaredField("progress");
-						field.setAccessible(true);
-						float current = (Float) field.get(petrification);
-						field.set(petrification, Math.min(1f, current + 0.5f)); // 50%石化负面
-					} catch (Exception e) {
-						// Fallback to apply method if reflection fails
-						Petrification.apply(ch);
-					}
-					
-					// No particle effect as requested
-				}
-			}
+		Char ch = Actor.findChar(bolt.collisionPos);
+		if (ch != null) {
+			wandProc(ch, chargesPerCast());
+			Petrification.apply(ch, ZAP_PROGRESS);
+		} else {
+			Dungeon.level.pressCell(bolt.collisionPos);
 		}
-		
-		// Create beam effect - using LightRay but more transparent
-		Beam.PetrificationRay beam = new Beam.PetrificationRay(curUser.sprite.center(), DungeonTilemap.raisedTileCenterToWorld(bolt.collisionPos));
-		curUser.sprite.parent.add(beam);
-		
-		Sample.INSTANCE.play(Assets.Sounds.RAY);
 	}
-	
+
+	@Override
+	public void fx(Ballistica bolt, Callback callback) {
+		Beam.LightRay beam = new Beam.LightRay(curUser.sprite.center(),
+				DungeonTilemap.raisedTileCenterToWorld(bolt.collisionPos));
+		beam.tint(0.8f, 0.8f, 0.8f, 0.3f);
+		curUser.sprite.parent.add(beam);
+		Sample.INSTANCE.play(Assets.Sounds.RAY);
+		callback.call();
+	}
+
 	@Override
 	public void onHit(MagesStaff staff, Char attacker, Char defender, int damage) {
-		// Apply Petrification effect on hit - staff bonus effect
-		if (Petrification.canAffect(defender)) {
-			Petrification petrification = Buff.affect(defender, Petrification.class);
-			// 10% + 魔杖等级 * 5%石化负面
-			float bonus = 0.1f + staff.buffedLvl() * 0.05f;
-			try {
-				// Use reflection to set private progress field
-				java.lang.reflect.Field field = Petrification.class.getDeclaredField("progress");
-				field.setAccessible(true);
-				float current = (Float) field.get(petrification);
-				field.set(petrification, Math.min(1f, current + bonus));
-			} catch (Exception e) {
-				// Fallback to apply method if reflection fails
-				Petrification.apply(defender);
-			}
-		}
+		float progress = (0.1f + staff.buffedLvl() * 0.05f) * procChanceMultiplier(attacker);
+		Petrification.apply(defender, progress);
 	}
-	
-	@Override
-	public String statsDesc() {
-		return Messages.get(this, "stats_desc", min(), max());
-	}
-	
-	@Override
-	public String upgradeStat2(int level) {
-		return Messages.get(this, "upgrade_stat2", 10 + level * 5);
-	}
-	
+
 	@Override
 	public void staffFx(MagesStaff.StaffParticle particle) {
-		particle.color(0xCCCCCC); // Light gray color
-		particle.am = 0.3f; // More transparent than prismatic
+		particle.color(0xCCCCCC);
+		particle.am = 0.3f;
 		particle.setLifespan(1f);
 		particle.speed.polar(Random.Float(PointF.PI2), 1f);
 		particle.setSize(0.5f, 1.5f);
 		particle.radiateXY(0.3f);
-	}
-	
-	@Override
-	public String title() {
-		return Messages.get(this, "title");
-	}
-	
-	@Override
-	public String desc() {
-		return Messages.get(this, "desc");
-	}
-	
-	@Override
-	public int min(int level) {
-		return 2 + level * 2;
-	}
-	
-	@Override
-	public int max(int level) {
-		return 6 + level * 4;
-	}
-	
-	@Override
-	public int damageRoll(int level) {
-		return Random.NormalIntRange(min(level), max(level));
 	}
 }
