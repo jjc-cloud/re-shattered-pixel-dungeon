@@ -137,9 +137,10 @@ public class WarriorSealRegression {
 		hero.heroClass = HeroClass.MAGE;
 		hero.belongings.armor = null;
 		hero.talents.get(0).put(Talent.IRON_WILL, 1);
-		check(shield.maxShield() == 15, "metamorphed Iron Will rank one");
+		check(hero.defenseProc(enemy, 10) == 7, "metamorphed Iron Will rank one reduces physical damage by 3");
 		hero.talents.get(0).put(Talent.IRON_WILL, 2);
-		check(shield.maxShield() == 30, "metamorphed Iron Will rank two");
+		check(hero.defenseProc(enemy, 10) == 6, "metamorphed Iron Will rank two reduces physical damage by 4");
+		check(hero.defenseProc(enemy, 2) == 0, "metamorphed Iron Will cannot heal via negative damage");
 		System.out.println("PASS: seal forms, pre-hit shields, cooldowns, actual HP thresholds and saved guard");
 	}
 
