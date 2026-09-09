@@ -317,6 +317,36 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 			health.killAndErase();
 		}
 	}
+
+	/** Leave the living pose frozen as a statue, without a death animation or fade. */
+	public void petrify() {
+		sleeping = false;
+		idle();
+		paused = true;
+		hideEmo();
+		if (health != null) health.killAndErase();
+		com.watabou.noosa.Game.runOnRenderThread(() -> {
+			paused = true;
+			com.shatteredpixel.shatteredpixeldungeon.effects.IceBlock.petrify(this);
+		});
+	}
+
+	public void petrifiedFall() {
+		idle();
+		paused = true;
+		hideEmo();
+		if (health != null) health.killAndErase();
+		Game.runOnRenderThread(() -> {
+			IceBlock.petrify(this);
+			if (parent != null) parent.add(new com.watabou.noosa.tweeners.ScaleTweener(this, new PointF(0, 0), 0.5f) {
+				@Override protected void updateValues(float progress) {
+					super.updateValues(progress);
+					am = 1f - progress;
+				}
+				@Override protected void onComplete() { CharSprite.this.killAndErase(); }
+			});
+		});
+	}
 	
 	public Emitter emitter() {
 		Emitter emitter = GameScene.emitter();

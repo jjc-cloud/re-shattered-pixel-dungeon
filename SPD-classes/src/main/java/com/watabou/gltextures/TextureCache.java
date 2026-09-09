@@ -108,6 +108,24 @@ public class TextureCache {
 		}
 	}
 
+	/** Cache immutable RGBA pixels without issuing GL calls, even when reusing an uploaded texture. */
+	public synchronized static SmartTexture createPixels(Object key, int width, int height, int[] rgba) {
+		if (width <= 0 || height <= 0 || (long)width * height != rgba.length) {
+			throw new IllegalArgumentException("Invalid texture dimensions");
+		}
+		SmartTexture cached = all.get(key);
+		if (cached != null) return cached;
+		Pixmap bitmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
+		bitmap.setBlending(Pixmap.Blending.None);
+		for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) {
+			bitmap.drawPixel(x, y, rgba[y * width + x]);
+		}
+		// SmartTexture defaults to NEAREST/CLAMP; upload is deferred until rendering binds it.
+		SmartTexture texture = new SmartTexture(bitmap);
+		all.put(key, texture);
+		return texture;
+	}
+
 	public synchronized static SmartTexture get( Object src ) {
 		
 		if (all.containsKey( src )) {

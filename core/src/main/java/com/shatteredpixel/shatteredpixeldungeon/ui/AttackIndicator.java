@@ -32,7 +32,6 @@ import com.shatteredpixel.shatteredpixeldungeon.windows.WndKeyBindings;
 import com.watabou.input.GameAction;
 import com.watabou.noosa.Game;
 import com.watabou.utils.Random;
-import com.watabou.utils.Reflection;
 
 import java.util.ArrayList;
 
@@ -149,7 +148,7 @@ public class AttackIndicator extends Tag {
 			sprite = null;
 		}
 		
-		sprite = Reflection.newInstance(lastTarget.spriteClass);
+		sprite = lastTarget.sprite();
 		active = true;
 		sprite.linkVisuals(lastTarget);
 		sprite.idle();

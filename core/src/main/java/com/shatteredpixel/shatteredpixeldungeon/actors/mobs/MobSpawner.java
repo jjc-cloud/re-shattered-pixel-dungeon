@@ -272,5 +272,6 @@ public class MobSpawner extends Actor {
 		RARE_ALTS.put(Elemental.class,      Elemental.ChaosElemental.class);
 
 		RARE_ALTS.put(Scorpio.class,        Acidic.class);
+		RARE_ALTS.put(Eye.class,            MedusaEye.class);
 	}
 }

@@ -26,12 +26,17 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.Gizmo;
 import com.watabou.noosa.audio.Sample;
+import com.watabou.gltextures.SmartTexture;
+import com.watabou.gltextures.TextureCache;
+import com.watabou.glwrap.Texture;
+import com.watabou.utils.RectF;
 
 public class IceBlock extends Gizmo {
 	
 	private float phase;
 	
 	private CharSprite target;
+	private boolean stone;
 	
 	public IceBlock( CharSprite target ) {
 		super();
@@ -43,6 +48,16 @@ public class IceBlock extends Gizmo {
 	@Override
 	public void update() {
 		super.update();
+		if (stone) {
+			if (!target.alive) {
+				killAndErase();
+				return;
+			}
+			target.paused = true;
+			phase = Math.min(1f, phase + Game.elapsed * 2);
+			target.tint(0.65f, 0.65f, 0.65f, phase * 0.25f);
+			return;
+		}
 
 		if ((phase += Game.elapsed * 2) < 1) {
 			target.tint( 0.83f, 1.17f, 1.33f, phase * 0.6f );
@@ -69,5 +84,29 @@ public class IceBlock extends Gizmo {
 			sprite.parent.add( iceBlock );
 		
 		return iceBlock;
+	}
+
+	public static IceBlock petrify(CharSprite sprite) {
+		// Keep the frozen pose's shading while removing all color from the statue.
+		SmartTexture source = sprite.texture;
+		SmartTexture gray = TextureCache.create("stone-sprite-" + source.hashCode(), source.width, source.height);
+		gray.bitmap.setBlending(com.badlogic.gdx.graphics.Pixmap.Blending.None);
+		for (int y = 0; y < source.height; y++) {
+			for (int x = 0; x < source.width; x++) {
+				int pixel = source.bitmap.getPixel(x, y);
+				int value = ((pixel >>> 24) * 30 + ((pixel >>> 16) & 255) * 59
+						+ ((pixel >>> 8) & 255) * 11) / 100;
+				gray.bitmap.drawPixel(x, y, (value << 24) | (value << 16) | (value << 8) | (pixel & 255));
+			}
+		}
+		gray.filter(Texture.NEAREST, Texture.NEAREST);
+		RectF pose = sprite.frame();
+		sprite.texture(gray);
+		sprite.frame(pose);
+		IceBlock block = new IceBlock(sprite);
+		block.stone = true;
+		sprite.paused = true;
+		if (sprite.parent != null) sprite.parent.add(block);
+		return block;
 	}
 }

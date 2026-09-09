@@ -40,27 +40,32 @@ public class EyeSprite extends MobSprite {
 	private Emitter chargeParticles;
 	
 	public EyeSprite() {
+		this(0);
+	}
+
+	protected EyeSprite(int row) {
 		super();
 		
 		texture( Assets.Sprites.EYE );
 		
 		TextureFilm frames = new TextureFilm( texture, 16, 18 );
+		int offset = row * (texture.width / 16);
 		
 		idle = new Animation( 8, true );
-		idle.frames( frames, 0, 1, 2 );
+		idle.frames( frames, offset, offset+1, offset+2 );
 
 		charging = new Animation( 12, true);
-		charging.frames( frames, 3, 4 );
+		charging.frames( frames, offset+3, offset+4 );
 		
 		run = new Animation( 12, true );
-		run.frames( frames, 5, 6 );
+		run.frames( frames, offset+5, offset+6 );
 		
 		attack = new Animation( 8, false );
-		attack.frames( frames, 4, 3 );
+		attack.frames( frames, offset+4, offset+3 );
 		zap = attack.clone();
 		
 		die = new Animation( 8, false );
-		die.frames( frames, 7, 8, 9 );
+		die.frames( frames, offset+7, offset+8, offset+9 );
 		
 		play( idle );
 	}
