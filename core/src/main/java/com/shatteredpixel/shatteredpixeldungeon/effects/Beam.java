@@ -64,6 +64,13 @@ public class Beam extends Image {
 		}
 	}
 
+	public static class PetrificationRay extends Beam{
+		public PetrificationRay(PointF s, PointF e){
+			super(s, e, Effects.Type.LIGHT_RAY, 0.5f); // Shorter duration for petrification
+			tint(0.8f, 0.8f, 0.8f, 0.3f); // More transparent than prismatic
+		}
+	}
+	
 	public static class SunRay extends Beam{
 		public SunRay(PointF s, PointF e){
 			super(s, e, Effects.Type.LIGHT_RAY, 1f);
