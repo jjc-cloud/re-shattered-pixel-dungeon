@@ -38,6 +38,7 @@ import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Callback;
 import com.watabou.utils.PointF;
 import com.watabou.utils.Random;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 
 public class WandOfPetrification extends DamageWand {
 	
@@ -57,7 +58,16 @@ public class WandOfPetrification extends DamageWand {
 				// Apply Petrification effect
 				if (Petrification.canAffect(ch)) {
 					Petrification petrification = Buff.affect(ch, Petrification.class);
-					petrification.progress = Math.min(1f, petrification.progress() + 0.5f); // 50%石化负面
+					try {
+						// Use reflection to set private progress field
+						java.lang.reflect.Field field = Petrification.class.getDeclaredField("progress");
+						field.setAccessible(true);
+						float current = (Float) field.get(petrification);
+						field.set(petrification, Math.min(1f, current + 0.5f)); // 50%石化负面
+					} catch (Exception e) {
+						// Fallback to apply method if reflection fails
+						Petrification.apply(ch);
+					}
 					
 					// No particle effect as requested
 				}
@@ -78,7 +88,16 @@ public class WandOfPetrification extends DamageWand {
 			Petrification petrification = Buff.affect(defender, Petrification.class);
 			// 10% + 魔杖等级 * 5%石化负面
 			float bonus = 0.1f + staff.buffedLvl() * 0.05f;
-			petrification.progress = Math.min(1f, petrification.progress() + bonus);
+			try {
+				// Use reflection to set private progress field
+				java.lang.reflect.Field field = Petrification.class.getDeclaredField("progress");
+				field.setAccessible(true);
+				float current = (Float) field.get(petrification);
+				field.set(petrification, Math.min(1f, current + bonus));
+			} catch (Exception e) {
+				// Fallback to apply method if reflection fails
+				Petrification.apply(defender);
+			}
 		}
 	}
 	
