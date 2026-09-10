@@ -44,6 +44,7 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndBag;
+import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndUseItem;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.audio.Sample;
@@ -145,6 +146,40 @@ public class BrokenSeal extends Item {
 			} else if (armor.cursed && (getGlyph() == null || !getGlyph().curse())){
 				GLog.w(Messages.get(BrokenSeal.class, "cursed_armor"));
 
+			} else if (armor.glyph != null && getGlyph() != null &&
+					(canTransferGlyph() || outgoing instanceof BrokenSeal) //if glyph is on the seal in isolation, always allow xfer
+					&& armor.glyph.getClass() != getGlyph().getClass()) {
+
+				GameScene.show(new WndOptions(new ItemSprite(ItemSpriteSheet.SEAL),
+						Messages.get(BrokenSeal.class, "choose_title"),
+						Messages.get(BrokenSeal.class, "choose_desc", armor.glyph.name(), getGlyph().name()),
+						armor.glyph.name(),
+						getGlyph().name()){
+					@Override
+					protected void onSelect(int index) {
+						if (index == -1) return;
+
+						if (outgoing == BrokenSeal.this) {
+							detach(Dungeon.hero.belongings.backpack);
+						} else if (outgoing instanceof Armor){
+							((Armor) outgoing).detachSeal();
+						}
+
+						if (index == 0) setGlyph(null);
+						//if index is 1, then the glyph transfer happens in affixSeal
+
+						GLog.p(Messages.get(BrokenSeal.class, "affix"));
+						Dungeon.hero.sprite.operate(Dungeon.hero.pos);
+						Sample.INSTANCE.play(Assets.Sounds.UNLOCK);
+						armor.affixSeal(BrokenSeal.this);
+					}
+
+					@Override
+					public void hide() {
+						super.hide();
+						Dungeon.hero.next();
+					}
+				});
 			} else {
 				if (outgoing == this) {
 					detach(Dungeon.hero.belongings.backpack);
