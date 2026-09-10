@@ -242,7 +242,8 @@ public enum HeroClass {
 		spikes.quantity(2).identify().collect(); //set quantity is 3, but Duelist starts with 2
 
 		Dungeon.quickslot.setSlot(0, hero.belongings.weapon);
-		Dungeon.quickslot.setSlot(1, spikes);
+		Dungeon.quickslot.setSlot(1, hero.belongings.secondWep);
+		Dungeon.quickslot.setSlot(2, spikes);
 
 		new PotionOfStrength().identify();
 		new ScrollOfMirrorImage().identify();

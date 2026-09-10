@@ -29,8 +29,10 @@ import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.SacrificialFire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.SmokeScreen;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.VaultFlameTraps;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Web;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.WellWater;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Awareness;
@@ -91,6 +93,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.HighGrass;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MagicalFireRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.ShadowCaster;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -1282,11 +1285,14 @@ public abstract class Level implements Bundlable {
 	private static boolean[] heroMindFov;
 
 	private static boolean[] modifiableBlocking;
+	private static boolean[] environmentalFOV;
+	private int environmentalViewDistance;
 
 	public void updateFieldOfView( Char c, boolean[] fieldOfView ) {
 
 		int cx = c.pos % width();
 		int cy = c.pos / width();
+		if (c == Dungeon.hero) environmentalViewDistance = 0;
 		
 		boolean sighted = c.buff( Blindness.class ) == null && c.buff( Shadows.class ) == null
 						&& c.isAlive();
@@ -1340,6 +1346,15 @@ public abstract class Level implements Bundlable {
 			}
 			
 			ShadowCaster.castShadow( cx, cy, width(), fieldOfView, blocking, Math.round(viewDist) );
+
+			if (c == Dungeon.hero) {
+				if (environmentalFOV == null || environmentalFOV.length != length()) {
+					environmentalFOV = new boolean[length()];
+				}
+				int mapDiagonal = (int)Math.ceil(Math.hypot(width(), height()));
+				ShadowCaster.castShadow(cx, cy, width(), environmentalFOV, blocking, mapDiagonal);
+				addEnvironmentalLighting(c, fieldOfView, environmentalFOV);
+			}
 		} else {
 			BArray.setFalse(fieldOfView);
 		}
@@ -1502,6 +1517,44 @@ public abstract class Level implements Bundlable {
 					heap.seen = true;
 		}
 
+	}
+
+	protected int environmentalLightRadius( int cell, Char viewer ) {
+		if (isActiveEnvironmentalBlob(cell, Fire.class)
+				|| isActiveEnvironmentalBlob(cell, MagicalFireRoom.EternalFire.class)
+				|| isActiveEnvironmentalBlob(cell, VaultFlameTraps.class)) {
+			return 0;
+		}
+		return -1;
+	}
+
+	protected boolean isActiveEnvironmentalBlob( int cell, Class<? extends Blob> type ) {
+		Blob blob = blobs.get(type);
+		return blob != null && blob.volume > 0 && blob.cur != null && blob.cur[cell] > 0;
+	}
+
+	private void addEnvironmentalLighting( Char viewer, boolean[] fieldOfView, boolean[] lineOfSight ) {
+		for (int source = 0; source < length(); source++) {
+			if (!lineOfSight[source]) continue;
+			int radius = environmentalLightRadius(source, viewer);
+			if (radius < 0) continue;
+
+			int sourceX = source % width();
+			int sourceY = source / width();
+			for (int y = Math.max(0, sourceY - radius); y <= Math.min(height() - 1, sourceY + radius); y++) {
+				for (int x = Math.max(0, sourceX - radius); x <= Math.min(width() - 1, sourceX + radius); x++) {
+					int cell = x + y * width();
+					if (lineOfSight[cell]) {
+						fieldOfView[cell] = true;
+						environmentalViewDistance = Math.max(environmentalViewDistance, distance(viewer.pos, cell));
+					}
+				}
+			}
+		}
+	}
+
+	public int environmentalViewDistance() {
+		return environmentalViewDistance;
 	}
 
 	public float levelExplorePercent( int depth ){

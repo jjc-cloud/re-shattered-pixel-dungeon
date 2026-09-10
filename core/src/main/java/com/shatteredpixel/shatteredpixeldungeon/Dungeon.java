@@ -923,6 +923,7 @@ public class Dungeon {
 		}
 		
 		level.updateFieldOfView(hero, level.heroFOV);
+		dist = Math.max(dist, level.environmentalViewDistance() + 1);
 
 		int x = hero.pos % level.width();
 		int y = hero.pos / level.width();

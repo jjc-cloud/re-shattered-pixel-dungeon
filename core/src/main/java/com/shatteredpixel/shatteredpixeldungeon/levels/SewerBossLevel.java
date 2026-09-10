@@ -53,6 +53,13 @@ import java.util.ArrayList;
 
 public class SewerBossLevel extends SewerLevel {
 
+	@Override
+	protected int environmentalLightRadius( int cell, Char viewer ) {
+		int radius = super.environmentalLightRadius(cell, viewer);
+		if (radius >= 0) return radius;
+		return (map[cell] != Terrain.WALL_DECO && (cell == exit() - 1 || cell == exit() + 1)) ? 1 : -1;
+	}
+
 	{
 		color1 = 0x48763c;
 		color2 = 0x59994a;
