@@ -464,7 +464,7 @@ public class VaultLevel extends CityLevel {
 			consumableLoot.get(2).addAll(Arrays.asList(
 					Reflection.newInstance(Random.oneOf(PotionOfMindVision.class, PotionOfLiquidFlame.class)),
 					Reflection.newInstance(Random.oneOf(Swiftthistle.Seed.class, Sungrass.Seed.class)),
-					Reflection.newInstance(Random.oneOf(ScrollOfLullaby.class, ScrollOfMagicMapping.class)),
+					Reflection.newInstance(Random.oneOf(ScrollOfLullaby.class, ScrollOfMagicMapping.class)).random(),
 					Reflection.newInstance(Random.oneOf(StoneOfBlast.class, StoneOfBlink.class))));
 			Collections.shuffle(consumableLoot.get(2));
 			consumableLoot.get(2).add(0, new PotionOfHealing());
