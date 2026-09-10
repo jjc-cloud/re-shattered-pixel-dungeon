@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LostInventory;
@@ -75,6 +76,13 @@ import com.watabou.utils.Random;
 import java.util.ArrayList;
 
 public class CityLevel extends RegularLevel {
+
+	@Override
+	protected int environmentalLightRadius( int cell, Char viewer ) {
+		int radius = super.environmentalLightRadius(cell, viewer);
+		if (radius >= 0) return radius;
+		return (map[cell] == Terrain.REGION_DECO || map[cell] == Terrain.REGION_DECO_ALT) ? 2 : -1;
+	}
 
 	{
 		color1 = 0x4b6636;

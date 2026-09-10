@@ -27,7 +27,7 @@ import com.watabou.utils.BArray;
 //based on: http://www.roguebasin.com/index.php?title=FOV_using_recursive_shadowcasting
 public final class ShadowCaster {
 
-	public static final int MAX_DISTANCE = 20;
+	public static final int MAX_DISTANCE = 128;
 	
 	//max length of rows as FOV moves out, for each FOV distance
 	//This is used to make the overall FOV circular, instead of square

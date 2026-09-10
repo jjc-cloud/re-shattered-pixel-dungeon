@@ -88,23 +88,56 @@ public class PrisonPainter extends RegularPainter {
 			}
 		}
 		
+		int[] undecoratedMap = map.clone();
 		for (int i=0; i < w; i++) {
 			if (map[i] == Terrain.WALL &&
-					(map[i + w] == Terrain.EMPTY || map[i + w] == Terrain.EMPTY_SP) &&
+					isOpenFloor(undecoratedMap[i + w]) &&
+					!isAdjacentToDoor(undecoratedMap, i, w) &&
 					Random.Int( 6 ) == 0) {
 				
 				map[i] = Terrain.WALL_DECO;
 			}
 		}
 		
-		for (int i=w; i < l - w; i++) {
-			if (map[i] == Terrain.WALL &&
-					map[i - w] == Terrain.WALL &&
-					(map[i + w] == Terrain.EMPTY || map[i + w] == Terrain.EMPTY_SP) &&
-					Random.Int( 3 ) == 0) {
-				
-				map[i] = Terrain.WALL_DECO;
+		for (int y=1; y < level.height()-1; y++) {
+			for (int x=1; x < w-1; x++) {
+				int cell = x + y*w;
+				if (isTorchWallCandidate(undecoratedMap, cell, w) && Random.Int( 3 ) == 0) {
+					map[cell] = Terrain.WALL_DECO;
+				}
 			}
 		}
+	}
+
+	protected static boolean isTorchWallCandidate( int[] map, int cell, int width ) {
+		if (map[cell] != Terrain.WALL || isAdjacentToDoor(map, cell, width)) return false;
+		return isWall(map[cell - width]) && isOpenFloor(map[cell + width])
+				|| isWall(map[cell + width]) && isOpenFloor(map[cell - width])
+				|| isWall(map[cell - 1]) && isOpenFloor(map[cell + 1])
+				|| isWall(map[cell + 1]) && isOpenFloor(map[cell - 1]);
+	}
+
+	private static boolean isWall( int terrain ) {
+		return terrain == Terrain.WALL || terrain == Terrain.WALL_DECO;
+	}
+
+	private static boolean isOpenFloor( int terrain ) {
+		return terrain == Terrain.EMPTY || terrain == Terrain.EMPTY_SP;
+	}
+
+	private static boolean isAdjacentToDoor( int[] map, int cell, int width ) {
+		return cell >= width && isDoor(map[cell - width])
+				|| cell + width < map.length && isDoor(map[cell + width])
+				|| cell % width > 0 && isDoor(map[cell - 1])
+				|| cell % width < width - 1 && isDoor(map[cell + 1]);
+	}
+
+	private static boolean isDoor( int terrain ) {
+		return terrain == Terrain.DOOR
+				|| terrain == Terrain.OPEN_DOOR
+				|| terrain == Terrain.LOCKED_DOOR
+				|| terrain == Terrain.HERO_LKD_DR
+				|| terrain == Terrain.CRYSTAL_DOOR
+				|| terrain == Terrain.SECRET_DOOR;
 	}
 }

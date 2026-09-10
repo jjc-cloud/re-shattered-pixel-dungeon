@@ -11,6 +11,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.*;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.*;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.*;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.*;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingSpike;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingStone;
 import com.watabou.utils.Bundle;
 
@@ -264,6 +265,12 @@ public class ClassFeaturesRegression {
         HeroClass.DUELIST.initHero(hero);
         check(hero.belongings.weapon instanceof Rapier && hero.belongings.secondWep instanceof WornShortsword,
                 "duelist starts with equipped rapier and worn shortsword");
+        check(Dungeon.quickslot.getItem(0) == hero.belongings.weapon,
+                "duelist starts with rapier in the first quickslot");
+        check(Dungeon.quickslot.getItem(1) == hero.belongings.secondWep,
+                "duelist starts with worn shortsword in the second quickslot");
+        check(Dungeon.quickslot.getItem(2) instanceof ThrowingSpike,
+                "duelist starts with throwing spikes in the third quickslot");
         KindOfWeapon primary = hero.belongings.weapon, secondary = hero.belongings.secondWep;
         int oldCapacity = hero.belongings.backpack.capacity();
         primary.cursed = secondary.cursed = true;
