@@ -101,6 +101,8 @@ import com.shatteredpixel.shatteredpixeldungeon.items.remains.BrokenStaff;
 import com.shatteredpixel.shatteredpixeldungeon.items.remains.CloakScrap;
 import com.shatteredpixel.shatteredpixeldungeon.items.remains.SealShard;
 import com.shatteredpixel.shatteredpixeldungeon.items.remains.TornPage;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfDungeonBlueprint;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicMap;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ExoticScroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.Alchemize;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.BeaconOfReturning;
@@ -229,6 +231,7 @@ public enum Catalog {
 		POTIONS.addItems(Generator.Category.POTION.classes);
 
 		SCROLLS.addItems(Generator.Category.SCROLL.classes);
+		SCROLLS.addItems(ScrollOfMagicMap.class, ScrollOfDungeonBlueprint.class);
 
 		SEEDS.addItems(Generator.Category.SEED.classes);
 

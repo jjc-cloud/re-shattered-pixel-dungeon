@@ -26,12 +26,15 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
+import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
+import com.watabou.utils.Random;
 
 public class ScrollOfMagicMapping extends Scroll {
 
@@ -43,33 +46,7 @@ public class ScrollOfMagicMapping extends Scroll {
 	public void doRead() {
 
 		detach(curUser.belongings.backpack);
-		int length = Dungeon.level.length();
-		int[] map = Dungeon.level.map;
-		boolean[] mapped = Dungeon.level.mapped;
-		boolean[] discoverable = Dungeon.level.discoverable;
-		
-		boolean noticed = false;
-		
-		for (int i=0; i < length; i++) {
-			
-			int terr = map[i];
-			
-			if (discoverable[i]) {
-				
-				mapped[i] = true;
-				if ((Terrain.flags[terr] & Terrain.SECRET) != 0) {
-					
-					Dungeon.level.discover( i );
-					
-					if (Dungeon.level.heroFOV[i]) {
-						GameScene.discoverTile( i, terr );
-						discover( i );
-						
-						noticed = true;
-					}
-				}
-			}
-		}
+		boolean noticed = reveal(Dungeon.level, true);
 		GameScene.updateFog();
 		
 		GLog.i( Messages.get(this, "layout") );
@@ -88,6 +65,33 @@ public class ScrollOfMagicMapping extends Scroll {
 	@Override
 	public int value() {
 		return isKnown() ? 40 * quantity : super.value();
+	}
+
+	@Override
+	public Item random() {
+		if (getClass() == ScrollOfMagicMapping.class && Random.Float() < 0.05f) {
+			return Random.Float() < 0.20f ? new ScrollOfDungeonBlueprint() : new ScrollOfMagicMap();
+		}
+		return this;
+	}
+
+	public static boolean reveal( Level level, boolean showEffects ) {
+		boolean noticed = false;
+		for (int i = 0; i < level.length(); i++) {
+			int terr = level.map[i];
+			if (level.discoverable[i]) {
+				level.mapped[i] = true;
+				if ((Terrain.flags[terr] & Terrain.SECRET) != 0) {
+					level.discover(i);
+					if (showEffects && level.heroFOV[i]) {
+						GameScene.discoverTile(i, terr);
+						discover(i);
+						noticed = true;
+					}
+				}
+			}
+		}
+		return noticed;
 	}
 	
 	public static void discover( int cell ) {

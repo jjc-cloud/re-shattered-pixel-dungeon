@@ -751,6 +751,7 @@ public class InterlevelScene extends PixelScene {
 	private void resurrect() {
 		
 		Mob.holdAllies( Dungeon.level );
+		Dungeon.clearTemporaryMapKnowledgeOnDeath();
 
 		Level level;
 		if (Dungeon.level.locked) {

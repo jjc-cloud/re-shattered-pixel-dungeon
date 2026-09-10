@@ -102,7 +102,7 @@ public class SecretLibraryRoom extends SecretRoom {
 				}
 			}
 
-			level.drop( Reflection.newInstance(scrollCls), pos );
+			level.drop( Reflection.newInstance(scrollCls).random(), pos );
 		}
 	}
 	

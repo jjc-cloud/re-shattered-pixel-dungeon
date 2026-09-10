@@ -53,6 +53,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TalismanOfForesi
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicMapping;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfRegrowth;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfWarding;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
@@ -197,6 +198,8 @@ public class Dungeon {
 
 	//keeps track of what levels the game should try to load instead of creating fresh
 	public static ArrayList<Integer> generatedLevels = new ArrayList<>();
+	private static HashSet<Integer> regionMappedLevels = new HashSet<>();
+	private static boolean entireDungeonMapped;
 
 	public static int gold;
 	public static int energy;
@@ -265,6 +268,8 @@ public class Dungeon {
 		depth = 1;
 		branch = 0;
 		generatedLevels.clear();
+		regionMappedLevels.clear();
+		entireDungeonMapped = false;
 
 		gold = 0;
 		energy = 0;
@@ -302,6 +307,28 @@ public class Dungeon {
 
 	public static boolean levelHasBeenGenerated(int depth, int branch){
 		return generatedLevels.contains(depth + 1000*branch);
+	}
+
+	public static void revealCurrentRegion() {
+		if (branch != 0) return;
+		int firstDepth = ((depth - 1) / 5) * 5 + 1;
+		for (int i = firstDepth; i <= Math.min(firstDepth + 4, 25); i++) {
+			regionMappedLevels.add(i);
+		}
+	}
+
+	public static void revealEntireDungeon() {
+		entireDungeonMapped = true;
+	}
+
+	public static void clearTemporaryMapKnowledgeOnDeath() {
+		if (branch != 0 || entireDungeonMapped) return;
+		regionMappedLevels.removeIf(mappedDepth -> mappedDepth == depth
+				|| !levelHasBeenGenerated(mappedDepth, 0));
+	}
+
+	public static boolean hasMapKnowledge( int depth ) {
+		return entireDungeonMapped || regionMappedLevels.contains(depth);
 	}
 	
 	public static Level newLevel() {
@@ -489,6 +516,9 @@ public class Dungeon {
 		PathFinder.setMapSize(level.width(), level.height());
 		
 		Dungeon.level = level;
+		if (branch == 0 && hasMapKnowledge(depth)) {
+			ScrollOfMagicMapping.reveal(level, false);
+		}
 		hero.pos = pos;
 
 		if (hero.buff(AscensionChallenge.class) != null){
@@ -622,6 +652,8 @@ public class Dungeon {
 	private static final String DEPTH		= "depth";
 	private static final String BRANCH		= "branch";
 	private static final String GENERATED_LEVELS    = "generated_levels";
+	private static final String REGION_MAPPED_LEVELS= "region_mapped_levels";
+	private static final String ENTIRE_DUNGEON_MAPPED = "entire_dungeon_mapped";
 	private static final String GOLD		= "gold";
 	private static final String ENERGY		= "energy";
 	private static final String DROPPED     = "dropped%d";
@@ -688,6 +720,11 @@ public class Dungeon {
 				bundleArr[i] = generatedLevels.get(i);
 			}
 			bundle.put( GENERATED_LEVELS, bundleArr);
+			int[] mappedDepths = new int[regionMappedLevels.size()];
+			int mappedIndex = 0;
+			for (int mappedDepth : regionMappedLevels) mappedDepths[mappedIndex++] = mappedDepth;
+			bundle.put(REGION_MAPPED_LEVELS, mappedDepths);
+			bundle.put(ENTIRE_DUNGEON_MAPPED, entireDungeonMapped);
 			
 			Scroll.save( bundle );
 			Potion.save( bundle );
@@ -794,6 +831,12 @@ public class Dungeon {
 			for (int i : bundle.getIntArray(GENERATED_LEVELS)){
 				generatedLevels.add(i);
 			}
+
+			regionMappedLevels.clear();
+			if (bundle.contains(REGION_MAPPED_LEVELS)) {
+				for (int i : bundle.getIntArray(REGION_MAPPED_LEVELS)) regionMappedLevels.add(i);
+			}
+			entireDungeonMapped = bundle.getBoolean(ENTIRE_DUNGEON_MAPPED);
 
 			droppedItems = new SparseArray<>();
 			for (int i=1; i <= 26; i++) {

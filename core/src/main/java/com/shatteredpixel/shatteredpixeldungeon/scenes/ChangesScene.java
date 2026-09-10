@@ -29,12 +29,14 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ExitButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
+import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.TitleBackground;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ScrollPane;
 import com.shatteredpixel.shatteredpixeldungeon.ui.StyledButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.changelist.ChangeInfo;
 import com.shatteredpixel.shatteredpixeldungeon.ui.changelist.Pixel_Dungeon_Changes;
+import com.shatteredpixel.shatteredpixeldungeon.ui.changelist.ReShatteredChanges;
 import com.shatteredpixel.shatteredpixeldungeon.ui.changelist.WndChanges;
 import com.shatteredpixel.shatteredpixeldungeon.ui.changelist.WndChangesTabbed;
 import com.shatteredpixel.shatteredpixeldungeon.ui.changelist.v0_1_X_Changes;
@@ -64,6 +66,7 @@ import java.util.ArrayList;
 public class ChangesScene extends PixelScene {
 	
 	public static int changesSelected = 0;
+	public static boolean showingReShatteredChanges = true;
 
 	private NinePatch rightPanel;
 	private ScrollPane rightScroll;
@@ -103,20 +106,32 @@ public class ChangesScene extends PixelScene {
 		btnExit.setPos( insets.left + w - btnExit.width(), insets.top );
 		add( btnExit );
 
+		RedButton sourceButton = new RedButton(
+				showingReShatteredChanges ? "查看原版更新记录" : "查看本作更新记录", 8){
+			@Override
+			protected void onClick() {
+				super.onClick();
+				showingReShatteredChanges = !showingReShatteredChanges;
+				ShatteredPixelDungeon.seamlessResetScene();
+			}
+		};
+		sourceButton.setRect(insets.left + (w - 135) / 2f, insets.top + 20, 135, 17);
+		add(sourceButton);
+
 		NinePatch panel = Chrome.get(Chrome.Type.TOAST);
 
 		int pw = 135 + panel.marginLeft() + panel.marginRight() - 2;
-		int ph = h - 36;
+		int ph = h - 54;
 
 		if (h >= PixelScene.MIN_HEIGHT_FULL && w >= 300) {
 			panel.size( pw, ph );
 			panel.x = insets.left + (w - pw) / 2f - pw/2 - 1;
-			panel.y = insets.top + 20;
+			panel.y = insets.top + 38;
 
 			rightPanel = Chrome.get(Chrome.Type.TOAST);
 			rightPanel.size( pw, ph );
 			rightPanel.x = (w - pw) / 2f + pw/2 + 1;
-			rightPanel.y = 20;
+			rightPanel.y = insets.top + 38;
 			add(rightPanel);
 
 			rightScroll = new ScrollPane(new Component());
@@ -143,20 +158,22 @@ public class ChangesScene extends PixelScene {
 		} else {
 			panel.size( pw, ph );
 			panel.x = insets.left + (w - pw) / 2f;
-			panel.y = insets.top + 20;
+			panel.y = insets.top + 38;
 		}
 		align( panel );
 		add( panel );
 		
 		final ArrayList<ChangeInfo> changeInfos = new ArrayList<>();
 
-		if (Messages.lang() != Languages.ENGLISH){
+		if (!showingReShatteredChanges && Messages.lang() != Languages.ENGLISH){
 			ChangeInfo langWarn = new ChangeInfo("", true, Messages.get(this, "lang_warn"));
 			langWarn.hardlight(CharSprite.WARNING);
 			changeInfos.add(langWarn);
 		}
 		
-		switch (changesSelected){
+		if (showingReShatteredChanges){
+			ReShatteredChanges.addAllChanges(changeInfos);
+		} else switch (changesSelected){
 			case 0: default:
 				v4_X_Changes.addAllChanges(changeInfos);
 				break;
@@ -245,7 +262,7 @@ public class ChangesScene extends PixelScene {
 
 		float left = list.left()-4f;
 
-		if (changesSelected <= 3){
+		if (!showingReShatteredChanges && changesSelected <= 3){
 
 			left = setupChangesSelectionButton(0, "v4.X", left, list.bottom(), 24);
 			left = setupChangesSelectionButton(1, "v3.X", left, list.bottom(), 24);
@@ -253,7 +270,7 @@ public class ChangesScene extends PixelScene {
 			left = setupChangesSelectionButton(3, "v1.X", left, list.bottom(), 24);
 			left = setupChangesSelectionButton(4, "PreRelease->", left, list.bottom(), 53);
 
-		} else {
+		} else if (!showingReShatteredChanges) {
 
 			left = setupChangesSelectionButton(3, "<-Release", left, list.bottom(), 40);
 			left = setupChangesSelectionButton(4, "v0.9", left, list.bottom(), 22);
