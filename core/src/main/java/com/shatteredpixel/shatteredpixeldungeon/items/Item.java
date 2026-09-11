@@ -91,6 +91,9 @@ public class Item implements Bundlable {
 	// Unique items persist through revival
 	public boolean unique = false;
 
+	// 订购物品标记：非0表示属于某笔商店订购（同时享受1.5倍售价），由 ShopOrder 管理
+	public int shopOrderTag = 0;
+
 	// These items are preserved even if the hero's inventory is lost via unblessed ankh
 	// this is largely set by the resurrection window, items can override this to always be kept
 	public boolean keptThoughLostInvent = false;
@@ -585,7 +588,8 @@ public class Item implements Bundlable {
 	private static final String QUICKSLOT		= "quickslotpos";
 	private static final String KEPT_LOST       = "kept_lost";
 	private static final String CUSTOM_NOTE_ID = "custom_note_id";
-	
+	private static final String SHOP_ORDER_TAG = "shop_order_tag";
+
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		bundle.put( QUANTITY, quantity );
@@ -598,6 +602,7 @@ public class Item implements Bundlable {
 		}
 		bundle.put( KEPT_LOST, keptThoughLostInvent );
 		if (customNoteID != -1)     bundle.put(CUSTOM_NOTE_ID, customNoteID);
+		if (shopOrderTag != 0)      bundle.put(SHOP_ORDER_TAG, shopOrderTag);
 	}
 	
 	@Override
@@ -614,6 +619,7 @@ public class Item implements Bundlable {
 		}
 		
 		cursed	= bundle.getBoolean( CURSED );
+		shopOrderTag = bundle.getInt( SHOP_ORDER_TAG );
 
 		//only want to populate slots when restoring belongings
 		if (Belongings.bundleRestoring) {

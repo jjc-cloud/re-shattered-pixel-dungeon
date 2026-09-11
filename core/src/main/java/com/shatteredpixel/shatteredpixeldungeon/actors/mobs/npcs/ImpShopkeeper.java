@@ -22,18 +22,24 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
+import com.shatteredpixel.shatteredpixeldungeon.items.ShopOrder;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ImpSprite;
+import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
+import com.watabou.noosa.Game;
+import com.watabou.utils.Callback;
 
 public class ImpShopkeeper extends Shopkeeper {
 
 	{
 		spriteClass = ImpSprite.class;
 	}
-	
+
 	private boolean seenBefore = false;
-	
+
 	@Override
 	protected boolean act() {
 
@@ -47,5 +53,31 @@ public class ImpShopkeeper extends Shopkeeper {
 		}
 
 		return super.act();
+	}
+
+	@Override
+	public boolean interact(Char c) {
+		if (c != Dungeon.hero) {
+			return true;
+		}
+		//正替商人保管订购物品时，先说明情况
+		if (ShopOrder.impHoldingGoods()) {
+			Game.runOnRenderThread(new Callback() {
+				@Override
+				public void call() {
+					GameScene.show(new WndOptions(sprite(), Messages.titleCase(name()),
+							Messages.get(ImpShopkeeper.class, "order_note"),
+							Messages.get(ImpShopkeeper.class, "order_note_continue")) {
+						@Override
+						protected void onSelect(int index) {
+							super.onSelect(index);
+							ImpShopkeeper.super.interact(Dungeon.hero);
+						}
+					});
+				}
+			});
+			return true;
+		}
+		return super.interact(c);
 	}
 }
