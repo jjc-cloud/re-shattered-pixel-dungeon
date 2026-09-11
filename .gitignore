@@ -24,3 +24,6 @@ local.properties
 
 #test files
 /core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/TestStart.java
+
+#vs files
+.vs/

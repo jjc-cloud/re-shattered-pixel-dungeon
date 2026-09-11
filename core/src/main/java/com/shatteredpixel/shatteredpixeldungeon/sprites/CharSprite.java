@@ -227,9 +227,7 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 
 		isMoving = true;
 		
-		if (canShowWaterRipple(from) && Dungeon.level.water[from] && !ch.flying) {
-			GameScene.ripple( from );
-		}
+		showWaterRipple(from);
 
 	}
 	
@@ -237,10 +235,16 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 		moveInterval = interval;
 	}
 
-	private boolean canShowWaterRipple( int pos ) {
+	protected boolean canShowWaterRipple( int pos ) {
 		return visible || Dungeon.hero != null
 				&& Dungeon.level.distance(Dungeon.hero.pos, pos) <= 8
 				&& (Dungeon.level.visited[pos] || Dungeon.level.mapped[pos]);
+	}
+
+	public void showWaterRipple( int pos ) {
+		if (canShowWaterRipple(pos) && Dungeon.level.water[pos] && !ch.flying) {
+			GameScene.ripple(pos);
+		}
 	}
 	
 	//returns where the center of this sprite will be after it completes any motion in progress
@@ -851,9 +855,7 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 	public void onComplete( Tweener tweener ) {
 		if (tweener == jumpTweener) {
 
-			if (canShowWaterRipple(ch.pos) && Dungeon.level.water[ch.pos] && !ch.flying) {
-				GameScene.ripple( ch.pos );
-			}
+			showWaterRipple(ch.pos);
 			if (jumpCallback != null) {
 				jumpCallback.call();
 			}

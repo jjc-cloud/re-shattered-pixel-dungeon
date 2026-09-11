@@ -317,6 +317,7 @@ public abstract class Char extends Actor {
 			sprite.move( from, to );
 			return true;
 		} else {
+			sprite.showWaterRipple(from);
 			sprite.turnTo(from, to);
 			sprite.place( to );
 			return true;
