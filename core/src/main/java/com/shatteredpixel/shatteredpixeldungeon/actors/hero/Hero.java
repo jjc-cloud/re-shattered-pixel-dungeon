@@ -219,7 +219,8 @@ public class Hero extends Char {
 	}
 
 	public boolean hasSecondWeaponSlot() {
-		return heroClass == HeroClass.DUELIST && hasWeaponSlots();
+		return (heroClass == HeroClass.DUELIST || subClass == HeroSubClass.CHAMPION)
+				&& hasWeaponSlots();
 	}
 
 	public void removeMonkWeapons() {
@@ -659,7 +660,7 @@ public class Hero extends Char {
 		Combo.ParryTracker parry = buff(Combo.ParryTracker.class);
 		if (parry != null){
 			parry.parried = true;
-			if (buff(Combo.class) == null || buff(Combo.class).getComboCount() < 9 || pointsInTalent(Talent.ENHANCED_COMBO) < 2){
+			if (buff(Combo.class) == null || pointsInTalent(Talent.ENHANCED_COMBO) < 2){
 				parry.detach();
 			}
 			return Messages.get(Monk.class, "parried");

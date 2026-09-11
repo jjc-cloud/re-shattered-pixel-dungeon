@@ -1,6 +1,7 @@
 package com.shatteredpixel.shatteredpixeldungeon;
 
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.*;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.*;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
@@ -11,6 +12,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.*;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.*;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.*;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.*;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingSpike;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingStone;
 import com.watabou.utils.Bundle;
@@ -223,6 +225,12 @@ public class ClassFeaturesRegression {
     }
 
     private static void championAttacks() throws Exception {
+		Hero crossClassChampion = hero(HeroClass.WARRIOR, HeroSubClass.CHAMPION);
+		check(crossClassChampion.hasSecondWeaponSlot(), "cross-class champion gains the second weapon slot");
+		Hero crossClassMonk = hero(HeroClass.WARRIOR, HeroSubClass.MONK);
+		check(!crossClassMonk.hasWeaponSlots() && !crossClassMonk.hasSecondWeaponSlot(),
+				"cross-class monk trades weapon slots for the extra misc slot");
+
         StrikeHero hero = champion();
         float before = hero.cooldown();
         float delay = hero.attackDelay();
@@ -258,7 +266,56 @@ public class ClassFeaturesRegression {
         Char enemy = new Char() { }; enemy.HP = 100; enemy.pos = 21;
         hero.shoot(enemy, new ThrowingStone());
         check(hero.hits == 1, "throws do not trigger secondary strikes");
+		Hero gladiator = hero(HeroClass.WARRIOR, HeroSubClass.GLADIATOR);
+		gladiator.talents.get(2).put(Talent.ENHANCED_COMBO, 1);
+		check(Combo.ComboMove.CLOBBER.desc(2).contains("眩晕"),
+				"enhanced clobber activates at its normal two-hit requirement");
+		Combo combo = Buff.affect(gladiator, Combo.class);
+		enemy = new Char() { }; enemy.HP = enemy.HT = 100;
+		for (int i = 0; i < 6; i++) combo.hit(enemy);
+		gladiator.talents.get(2).put(Talent.ENHANCED_COMBO, 2);
+		Buff.affect(gladiator, Combo.ParryTracker.class, Actor.TICK);
+		gladiator.defenseVerb();
+		check(gladiator.buff(Combo.ParryTracker.class) != null,
+				"enhanced parry no longer needs nine combo to block repeatedly");
+		float[] expectedCleaveTimes = {33f, 66f, 100f};
+		for (int rank = 1; rank <= 3; rank++) {
+			gladiator = hero(HeroClass.WARRIOR, HeroSubClass.GLADIATOR);
+			gladiator.talents.get(2).put(Talent.CLEAVE, rank);
+			combo = Buff.affect(gladiator, Combo.class);
+			enemy = new Char() { }; enemy.HP = 0; enemy.HT = 100;
+			combo.hit(enemy);
+			Bundle comboState = new Bundle();
+			combo.storeInBundle(comboState);
+			close(comboState.getFloat("combotime"), expectedCleaveTimes[rank-1],
+					"cleave duration rank " + rank);
+		}
     }
+
+	private static class TestExperimentalMask extends ExperimentalTengusMask {
+		Item classItem(HeroSubClass subClass) {
+			return requiredClassItem(subClass);
+		}
+	}
+
+	private static void experimentalMaskClassItems() {
+		TestExperimentalMask mask = new TestExperimentalMask();
+		check(mask.classItem(HeroSubClass.BERSERKER) instanceof BrokenSeal, "berserker receives warrior item");
+		check(mask.classItem(HeroSubClass.GLADIATOR) instanceof BrokenSeal, "gladiator receives warrior item");
+		check(mask.classItem(HeroSubClass.BATTLEMAGE) instanceof MagesStaff, "battlemage receives mage item");
+		check(mask.classItem(HeroSubClass.WARLOCK) == null, "warlock receives no class item");
+		check(mask.classItem(HeroSubClass.ASSASSIN) instanceof CloakOfShadows, "assassin receives rogue item");
+		check(mask.classItem(HeroSubClass.FREERUNNER) instanceof CloakOfShadows, "freerunner receives rogue item");
+		check(mask.classItem(HeroSubClass.SNIPER) instanceof SpiritBow, "sniper receives huntress item");
+		check(mask.classItem(HeroSubClass.WARDEN) == null, "warden receives no class item");
+		check(mask.classItem(HeroSubClass.CHAMPION) == null, "champion receives its subclass equipment rules");
+		check(mask.classItem(HeroSubClass.MONK) == null, "monk receives its subclass equipment rules");
+		check(mask.classItem(HeroSubClass.PRIEST) instanceof HolyTome, "priest receives cleric item");
+		check(mask.classItem(HeroSubClass.PALADIN) instanceof HolyTome, "paladin receives cleric item");
+		Hero transferredWarrior = hero(HeroClass.MAGE, HeroSubClass.GLADIATOR);
+		check(mask.classItem(HeroSubClass.GLADIATOR).name().equals("完整纹章"),
+				"cross-class warrior specialization receives the post-transfer complete seal");
+	}
 
     private static void monkEquipment() {
         Hero hero = hero(HeroClass.DUELIST, HeroSubClass.NONE);
@@ -392,6 +449,7 @@ public class ClassFeaturesRegression {
         searching();
         clericDamage();
         championAttacks();
+		experimentalMaskClassItems();
         monkEquipment();
         monkEnergy();
         System.out.println("PASS: class charging, hunger, stealth, cleric damage, champion strikes, monk slots and energy");

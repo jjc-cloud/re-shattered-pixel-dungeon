@@ -79,7 +79,7 @@ public class BrokenSeal extends Item {
 	}
 
 	private static boolean isComplete(Hero hero) {
-		return hero != null && hero.heroClass == HeroClass.WARRIOR
+		return hero != null
 				&& (hero.subClass == HeroSubClass.GLADIATOR || hero.subClass == HeroSubClass.BERSERKER);
 	}
 
@@ -290,7 +290,10 @@ public class BrokenSeal extends Item {
 		}
 
 		public void updateForm() {
-			cooldown = Math.max(-cooldownDuration(), Math.min(cooldown, cooldownDuration()));
+			cooldown = Math.min(cooldown, cooldownDuration());
+			if (!(target instanceof Hero) || ((Hero)target).subClass != HeroSubClass.GLADIATOR) {
+				cooldown = Math.max(-cooldownDuration(), cooldown);
+			}
 			BuffIndicator.refreshHero();
 		}
 
@@ -323,9 +326,10 @@ public class BrokenSeal extends Item {
 			if (loss <= 0 || !completeSealEquipped()) return;
 			if (((Hero)target).subClass == HeroSubClass.GLADIATOR) {
 				gladiatorDamage += loss;
-				if (gladiatorDamage >= 25) {
-					gladiatorDamage %= 25;
-					cooldown = 0;
+				int threshold = Math.max(1, (target.HT * 3 + 9) / 10);
+				while (gladiatorDamage >= threshold) {
+					gladiatorDamage -= threshold;
+					cooldown -= 100;
 				}
 			} else if (((Hero)target).subClass == HeroSubClass.BERSERKER) {
 				berserkerLoss += loss / (float)target.HT;
@@ -394,7 +398,8 @@ public class BrokenSeal extends Item {
 			}
 			if (completeSealEquipped()) {
 				if (((Hero)target).subClass == HeroSubClass.GLADIATOR) {
-					description += "\n\n" + Messages.get(this, "gladiator_progress", gladiatorDamage);
+					description += "\n\n" + Messages.get(this, "gladiator_progress", gladiatorDamage,
+							Math.max(1, (target.HT * 3 + 9) / 10));
 				} else {
 					description += "\n\n" + Messages.get(this, "berserker_progress", Math.round(berserkerLoss * 100));
 					if (guardReady) description += "\n\n" + Messages.get(this, "guard_ready");
@@ -438,7 +443,10 @@ public class BrokenSeal extends Item {
 		public synchronized void activate() {
 			deathShield = false;
 			incShield(maxShield());
-			cooldown = Math.max(0, cooldown+cooldownDuration());
+			cooldown += cooldownDuration();
+			if (!(target instanceof Hero) || ((Hero)target).subClass != HeroSubClass.GLADIATOR) {
+				cooldown = Math.max(0, cooldown);
+			}
 			turnsSinceEnemies = 0;
 			initialShield = maxShield();
 		}
@@ -473,9 +481,11 @@ public class BrokenSeal extends Item {
 			return cooldown > 0;
 		}
 
-		public void reduceCooldown(float percentage){
-			cooldown -= Math.round(cooldownDuration()*percentage);
-			cooldown = Math.max(cooldown, -cooldownDuration());
+		public void reduceCooldown(int turns){
+			cooldown -= turns;
+			if (!(target instanceof Hero) || ((Hero)target).subClass != HeroSubClass.GLADIATOR) {
+				cooldown = Math.max(cooldown, -cooldownDuration());
+			}
 		}
 
 		public synchronized void setArmor(Armor arm){

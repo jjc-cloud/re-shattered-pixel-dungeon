@@ -66,12 +66,28 @@ public class WarriorSealRegression {
 		check(state(shield).getInt("cooldown") == 100, "complete cooldown");
 		check(state(shield).getInt("gladiator_damage") == 0, "absorbed damage does not count");
 		shield.decShield(shield.shielding());
-		for (int i = 0; i < 24; i++) { hero.HP = 200; hero.damage(1, enemy); }
-		check(shield.coolingDown() && state(shield).getInt("gladiator_damage") == 24, "24 HP not enough");
+		for (int i = 0; i < 59; i++) { hero.HP = 200; hero.damage(1, enemy); }
+		check(shield.coolingDown() && state(shield).getInt("gladiator_damage") == 59, "less than 30 percent is not enough");
 		hero.damage(1, enemy);
-		check(!shield.coolingDown(), "25 HP resets cooldown");
+		check(!shield.coolingDown(), "30 percent max HP removes 100 cooldown, actual="
+				+ state(shield).getInt("cooldown") + ", progress="
+				+ state(shield).getInt("gladiator_damage") + ", HT=" + hero.HT);
 		hero.damage(1, enemy);
 		check(shield.shielding() == 4 && shield.coolingDown(), "next hit triggers refreshed shield");
+		shield.decShield(shield.shielding());
+		shield.reduceCooldown(100);
+		shield.reduceCooldown(100);
+		shield.reduceCooldown(100);
+		shield.reduceCooldown(100);
+		shield.updateForm();
+		check(state(shield).getInt("cooldown") == -300, "gladiator negative cooldown has no lower limit");
+		hero.damage(1, enemy);
+		check(shield.shielding() == 4 && state(shield).getInt("cooldown") == -200,
+				"one incoming hit activates once and consumes exactly 100 cooldown");
+		shield.decShield(shield.shielding());
+		shield.onHealthLost(120);
+		check(state(shield).getInt("cooldown") == -400,
+				"large health loss applies every completed 30 percent threshold");
 
 		hero = hero(HeroSubClass.BERSERKER);
 		shield = hero.buff(BrokenSeal.WarriorShield.class);
