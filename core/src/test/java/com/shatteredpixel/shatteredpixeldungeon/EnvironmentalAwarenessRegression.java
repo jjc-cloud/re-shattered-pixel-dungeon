@@ -6,6 +6,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.VaultFlameTraps;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Rat;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CavesBossLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CavesLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CityLevel;
@@ -14,6 +15,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.PrisonLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.PrisonPainter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MagicalFireRoom;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -21,6 +23,33 @@ import java.util.HashSet;
 
 /** Standalone checks for terrain light ranges and line-of-sight clipping. */
 public class EnvironmentalAwarenessRegression {
+	private static class RippleTrackingSprite extends CharSprite {
+		private boolean rippleShown;
+
+		private boolean canShowRipple( int cell ) {
+			return canShowWaterRipple(cell);
+		}
+
+		@Override
+		public void showWaterRipple( int cell ) {
+			rippleShown = true;
+		}
+
+		@Override
+		public void turnTo( int from, int to ) {
+		}
+
+		@Override
+		public void place( int cell ) {
+		}
+	}
+
+	private static class TestRat extends Rat {
+		private boolean moveSpriteForTest( int from, int to ) {
+			return moveSprite(from, to);
+		}
+	}
+
 	private static class TestPrisonPainter extends PrisonPainter {
 		private static boolean isCandidate( int[] map, int cell, int width ) {
 			return isTorchWallCandidate(map, cell, width);
@@ -150,6 +179,28 @@ public class EnvironmentalAwarenessRegression {
 		check(!level.heroFOV[cell(12, 6)], "pylon energy does not reveal neighboring tiles");
 	}
 
+	private static void mappedWaterRipple() {
+		PrisonLevel level = new PrisonLevel();
+		prepare(level);
+		int from = cell(6, 7);
+		int to = cell(7, 7);
+		level.map[from] = Terrain.WATER;
+		level.map[to] = Terrain.WATER;
+		level.buildFlagMaps();
+		level.mapped[from] = true;
+
+		TestRat rat = new TestRat();
+		rat.pos = from;
+		RippleTrackingSprite sprite = new RippleTrackingSprite();
+		sprite.visible = false;
+		sprite.ch = rat;
+		rat.sprite = sprite;
+
+		check(sprite.canShowRipple(from), "mapped water supports environmental ripple awareness");
+		rat.moveSpriteForTest(from, to);
+		check(sprite.rippleShown, "hidden movement still requests a ripple on known water");
+	}
+
 	public static void main( String[] args ) {
 		com.watabou.noosa.Game.version = "regression-test";
 		prisonTorchDirections();
@@ -158,6 +209,7 @@ public class EnvironmentalAwarenessRegression {
 		activeGroundLights();
 		caveLights();
 		pylonEnergyLight();
+		mappedWaterRipple();
 		System.out.println("PASS: environmental lighting ranges, sources, and occlusion");
 	}
 }
