@@ -45,6 +45,10 @@ public class WndChooseSubclass extends Window {
 	private static final float GAP		= 2;
 	
 	public WndChooseSubclass(final TengusMask tome, final Hero hero ) {
+		this(tome, hero, hero.heroClass.subClasses());
+	}
+
+	public WndChooseSubclass(final TengusMask tome, final Hero hero, final HeroSubClass[] choices ) {
 		
 		super();
 
@@ -68,7 +72,7 @@ public class WndChooseSubclass extends Window {
 						super.onSelect(index);
 						if (index == 0){
 							WndChooseSubclass.this.hide();
-							HeroSubClass cls = Random.oneOf(hero.heroClass.subClasses());
+							HeroSubClass cls = Random.oneOf(choices);
 							tome.choose(cls);
 							GameScene.show(new WndInfoSubclass(hero.heroClass, cls));
 						}
@@ -99,7 +103,7 @@ public class WndChooseSubclass extends Window {
 
 		float pos = message.bottom() + 3*GAP;
 
-		for (HeroSubClass subCls : hero.heroClass.subClasses()){
+		for (HeroSubClass subCls : choices){
 			RedButton btnCls = new RedButton( subCls.shortDesc(), 6 ) {
 				@Override
 				protected void onClick() {
