@@ -145,7 +145,7 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 	public float evasionMultiplier() {
 		if (power < 2f) return 1f - 0.1f * power;
 		if (power < 3f) return 0.8f + 0.2f * (power - 2f);
-		return 0.2f;
+		return 1f - 0.8f * (power - 3f);
 	}
 
 	public float speedMultiplier() {
