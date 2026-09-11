@@ -856,14 +856,19 @@ public class AlchemyScene extends PixelScene {
 
 		Recipe recipe = Recipe.findExperimentalRecipe(ingredients, experimentalOutput,
 				experimentalEnergy, experimentalCategory);
-		consumeEnergy(experimentalEnergy);
+		int energySpent = experimentalEnergy;
+		consumeEnergy(energySpent);
 
 		if (recipe != null) {
 			for (Item ingredient : ingredients) ingredient.identify();
 			Item result = recipe.brew(ingredients);
 			experimentalOutput = null;
 			experimentalEnergy = 0;
-			if (result != null) craftItem(ingredients, result);
+			if (result != null) {
+				Recipe.recordSpecialRecipe(recipe, energySpent);
+				craftItem(ingredients, result);
+				if (alchGuide != null) alchGuide.updateList();
+			}
 		} else {
 			bubbleEmitter.start(Speck.factory(Speck.BUBBLE), 0.01f, 100);
 			smokeEmitter.burst(Speck.factory(Speck.WOOL), 10);
@@ -1043,7 +1048,7 @@ public class AlchemyScene extends PixelScene {
 	}
 
 	private Item displayExperimentalOutput(final Item output, int category) {
-		if (experimentalGuideFound(category)) return output;
+		if (experimentalOutputKnown(output, category)) return output;
 		return new Item() {
 			{
 				image = output.image();
@@ -1064,6 +1069,13 @@ public class AlchemyScene extends PixelScene {
 				return output.glowing();
 			}
 		};
+	}
+
+	private boolean experimentalOutputKnown(Item output, int category) {
+		if (Recipe.isSpecialOutput(output)) {
+			return Document.ALCHEMY_GUIDE.isPageFound(9) || Recipe.isSpecialDiscovered(output);
+		}
+		return experimentalGuideFound(category);
 	}
 
 	private class WndExperimentalOutput extends Window {
@@ -1140,7 +1152,7 @@ public class AlchemyScene extends PixelScene {
 
 					@Override
 					protected boolean onLongClick() {
-						if (experimentalGuideFound(selectedCategory)) {
+						if (experimentalOutputKnown(output, selectedCategory)) {
 							AlchemyScene.this.addToFront(new WndInfoItem(output));
 							return true;
 						}
@@ -1462,12 +1474,12 @@ public class AlchemyScene extends PixelScene {
 					super.onClick();
 					if (experimentalMode && OutputSlot.this == outputs[0]) {
 						if (experimentalLastResult != null) {
-							if (experimentalGuideFound(experimentalCategory)) {
+							if (experimentalOutputKnown(experimentalLastResult, experimentalCategory)) {
 								AlchemyScene.this.addToFront(new WndInfoItem(experimentalLastResult));
 							}
 						} else if (experimentalOutput == null) {
 							AlchemyScene.this.addToFront(new WndExperimentalOutput());
-						} else if (experimentalGuideFound(experimentalCategory)) {
+						} else if (experimentalOutputKnown(experimentalOutput, experimentalCategory)) {
 							AlchemyScene.this.addToFront(new WndInfoItem(experimentalOutput));
 						}
 					} else if (visible && item != null && item.trueName() != null){
@@ -1479,7 +1491,9 @@ public class AlchemyScene extends PixelScene {
 				protected boolean onLongClick() {
 					if (experimentalMode && OutputSlot.this == outputs[0]
 							&& (experimentalOutput != null || experimentalLastResult != null)
-							&& experimentalGuideFound(experimentalCategory)) {
+							&& experimentalOutputKnown(
+								experimentalLastResult != null ? experimentalLastResult : experimentalOutput,
+								experimentalCategory)) {
 						AlchemyScene.this.addToFront(new WndInfoItem(
 								experimentalLastResult != null ? experimentalLastResult : experimentalOutput));
 						return true;

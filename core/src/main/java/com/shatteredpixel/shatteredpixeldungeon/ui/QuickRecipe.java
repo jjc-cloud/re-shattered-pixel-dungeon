@@ -97,9 +97,13 @@ public class QuickRecipe extends Component {
 	}
 	
 	public QuickRecipe(Recipe r, ArrayList<Item> inputs, final Item output) {
+		this(r, inputs, output, -1);
+	}
+
+	public QuickRecipe(Recipe r, ArrayList<Item> inputs, final Item output, int displayCost) {
 		
 		ingredients = inputs;
-		int cost = r.cost(inputs);
+		int cost = displayCost >= 0 ? displayCost : r.cost(inputs);
 		boolean hasInputs = true;
 		this.inputs = new ArrayList<>();
 		for (final Item in : inputs) {
@@ -340,6 +344,7 @@ public class QuickRecipe extends Component {
 					result.add(new QuickRecipe( r, in, r.sampleOutput(in)));
 					i++;
 				}
+				addDiscoveredSpecialRecipes(result, pageIdx);
 				return result;
 			case 6:
 				result.add(new QuickRecipe( new LiquidMetal.Recipe(),
@@ -366,6 +371,7 @@ public class QuickRecipe extends Component {
 				result.add(new QuickRecipe(new ElixirOfDragonsBlood.Recipe()));
 				result.add(new QuickRecipe(new ElixirOfFeatherFall.Recipe()));
 				result.add(new QuickRecipe(new ElixirOfMight.Recipe()));
+				addDiscoveredSpecialRecipes(result, pageIdx);
 				return result;
 			case 8:
 				result.add(new QuickRecipe(new UnstableSpell.Recipe(), new ArrayList<>(Arrays.asList(new Scroll.PlaceHolder(), new  Runestone.PlaceHolder())), new UnstableSpell()));
@@ -383,9 +389,21 @@ public class QuickRecipe extends Component {
 				result.add(new QuickRecipe(new ReclaimTrap.Recipe()));
 				result.add(new QuickRecipe(new SummonElemental.Recipe()));
 				result.add(new QuickRecipe(new BeaconOfReturning.Recipe()));
+				addDiscoveredSpecialRecipes(result, pageIdx);
 				return result;
 			case 9:
 				return result;
+		}
+	}
+
+	private static void addDiscoveredSpecialRecipes(ArrayList<QuickRecipe> result, int pageIdx) {
+		ArrayList<Recipe.SpecialRecipe> special = Recipe.discoveredSpecialRecipes(pageIdx);
+		if (special.isEmpty()) return;
+		result.add(null);
+		for (Recipe.SpecialRecipe recipe : special) {
+			ArrayList<Item> ingredients = recipe.getIngredients();
+			result.add(new QuickRecipe(recipe, ingredients, recipe.sampleOutput(ingredients),
+					Recipe.discoveredSpecialCost(recipe)));
 		}
 	}
 	

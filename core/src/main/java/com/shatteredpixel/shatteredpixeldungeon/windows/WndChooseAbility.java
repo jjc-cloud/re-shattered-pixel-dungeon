@@ -47,11 +47,19 @@ public class WndChooseAbility extends Window {
 	private static final float GAP		= 2;
 
 	public WndChooseAbility(final KingsCrown crown, final Armor armor, final Hero hero){
+		this(crown, armor, hero, defaultAbilities(hero));
+	}
+
+	private static ArmorAbility[] defaultAbilities(Hero hero) {
+		ArmorAbility[] classAbilities = hero.heroClass.armorAbilities();
+		return hero.subClass == HeroSubClass.MONK
+				? new ArmorAbility[]{classAbilities[0], classAbilities[2]} : classAbilities;
+	}
+
+	public WndChooseAbility(final KingsCrown crown, final Armor armor, final Hero hero,
+			final ArmorAbility[] abilities){
 
 		super();
-		ArmorAbility[] classAbilities = hero.heroClass.armorAbilities();
-		final ArmorAbility[] abilities = hero.subClass == HeroSubClass.MONK
-				? new ArmorAbility[]{classAbilities[0], classAbilities[2]} : classAbilities;
 
 		//crown can be null if hero is choosing from armor
 		IconTitle titlebar = new IconTitle();
