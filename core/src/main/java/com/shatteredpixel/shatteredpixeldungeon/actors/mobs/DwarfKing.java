@@ -52,6 +52,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.LloydsBeacon;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfForce;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfMetamorphosis;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLightning;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
@@ -561,8 +562,10 @@ public class DwarfKing extends Mob {
 
 		if (pos == CityBossLevel.throne){
 			Dungeon.level.drop(new KingsCrown(), pos + Dungeon.level.width()).sprite.drop(pos);
+			Dungeon.level.drop(new ScrollOfMetamorphosis(), pos + Dungeon.level.width()).sprite.drop(pos);
 		} else {
 			Dungeon.level.drop(new KingsCrown(), pos).sprite.drop();
+			Dungeon.level.drop(new ScrollOfMetamorphosis(), pos).sprite.drop();
 		}
 
 		Badges.validateBossSlain();

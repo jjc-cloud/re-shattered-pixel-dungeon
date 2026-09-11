@@ -69,12 +69,19 @@ public class KingsCrown extends Item {
 
 			curUser = hero;
 			if (hero.belongings.armor() != null){
-				GameScene.show( new WndChooseAbility(this, hero.belongings.armor(), hero));
+				GameScene.show( new WndChooseAbility(this, hero.belongings.armor(), hero,
+						abilityChoices(hero)));
 			} else {
 				GLog.w( Messages.get(this, "naked"));
 			}
 			
 		}
+	}
+
+	protected ArmorAbility[] abilityChoices(Hero hero) {
+		ArmorAbility[] classAbilities = hero.heroClass.armorAbilities();
+		return hero.subClass == com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass.MONK
+				? new ArmorAbility[]{classAbilities[0], classAbilities[2]} : classAbilities;
 	}
 	
 	@Override

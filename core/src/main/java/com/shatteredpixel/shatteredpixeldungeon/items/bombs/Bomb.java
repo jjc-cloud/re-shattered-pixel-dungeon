@@ -193,7 +193,7 @@ public class Bomb extends Item {
 					continue;
 				}
 
-				int dmg = Random.NormalIntRange(4 + Dungeon.scalingDepth(), 12 + 3*Dungeon.scalingDepth());
+				int dmg = damageRoll();
 				dmg -= ch.drRoll();
 
 				if (dmg > 0) {
@@ -213,6 +213,10 @@ public class Bomb extends Item {
 				Dungeon.observe();
 			}
 		}
+	}
+
+	protected int damageRoll() {
+		return Random.NormalIntRange(4 + Dungeon.scalingDepth(), 12 + 3*Dungeon.scalingDepth());
 	}
 	
 	@Override

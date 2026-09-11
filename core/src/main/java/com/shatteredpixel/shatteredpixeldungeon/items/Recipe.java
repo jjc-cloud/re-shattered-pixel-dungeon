@@ -23,6 +23,10 @@ package com.shatteredpixel.shatteredpixeldungeon.items;
 
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb;
+import com.shatteredpixel.shatteredpixeldungeon.items.bombs.ExorcismBomb;
+import com.shatteredpixel.shatteredpixeldungeon.items.bombs.ShockBomb;
+import com.shatteredpixel.shatteredpixeldungeon.items.bombs.StunBomb;
+import com.shatteredpixel.shatteredpixeldungeon.items.bombs.SuperBomb;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.Blandfruit;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.MeatPie;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.StewedMeat;
@@ -40,10 +44,17 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfFe
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfHoneyedHealing;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfIcyTouch;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfMight;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfKineticEnergy;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfToxicEssence;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.ExoticPotion;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRetribution;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ExoticScroll;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfAntiMagic;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfMetamorphosis;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfLevitation;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.PotionOfStamina;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.Alchemize;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.BeaconOfReturning;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.CurseInfusion;
@@ -60,8 +71,10 @@ import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.TrinketCatalyst;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.watabou.utils.Reflection;
+import com.watabou.utils.Bundle;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 public abstract class Recipe {
 	
@@ -240,9 +253,80 @@ public abstract class Recipe {
 	public static final int EXPERIMENTAL_BREWS = 1;
 	public static final int EXPERIMENTAL_SPELLS = 2;
 
+	public static class SpecialRecipe extends SimpleRecipe {
+
+		private final int category;
+
+		@SafeVarargs
+		public SpecialRecipe(int category, int cost, Class<? extends Item> output,
+				Class<? extends Item>... inputs) {
+			this.category = category;
+			this.cost = cost;
+			this.output = output;
+			this.inputs = inputs;
+			this.inQuantity = new int[inputs.length];
+			for (int i = 0; i < inQuantity.length; i++) inQuantity[i] = 1;
+			this.outQuantity = 1;
+		}
+
+		public int category() {
+			return category;
+		}
+
+		@Override
+		public boolean testIngredients(ArrayList<Item> ingredients) {
+			return exactIngredients(ingredients);
+		}
+
+		@Override
+		public boolean testIngredientsExperimental(ArrayList<Item> ingredients) {
+			return exactIngredients(ingredients);
+		}
+
+		private boolean exactIngredients(ArrayList<Item> ingredients) {
+			if (ingredients.size() != inputs.length) return false;
+			int[] found = new int[inputs.length];
+			for (Item ingredient : ingredients) {
+				boolean matched = false;
+				for (int i = 0; i < inputs.length; i++) {
+					if (ingredient.getClass() == inputs[i]) {
+						found[i] += ingredient.quantity();
+						matched = true;
+						break;
+					}
+				}
+				if (!matched) return false;
+			}
+			for (int i = 0; i < found.length; i++) {
+				if (found[i] != inQuantity[i]) return false;
+			}
+			return true;
+		}
+	}
+
+	private static final SpecialRecipe[] specialRecipes = new SpecialRecipe[]{
+			new SpecialRecipe(EXPERIMENTAL_BOMBS, 4, SuperBomb.class,
+					Bomb.class, PotionOfStrength.class),
+			new SpecialRecipe(EXPERIMENTAL_BOMBS, 2, StunBomb.class,
+					Bomb.class, PotionOfLevitation.class),
+			new SpecialRecipe(EXPERIMENTAL_BOMBS, 6, ShockBomb.class,
+					Bomb.class, ScrollOfRetribution.class),
+			new SpecialRecipe(EXPERIMENTAL_BOMBS, 2, ExorcismBomb.class,
+					Bomb.class, ScrollOfAntiMagic.class),
+			new SpecialRecipe(EXPERIMENTAL_BREWS, 8, ElixirOfKineticEnergy.class,
+					PotionOfStamina.class),
+			new SpecialRecipe(EXPERIMENTAL_SPELLS, 4, ExperimentalTengusMask.class,
+					TengusMask.class, ScrollOfMetamorphosis.class),
+			new SpecialRecipe(EXPERIMENTAL_SPELLS, 6, ExperimentalKingsCrown.class,
+					KingsCrown.class, ScrollOfMetamorphosis.class)
+	};
+
+	private static final LinkedHashMap<String, Integer> specialRecipeCosts = new LinkedHashMap<>();
+
 	private static final Recipe[][] experimentalRecipes = new Recipe[][]{
 			{
-					new Bomb.EnhanceBomb()
+					new Bomb.EnhanceBomb(), specialRecipes[0], specialRecipes[1],
+					specialRecipes[2], specialRecipes[3]
 			},
 			{
 					new UnstableBrew.Recipe(), new CausticBrew.Recipe(),
@@ -251,7 +335,7 @@ public abstract class Recipe {
 					new ElixirOfHoneyedHealing.Recipe(), new ElixirOfAquaticRejuvenation.Recipe(),
 					new ElixirOfArcaneArmor.Recipe(), new ElixirOfIcyTouch.Recipe(),
 					new ElixirOfToxicEssence.Recipe(), new ElixirOfDragonsBlood.Recipe(),
-					new ElixirOfFeatherFall.Recipe(), new ElixirOfMight.Recipe()
+					new ElixirOfFeatherFall.Recipe(), new ElixirOfMight.Recipe(), specialRecipes[4]
 			},
 			{
 					new UnstableSpell.Recipe(), new WildEnergy.Recipe(),
@@ -259,7 +343,7 @@ public abstract class Recipe {
 					new Alchemize.Recipe(), new CurseInfusion.Recipe(),
 					new MagicalInfusion.Recipe(), new Recycle.Recipe(),
 					new ReclaimTrap.Recipe(), new SummonElemental.Recipe(),
-					new BeaconOfReturning.Recipe()
+					new BeaconOfReturning.Recipe(), specialRecipes[5], specialRecipes[6]
 			}
 	};
 
@@ -270,6 +354,9 @@ public abstract class Recipe {
 		if (category == EXPERIMENTAL_BOMBS) {
 			for (Class<? extends Bomb> output : Bomb.EnhanceBomb.validIngredients.values()) {
 				result.add(Reflection.newInstance(output));
+			}
+			for (SpecialRecipe recipe : specialRecipes) {
+				if (recipe.category == category) result.add(recipe.sampleOutput(null));
 			}
 		} else {
 			for (Recipe recipe : experimentalRecipes[category]) {
@@ -284,8 +371,10 @@ public abstract class Recipe {
 		if (output == null || category < 0 || category >= experimentalRecipes.length) return null;
 
 		for (Recipe recipe : experimentalRecipes[category]) {
+			boolean enoughEnergy = recipe instanceof SpecialRecipe
+					? energy >= recipe.cost(ingredients) : energy == recipe.cost(ingredients);
 			if (ingredients.size() == experimentalIngredientSlots(recipe, category)
-					&& recipe.testIngredientsExperimental(ingredients) && recipe.cost(ingredients) == energy) {
+					&& recipe.testIngredientsExperimental(ingredients) && enoughEnergy) {
 				Item expected = recipe.sampleOutput(ingredients);
 				if (expected != null && expected.getClass() == output.getClass()) return recipe;
 			}
@@ -300,6 +389,67 @@ public abstract class Recipe {
 			return 2;
 		}
 		return 1;
+	}
+
+	public static boolean isSpecialOutput(Item output) {
+		if (output == null) return false;
+		for (SpecialRecipe recipe : specialRecipes) {
+			if (recipe.output == output.getClass()) return true;
+		}
+		return false;
+	}
+
+	public static boolean isSpecialDiscovered(Item output) {
+		return output != null && specialRecipeCosts.containsKey(output.getClass().getName());
+	}
+
+	public static void recordSpecialRecipe(Recipe recipe, int energy) {
+		if (!(recipe instanceof SpecialRecipe)) return;
+		String key = ((SpecialRecipe)recipe).output.getName();
+		Integer previous = specialRecipeCosts.get(key);
+		if (previous == null || energy < previous) specialRecipeCosts.put(key, energy);
+	}
+
+	public static int discoveredSpecialCost(SpecialRecipe recipe) {
+		Integer result = specialRecipeCosts.get(recipe.output.getName());
+		return result == null ? -1 : result;
+	}
+
+	public static ArrayList<SpecialRecipe> discoveredSpecialRecipes(int guidePage) {
+		ArrayList<SpecialRecipe> result = new ArrayList<>();
+		int category = guidePage == 5 ? EXPERIMENTAL_BOMBS
+				: guidePage == 7 ? EXPERIMENTAL_BREWS
+				: guidePage == 8 ? EXPERIMENTAL_SPELLS : -1;
+		for (SpecialRecipe recipe : specialRecipes) {
+			if (recipe.category == category && discoveredSpecialCost(recipe) >= 0) result.add(recipe);
+		}
+		return result;
+	}
+
+	private static final String SPECIAL_RECIPE_KEYS = "special_recipe_keys";
+	private static final String SPECIAL_RECIPE_COSTS = "special_recipe_costs";
+
+	public static void resetSpecialRecipes() {
+		specialRecipeCosts.clear();
+	}
+
+	public static void storeSpecialRecipes(Bundle bundle) {
+		String[] keys = specialRecipeCosts.keySet().toArray(new String[0]);
+		int[] costs = new int[keys.length];
+		for (int i = 0; i < keys.length; i++) costs[i] = specialRecipeCosts.get(keys[i]);
+		bundle.put(SPECIAL_RECIPE_KEYS, keys);
+		bundle.put(SPECIAL_RECIPE_COSTS, costs);
+	}
+
+	public static void restoreSpecialRecipes(Bundle bundle) {
+		specialRecipeCosts.clear();
+		String[] keys = bundle.getStringArray(SPECIAL_RECIPE_KEYS);
+		int[] costs = bundle.getIntArray(SPECIAL_RECIPE_COSTS);
+		if (keys != null && costs != null) {
+			for (int i = 0; i < Math.min(keys.length, costs.length); i++) {
+				specialRecipeCosts.put(keys[i], costs[i]);
+			}
+		}
 	}
 	
 	public static ArrayList<Recipe> findRecipes(ArrayList<Item> ingredients){

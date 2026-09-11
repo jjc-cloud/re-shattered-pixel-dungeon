@@ -71,9 +71,13 @@ public class TengusMask extends Item {
 			
 			curUser = hero;
 
-			GameScene.show( new WndChooseSubclass( this, hero ) );
+			GameScene.show( new WndChooseSubclass( this, hero, subclassChoices(hero) ) );
 			
 		}
+	}
+
+	protected HeroSubClass[] subclassChoices(Hero hero) {
+		return hero.heroClass.subClasses();
 	}
 	
 	@Override
