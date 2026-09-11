@@ -658,23 +658,20 @@ public class ItemSpriteSheet {
 	public static final int BREW_AQUA       = BREWS+4;
 	public static final int BREW_UNSTABLE   = BREWS+5;
 	
-	private static final int ELIXIRS_START  =                               xy(7, 26);  //2 slots
-	private static final int ELIXIRS_NEXT   =                               xy(1, 27);  //7 slots
-	public static final int ELIXIR_HONEY    = ELIXIRS_START+0;
-	public static final int ELIXIR_AQUA     = ELIXIRS_START+1;
-	public static final int ELIXIR_MIGHT    = ELIXIRS_NEXT+0;
-	public static final int ELIXIR_DRAGON   = ELIXIRS_NEXT+1;
-	public static final int ELIXIR_TOXIC    = ELIXIRS_NEXT+2;
-	public static final int ELIXIR_ICY      = ELIXIRS_NEXT+3;
-	public static final int ELIXIR_ARCANE   = ELIXIRS_NEXT+4;
-	public static final int ELIXIR_FEATHER  = ELIXIRS_NEXT+5;
-	public static final int ELIXIR_KINETIC  = ELIXIRS_NEXT+6;
+	private static final int ELIXIRS        =                               xy(1, 27);  //9 slots
+	public static final int ELIXIR_HONEY    = ELIXIRS+0;
+	public static final int ELIXIR_AQUA     = ELIXIRS+1;
+	public static final int ELIXIR_MIGHT    = ELIXIRS+2;
+	public static final int ELIXIR_DRAGON   = ELIXIRS+3;
+	public static final int ELIXIR_TOXIC    = ELIXIRS+4;
+	public static final int ELIXIR_ICY      = ELIXIRS+5;
+	public static final int ELIXIR_ARCANE   = ELIXIRS+6;
+	public static final int ELIXIR_FEATHER  = ELIXIRS+7;
+	public static final int ELIXIR_KINETIC  = ELIXIRS+8;
 	static{
 		for (int i = BREWS; i < BREWS+6; i++)
 			assignItemRect(i, 12, 14);
-		for (int i = ELIXIRS_START; i < ELIXIRS_START+2; i++)
-			assignItemRect(i, 12, 14);
-		for (int i = ELIXIRS_NEXT; i < ELIXIRS_NEXT+7; i++)
+		for (int i = ELIXIRS; i < ELIXIRS+9; i++)
 			assignItemRect(i, 12, 14);
 
 		assignItemRect(BREW_AQUA, 9, 11);
