@@ -50,6 +50,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.Recipe;
+import com.shatteredpixel.shatteredpixeldungeon.items.ShopOrder;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TalismanOfForesight;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
@@ -717,6 +718,7 @@ public class Dungeon {
 			Statistics.storeInBundle( bundle );
 			Notes.storeInBundle( bundle );
 			Generator.storeInBundle( bundle );
+			ShopOrder.storeInBundle( bundle );
 
 			int[] bundleArr = new int[generatedLevels.size()];
 			for (int i = 0; i < generatedLevels.size(); i++){
@@ -878,6 +880,7 @@ public class Dungeon {
 			Journal.markDirty();
 			Journal.saveGlobal();
 		}
+		ShopOrder.restoreFromBundle( bundle );
 
 		Statistics.restoreFromBundle( bundle );
 		Generator.restoreFromBundle( bundle );

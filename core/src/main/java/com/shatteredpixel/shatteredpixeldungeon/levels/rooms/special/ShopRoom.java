@@ -31,6 +31,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Honeypot;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.ShopOrder;
 import com.shatteredpixel.shatteredpixeldungeon.items.Stylus;
 import com.shatteredpixel.shatteredpixeldungeon.items.Torch;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.LeatherArmor;
@@ -105,7 +106,10 @@ public class ShopRoom extends SpecialRoom {
 		placeShopkeeper( level );
 
 		placeItems( level );
-		
+
+		//交付玩家在上一间商店预订的货物
+		ShopOrder.onShopGenerated( level );
+
 		for (Door door : connected.values()) {
 			door.set( Door.Type.REGULAR );
 		}

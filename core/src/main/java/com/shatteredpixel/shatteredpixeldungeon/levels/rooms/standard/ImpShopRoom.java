@@ -27,6 +27,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.ImpShopkeeper;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.ShopOrder;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.ShopRoom;
@@ -100,6 +101,8 @@ public class ImpShopRoom extends ShopRoom {
 		impSpawned = true;
 		placeShopkeeper(level);
 		placeItems(level);
+		//交付玩家预订的货物（16层商店的订单会送到小恶魔这里）
+		ShopOrder.onShopGenerated(level);
 	}
 
 	@Override
