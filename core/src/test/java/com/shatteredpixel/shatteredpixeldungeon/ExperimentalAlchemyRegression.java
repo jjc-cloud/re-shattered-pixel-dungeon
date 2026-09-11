@@ -98,6 +98,21 @@ public class ExperimentalAlchemyRegression {
 		Recipe.resetSpecialRecipes();
 		Recipe.restoreSpecialRecipes(saved);
 		check(Recipe.discoveredSpecialCost(recorded) == 6, "special recipe discovery survives saves");
+		Bundle otherSave = new Bundle();
+		Recipe.resetSpecialRecipes();
+		Recipe.recordSpecialRecipe(special, 8);
+		Recipe.storeSpecialRecipes(otherSave);
+		Recipe.resetSpecialRecipes();
+		Recipe.restoreSpecialRecipes(saved);
+		check(!Recipe.restoreSpecialRecipes(otherSave), "a worse cost from another save changes nothing");
+		check(Recipe.discoveredSpecialCost(recorded) == 6, "global discovery keeps the lower cost");
+		Recipe.resetSpecialRecipes();
+		Recipe.recordSpecialRecipe(special, 4);
+		Recipe.storeSpecialRecipes(otherSave);
+		Recipe.resetSpecialRecipes();
+		Recipe.restoreSpecialRecipes(saved);
+		check(Recipe.restoreSpecialRecipes(otherSave), "a better cost from another save is merged");
+		check(Recipe.discoveredSpecialCost(recorded) == 4, "global discovery adopts the new minimum");
 
 		System.out.println("PASS: experimental alchemy matching");
 	}

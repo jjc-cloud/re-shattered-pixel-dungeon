@@ -70,6 +70,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.Trinket;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.TrinketCatalyst;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
+import com.shatteredpixel.shatteredpixeldungeon.journal.Journal;
 import com.watabou.utils.Reflection;
 import com.watabou.utils.Bundle;
 
@@ -407,7 +408,10 @@ public abstract class Recipe {
 		if (!(recipe instanceof SpecialRecipe)) return;
 		String key = ((SpecialRecipe)recipe).output.getName();
 		Integer previous = specialRecipeCosts.get(key);
-		if (previous == null || energy < previous) specialRecipeCosts.put(key, energy);
+		if (previous == null || energy < previous) {
+			specialRecipeCosts.put(key, energy);
+			Journal.markDirty();
+		}
 	}
 
 	public static int discoveredSpecialCost(SpecialRecipe recipe) {
@@ -441,15 +445,20 @@ public abstract class Recipe {
 		bundle.put(SPECIAL_RECIPE_COSTS, costs);
 	}
 
-	public static void restoreSpecialRecipes(Bundle bundle) {
-		specialRecipeCosts.clear();
+	public static boolean restoreSpecialRecipes(Bundle bundle) {
+		boolean changed = false;
 		String[] keys = bundle.getStringArray(SPECIAL_RECIPE_KEYS);
 		int[] costs = bundle.getIntArray(SPECIAL_RECIPE_COSTS);
 		if (keys != null && costs != null) {
 			for (int i = 0; i < Math.min(keys.length, costs.length); i++) {
-				specialRecipeCosts.put(keys[i], costs[i]);
+				Integer previous = specialRecipeCosts.get(keys[i]);
+				if (previous == null || costs[i] < previous) {
+					specialRecipeCosts.put(keys[i], costs[i]);
+					changed = true;
+				}
 			}
 		}
+		return changed;
 	}
 	
 	public static ArrayList<Recipe> findRecipes(ArrayList<Item> ingredients){
