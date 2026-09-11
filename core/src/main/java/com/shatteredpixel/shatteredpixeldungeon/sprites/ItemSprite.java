@@ -373,6 +373,15 @@ public class ItemSprite extends MovieClip {
 		}
 
 		if (visible && glowing != null) {
+			if (glowing.rainbow) {
+				float angle = 2f * (float)Math.PI * Game.timeTotal / glowing.period;
+				float value = 0.5f;
+				rm = gm = bm = 1 - value;
+				ra = (0.5f + 0.5f*(float)Math.sin(angle)) * value;
+				ga = (0.5f + 0.5f*(float)Math.sin(angle + 2f*Math.PI/3f)) * value;
+				ba = (0.5f + 0.5f*(float)Math.sin(angle + 4f*Math.PI/3f)) * value;
+				return;
+			}
 			if (glowUp && (phase += Game.elapsed) > glowing.period) {
 				
 				glowUp = false;
@@ -409,6 +418,7 @@ public class ItemSprite extends MovieClip {
 		public float green;
 		public float blue;
 		public float period;
+		public boolean rainbow;
 		
 		public Glowing( int color ) {
 			this( color, 1f );
@@ -423,6 +433,12 @@ public class ItemSprite extends MovieClip {
 			blue = (color & 0xFF) / 255f;
 			
 			this.period = period;
+		}
+
+		public static Glowing rainbow(float period) {
+			Glowing result = new Glowing(0xFFFFFF, period);
+			result.rainbow = true;
+			return result;
 		}
 	}
 }
