@@ -13,7 +13,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Paralysis;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Vertigo;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.watabou.utils.BArray;
 import com.watabou.utils.PathFinder;
@@ -34,7 +34,7 @@ public class StunBomb extends Bomb {
 			Char ch = Actor.findChar(i);
 			if (PathFinder.distance[i] != Integer.MAX_VALUE && ch != null
 					&& ch.alignment == Char.Alignment.ENEMY && ch.isAlive()) {
-				Buff.prolong(ch, Paralysis.class, STUN_DURATION);
+				Buff.prolong(ch, Vertigo.class, STUN_DURATION);
 			}
 		}
 	}

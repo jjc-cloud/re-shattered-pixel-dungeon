@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.journal;
 
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
+import com.shatteredpixel.shatteredpixeldungeon.items.Recipe;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.FileUtils;
 
@@ -49,6 +50,8 @@ public class Journal {
 		Catalog.restore( bundle );
 		Bestiary.restore( bundle );
 		Document.restore( bundle );
+		Recipe.resetSpecialRecipes();
+		Recipe.restoreSpecialRecipes(bundle);
 		
 		loaded = true;
 	}
@@ -70,6 +73,7 @@ public class Journal {
 		Catalog.store(bundle);
 		Bestiary.store(bundle);
 		Document.store(bundle);
+		Recipe.storeSpecialRecipes(bundle);
 		
 		try {
 			FileUtils.bundleToFile( JOURNAL_FILE, bundle );
@@ -78,6 +82,10 @@ public class Journal {
 			ShatteredPixelDungeon.reportException(e);
 		}
 		
+	}
+
+	public static void markDirty() {
+		saveNeeded = true;
 	}
 
 }

@@ -58,6 +58,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicMappi
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfRegrowth;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfWarding;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
+import com.shatteredpixel.shatteredpixeldungeon.journal.Journal;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CavesBossLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CavesLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CityBossLevel;
@@ -260,7 +261,6 @@ public class Dungeon {
 		Random.resetGenerators();
 		
 		Statistics.reset();
-		Recipe.resetSpecialRecipes();
 		Notes.reset();
 
 		quickslot.reset();
@@ -874,7 +874,10 @@ public class Dungeon {
 
 		gold = bundle.getInt( GOLD );
 		energy = bundle.getInt( ENERGY );
-		Recipe.restoreSpecialRecipes(bundle);
+		if (Recipe.restoreSpecialRecipes(bundle)) {
+			Journal.markDirty();
+			Journal.saveGlobal();
+		}
 
 		Statistics.restoreFromBundle( bundle );
 		Generator.restoreFromBundle( bundle );
