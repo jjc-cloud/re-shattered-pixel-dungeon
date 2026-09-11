@@ -96,7 +96,8 @@ public class Combo extends Buff implements ActionIndicator.Action {
 		}
 
 		if (!enemy.isAlive() || (enemy.buff(Corruption.class) != null && enemy.HP == enemy.HT)){
-			comboTime = 15f + 15f*((Hero)target).pointsInTalent(Talent.CLEAVE);
+			int rank = ((Hero)target).pointsInTalent(Talent.CLEAVE);
+			comboTime = rank == 1 ? 33f : rank == 2 ? 66f : rank == 3 ? 100f : 15f;
 			initialComboTime = comboTime;
 		}
 
@@ -229,31 +230,31 @@ public class Combo extends Buff implements ActionIndicator.Action {
 		public String desc(int count){
 			switch (this){
 				case CLOBBER: default:
-					if (count >= 7 && Dungeon.hero.pointsInTalent(Talent.ENHANCED_COMBO) >= 1){
+					if (Dungeon.hero.pointsInTalent(Talent.ENHANCED_COMBO) >= 1){
 						return Messages.get(this, name() + ".empower_desc");
 					} else {
 						return Messages.get(this, name() + ".desc");
 					}
 				case SLAM:
-					if (count >= 3 && Dungeon.hero.pointsInTalent(Talent.ENHANCED_COMBO) >= 3){
+					if (Dungeon.hero.pointsInTalent(Talent.ENHANCED_COMBO) >= 3){
 						return Messages.get(this, name() + ".empower_desc", count/3, count*20);
 					} else {
 						return Messages.get(this, name() + ".desc", count*20);
 					}
 				case PARRY:
-					if (count >= 9 && Dungeon.hero.pointsInTalent(Talent.ENHANCED_COMBO) >= 2){
+					if (Dungeon.hero.pointsInTalent(Talent.ENHANCED_COMBO) >= 2){
 						return Messages.get(this, name() + ".empower_desc");
 					} else {
 						return Messages.get(this, name() + ".desc");
 					}
 				case CRUSH:
-					if (count >= 3 && Dungeon.hero.pointsInTalent(Talent.ENHANCED_COMBO) >= 3){
+					if (Dungeon.hero.pointsInTalent(Talent.ENHANCED_COMBO) >= 3){
 						return Messages.get(this, name() + ".empower_desc", count/3, count*25);
 					} else {
 						return Messages.get(this,  name() + ".desc", count*25);
 					}
 				case FURY:
-					if (count >= 3 && Dungeon.hero.pointsInTalent(Talent.ENHANCED_COMBO) >= 3){
+					if (Dungeon.hero.pointsInTalent(Talent.ENHANCED_COMBO) >= 3){
 						return Messages.get(this, name() + ".empower_desc", count/3);
 					} else {
 						return Messages.get(this,  name() + ".desc");
@@ -377,7 +378,7 @@ public class Combo extends Buff implements ActionIndicator.Action {
 					trajectory = new Ballistica(trajectory.collisionPos, trajectory.path.get(trajectory.path.size() - 1), Ballistica.PROJECTILE);
 					//knock them back along that ballistica, ensuring they don't fall into a pit
 					int dist = 2;
-					if (enemy.isAlive() && count >= 7 && hero.pointsInTalent(Talent.ENHANCED_COMBO) >= 1) {
+					if (enemy.isAlive() && hero.pointsInTalent(Talent.ENHANCED_COMBO) >= 1) {
 						dist++;
 						Buff.prolong(enemy, Vertigo.class, 3);
 					} else if (!enemy.flying) {
@@ -414,7 +415,8 @@ public class Combo extends Buff implements ActionIndicator.Action {
 							ch.sprite.flash();
 
 							if (!ch.isAlive() && hero.hasTalent(Talent.LETHAL_DEFENSE)) {
-								Buff.affect(hero, BrokenSeal.WarriorShield.class).reduceCooldown(hero.pointsInTalent(Talent.LETHAL_DEFENSE)/3f);
+								Buff.affect(hero, BrokenSeal.WarriorShield.class).reduceCooldown(
+										lethalDefenseReduction(hero));
 							}
 						}
 					}
@@ -473,10 +475,16 @@ public class Combo extends Buff implements ActionIndicator.Action {
 
 		if (!enemy.isAlive() || (!wasAlly && enemy.alignment == target.alignment)) {
 			if (hero.hasTalent(Talent.LETHAL_DEFENSE)){
-				Buff.affect(hero, BrokenSeal.WarriorShield.class).reduceCooldown(hero.pointsInTalent(Talent.LETHAL_DEFENSE)/3f);
+				Buff.affect(hero, BrokenSeal.WarriorShield.class).reduceCooldown(
+						lethalDefenseReduction(hero));
 			}
 		}
 
+	}
+
+	private static int lethalDefenseReduction(Hero hero) {
+		int rank = hero.pointsInTalent(Talent.LETHAL_DEFENSE);
+		return rank == 1 ? 33 : rank == 2 ? 66 : rank >= 3 ? 100 : 0;
 	}
 
 	private CellSelector.Listener listener = new CellSelector.Listener() {
