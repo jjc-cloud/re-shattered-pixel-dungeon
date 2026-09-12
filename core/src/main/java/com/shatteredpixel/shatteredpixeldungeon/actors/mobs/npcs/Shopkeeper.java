@@ -35,6 +35,7 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ElmoParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.ShopOrder;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
@@ -42,11 +43,13 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ShopkeeperSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.CurrencyIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndBag;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
+import com.shatteredpixel.shatteredpixeldungeon.windows.WndShopOrder;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndTitledMessage;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndTradeItem;
 import com.watabou.noosa.Game;
@@ -199,7 +202,12 @@ public class Shopkeeper extends NPC {
 
 	//shopkeepers are greedy!
 	public static int sellPrice(Item item){
-		return item.value() * 5 * (Dungeon.depth / 5 + 1);
+		int price = item.value() * 5 * (Dungeon.depth / 5 + 1);
+		//订购物品按标价的1.5倍出售
+		if (item.shopOrderTag != 0) {
+			price = price * 3 / 2;
+		}
+		return price;
 	}
 	
 	public static WndBag sell() {
@@ -242,70 +250,112 @@ public class Shopkeeper extends NPC {
 		Game.runOnRenderThread(new Callback() {
 			@Override
 			public void call() {
-				String[] options = new String[2+ buybackItems.size()];
-				int maxLen = PixelScene.landscape() ? 30 : 25;
-				int i = 0;
-				options[i++] = Messages.get(Shopkeeper.this, "sell");
-				options[i++] = Messages.get(Shopkeeper.this, "talk");
-				for (Item item : buybackItems){
-					options[i] = Messages.get(Heap.class, "for_sale", item.value(), Messages.titleCase(item.title()));
-					if (options[i].length() > maxLen) options[i] = options[i].substring(0, maxLen-3) + "...";
-					i++;
+				//订购物品全部买走后，商人会说一句专属的话（只弹一次）
+				if (ShopOrder.takeDoneDialog()) {
+					GameScene.show(new WndOptions(sprite(), Messages.titleCase(name()),
+							orderDoneText(),
+							Messages.get(Shopkeeper.this, "order_done_continue")) {
+						@Override
+						protected void onSelect(int index) {
+							super.onSelect(index);
+							showShopDialog();
+						}
+					});
+				} else {
+					showShopDialog();
 				}
-				CurrencyIndicator.showGold = true;
-				GameScene.show(new WndOptions(sprite(), Messages.titleCase(name()), description(), options){
-					@Override
-					protected void onSelect(int index) {
-						super.onSelect(index);
-						if (index == 0){
-							sell();
-						} else if (index == 1){
-							GameScene.show(new WndTitledMessage(sprite(), Messages.titleCase(name()), chatText()));
-						} else if (index > 1){
-							GLog.i(Messages.get(Shopkeeper.this, "buyback"));
-							Item returned = buybackItems.remove(index-2);
-							Dungeon.gold -= returned.value();
-							Statistics.goldCollected -= returned.value();
-							if (returned instanceof MissileWeapon && returned.isUpgradable()){
-								Buff.affect(Dungeon.hero, MissileWeapon.UpgradedSetTracker.class).levelThresholds.put(((MissileWeapon) returned).setID, returned.level());
-							}
-							if (!returned.doPickUp(Dungeon.hero)){
-								Dungeon.level.drop(returned, Dungeon.hero.pos);
-							}
-						}
-					}
-
-					@Override
-					protected boolean enabled(int index) {
-						if (index > 1){
-							return Dungeon.gold >= buybackItems.get(index-2).value();
-						} else {
-							return super.enabled(index);
-						}
-					}
-
-					@Override
-					protected boolean hasIcon(int index) {
-						return index > 1;
-					}
-
-					@Override
-					protected Image getIcon(int index) {
-						if (index > 1){
-							return new ItemSprite(buybackItems.get(index-2));
-						}
-						return null;
-					}
-
-					@Override
-					public void hide() {
-						super.hide();
-						CurrencyIndicator.showGold = false;
-					}
-				});
 			}
 		});
 		return true;
+	}
+
+	//订单全部买走时的台词；普通店主按商店层数分键，便于逐位商人自定义，子类（如小恶魔）可覆盖
+	protected String orderDoneText() {
+		return Messages.get(Shopkeeper.this, "order_done_" + Dungeon.depth);
+	}
+
+	private void showShopDialog() {
+		//小恶魔不参与订购
+		final boolean canOrder = !(Shopkeeper.this instanceof ImpShopkeeper) && ShopOrder.canOrder();
+		final int buybackOffset = 2 + (canOrder ? 1 : 0);
+		String[] options = new String[buybackOffset + buybackItems.size()];
+		int maxLen = PixelScene.landscape() ? 30 : 25;
+		int i = 0;
+		options[i++] = Messages.get(Shopkeeper.this, "sell");
+		options[i++] = Messages.get(Shopkeeper.this, "talk");
+		if (canOrder) {
+			options[i++] = Messages.get(Shopkeeper.this, "order");
+		}
+		for (Item item : buybackItems){
+			options[i] = Messages.get(Heap.class, "for_sale", item.value(), Messages.titleCase(item.title()));
+			if (options[i].length() > maxLen) options[i] = options[i].substring(0, maxLen-3) + "...";
+			i++;
+		}
+		CurrencyIndicator.showGold = true;
+		GameScene.show(new WndOptions(sprite(), Messages.titleCase(name()), description(), options){
+			@Override
+			protected void onSelect(int index) {
+				super.onSelect(index);
+				if (index == 0){
+					sell();
+				} else if (index == 1){
+					GameScene.show(new WndTitledMessage(sprite(), Messages.titleCase(name()), chatText()));
+				} else if (canOrder && index == 2){
+					GameScene.show(new WndOptions(new ItemSprite(ItemSpriteSheet.GOLD),
+							Messages.get(Shopkeeper.this, "order"),
+							Messages.get(Shopkeeper.this, "order_desc"),
+							Messages.get(Shopkeeper.this, "order_yes"),
+							Messages.get(Shopkeeper.this, "order_no")){
+						@Override
+						protected void onSelect(int index) {
+							super.onSelect(index);
+							if (index == 0){
+								GameScene.show(new WndShopOrder());
+							}
+						}
+					});
+				} else if (index >= buybackOffset){
+					GLog.i(Messages.get(Shopkeeper.this, "buyback"));
+					Item returned = buybackItems.remove(index-buybackOffset);
+					Dungeon.gold -= returned.value();
+					Statistics.goldCollected -= returned.value();
+					if (returned instanceof MissileWeapon && returned.isUpgradable()){
+						Buff.affect(Dungeon.hero, MissileWeapon.UpgradedSetTracker.class).levelThresholds.put(((MissileWeapon) returned).setID, returned.level());
+					}
+					if (!returned.doPickUp(Dungeon.hero)){
+						Dungeon.level.drop(returned, Dungeon.hero.pos);
+					}
+				}
+			}
+
+			@Override
+			protected boolean enabled(int index) {
+				if (index >= buybackOffset){
+					return Dungeon.gold >= buybackItems.get(index-buybackOffset).value();
+				} else {
+					return super.enabled(index);
+				}
+			}
+
+			@Override
+			protected boolean hasIcon(int index) {
+				return index >= buybackOffset;
+			}
+
+			@Override
+			protected Image getIcon(int index) {
+				if (index >= buybackOffset){
+					return new ItemSprite(buybackItems.get(index-buybackOffset));
+				}
+				return null;
+			}
+
+			@Override
+			public void hide() {
+				super.hide();
+				CurrencyIndicator.showGold = false;
+			}
+		});
 	}
 
 	public String chatText(){
