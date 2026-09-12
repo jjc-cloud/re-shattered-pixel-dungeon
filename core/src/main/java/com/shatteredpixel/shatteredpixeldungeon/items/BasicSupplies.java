@@ -62,6 +62,7 @@ public class BasicSupplies extends Item {
 		items.add(new TengusMask());
 		items.add(new KingsCrown());
 		items.add(new Ankh());
+		items.add(new FloorTeleporter());
 		items.add(new AlchemistsToolkit().upgrade(10));
 		// Ordinary potion/scroll sets, plus the two explicitly requested exotic scrolls.
 		for (Catalog category : new Catalog[]{Catalog.POTIONS, Catalog.SCROLLS, Catalog.SEEDS}) {

@@ -53,6 +53,7 @@ public class ShopOrder {
 	private static ArrayList<Integer> completedPlacements = new ArrayList<>(); //全额购完订单的下单层
 	private static boolean broken;                  //断链后本局永久关闭订购
 	private static int lastShopDepth;               //最近一次实体化的商店层（含小恶魔商店）
+	private static boolean doneDialogPending;       //订购物品全部买走后，商人待说的那句话（只弹一次）
 
 	public static boolean canOrder() {
 		if (broken) return false;
@@ -152,8 +153,18 @@ public class ShopOrder {
 			remaining--;
 			if (remaining == 0) {
 				completedPlacements.add(deliveredPlacedDepth);
+				doneDialogPending = true;
 			}
 		}
+	}
+
+	//取走“订单已买完”的待播对话标记，只返回一次true
+	public static boolean takeDoneDialog() {
+		if (doneDialogPending) {
+			doneDialogPending = false;
+			return true;
+		}
+		return false;
 	}
 
 	private static final String SEQ                = "order_seq";
@@ -167,6 +178,7 @@ public class ShopOrder {
 	private static final String COMPLETED          = "completed_placements";
 	private static final String BROKEN             = "broken";
 	private static final String LAST_SHOP          = "last_shop_depth";
+	private static final String DONE_DIALOG        = "done_dialog_pending";
 
 	public static void storeInBundle(Bundle bundle) {
 		bundle.put(SEQ, seq);
@@ -184,6 +196,7 @@ public class ShopOrder {
 		bundle.put(COMPLETED, completed);
 		bundle.put(BROKEN, broken);
 		bundle.put(LAST_SHOP, lastShopDepth);
+		bundle.put(DONE_DIALOG, doneDialogPending);
 	}
 
 	public static void restoreFromBundle(Bundle bundle) {
@@ -206,5 +219,6 @@ public class ShopOrder {
 		}
 		broken = bundle.getBoolean(BROKEN);
 		lastShopDepth = bundle.getInt(LAST_SHOP);
+		doneDialogPending = bundle.getBoolean(DONE_DIALOG);
 	}
 }

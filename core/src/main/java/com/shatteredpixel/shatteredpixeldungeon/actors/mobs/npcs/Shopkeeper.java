@@ -250,90 +250,112 @@ public class Shopkeeper extends NPC {
 		Game.runOnRenderThread(new Callback() {
 			@Override
 			public void call() {
-				//小恶魔不参与订购
-				final boolean canOrder = !(Shopkeeper.this instanceof ImpShopkeeper) && ShopOrder.canOrder();
-				final int buybackOffset = 2 + (canOrder ? 1 : 0);
-				String[] options = new String[buybackOffset + buybackItems.size()];
-				int maxLen = PixelScene.landscape() ? 30 : 25;
-				int i = 0;
-				options[i++] = Messages.get(Shopkeeper.this, "sell");
-				options[i++] = Messages.get(Shopkeeper.this, "talk");
-				if (canOrder) {
-					options[i++] = Messages.get(Shopkeeper.this, "order");
+				//订购物品全部买走后，商人会说一句专属的话（只弹一次）
+				if (ShopOrder.takeDoneDialog()) {
+					GameScene.show(new WndOptions(sprite(), Messages.titleCase(name()),
+							orderDoneText(),
+							Messages.get(Shopkeeper.this, "order_done_continue")) {
+						@Override
+						protected void onSelect(int index) {
+							super.onSelect(index);
+							showShopDialog();
+						}
+					});
+				} else {
+					showShopDialog();
 				}
-				for (Item item : buybackItems){
-					options[i] = Messages.get(Heap.class, "for_sale", item.value(), Messages.titleCase(item.title()));
-					if (options[i].length() > maxLen) options[i] = options[i].substring(0, maxLen-3) + "...";
-					i++;
-				}
-				CurrencyIndicator.showGold = true;
-				GameScene.show(new WndOptions(sprite(), Messages.titleCase(name()), description(), options){
-					@Override
-					protected void onSelect(int index) {
-						super.onSelect(index);
-						if (index == 0){
-							sell();
-						} else if (index == 1){
-							GameScene.show(new WndTitledMessage(sprite(), Messages.titleCase(name()), chatText()));
-						} else if (canOrder && index == 2){
-							GameScene.show(new WndOptions(new ItemSprite(ItemSpriteSheet.GOLD),
-									Messages.get(Shopkeeper.this, "order"),
-									Messages.get(Shopkeeper.this, "order_desc"),
-									Messages.get(Shopkeeper.this, "order_yes"),
-									Messages.get(Shopkeeper.this, "order_no")){
-								@Override
-								protected void onSelect(int index) {
-									super.onSelect(index);
-									if (index == 0){
-										GameScene.show(new WndShopOrder());
-									}
-								}
-							});
-						} else if (index >= buybackOffset){
-							GLog.i(Messages.get(Shopkeeper.this, "buyback"));
-							Item returned = buybackItems.remove(index-buybackOffset);
-							Dungeon.gold -= returned.value();
-							Statistics.goldCollected -= returned.value();
-							if (returned instanceof MissileWeapon && returned.isUpgradable()){
-								Buff.affect(Dungeon.hero, MissileWeapon.UpgradedSetTracker.class).levelThresholds.put(((MissileWeapon) returned).setID, returned.level());
-							}
-							if (!returned.doPickUp(Dungeon.hero)){
-								Dungeon.level.drop(returned, Dungeon.hero.pos);
-							}
-						}
-					}
-
-					@Override
-					protected boolean enabled(int index) {
-						if (index >= buybackOffset){
-							return Dungeon.gold >= buybackItems.get(index-buybackOffset).value();
-						} else {
-							return super.enabled(index);
-						}
-					}
-
-					@Override
-					protected boolean hasIcon(int index) {
-						return index >= buybackOffset;
-					}
-
-					@Override
-					protected Image getIcon(int index) {
-						if (index >= buybackOffset){
-							return new ItemSprite(buybackItems.get(index-buybackOffset));
-						}
-						return null;
-					}
-
-					@Override
-					public void hide() {
-						super.hide();
-						CurrencyIndicator.showGold = false;
-					}
-				});
 			}
 		});
 		return true;
+	}
+
+	//订单全部买走时的台词；普通店主按商店层数分键，便于逐位商人自定义，子类（如小恶魔）可覆盖
+	protected String orderDoneText() {
+		return Messages.get(Shopkeeper.this, "order_done_" + Dungeon.depth);
+	}
+
+	private void showShopDialog() {
+		//小恶魔不参与订购
+		final boolean canOrder = !(Shopkeeper.this instanceof ImpShopkeeper) && ShopOrder.canOrder();
+		final int buybackOffset = 2 + (canOrder ? 1 : 0);
+		String[] options = new String[buybackOffset + buybackItems.size()];
+		int maxLen = PixelScene.landscape() ? 30 : 25;
+		int i = 0;
+		options[i++] = Messages.get(Shopkeeper.this, "sell");
+		options[i++] = Messages.get(Shopkeeper.this, "talk");
+		if (canOrder) {
+			options[i++] = Messages.get(Shopkeeper.this, "order");
+		}
+		for (Item item : buybackItems){
+			options[i] = Messages.get(Heap.class, "for_sale", item.value(), Messages.titleCase(item.title()));
+			if (options[i].length() > maxLen) options[i] = options[i].substring(0, maxLen-3) + "...";
+			i++;
+		}
+		CurrencyIndicator.showGold = true;
+		GameScene.show(new WndOptions(sprite(), Messages.titleCase(name()), description(), options){
+			@Override
+			protected void onSelect(int index) {
+				super.onSelect(index);
+				if (index == 0){
+					sell();
+				} else if (index == 1){
+					GameScene.show(new WndTitledMessage(sprite(), Messages.titleCase(name()), chatText()));
+				} else if (canOrder && index == 2){
+					GameScene.show(new WndOptions(new ItemSprite(ItemSpriteSheet.GOLD),
+							Messages.get(Shopkeeper.this, "order"),
+							Messages.get(Shopkeeper.this, "order_desc"),
+							Messages.get(Shopkeeper.this, "order_yes"),
+							Messages.get(Shopkeeper.this, "order_no")){
+						@Override
+						protected void onSelect(int index) {
+							super.onSelect(index);
+							if (index == 0){
+								GameScene.show(new WndShopOrder());
+							}
+						}
+					});
+				} else if (index >= buybackOffset){
+					GLog.i(Messages.get(Shopkeeper.this, "buyback"));
+					Item returned = buybackItems.remove(index-buybackOffset);
+					Dungeon.gold -= returned.value();
+					Statistics.goldCollected -= returned.value();
+					if (returned instanceof MissileWeapon && returned.isUpgradable()){
+						Buff.affect(Dungeon.hero, MissileWeapon.UpgradedSetTracker.class).levelThresholds.put(((MissileWeapon) returned).setID, returned.level());
+					}
+					if (!returned.doPickUp(Dungeon.hero)){
+						Dungeon.level.drop(returned, Dungeon.hero.pos);
+					}
+				}
+			}
+
+			@Override
+			protected boolean enabled(int index) {
+				if (index >= buybackOffset){
+					return Dungeon.gold >= buybackItems.get(index-buybackOffset).value();
+				} else {
+					return super.enabled(index);
+				}
+			}
+
+			@Override
+			protected boolean hasIcon(int index) {
+				return index >= buybackOffset;
+			}
+
+			@Override
+			protected Image getIcon(int index) {
+				if (index >= buybackOffset){
+					return new ItemSprite(buybackItems.get(index-buybackOffset));
+				}
+				return null;
+			}
+
+			@Override
+			public void hide() {
+				super.hide();
+				CurrencyIndicator.showGold = false;
+			}
+		});
 	}
 
 	public String chatText(){

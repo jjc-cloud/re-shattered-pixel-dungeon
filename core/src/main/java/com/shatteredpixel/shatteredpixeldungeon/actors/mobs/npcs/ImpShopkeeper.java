@@ -56,6 +56,12 @@ public class ImpShopkeeper extends Shopkeeper {
 	}
 
 	@Override
+	protected String orderDoneText() {
+		//小恶魔有专属的订购买完台词，但依旧不参与订购
+		return Messages.get(ImpShopkeeper.class, "order_done");
+	}
+
+	@Override
 	public boolean interact(Char c) {
 		if (c != Dungeon.hero) {
 			return true;
