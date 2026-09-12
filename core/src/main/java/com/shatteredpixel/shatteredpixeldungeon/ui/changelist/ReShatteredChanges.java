@@ -61,6 +61,10 @@ public class ReShatteredChanges {
 				"\n新增邪眼稀有变种，蛇发邪眼会给予玩家不可逆的负面效果，_极度危险_。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V010_DUNGEON_BLUEPRINT, "地牢蓝图",
 				"\n新增探地卷轴变种，探地卷轴有极低的概率生成为魔法地图或地牢蓝图，这两者都拥有强大的效果。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V21_SHOPKEEPER, "订购",
+				"\n新增商店订购功能，现在可以在商店处订购额外的物资。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V010_VOID_WALKER, "公共天赋",
+				"\n新增公共天赋池，使用蜕变密卷时额外抽取两个属于公共天赋池的天赋。"));
 
 		changes = new ChangeInfo("改动", false, null);
 		changes.hardlight(CharSprite.WARNING);
@@ -70,6 +74,21 @@ public class ReShatteredChanges {
 				"\n现在所有角色的基础属性做出了区分。\n\n-战士拥有更快的生命回复速度。\n\n-法师拥有更快的法杖充能速度，不仅限于魔杖，但神器充能速度下降。\n\n-盗贼更加耐饿，且更容易发现地牢的秘密，但法杖充能速度下降。\n\n-女猎手更难以被怪物发现。\n\n-决斗家可以双持武器。\n\n-牧师拥有更快的神器充能速度，但受到的伤害更多。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V20_DUELIST_CLOTH,"决斗家调整",
 				"\n现在决斗家初始双持独特的刺剑与破损的短剑，转职成勇士后会获得二连击，转职成武僧则会失去所有武器栏，并获得一个额外的饰品栏。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V010_HOLD_FAST,"天赋调整",
+				"\n不动如山与液蕴意志天赋互换位置，现在不动如山会在战士进行原地攻击后触发，而非强制等待；液蕴意志改为液蕴复苏，使战士回血而非获得护盾。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V081_DISPLAY_VERT,"界面回调",
+				"\n使用早期的像素风标题与boss击杀。"));		
+		changes.addButton(new ChangeButton(ChangeIcons.V075_TENGU,"BOSS调整",
+				"\n现在天狗与矮人国王会额外掉落一张蜕变密卷。"));		
+
+		changes = new ChangeInfo("增强", false, null);
+		changes.hardlight(CharSprite.POSITIVE);
+		changeInfos.add(changes);
+
+		changes.addButton(new ChangeButton(ChangeIcons.V010_GLADIATOR,"角斗士",
+				"\n角斗士的二连击现在会造成伤害，且战技强化移除了连击数需求。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V30_SHARED_UPGRADES,"联动升级",
+				"\n联动升级无上限等级限制，且现在按投掷武器的阶数提供增幅，每阶提供2.5%/5%/7.5%伤害，每级提供倍数伤害。"));
 	}
 
 	public static void addDevelopmentPreview(ArrayList<ChangeInfo> changeInfos) {

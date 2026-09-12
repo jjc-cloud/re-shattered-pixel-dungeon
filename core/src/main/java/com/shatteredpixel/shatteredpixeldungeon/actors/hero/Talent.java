@@ -47,14 +47,17 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.Ratmogrify
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.DivineSense;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.RecallInscription;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.MirrorImage;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Flare;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.LeafParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.MirrorLink;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClothArmor;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.CloakOfShadows;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HolyTome;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HornOfPlenty;
@@ -72,7 +75,9 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Chasm;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.plants.Swiftthistle;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
@@ -200,7 +205,18 @@ public enum Talent {
 	//universal T4
 	HEROIC_ENERGY(26, 4), //See icon() and title() for special logic for this one
 	//Ratmogrify T4
-	RATSISTANCE(215, 4), RATLOMACY(216, 4), RATFORCEMENTS(217, 4);
+	RATSISTANCE(215, 4), RATLOMACY(216, 4), RATFORCEMENTS(217, 4),
+
+	//public metamorph talents
+	UPLIFTING_MEAL(224), MULTIPLE_EXISTENCE(225), ESCAPE_PLAN(226), VOID_WALKER(227),
+	FIREPOWER_BARRAGE(228, 2, true);
+
+	private static final Talent[] COMMON_METAMORPH_TALENTS = {
+			UPLIFTING_MEAL, MULTIPLE_EXISTENCE, ESCAPE_PLAN, VOID_WALKER
+	};
+	private static final Talent[] RARE_METAMORPH_TALENTS = {
+			FIREPOWER_BARRAGE
+	};
 
 	public static class ImprovisedProjectileCooldown extends FlavourBuff{
 		public int icon() { return BuffIndicator.TIME; }
@@ -431,6 +447,7 @@ public enum Talent {
 
 	int icon;
 	int maxPoints;
+	boolean rare;
 
 	// tiers 1/2/3/4 start at levels 2/7/13/21
 	public static int[] tierLevelThresholds = new int[]{0, 2, 7, 13, 21, 31};
@@ -440,8 +457,41 @@ public enum Talent {
 	}
 
 	Talent( int icon, int maxPoints ){
+		this(icon, maxPoints, false);
+	}
+
+	Talent( int icon, int maxPoints, boolean rare ){
 		this.icon = icon;
 		this.maxPoints = maxPoints;
+		this.rare = rare;
+	}
+
+	public boolean isPublicMetamorphTalent(){
+		for (Talent talent : COMMON_METAMORPH_TALENTS) if (this == talent) return true;
+		for (Talent talent : RARE_METAMORPH_TALENTS) if (this == talent) return true;
+		return false;
+	}
+
+	public boolean isRare(){
+		return rare;
+	}
+
+	public static boolean publicMetamorphTalentsAvailable(int tier){
+		return tier == 1 || tier == 2;
+	}
+
+	public static Talent randomPublicMetamorphTalent( boolean rare, HashSet<Talent> excluded ){
+		Talent[] pool = rare ? RARE_METAMORPH_TALENTS : COMMON_METAMORPH_TALENTS;
+		ArrayList<Talent> available = new ArrayList<>();
+		for (Talent talent : pool){
+			if (!excluded.contains(talent)) available.add(talent);
+		}
+		if (available.isEmpty() && rare){
+			for (Talent talent : COMMON_METAMORPH_TALENTS){
+				if (!excluded.contains(talent)) available.add(talent);
+			}
+		}
+		return available.isEmpty() ? null : Random.element(available);
 	}
 
 	public int icon(){
@@ -485,16 +535,29 @@ public enum Talent {
 	}
 
 	public String desc(boolean metamorphed){
+		String desc;
 		if (metamorphed){
 			String metaDesc = Messages.get(this, name() + ".meta_desc");
 			if (!metaDesc.equals(Messages.NO_TEXT_FOUND)){
-				return Messages.get(this, name() + ".desc") + "\n\n" + metaDesc;
+				desc = Messages.get(this, name() + ".desc") + "\n\n" + metaDesc;
+			} else {
+				desc = Messages.get(this, name() + ".desc");
 			}
+		} else {
+			desc = Messages.get(this, name() + ".desc");
 		}
-		return Messages.get(this, name() + ".desc");
+		if (rare){
+			String rareDesc = Messages.get(Talent.class, "rare_desc");
+			if (!rareDesc.equals(Messages.NO_TEXT_FOUND)) desc = rareDesc + "\n\n" + desc;
+		}
+		return desc;
 	}
 
 	public static void onTalentUpgraded( Hero hero, Talent talent ){
+		if (talent == MULTIPLE_EXISTENCE){
+			ensureSpecialItems(hero);
+			Dungeon.observe();
+		}
 		//for metamorphosis
 		if (talent == VETERANS_INTUITION && hero.pointsInTalent(VETERANS_INTUITION) == 2){
 			if (hero.belongings.armor() != null && !ShardOfOblivion.passiveIDDisabled())  {
@@ -581,6 +644,10 @@ public enum Talent {
 	public static class NatureBerriesDropped extends CounterBuff{{revivePersists = true;}};
 
 	public static void onFoodEaten( Hero hero, float foodVal, Item foodSource ){
+		if (hero.hasTalent(UPLIFTING_MEAL)){
+			Buff.affect(hero, Swiftthistle.TimeBubble.class).reset(
+					hero.pointsInTalent(UPLIFTING_MEAL) == 1 ? 2 : 4);
+		}
 		if (hero.hasTalent(HEARTY_MEAL)){
 			//4/6 HP healed, when hero is below 33% health (with a little rounding up)
 			if (hero.HP/(float)hero.HT < 0.334f) {
@@ -669,6 +736,35 @@ public enum Talent {
 			}
 			ScrollOfRecharging.charge( hero );
 			SpellSprite.show(hero, SpellSprite.CHARGE, 0, 1, 1);
+		}
+	}
+
+	public static void ensureSpecialItems( Hero hero ){
+		if (hero.hasTalent(MULTIPLE_EXISTENCE) && hero.belongings.getItem(MirrorLink.class) == null){
+			MirrorLink link = new MirrorLink();
+			if (!link.collect(hero.belongings.backpack) && Dungeon.level != null){
+				Dungeon.level.drop(link, hero.pos).sprite.drop();
+			}
+		}
+	}
+
+	public static void onTalentRemoved( Hero hero, Talent talent ){
+		if (talent == MULTIPLE_EXISTENCE && !hero.hasTalent(MULTIPLE_EXISTENCE)){
+			MirrorLink link = hero.belongings.getItem(MirrorLink.class);
+			if (link != null){
+				for (Bag bag : hero.belongings.getBags()){
+					if (bag.items.contains(link)){
+						link.detachAll(bag);
+						break;
+					}
+				}
+			}
+			if (Dungeon.level != null && Dungeon.level.mobs != null){
+				for (Mob mob : Dungeon.level.mobs){
+					if (mob instanceof MirrorImage) ((MirrorImage)mob).disableDirection();
+				}
+			}
+			Dungeon.observe();
 		}
 	}
 
@@ -957,6 +1053,26 @@ public enum Talent {
 			object = bundle.getInt(OBJECT);
 		}
 	};
+
+	public static class VoidWalkerBuff extends FlavourBuff {
+		{ type = buffType.POSITIVE; }
+
+		@Override
+		public int icon() {
+			return target != null && Dungeon.level != null && Dungeon.level.pit[target.pos]
+					? BuffIndicator.VOID_WALKER : BuffIndicator.NONE;
+		}
+
+		@Override
+		public void detach() {
+			Char affected = target;
+			super.detach();
+			if (affected == Dungeon.hero && Dungeon.level != null
+					&& Dungeon.level.pit[affected.pos] && !affected.flying){
+				Chasm.heroFall(affected.pos);
+			}
+		}
+	}
 
 	public static final int MAX_TALENT_TIERS = 4;
 

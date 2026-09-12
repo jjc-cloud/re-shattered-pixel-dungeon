@@ -32,6 +32,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.BodyForm;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.HolyWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
@@ -40,6 +41,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfEvasion;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WornShortsword;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MirrorSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
@@ -47,7 +49,7 @@ import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
-public class MirrorImage extends NPC {
+public class MirrorImage extends DirectableAlly {
 	
 	{
 		spriteClass = MirrorSprite.class;
@@ -57,6 +59,7 @@ public class MirrorImage extends NPC {
 		
 		alignment = Alignment.ALLY;
 		state = HUNTING;
+		intelligentAlly = false;
 		
 		//before other mobs
 		actPriority = MOB_PRIO + 1;
@@ -68,6 +71,7 @@ public class MirrorImage extends NPC {
 	
 	@Override
 	protected boolean act() {
+		int oldPos = pos;
 		
 		if ( hero == null ){
 			hero = (Hero)Actor.findById(heroID);
@@ -83,7 +87,12 @@ public class MirrorImage extends NPC {
 			((MirrorSprite)sprite).updateArmor( armTier );
 		}
 		
-		return super.act();
+		boolean result = super.act();
+		if (hero.pointsInTalent(Talent.MULTIPLE_EXISTENCE) >= 2){
+			Dungeon.observe();
+			if (oldPos != pos) GameScene.updateFog(oldPos, 2);
+		}
+		return result;
 	}
 	
 	private static final String HEROID	= "hero_id";
@@ -105,6 +114,48 @@ public class MirrorImage extends NPC {
 		heroID = this.hero.id();
 		Buff.affect(this, MirrorInvis.class, Short.MAX_VALUE);
 	}
+
+	public void enableDirection() {
+		intelligentAlly = true;
+		//re-asserts follow state directly instead of calling followHero(),
+		//so direction feedback doesn't repeat on every use of the mirror link
+		defendingPos = -1;
+		movingToDefendPos = false;
+		aggro(null);
+		state = WANDERING;
+	}
+
+	public void disableDirection() {
+		intelligentAlly = false;
+		clearDefensingPos();
+		aggro(null);
+	}
+
+	@Override
+	public void defendPos(int cell) {
+		GLog.i(Messages.get(this, "direct_defend"));
+		super.defendPos(cell);
+	}
+
+	@Override
+	public void followHero() {
+		GLog.i(Messages.get(this, "direct_follow"));
+		super.followHero();
+	}
+
+	@Override
+	public void targetChar(Char ch) {
+		GLog.i(Messages.get(this, "direct_attack"));
+		super.targetChar(ch);
+	}
+
+	@Override
+	public boolean canInteract(Char c) {
+		if (c == Dungeon.hero && Dungeon.hero.pointsInTalent(Talent.MULTIPLE_EXISTENCE) >= 2){
+			return true;
+		}
+		return super.canInteract(c);
+	}
 	
 	@Override
 	public int damageRoll() {
@@ -115,6 +166,18 @@ public class MirrorImage extends NPC {
 			damage = hero.damageRoll(); //handles ring of force
 		}
 		return (damage+1)/2; //half hero damage, rounded up
+	}
+
+	@Override
+	public void destroy() {
+		int lastPos = pos;
+		boolean sharedVision = Dungeon.hero != null
+				&& Dungeon.hero.pointsInTalent(Talent.MULTIPLE_EXISTENCE) >= 2;
+		super.destroy();
+		if (sharedVision && Dungeon.level != null && Dungeon.hero.isAlive()){
+			Dungeon.observe();
+			GameScene.updateFog(lastPos, 2);
+		}
 	}
 	
 	@Override

@@ -43,6 +43,7 @@ import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
 
@@ -69,6 +70,7 @@ public class ScrollOfMetamorphosis extends ExoticScroll {
 	}
 
 	public static void onMetamorph( Talent oldTalent, Talent newTalent ){
+		Talent.onTalentRemoved(Dungeon.hero, oldTalent);
 		if (curItem instanceof ScrollOfMetamorphosis) {
 			((ScrollOfMetamorphosis) curItem).readAnimation();
 			Sample.INSTANCE.play(Assets.Sounds.READ);
@@ -232,6 +234,24 @@ public class ScrollOfMetamorphosis extends ExoticScroll {
 				}
 			}
 
+			//Public talents only occupy the two extra slots for tier 1 and tier 2 metamorphs.
+			if (Talent.publicMetamorphTalentsAvailable(tier)){
+				HashSet<Talent> excluded = new HashSet<>(curTalentsAtTier);
+				excluded.addAll(options.keySet());
+				for (LinkedHashMap<Talent, Integer> heroTier : Dungeon.hero.talents){
+					for (Talent talent : heroTier.keySet()){
+						if (talent.isPublicMetamorphTalent()) excluded.add(talent);
+					}
+				}
+				for (int i = 0; i < 2; i++){
+					Talent option = Talent.randomPublicMetamorphTalent(Random.Int(20) == 0, excluded);
+					if (option != null){
+						options.put(option, Dungeon.hero.pointsInTalent(replacing));
+						excluded.add(option);
+					}
+				}
+			}
+
 			replaceOptions = options;
 			setup(replacing, tier, options);
 		}
@@ -253,14 +273,32 @@ public class ScrollOfMetamorphosis extends ExoticScroll {
 
 			top = text.bottom() + 2;
 
-			TalentsPane.TalentTierPane optionsPane = new TalentsPane.TalentTierPane(replaceOptions, tier, TalentButton.Mode.METAMORPH_REPLACE);
-			add(optionsPane);
-			optionsPane.title.text(" ");
-			optionsPane.setPos(0, top);
-			optionsPane.setSize(120, optionsPane.height());
-			resize((int)optionsPane.width(), (int)optionsPane.bottom());
+			LinkedHashMap<Talent, Integer> classOptions = new LinkedHashMap<>();
+			LinkedHashMap<Talent, Integer> publicOptions = new LinkedHashMap<>();
+			for (Talent talent : replaceOptions.keySet()){
+				if (talent.isPublicMetamorphTalent()) publicOptions.put(talent, replaceOptions.get(talent));
+				else                                    classOptions.put(talent, replaceOptions.get(talent));
+			}
 
-			resize(120, (int)optionsPane.bottom());
+			if (!classOptions.isEmpty()){
+				TalentsPane.TalentTierPane optionsPane = new TalentsPane.TalentTierPane(classOptions, tier, TalentButton.Mode.METAMORPH_REPLACE);
+				add(optionsPane);
+				optionsPane.title.text(" ");
+				optionsPane.setPos(0, top);
+				optionsPane.setSize(120, optionsPane.height());
+				top = optionsPane.bottom() + 2;
+			}
+
+			if (!publicOptions.isEmpty()){
+				TalentsPane.TalentTierPane publicPane = new TalentsPane.TalentTierPane(publicOptions, tier, TalentButton.Mode.METAMORPH_REPLACE);
+				add(publicPane);
+				publicPane.title.text(Messages.get(ScrollOfMetamorphosis.class, "public_talents"));
+				publicPane.setPos(0, top);
+				publicPane.setSize(120, publicPane.height());
+				top = publicPane.bottom();
+			}
+
+			resize(120, (int)top);
 		}
 
 		@Override
