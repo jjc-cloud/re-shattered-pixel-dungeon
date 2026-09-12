@@ -234,6 +234,8 @@ public abstract class Char extends Actor {
 	public boolean canInteract(Char c){
 		if (Dungeon.level.adjacent( pos, c.pos )){
 			return true;
+		} else if (c instanceof Hero && ((Hero)c).escapePlanInRange(this)){
+			return true;
 		} else if (c instanceof Hero
 				&& alignment == Alignment.ALLY
 				&& !hasProp(this, Property.IMMOVABLE)
@@ -269,8 +271,16 @@ public abstract class Char extends Actor {
 			return true;
 		}
 
-		//warp instantly with allies in this case
-		if (c == Dungeon.hero && Dungeon.hero.hasTalent(Talent.ALLY_WARP)){
+		boolean mirrorSwap = c == Dungeon.hero && this instanceof MirrorImage
+				&& Dungeon.hero.pointsInTalent(Talent.MULTIPLE_EXISTENCE) >= 2;
+		boolean escapeSwap = c == Dungeon.hero && Dungeon.hero.escapePlanInRange(this);
+		if (escapeSwap && !Dungeon.hero.selectEscapePlanTarget(this)){
+			GLog.w(Messages.get(Talent.class, "escape_plan.one_target"));
+			return true;
+		}
+
+		//warp instantly with allies, mirrors, or the selected escape-plan target
+		if (c == Dungeon.hero && (Dungeon.hero.hasTalent(Talent.ALLY_WARP) || mirrorSwap || escapeSwap)){
 			PathFinder.buildDistanceMap(c.pos, BArray.or(Dungeon.level.passable, Dungeon.level.avoid, null));
 			if (PathFinder.distance[pos] == Integer.MAX_VALUE){
 				return true;

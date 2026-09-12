@@ -63,6 +63,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.MobSpawner;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Piranha;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.YogFist;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.MirrorImage;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Sheep;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.TargetedCell;
@@ -1205,7 +1206,14 @@ public abstract class Level implements Bundlable {
 			
 			if (pit[ch.pos]){
 				if (ch == Dungeon.hero) {
-					Chasm.heroFall(ch.pos);
+					if (Dungeon.hero.hasTalent(Talent.VOID_WALKER)){
+						if (Dungeon.hero.buff(Talent.VoidWalkerBuff.class) == null){
+							Buff.prolong(Dungeon.hero, Talent.VoidWalkerBuff.class,
+									Dungeon.hero.pointsInTalent(Talent.VOID_WALKER) == 1 ? 3 : 5);
+						}
+					} else {
+						Chasm.heroFall(ch.pos);
+					}
 				} else if (ch instanceof Mob) {
 					Chasm.mobFall( (Mob)ch );
 				}
@@ -1515,6 +1523,16 @@ public abstract class Level implements Bundlable {
 						Dungeon.level.updateFieldOfView( m, m.fieldOfView );
 					}
 					BArray.or(heroMindFov, m.fieldOfView, heroMindFov);
+				}
+			}
+
+			if (((Hero)c).pointsInTalent(Talent.MULTIPLE_EXISTENCE) >= 2){
+				for (Mob mob : mobs){
+					if (mob instanceof MirrorImage){
+						for (int offset : PathFinder.NEIGHBOURS9){
+							heroMindFov[mob.pos + offset] = true;
+						}
+					}
 				}
 			}
 

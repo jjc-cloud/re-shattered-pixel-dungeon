@@ -401,6 +401,10 @@ abstract public class MissileWeapon extends Weapon {
 	
 	@Override
 	public float castDelay(Char user, int cell) {
+		if (!(this instanceof SpiritBow.SpiritArrow) && user instanceof Hero
+				&& ((Hero)user).hasTalent(Talent.FIREPOWER_BARRAGE)){
+			return 0;
+		}
 		if (Actor.findChar(cell) != null && Actor.findChar(cell) != user){
 			return delayFactor( user );
 		} else {
@@ -543,11 +547,15 @@ abstract public class MissileWeapon extends Weapon {
 			if (owner.buff(Momentum.class) != null && owner.buff(Momentum.class).freerunning()) {
 				damage = Math.round(damage * (1f + 0.15f * ((Hero) owner).pointsInTalent(Talent.PROJECTILE_MOMENTUM)));
 			}
+			if (!(this instanceof SpiritBow.SpiritArrow)
+					&& ((Hero)owner).pointsInTalent(Talent.FIREPOWER_BARRAGE) >= 2){
+				damage = Math.round(damage * 1.5f);
+			}
 		}
 		
 		return damage;
 	}
-	
+
 	@Override
 	public void reset() {
 		super.reset();

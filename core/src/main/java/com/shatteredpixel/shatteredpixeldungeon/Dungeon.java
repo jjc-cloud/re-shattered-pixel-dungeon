@@ -43,6 +43,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.MirrorImage;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Wandmaker;
 import com.shatteredpixel.shatteredpixeldungeon.items.Amulet;
@@ -1082,6 +1083,17 @@ public class Dungeon {
 					pos+=level.width();
 				}
 				GameScene.updateFog(ch.pos, dist);
+			}
+		}
+
+		if (hero.pointsInTalent(Talent.MULTIPLE_EXISTENCE) >= 2){
+			for (Mob mob : level.mobs){
+				if (mob instanceof MirrorImage){
+					BArray.or(level.visited, level.heroFOV, mob.pos - 1 - level.width(), 3, level.visited);
+					BArray.or(level.visited, level.heroFOV, mob.pos - 1, 3, level.visited);
+					BArray.or(level.visited, level.heroFOV, mob.pos - 1 + level.width(), 3, level.visited);
+					GameScene.updateFog(mob.pos, 2);
+				}
 			}
 		}
 

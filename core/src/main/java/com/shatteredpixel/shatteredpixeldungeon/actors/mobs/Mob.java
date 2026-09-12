@@ -878,7 +878,8 @@ public abstract class Mob extends Char {
 
 	//whether the hero should interact with the mob (true) or attack it (false)
 	public boolean heroShouldInteract(){
-		return alignment != Alignment.ENEMY && buff(Amok.class) == null;
+		return alignment != Alignment.ENEMY && buff(Amok.class) == null
+				|| Dungeon.hero != null && Dungeon.hero.escapePlanInRange(this);
 	}
 
 	public void aggro( Char ch ) {

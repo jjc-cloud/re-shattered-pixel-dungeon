@@ -376,6 +376,7 @@ public class Hero extends Char {
 		STR = bundle.getInt( STRENGTH );
 
 		belongings.restoreFromBundle( bundle );
+		Talent.ensureSpecialItems(this);
 		if (subClass == HeroSubClass.BERSERKER) {
 			if (buff(Berserk.class) == null) Buff.affect(this, Berserk.class);
 			if (buff(Berserk.DeathDefianceIndicator.class) == null) Buff.affect(this, Berserk.DeathDefianceIndicator.class);
@@ -396,6 +397,25 @@ public class Hero extends Char {
 
 	public boolean hasTalent( Talent talent ){
 		return pointsInTalent(talent) > 0;
+	}
+
+	private float escapePlanTurn = Float.NEGATIVE_INFINITY;
+	private int escapePlanTarget = -1;
+
+	public boolean escapePlanInRange( Char target ){
+		return target != null && target.alignment == Alignment.ENEMY
+				&& hasTalent(Talent.ESCAPE_PLAN)
+				&& Dungeon.level.distance(pos, target.pos) <= pointsInTalent(Talent.ESCAPE_PLAN);
+	}
+
+	public boolean selectEscapePlanTarget( Char target ){
+		if (!escapePlanInRange(target)) return false;
+		if (Float.compare(escapePlanTurn, Actor.now()) != 0){
+			escapePlanTurn = Actor.now();
+			escapePlanTarget = target.id();
+			return true;
+		}
+		return escapePlanTarget == target.id();
 	}
 
 	public int pointsInTalent( Talent talent ){
@@ -1608,10 +1628,10 @@ public class Hero extends Char {
 					protected boolean act() {
 						if (enemy.isAlive()) {
 							if (hasTalent(Talent.SHARED_UPGRADES)){
-								int levelBonus = Math.min( 2*pointsInTalent(Talent.SHARED_UPGRADES), wep.buffedLvl() );
-								// bonus dmg is 16.67% x weapon level, max of 2/4/6
-								float bonusDmg = levelBonus/6f;
-								Buff.prolong(Hero.this, SnipersMark.class, SnipersMark.DURATION + levelBonus).set(enemy.id(), bonusDmg);
+								int bonusTurns = wep.buffedLvl();
+								// bonus dmg is 2.5% x talent lvl x weapon level x weapon tier
+								float bonusDmg = wep.buffedLvl() * ((MissileWeapon) wep).tier * pointsInTalent(Talent.SHARED_UPGRADES) * 0.025f;
+								Buff.prolong(Hero.this, SnipersMark.class, SnipersMark.DURATION + bonusTurns).set(enemy.id(), bonusDmg);
 							} else {
 								Buff.prolong(Hero.this, SnipersMark.class, SnipersMark.DURATION).set(enemy.id(), 0);
 							}
@@ -1937,7 +1957,8 @@ public class Hero extends Char {
 				delay = 0;
 			}
 
-			if (Dungeon.level.pit[step] && !Dungeon.level.solid[step]
+			if (!hasTalent(Talent.VOID_WALKER)
+					&& Dungeon.level.pit[step] && !Dungeon.level.solid[step]
 					&& (!flying || buff(Levitation.class) != null && buff(Levitation.class).detachesWithinDelay(delay / speed()))){
 				if (!Chasm.jumpConfirmed){
 					Chasm.heroJump(this);
@@ -2063,6 +2084,12 @@ public class Hero extends Char {
 			
 		}
 
+		return true;
+	}
+
+	public boolean handleAttack( Char target ){
+		if (target == null || !target.isAlive()) return false;
+		curAction = new HeroAction.Attack(target);
 		return true;
 	}
 	
@@ -2392,6 +2419,10 @@ public class Hero extends Char {
 
 		super.move( step, travelling);
 		if (pos != previousPos) Buff.detach(this, HoldFast.class);
+		if (hasTalent(Talent.VOID_WALKER) && !Dungeon.level.pit[pos]
+				&& buff(Talent.VoidWalkerBuff.class) != null){
+			buff(Talent.VoidWalkerBuff.class).detach();
+		}
 		
 		if (!flying && travelling) {
 			if (Dungeon.level.water[pos]) {

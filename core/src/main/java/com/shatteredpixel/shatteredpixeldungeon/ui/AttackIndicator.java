@@ -180,7 +180,10 @@ public class AttackIndicator extends Tag {
 	protected void onClick() {
 		super.onClick();
 		if (enabled && Dungeon.hero.ready) {
-			if (Dungeon.hero.handle( lastTarget.pos )) {
+			boolean handled = Dungeon.hero.escapePlanInRange(lastTarget)
+					? Dungeon.hero.handleAttack(lastTarget)
+					: Dungeon.hero.handle(lastTarget.pos);
+			if (handled) {
 				Dungeon.hero.next();
 			}
 		}

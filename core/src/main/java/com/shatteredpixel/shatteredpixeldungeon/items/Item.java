@@ -515,6 +515,10 @@ public class Item implements Bundlable {
 		return null;
 	}
 
+	public void tintSprite( ItemSprite sprite ) {
+		//do nothing by default
+	}
+
 	public Emitter emitter() { return null; }
 	
 	public String info() {

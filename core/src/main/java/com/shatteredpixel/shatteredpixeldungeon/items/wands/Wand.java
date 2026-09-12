@@ -554,6 +554,7 @@ public abstract class Wand extends Item {
 
 		Berserk rage = curUser.buff(Berserk.class);
 		float delay = normalZap && rage != null ? rage.normalWandShotDelay() : TIME_TO_ZAP;
+		if (curUser.hasTalent(Talent.FIREPOWER_BARRAGE)) delay = 0;
 		normalZap = false;
 		curUser.spendAndNext(delay);
 	}
