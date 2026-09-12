@@ -350,8 +350,9 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 
 	@Override
 	public String desc() {
-		return Messages.get(this, "desc", power * 100f, damageMultiplier(),
-				incomingDamageMultiplier(), accuracyMultiplier(), evasionMultiplier(), speedMultiplier());
+		return Messages.get(this, "desc", power * 100f, (damageMultiplier() - 1f) * 100f,
+				(incomingDamageMultiplier() - 1f) * 100f, (accuracyMultiplier() - 1f) * 100f,
+				(evasionMultiplier() - 1f) * 100f, (speedMultiplier() - 1f) * 100f);
 	}
 
 	public static class DeathDefianceIndicator extends Buff {
