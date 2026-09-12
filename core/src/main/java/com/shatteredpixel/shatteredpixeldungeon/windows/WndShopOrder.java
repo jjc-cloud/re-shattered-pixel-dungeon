@@ -193,6 +193,7 @@ public class WndShopOrder extends Window {
 		private final RedButton[] categories = new RedButton[5];
 		private Component grid;
 		private float gridTop;
+		private int pickerHeight;
 
 		ItemPicker(int slotIdx) {
 			super();
@@ -231,8 +232,28 @@ public class WndShopOrder extends Window {
 			}
 
 			gridTop = categories[0].bottom() + 2;
+			//绘制前先确认各分类最多需要几行，窗口按最大行数固定，切换分类时不再改变大小
+			int maxRows = 1;
+			for (int i = 0; i < categories.length; i++) {
+				maxRows = Math.max(maxRows, rowsNeeded(categoryItems(i)));
+			}
+			pickerHeight = (int) (gridTop + (maxRows + 1) * GRID_SLOT);
 			selectedCategory = 0;
+			resize(WIDTH, pickerHeight);
 			rebuild();
+		}
+
+		private int rowsNeeded(ArrayList<Item> items) {
+			int rows = 1;
+			int left = 0;
+			for (int i = 0; i < items.size(); i++) {
+				left += GRID_SLOT;
+				if (left > WIDTH - 19) {
+					rows++;
+					left = 0;
+				}
+			}
+			return rows;
 		}
 
 		private void rebuild() {
@@ -274,9 +295,6 @@ public class WndShopOrder extends Window {
 					left = 0;
 				}
 			}
-
-			int rows = items.isEmpty() ? 1 : top / GRID_SLOT + 1;
-			resize(WIDTH, (int) (gridTop + (rows + 1) * GRID_SLOT));
 		}
 	}
 }
