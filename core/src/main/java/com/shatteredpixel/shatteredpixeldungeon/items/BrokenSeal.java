@@ -398,8 +398,9 @@ public class BrokenSeal extends Item {
 			}
 			if (completeSealEquipped()) {
 				if (((Hero)target).subClass == HeroSubClass.GLADIATOR) {
-					description += "\n\n" + Messages.get(this, "gladiator_progress", gladiatorDamage,
-							Math.max(1, (target.HT * 3 + 9) / 10));
+					int threshold = Math.max(1, (target.HT * 3 + 9) / 10);
+					description += "\n\n" + Messages.get(this, "gladiator_progress",
+							Math.round(gladiatorDamage * 100f / threshold));
 				} else {
 					description += "\n\n" + Messages.get(this, "berserker_progress", Math.round(berserkerLoss * 100));
 					if (guardReady) description += "\n\n" + Messages.get(this, "guard_ready");

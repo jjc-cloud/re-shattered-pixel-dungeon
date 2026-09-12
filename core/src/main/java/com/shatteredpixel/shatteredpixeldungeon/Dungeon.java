@@ -971,9 +971,11 @@ public class Dungeon {
 		if (level == null) {
 			return;
 		}
-		
+
+		int previousEnvironmentalViewDistance = level.environmentalViewDistance();
 		level.updateFieldOfView(hero, level.heroFOV);
-		dist = Math.max(dist, level.environmentalViewDistance() + 1);
+		dist = Math.max(dist, Math.max(previousEnvironmentalViewDistance,
+				level.environmentalViewDistance()) + 1);
 
 		int x = hero.pos % level.width();
 		int y = hero.pos / level.width();
