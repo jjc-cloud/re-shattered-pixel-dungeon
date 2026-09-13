@@ -97,7 +97,8 @@ public class HornOfPlenty extends Artifact {
 		if (action.equals(AC_EAT) || action.equals(AC_SNACK)){
 
 			if (!isEquipped(hero)) GLog.i( Messages.get(Artifact.class, "need_to_equip") );
-			else if (charge == 0)  GLog.i( Messages.get(this, "no_food") );
+			else if (charge == 0 && !hero.hasTalent(Talent.MANA_OVERLOAD))  GLog.i( Messages.get(this, "no_food") );
+			else if (charge < 0)   GLog.i( Messages.get(this, "no_food") );
 			else {
 				//consume as much food as it takes to be full, to a minimum of 1
 				int satietyPerCharge = (int) (Hunger.STARVING/5f);
@@ -107,7 +108,8 @@ public class HornOfPlenty extends Artifact {
 
 				Hunger hunger = Buff.affect(Dungeon.hero, Hunger.class);
 				int chargesToUse = Math.max( 1, hunger.hunger() / satietyPerCharge);
-				if (chargesToUse > charge) chargesToUse = charge;
+				//魔能超载：充能不足时至少消耗1点，把充能扣至负数
+				if (chargesToUse > charge && !hero.hasTalent(Talent.MANA_OVERLOAD)) chargesToUse = charge;
 
 				//always use 1 charge if snacking
 				if (action.equals(AC_SNACK)){
@@ -174,7 +176,7 @@ public class HornOfPlenty extends Artifact {
 	@Override
 	public void charge(Hero target, float amount) {
 		if (charge < chargeCap && !cursed && target.buff(MagicImmune.class) == null){
-			partialCharge += 0.25f*amount;
+			partialCharge += 0.25f*amount * Artifact.negativeRechargeFactor(this);
 			while (partialCharge >= 1){
 				partialCharge--;
 				charge++;

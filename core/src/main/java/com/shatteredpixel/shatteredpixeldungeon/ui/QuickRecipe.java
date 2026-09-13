@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.LiquidMetal;
 import com.shatteredpixel.shatteredpixeldungeon.items.Recipe;
+import com.shatteredpixel.shatteredpixeldungeon.items.RealityWarp;
 import com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.Blandfruit;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.Food;
@@ -102,8 +103,9 @@ public class QuickRecipe extends Component {
 
 	public QuickRecipe(Recipe r, ArrayList<Item> inputs, final Item output, int displayCost) {
 		
-		ingredients = inputs;
 		int cost = displayCost >= 0 ? displayCost : r.cost(inputs);
+		inputs = RealityWarp.recipeIngredients(inputs);
+		ingredients = inputs;
 		boolean hasInputs = true;
 		this.inputs = new ArrayList<>();
 		for (final Item in : inputs) {

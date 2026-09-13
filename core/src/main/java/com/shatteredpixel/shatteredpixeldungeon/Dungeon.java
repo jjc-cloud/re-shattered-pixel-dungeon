@@ -51,6 +51,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.Recipe;
+import com.shatteredpixel.shatteredpixeldungeon.items.RealityWarp;
 import com.shatteredpixel.shatteredpixeldungeon.items.ShopOrder;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TalismanOfForesight;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
@@ -240,6 +241,8 @@ public class Dungeon {
 	}
 	
 	public static void init() {
+
+		RealityWarp.reset();
 
 		initialVersion = version = Game.versionCode;
 		challenges = SPDSettings.challenges();
@@ -720,6 +723,8 @@ public class Dungeon {
 			Notes.storeInBundle( bundle );
 			Generator.storeInBundle( bundle );
 			ShopOrder.storeInBundle( bundle );
+			RealityWarp.storeInBundle( bundle );
+			Talent.storeExecutedTargets( bundle );
 
 			int[] bundleArr = new int[generatedLevels.size()];
 			for (int i = 0; i < generatedLevels.size(); i++){
@@ -775,6 +780,9 @@ public class Dungeon {
 	}
 	
 	public static void loadGame( int save, boolean fullLoad ) throws IOException {
+
+		//Static run state must never leak from the previously opened save.
+		RealityWarp.reset();
 		
 		Bundle bundle = FileUtils.bundleFromFile( GamesInProgress.gameFile( save ) );
 
@@ -882,6 +890,8 @@ public class Dungeon {
 			Journal.saveGlobal();
 		}
 		ShopOrder.restoreFromBundle( bundle );
+		RealityWarp.restoreFromBundle( bundle );
+		Talent.restoreExecutedTargets( bundle );
 
 		Statistics.restoreFromBundle( bundle );
 		Generator.restoreFromBundle( bundle );

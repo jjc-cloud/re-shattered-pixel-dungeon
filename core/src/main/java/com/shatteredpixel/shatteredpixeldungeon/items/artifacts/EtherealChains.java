@@ -98,7 +98,7 @@ public class EtherealChains extends Artifact {
 				GLog.i( Messages.get(Artifact.class, "need_to_equip") );
 				usesTargeting = false;
 
-			} else if (charge < 1) {
+			} else if (charge < 1 && !hero.hasTalent(Talent.MANA_OVERLOAD)) {
 				GLog.i( Messages.get(this, "no_charge") );
 				usesTargeting = false;
 
@@ -324,7 +324,7 @@ public class EtherealChains extends Artifact {
 				//gains a charge in 40 - 2*missingCharge turns
 				float chargeGain = (1 / (40f - (chargeTarget - charge)*2f));
 				chargeGain *= RingOfEnergy.artifactChargeMultiplier(target);
-				partialCharge += chargeGain;
+				partialCharge += chargeGain * Artifact.negativeRechargeFactor(EtherealChains.this);
 			} else if (cursed && Random.Int(100) == 0){
 				Buff.prolong( target, Cripple.class, 10f);
 			}

@@ -94,7 +94,11 @@ public class MasterThievesArmband extends Artifact {
 				GLog.i( Messages.get(Artifact.class, "need_to_equip") );
 				usesTargeting = false;
 
-			} else if (charge < 1) {
+			} else if (charge < 1 && !hero.hasTalent(Talent.MANA_OVERLOAD)) {
+				GLog.i( Messages.get(this, "no_charge") );
+				usesTargeting = false;
+
+			} else if (charge < 0) {
 				GLog.i( Messages.get(this, "no_charge") );
 				usesTargeting = false;
 
@@ -223,7 +227,7 @@ public class MasterThievesArmband extends Artifact {
 	public void charge(Hero target, float amount) {
 		if (cursed || target.buff(MagicImmune.class) != null) return;
 		if (charge < chargeCap) {
-			partialCharge += 0.1f * amount;
+			partialCharge += 0.1f * amount * Artifact.negativeRechargeFactor(this);
 			while (partialCharge >= 1f) {
 				charge++;
 				partialCharge--;
@@ -279,7 +283,7 @@ public class MasterThievesArmband extends Artifact {
 				float chargeGain = (3f + 0.15f*level()) * levelPortion;
 				chargeGain *= RingOfEnergy.artifactChargeMultiplier(target);
 
-				partialCharge += chargeGain;
+				partialCharge += chargeGain * Artifact.negativeRechargeFactor(MasterThievesArmband.this);
 				while (partialCharge > 1f){
 					partialCharge--;
 					charge++;

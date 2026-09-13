@@ -102,6 +102,7 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
+import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.curses.Bulk;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs.AntiMagic;
@@ -385,7 +386,17 @@ public abstract class Char extends Actor {
 	public boolean attack( Char enemy, float dmgMulti, float dmgBonus, float accMulti ) {
 
 		if (enemy == null) return false;
-		
+
+		//交叉火力：英雄的近战/投掷攻击动作做出即触发，无论是否命中（法杖攻击在Wand处触发）；
+		//友方单位每次攻击敌方单位也会叠加1层
+		if (this == Dungeon.hero) {
+			Talent.onCrossfireHeroAttack();
+		} else if (Dungeon.hero != null
+				&& alignment == Alignment.ALLY
+				&& enemy.alignment == Alignment.ENEMY){
+			Talent.onCrossfireAllyAttack();
+		}
+
 		boolean visibleFight = Dungeon.level.heroFOV[pos] || Dungeon.level.heroFOV[enemy.pos];
 
 		if (enemy.isInvulnerable(getClass())) {
@@ -841,10 +852,13 @@ public abstract class Char extends Actor {
 	}
 	
 	public void damage( int dmg, Object src ) {
-		
+
 		if (!isAlive() || dmg < 0) {
 			return;
 		}
+
+		//被角色攻击（用于野蛮寄生的触发判定）
+		boolean charAttacked = dmg > 0 && src instanceof Char && src != this;
 
 		if (!(this instanceof Hero) && src instanceof Wand && Dungeon.hero != null) {
 			Berserk berserk = Dungeon.hero.buff(Berserk.class);
@@ -1009,6 +1023,20 @@ public abstract class Char extends Actor {
 			Splash.at( sprite.center(), -PointF.PI / 2, PointF.PI / 6, sprite.blood(), 10 );
 			return;
 		}
+		//交叉火力：连段期间，友方单位对敌方造成的伤害按其攻击前已有的层数递增（每层+100%/+200%），
+		//即首次友方攻击获得1层加成（英雄攻击那层），此后每次递增1层
+		if (dmg > 0
+				&& this != Dungeon.hero
+				&& alignment == Alignment.ENEMY
+				&& src instanceof Char && src != Dungeon.hero && src != this
+				&& ((Char) src).alignment == Alignment.ALLY
+				&& Dungeon.hero != null){
+			Talent.CrossfireTracker crossfire = Dungeon.hero.buff(Talent.CrossfireTracker.class);
+			if (crossfire != null && crossfire.stacks > 0 && Dungeon.hero.hasTalent(Talent.CROSSFIRE)){
+				dmg = Math.round(dmg * (1f + Dungeon.hero.pointsInTalent(Talent.CROSSFIRE)*(crossfire.stacks - 1)));
+			}
+		}
+
 		int shielded = dmg;
 		dmg = ShieldBuff.processDamage(this, dmg, src);
 		shielded -= dmg;
@@ -1016,6 +1044,7 @@ public abstract class Char extends Actor {
 				&& Berserk.isEnemyDamageSource(src)) {
 			dmg = (int) (dmg * 115L / 100L);
 		}
+
 		HP -= dmg;
 
 		if (HP > 0 && src instanceof Char && ((Char) src).buff(Grim.GrimTracker.class) != null){
@@ -1103,6 +1132,14 @@ public abstract class Char extends Actor {
 			die( src );
 		} else if (HP == 0 && buff(DeathMark.DeathMarkTracker.class) != null){
 			DeathMark.processFearTheReaper(this);
+		}
+
+		//野蛮寄生：宿主被角色攻击后，结算寄生种子的效果
+		if (isAlive() && charAttacked){
+			Talent.SavageParasitism parasite = buff(Talent.SavageParasitism.class);
+			if (parasite != null){
+				parasite.trigger();
+			}
 		}
 	}
 

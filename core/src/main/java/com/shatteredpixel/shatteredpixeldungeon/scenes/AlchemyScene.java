@@ -713,11 +713,11 @@ public class AlchemyScene extends PixelScene {
 
 			Recipe recipe = recipes.get(i);
 
-			int cost = recipe.cost(ingredients);
+			int cost = Recipe.cost(recipe, ingredients);
 
 			outputs[i].visible = true;
 			outputs[i].setRect(outputs[0].left(), top, BTN_SIZE, BTN_SIZE);
-			outputs[i].item(recipe.sampleOutput(ingredients));
+			outputs[i].item(Recipe.sampleOutput(recipe, ingredients));
 			top += BTN_SIZE+gap;
 
 			int availableEnergy = Dungeon.energy;
@@ -811,10 +811,10 @@ public class AlchemyScene extends PixelScene {
 		Item result = null;
 		
 		if (recipe != null){
-			int cost = recipe.cost(ingredients);
+			int cost = Recipe.cost(recipe, ingredients);
 			consumeEnergy(cost);
 			
-			result = recipe.brew(ingredients);
+			result = Recipe.brew(recipe, ingredients);
 		}
 		
 		if (result != null){
@@ -861,7 +861,7 @@ public class AlchemyScene extends PixelScene {
 
 		if (recipe != null) {
 			for (Item ingredient : ingredients) ingredient.identify();
-			Item result = recipe.brew(ingredients);
+			Item result = Recipe.brew(recipe, ingredients);
 			experimentalOutput = null;
 			experimentalEnergy = 0;
 			if (result != null) {

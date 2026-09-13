@@ -370,6 +370,7 @@ public abstract class Recipe {
 	public static Recipe findExperimentalRecipe(ArrayList<Item> ingredients, Item output,
 			int energy, int category) {
 		if (output == null || category < 0 || category >= experimentalRecipes.length) return null;
+		ingredients = RealityWarp.alchemyIngredients(ingredients);
 
 		for (Recipe recipe : experimentalRecipes[category]) {
 			boolean enoughEnergy = recipe instanceof SpecialRecipe
@@ -464,6 +465,7 @@ public abstract class Recipe {
 	public static ArrayList<Recipe> findRecipes(ArrayList<Item> ingredients){
 
 		ArrayList<Recipe> result = new ArrayList<>();
+		ingredients = RealityWarp.alchemyIngredients(ingredients);
 
 		for (Recipe recipe : variableRecipes){
 			if (recipe.testIngredients(ingredients)){
@@ -494,6 +496,18 @@ public abstract class Recipe {
 		}
 		
 		return result;
+	}
+
+	public static int cost(Recipe recipe, ArrayList<Item> ingredients) {
+		return recipe.cost(RealityWarp.alchemyIngredients(ingredients));
+	}
+
+	public static Item sampleOutput(Recipe recipe, ArrayList<Item> ingredients) {
+		return recipe.sampleOutput(RealityWarp.alchemyIngredients(ingredients));
+	}
+
+	public static Item brew(Recipe recipe, ArrayList<Item> ingredients) {
+		return recipe.brew(RealityWarp.alchemyIngredients(ingredients));
 	}
 	
 	public static boolean usableInRecipe(Item item){

@@ -149,7 +149,7 @@ public class SkeletonKey extends Artifact {
 							GLog.w(Messages.get(SkeletonKey.class, "wont_open"));
 							return;
 						}
-						if (charge < 1){
+						if (charge < 1 && !curUser.hasTalent(Talent.MANA_OVERLOAD)){
 							GLog.i( Messages.get(SkeletonKey.class, "iron_charges") );
 							return;
 						}
@@ -187,7 +187,7 @@ public class SkeletonKey extends Artifact {
 						return;
 					} else if (Dungeon.level.map[target] == Terrain.CRYSTAL_DOOR) {
 
-						if (charge < 5) {
+						if (charge < 5 && !curUser.hasTalent(Talent.MANA_OVERLOAD)) {
 							GLog.i(Messages.get(SkeletonKey.class, "crystal_charges"));
 							return;
 						}
@@ -214,7 +214,7 @@ public class SkeletonKey extends Artifact {
 						return;
 					} else if (Dungeon.level.map[target] == Terrain.DOOR || Dungeon.level.map[target] == Terrain.OPEN_DOOR){
 
-						if (charge < 2) {
+						if (charge < 2 && !curUser.hasTalent(Talent.MANA_OVERLOAD)) {
 							GLog.i(Messages.get(SkeletonKey.class, "lock_charges"));
 							return;
 						}
@@ -287,7 +287,7 @@ public class SkeletonKey extends Artifact {
 						return;
 
 					} else if (Dungeon.level.heaps.get(target) != null && Dungeon.level.heaps.get(target).type == Heap.Type.LOCKED_CHEST){
-						if (charge < 2) {
+						if (charge < 2 && !curUser.hasTalent(Talent.MANA_OVERLOAD)) {
 							GLog.i(Messages.get(SkeletonKey.class, "gold_charges"));
 							return;
 						}
@@ -308,7 +308,7 @@ public class SkeletonKey extends Artifact {
 						return;
 
 					} else if (Dungeon.level.heaps.get(target) != null && Dungeon.level.heaps.get(target).type == Heap.Type.CRYSTAL_CHEST){
-						if (charge < 5) {
+						if (charge < 5 && !curUser.hasTalent(Talent.MANA_OVERLOAD)) {
 							GLog.i(Messages.get(SkeletonKey.class, "crystal_charges"));
 							return;
 						}
@@ -331,7 +331,7 @@ public class SkeletonKey extends Artifact {
 					}
 				}
 
-				if (charge < 2){
+				if (charge < 2 && !curUser.hasTalent(Talent.MANA_OVERLOAD)){
 					GLog.i(Messages.get(SkeletonKey.class, "wall_charges"));
 					return;
 				}
@@ -401,7 +401,7 @@ public class SkeletonKey extends Artifact {
 	@Override
 	public void charge(Hero target, float amount) {
 		if (charge < chargeCap && !cursed && target.buff(MagicImmune.class) == null){
-			partialCharge += 0.133f*amount;
+			partialCharge += 0.133f*amount * Artifact.negativeRechargeFactor(this);
 			while (partialCharge >= 1){
 				partialCharge--;
 				charge++;
@@ -438,7 +438,7 @@ public class SkeletonKey extends Artifact {
 				//120 turns to charge at full, 60 turns to charge at 0/8
 				float chargeGain = 1 / (120f - (chargeCap - charge)*7.5f);
 				chargeGain *= RingOfEnergy.artifactChargeMultiplier(target);
-				partialCharge += chargeGain;
+				partialCharge += chargeGain * Artifact.negativeRechargeFactor(SkeletonKey.this);
 
 				while (partialCharge >= 1) {
 					partialCharge --;
