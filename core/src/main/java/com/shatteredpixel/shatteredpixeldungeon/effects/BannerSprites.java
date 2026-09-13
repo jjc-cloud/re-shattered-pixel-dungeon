@@ -41,17 +41,17 @@ public class BannerSprites {
 			case TITLE_PORT:
 			case TITLE_LAND:
 				// The replacement atlas has one title shared by both orientations.
-				icon.frame( icon.texture.uvRect( 0, 0, 130, 92 ) );
+				icon.frame( icon.texture.uvRect( 46, 7, 210, 95 ) );
 				break;
 			case TITLE_GLOW_PORT:
 			case TITLE_GLOW_LAND:
-				icon.frame( icon.texture.uvRect( 130, 0, 256, 92 ) );
+				icon.frame( icon.texture.uvRect( 51, 98, 205, 177 ) );
 				break;
 			case BOSS_SLAIN:
-				icon.frame( icon.texture.uvRect( 0, 92, 128, 126 ) );
+				icon.frame( icon.texture.uvRect( 67, 190, 189, 224 ) );
 				break;
 			case GAME_OVER:
-				icon.frame( icon.texture.uvRect( 0, 126, 128, 160 ) );
+				icon.frame( icon.texture.uvRect( 81, 222, 168, 256 ) );
 				break;
 		}
 		return icon;

@@ -138,8 +138,10 @@ public class TitleScene extends PixelScene {
 				Blending.setNormalMode();
 			}
 		};
-		signs.x = title.x + (title.width() - signs.width())/2f;
-		signs.y = title.y;
+		//the glow is the inner fill of the title letters (no outline), so it is smaller and
+		//sits inset within the title frame
+		signs.x = title.x + 5;
+		signs.y = title.y + 5;
 		add( signs );
 
 		final Chrome.Type GREY_TR = Chrome.Type.GREY_BUTTON_TR;

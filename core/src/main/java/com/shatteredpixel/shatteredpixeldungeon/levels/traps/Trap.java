@@ -22,9 +22,11 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels.traps;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoTrap;
@@ -69,10 +71,17 @@ public abstract class Trap implements Bundlable {
 
 	public boolean avoidsHallways = false; //whether this trap should avoid being placed in hallways
 
-	//intricate design challenge: whether this trap only triggers the second time the player passes over it
-	public boolean intricate = false;
-	//intricate design challenge: whether an intricate trap has been silently primed by the player's first pass
+	//outdated design challenge: whether this trap only takes effect the second time it is triggered
+	public boolean outdated = false;
+	//outdated design challenge: whether an outdated trap has been silently primed by its first trigger
 	public boolean primed = false;
+
+	//outdated design challenge: guarantees every second trap placed on a level needs a second
+	//trigger to take effect, instead of rolling pure chance for each trap
+	public Trap rollOutdated( Level level ){
+		outdated = Dungeon.isChallenged(Challenges.OUTDATED_DESIGN) && (level.outdatedTrapCounter++ % 2 == 0);
+		return this;
+	}
 
 	public Trap set(int pos){
 		this.pos = pos;
@@ -138,7 +147,7 @@ public abstract class Trap implements Bundlable {
 	private static final String POS	= "pos";
 	private static final String VISIBLE	= "visible";
 	private static final String ACTIVE = "active";
-	private static final String INTRICATE = "intricate";
+	private static final String OUTDATED = "outdated";
 	private static final String PRIMED = "primed";
 
 	@Override
@@ -148,7 +157,7 @@ public abstract class Trap implements Bundlable {
 		if (bundle.contains(ACTIVE)){
 			active = bundle.getBoolean(ACTIVE);
 		}
-		intricate = bundle.getBoolean( INTRICATE );
+		outdated = bundle.getBoolean( OUTDATED );
 		primed = bundle.getBoolean( PRIMED );
 	}
 
@@ -157,7 +166,7 @@ public abstract class Trap implements Bundlable {
 		bundle.put( POS, pos );
 		bundle.put( VISIBLE, visible );
 		bundle.put( ACTIVE, active );
-		bundle.put( INTRICATE, intricate );
+		bundle.put( OUTDATED, outdated );
 		bundle.put( PRIMED, primed );
 	}
 
