@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Petrification;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ShieldBuff;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
@@ -75,8 +76,8 @@ public class Brute extends Mob {
 	public void die(Object cause) {
 		super.die(cause);
 
-		if (cause == Chasm.class){
-			hasRaged = true; //don't let enrage trigger for chasm deaths
+		if (cause == Chasm.class || cause instanceof Petrification){
+			hasRaged = true; //don't let enrage trigger for chasm or petrification deaths
 		}
 	}
 
