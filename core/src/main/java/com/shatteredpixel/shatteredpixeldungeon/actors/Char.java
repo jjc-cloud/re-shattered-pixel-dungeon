@@ -1189,6 +1189,8 @@ public abstract class Char extends Actor {
 	}
 	
 	public void die( Object src ) {
+		//recorded before destroy() so buffs detached on death can react to the cause of death
+		deathCause = src;
 		//something else is forcing death, so remove death mark to prevent conflicts
 		if (buff(DeathMark.DeathMarkTracker.class) != null){
 			buff(DeathMark.DeathMarkTracker.class).detachOnDeath();
@@ -1210,6 +1212,10 @@ public abstract class Char extends Actor {
 	//This is relevant because we call isAlive during drawing, which has both performance
 	//and thread coordination implications
 	public boolean deathMarked = false;
+
+	//what killed this character, set at the start of die(); lets on-death effects (including
+	//ones in buff detach, which runs inside destroy) gate on the cause of death
+	public Object deathCause;
 	
 	public boolean isAlive() {
 		return HP > 0 || deathMarked;
