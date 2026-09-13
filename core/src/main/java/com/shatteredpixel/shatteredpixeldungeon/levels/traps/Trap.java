@@ -69,6 +69,11 @@ public abstract class Trap implements Bundlable {
 
 	public boolean avoidsHallways = false; //whether this trap should avoid being placed in hallways
 
+	//intricate design challenge: whether this trap only triggers the second time the player passes over it
+	public boolean intricate = false;
+	//intricate design challenge: whether an intricate trap has been silently primed by the player's first pass
+	public boolean primed = false;
+
 	public Trap set(int pos){
 		this.pos = pos;
 		return this;
@@ -133,6 +138,8 @@ public abstract class Trap implements Bundlable {
 	private static final String POS	= "pos";
 	private static final String VISIBLE	= "visible";
 	private static final String ACTIVE = "active";
+	private static final String INTRICATE = "intricate";
+	private static final String PRIMED = "primed";
 
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
@@ -141,6 +148,8 @@ public abstract class Trap implements Bundlable {
 		if (bundle.contains(ACTIVE)){
 			active = bundle.getBoolean(ACTIVE);
 		}
+		intricate = bundle.getBoolean( INTRICATE );
+		primed = bundle.getBoolean( PRIMED );
 	}
 
 	@Override
@@ -148,6 +157,8 @@ public abstract class Trap implements Bundlable {
 		bundle.put( POS, pos );
 		bundle.put( VISIBLE, visible );
 		bundle.put( ACTIVE, active );
+		bundle.put( INTRICATE, intricate );
+		bundle.put( PRIMED, primed );
 	}
 
 	//this buff is used to keep track of hazards recently affecting a character

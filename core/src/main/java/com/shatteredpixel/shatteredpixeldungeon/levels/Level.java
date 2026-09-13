@@ -1245,16 +1245,23 @@ public abstract class Level implements Bundlable {
 		Trap trap = null;
 		
 		switch (map[cell]) {
-		
+
 		case Terrain.SECRET_TRAP:
 			if (hard) {
 				trap = traps.get( cell );
-				GLog.i(Messages.get(Level.class, "hidden_trap", trap.name()));
+				if (primeIntricateTrap(trap, cell)) {
+					trap = null;
+				} else {
+					GLog.i(Messages.get(Level.class, "hidden_trap", trap.name()));
+				}
 			}
 			break;
-			
+
 		case Terrain.TRAP:
 			trap = traps.get( cell );
+			if (primeIntricateTrap(trap, cell)) {
+				trap = null;
+			}
 			break;
 			
 		case Terrain.HIGH_GRASS:
@@ -1316,6 +1323,20 @@ public abstract class Level implements Bundlable {
 		if (hard && Blob.volumeAt(cell, Web.class) > 0){
 			blobs.get(Web.class).clear(cell);
 		}
+	}
+
+	//intricate design challenge: the hero's first pass over an intricate trap silently primes it instead of
+	//triggering it, with no sound or reveal. Returns true if the trap was primed and should not trigger now
+	private boolean primeIntricateTrap( Trap trap, int cell ){
+		if (Dungeon.isChallenged(Challenges.INTRICATE_DESIGN)
+				&& trap != null
+				&& trap.intricate
+				&& !trap.primed
+				&& Dungeon.hero.pos == cell){
+			trap.primed = true;
+			return true;
+		}
+		return false;
 	}
 
 	private static boolean[] heroMindFov;
