@@ -139,8 +139,9 @@ public abstract class ChampionEnemy extends Buff {
 
 		@Override
 		public void detach() {
-			//don't trigger when killed by being knocked into a pit
-			if (target.flying || !Dungeon.level.pit[target.pos]) {
+			//don't trigger when killed by being knocked into a pit, or turned to stone
+			if (!(target.deathCause instanceof Petrification)
+					&& (target.flying || !Dungeon.level.pit[target.pos])) {
 				for (int i : PathFinder.NEIGHBOURS9) {
 					if (!Dungeon.level.solid[target.pos + i] && !Dungeon.level.water[target.pos + i]) {
 						GameScene.add(Blob.seed(target.pos + i, 2, Fire.class));
