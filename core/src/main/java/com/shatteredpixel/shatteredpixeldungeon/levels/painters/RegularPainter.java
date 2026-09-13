@@ -481,7 +481,7 @@ public abstract class RegularPainter extends Painter {
 
 			Trap trap = Reflection.newInstance(trapClasses[Random.chances( trapChances )]);
 			//outdated design challenge: each trap has a 50% chance to need a second trigger to take effect
-			trap.rollOutdated();
+			trap.rollOutdated( l );
 
 			Integer trapPos;
 			if (trap.avoidsHallways && !validNonHallways.isEmpty()){

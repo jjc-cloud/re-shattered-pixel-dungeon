@@ -26,13 +26,13 @@ import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoTrap;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundlable;
 import com.watabou.utils.Bundle;
-import com.watabou.utils.Random;
 
 public abstract class Trap implements Bundlable {
 
@@ -76,9 +76,10 @@ public abstract class Trap implements Bundlable {
 	//outdated design challenge: whether an outdated trap has been silently primed by its first trigger
 	public boolean primed = false;
 
-	//outdated design challenge: 50% chance for a newly placed trap to only take effect on its second trigger
-	public Trap rollOutdated(){
-		outdated = Dungeon.isChallenged(Challenges.OUTDATED_DESIGN) && Random.Int(2) == 0;
+	//outdated design challenge: guarantees every second trap placed on a level needs a second
+	//trigger to take effect, instead of rolling pure chance for each trap
+	public Trap rollOutdated( Level level ){
+		outdated = Dungeon.isChallenged(Challenges.OUTDATED_DESIGN) && (level.outdatedTrapCounter++ % 2 == 0);
 		return this;
 	}
 
