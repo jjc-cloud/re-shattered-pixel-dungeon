@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.levels.painters;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
@@ -427,6 +428,11 @@ public abstract class RegularPainter extends Painter {
 	}
 	
 	protected void paintTraps( Level l, ArrayList<Room> rooms ) {
+		//outdated design challenge: 50% more traps are placed
+		if (Dungeon.isChallenged(Challenges.OUTDATED_DESIGN)){
+			nTraps = Math.round(nTraps * 1.5f);
+		}
+
 		ArrayList<Integer> validCells = new ArrayList<>();
 		
 		if (!rooms.isEmpty()){
@@ -474,6 +480,8 @@ public abstract class RegularPainter extends Painter {
 		for (int i = 0; i < (l.feeling == Level.Feeling.TRAPS ? 5*nTraps : nTraps); i++) {
 
 			Trap trap = Reflection.newInstance(trapClasses[Random.chances( trapChances )]);
+			//outdated design challenge: each trap has a 50% chance to need a second trigger to take effect
+			trap.rollOutdated();
 
 			Integer trapPos;
 			if (trap.avoidsHallways && !validNonHallways.isEmpty()){

@@ -85,11 +85,11 @@ public class MinefieldRoom extends StandardRoom {
 			revealInc += revealedChance;
 			if (revealInc >= 1) {
 				Painter.set(level, pos, Terrain.TRAP);
-				level.setTrap(new ExplosiveTrap().reveal(), pos);
+				level.setTrap(new ExplosiveTrap().rollOutdated().reveal(), pos);
 				revealInc--;
 			} else {
 				Painter.set(level, pos, Terrain.SECRET_TRAP);
-				level.setTrap(new ExplosiveTrap().hide(), pos);
+				level.setTrap(new ExplosiveTrap().rollOutdated().hide(), pos);
 			}
 
 		}
