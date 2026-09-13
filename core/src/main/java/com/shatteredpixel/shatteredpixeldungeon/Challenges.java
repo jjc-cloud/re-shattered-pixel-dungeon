@@ -36,7 +36,7 @@ public class Challenges {
 	public static final int NO_SCROLLS		    = 64;
 	public static final int CHAMPION_ENEMIES	= 128;
 	public static final int STRONGER_BOSSES 	= 256;
-	public static final int INTRICATE_DESIGN	= 512;
+	public static final int OUTDATED_DESIGN	= 512;
 
 	public static final int MAX_VALUE           = 1023;
 	public static final int MAX_CHALS           = 10;
@@ -51,11 +51,11 @@ public class Challenges {
 			"swarm_intelligence",
 			"darkness",
 			"no_scrolls",
-			"intricate_design"
+			"outdated_design"
 	};
 
 	public static final int[] MASKS = {
-			CHAMPION_ENEMIES, STRONGER_BOSSES, NO_FOOD, NO_ARMOR, NO_HEALING, NO_HERBALISM, SWARM_INTELLIGENCE, DARKNESS, NO_SCROLLS, INTRICATE_DESIGN
+			CHAMPION_ENEMIES, STRONGER_BOSSES, NO_FOOD, NO_ARMOR, NO_HEALING, NO_HERBALISM, SWARM_INTELLIGENCE, DARKNESS, NO_SCROLLS, OUTDATED_DESIGN
 	};
 
 	public static int activeChallenges(){

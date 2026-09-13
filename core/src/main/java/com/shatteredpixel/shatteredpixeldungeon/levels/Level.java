@@ -189,6 +189,10 @@ public abstract class Level implements Bundlable {
 	public HashMap<Class<? extends Blob>,Blob> blobs;
 	public SparseArray<Plant> plants;
 	public SparseArray<Trap> traps;
+
+	//outdated design challenge: counts traps placed on this level, so that every second one
+	//needs a second trigger to take effect. Starts at a random phase each level
+	public int outdatedTrapCounter = Random.Int(2);
 	public ArrayList<CustomTilemap> customTiles;
 	public ArrayList<CustomTilemap> customTerrain;
 	public ArrayList<CustomTilemap> customWalls;
@@ -1249,7 +1253,7 @@ public abstract class Level implements Bundlable {
 		case Terrain.SECRET_TRAP:
 			if (hard) {
 				trap = traps.get( cell );
-				if (primeIntricateTrap(trap, cell)) {
+				if (primeOutdatedTrap(trap)) {
 					trap = null;
 				} else {
 					GLog.i(Messages.get(Level.class, "hidden_trap", trap.name()));
@@ -1259,7 +1263,7 @@ public abstract class Level implements Bundlable {
 
 		case Terrain.TRAP:
 			trap = traps.get( cell );
-			if (primeIntricateTrap(trap, cell)) {
+			if (primeOutdatedTrap(trap)) {
 				trap = null;
 			}
 			break;
@@ -1325,14 +1329,13 @@ public abstract class Level implements Bundlable {
 		}
 	}
 
-	//intricate design challenge: the hero's first pass over an intricate trap silently primes it instead of
-	//triggering it, with no sound or reveal. Returns true if the trap was primed and should not trigger now
-	private boolean primeIntricateTrap( Trap trap, int cell ){
-		if (Dungeon.isChallenged(Challenges.INTRICATE_DESIGN)
+	//outdated design challenge: the first time an outdated trap is triggered (by anything) it silently
+	//primes instead of triggering, with no sound or reveal. Returns true if the trap was primed
+	private boolean primeOutdatedTrap( Trap trap ){
+		if (Dungeon.isChallenged(Challenges.OUTDATED_DESIGN)
 				&& trap != null
-				&& trap.intricate
-				&& !trap.primed
-				&& Dungeon.hero.pos == cell){
+				&& trap.outdated
+				&& !trap.primed){
 			trap.primed = true;
 			return true;
 		}

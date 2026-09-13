@@ -64,9 +64,9 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V21_SHOPKEEPER, "订购",
 				"\n新增商店订购功能，现在可以在商店处订购额外的物资。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V010_VOID_WALKER, "公共天赋",
-				"\n新增公共天赋池，使用蜕变密卷时额外抽取两个属于公共天赋池的天赋。"));
-		changes.addButton(new ChangeButton(ChangeIcons.V010_VOID_WALKER, "公共天赋扩展",
-				"\n公共天赋池新增五个天赋：_魔能超载_、_野蛮寄生_、_完美处决_，以及强大的_扭曲现实_与_交叉火力_（后两者为稀有天赋）。"));
+				"\n新增公共天赋池，使用蜕变密卷时额外抽取两个属于公共天赋池的天赋。\n-振奋一餐：进食冻结周围时间。\n-多重存在：操纵镜像的行为，并获得它们的视野。\n-逃脱计划：可以与一名敌人互换位置。\n-虚空行者：暂时不掉下悬崖。\n-魔能超载：无视充能限制使用法杖神器。\n-野蛮寄生：种子可以在生物上发芽生效。\n-扭曲现实：唯心的改写现实，交换两种药剂或卷轴的效果。\n-交叉火力：大幅增加友军伤害。\n-隐藏技：处决敌人。\n-火力倾泻：法杖与投掷武器不消耗时间。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V064_CHALLENGES, "新挑战",
+				"\n新增一个陷阱相关挑战，生成更多的陷阱，所有陷阱有一半概率只有第二次经过才会触发，可见陷阱有一半概率需要两次才会触发。"));
 
 		changes = new ChangeInfo("改动", false, null);
 		changes.hardlight(CharSprite.WARNING);
@@ -91,6 +91,13 @@ public class ReShatteredChanges {
 				"\n角斗士的二连击现在会造成伤害，且战技强化移除了连击数需求。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V30_SHARED_UPGRADES,"联动升级",
 				"\n联动升级无上限等级限制，且现在按投掷武器的阶数提供增幅，每阶提供2.5%/5%/7.5%伤害，每级提供倍数伤害。"));
+
+		changes = new ChangeInfo("削弱", false, null);
+		changes.hardlight(CharSprite.NEGATIVE);
+		changeInfos.add(changes);
+
+		changes.addButton(new ChangeButton(ChangeIcons.V035_WARRIOR_HEROARM, "战士转职",
+				"\n调整了转职的数值，使其更加合理。"));	
 	}
 
 	public static void addDevelopmentPreview(ArrayList<ChangeInfo> changeInfos) {
