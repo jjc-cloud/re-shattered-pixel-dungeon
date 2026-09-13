@@ -152,6 +152,14 @@ public abstract class Plant implements Bundlable {
 		
 		@Override
 		protected void onThrow( int cell ) {
+
+			//野蛮寄生：投掷种子命中敌人时，种子消失并寄生于目标
+			Char parasitize = Actor.findChar( cell );
+			if (curUser != null && parasitize != null && parasitize != curUser
+					&& Talent.trySavageParasite( curUser, this, parasitize )){
+				return;
+			}
+
 			if (Dungeon.level.map[cell] == Terrain.ALCHEMY
 					|| Dungeon.level.pit[cell]
 					|| Dungeon.level.traps.get(cell) != null

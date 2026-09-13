@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Thief;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.RealityWarp;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.FrozenCarpaccio;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.MysteryMeat;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
@@ -75,7 +76,7 @@ public class Frost extends FlavourBuff {
 					Item toFreeze = Random.element(freezable).detach( hero.belongings.backpack );
 					GLog.w( Messages.capitalize(Messages.get(this, "freezes", toFreeze.title())) );
 					if (toFreeze instanceof Potion){
-						((Potion) toFreeze).shatter(hero.pos);
+						RealityWarp.shatterPotionEffect((Potion) toFreeze, hero.pos);
 					} else if (toFreeze instanceof MysteryMeat){
 						FrozenCarpaccio carpaccio = new FrozenCarpaccio();
 						if (!carpaccio.collect( hero.belongings.backpack )) {
@@ -89,7 +90,7 @@ public class Frost extends FlavourBuff {
 				Item item = ((Thief) target).item;
 
 				if (item instanceof Potion && !item.unique) {
-					((Potion) ((Thief) target).item).shatter(target.pos);
+					RealityWarp.shatterPotionEffect((Potion) ((Thief) target).item, target.pos);
 					((Thief) target).item = null;
 				} else if (item instanceof MysteryMeat){
 					((Thief) target).item = new FrozenCarpaccio();

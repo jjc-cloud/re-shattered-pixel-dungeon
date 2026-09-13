@@ -246,7 +246,8 @@ public class ScrollOfMetamorphosis extends ExoticScroll {
 				for (int i = 0; i < 2; i++){
 					Talent option = Talent.randomPublicMetamorphTalent(Random.Int(20) == 0, excluded);
 					if (option != null){
-						options.put(option, Dungeon.hero.pointsInTalent(replacing));
+						//扭曲现实：获得时返还该天赋槽启用的天赋点，从0点开始
+						options.put(option, option == Talent.REALITY_WARP ? 0 : Dungeon.hero.pointsInTalent(replacing));
 						excluded.add(option);
 					}
 				}

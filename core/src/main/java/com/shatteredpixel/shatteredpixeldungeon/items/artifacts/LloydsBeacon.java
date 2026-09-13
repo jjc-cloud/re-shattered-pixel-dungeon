@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Regeneration;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -134,11 +135,16 @@ public class LloydsBeacon extends Artifact {
 				GLog.i( Messages.get(Artifact.class, "need_to_equip") );
 				QuickSlotButton.cancel();
 
-			} else if (charge < chargesToUse) {
+		} else if (charge < chargesToUse
+				&& !hero.hasTalent(Talent.MANA_OVERLOAD)) {
 				GLog.i( Messages.get(this, "no_charge") );
 				QuickSlotButton.cancel();
 
-			} else {
+		} else if (charge < 0) {
+				GLog.i( Messages.get(this, "no_charge") );
+				QuickSlotButton.cancel();
+
+		} else {
 				GameScene.selectCell(zapper);
 			}
 
@@ -275,7 +281,7 @@ public class LloydsBeacon extends Artifact {
 	@Override
 	public void charge(Hero target, float amount) {
 		if (charge < chargeCap){
-			partialCharge += 0.25f*amount;
+			partialCharge += 0.25f*amount * Artifact.negativeRechargeFactor(this);
 			while (partialCharge >= 1){
 				partialCharge--;
 				charge++;
@@ -317,7 +323,7 @@ public class LloydsBeacon extends Artifact {
 		@Override
 		public boolean act() {
 			if (charge < chargeCap && !cursed && Regeneration.regenOn()) {
-				partialCharge += 1 / (100f - (chargeCap - charge)*10f);
+				partialCharge += (1 / (100f - (chargeCap - charge)*10f)) * Artifact.negativeRechargeFactor(LloydsBeacon.this);
 
 				while (partialCharge >= 1) {
 					partialCharge --;

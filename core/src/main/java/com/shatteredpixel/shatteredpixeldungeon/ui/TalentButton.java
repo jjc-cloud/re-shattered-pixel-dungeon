@@ -27,11 +27,13 @@ import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
+import com.shatteredpixel.shatteredpixeldungeon.items.RealityWarp;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfMetamorphosis;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoTalent;
+import com.shatteredpixel.shatteredpixeldungeon.windows.WndRealityWarp;
 import com.watabou.noosa.ColorBlock;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.PointerArea;
@@ -111,6 +113,18 @@ public class TalentButton extends Button {
 	protected void onClick() {
 		super.onClick();
 
+		//扭曲现实：一旦获得将无法被蜕变改变；有待完成的互换选择时，点击直接打开选品窗口
+		if (talent == Talent.REALITY_WARP
+				&& Dungeon.hero != null
+				&& Dungeon.hero.isAlive()
+				&& mode != Mode.METAMORPH_REPLACE
+				&& Talent.realityWarpSelectionPending(Dungeon.hero)){
+			GameScene.show(new WndRealityWarp(RealityWarp.potionSwapped()
+					? WndRealityWarp.Mode.SCROLL
+					: WndRealityWarp.Mode.POTION));
+			return;
+		}
+
 		Window toAdd;
 		if (mode == Mode.UPGRADE
 				&& Dungeon.hero != null
@@ -130,7 +144,10 @@ public class TalentButton extends Button {
 					Statistics.qualifiedForRandomVictoryBadge = false;
 				}
 			});
-		} else if (mode == Mode.METAMORPH_CHOOSE && Dungeon.hero != null && Dungeon.hero.isAlive()) {
+		} else if (mode == Mode.METAMORPH_CHOOSE
+				&& Dungeon.hero != null
+				&& Dungeon.hero.isAlive()
+				&& talent != Talent.REALITY_WARP) {
 			toAdd = new WndInfoTalent(talent, pointsInTalent, new WndInfoTalent.TalentButtonCallback() {
 
 				@Override
@@ -168,14 +185,15 @@ public class TalentButton extends Button {
 				public void call() {
 					Talent replacing = ScrollOfMetamorphosis.WndMetamorphReplace.INSTANCE.replacing;
 
-					for (LinkedHashMap<Talent, Integer> tier : Dungeon.hero.talents){
-						if (tier.containsKey(replacing)){
-							LinkedHashMap<Talent, Integer> newTier = new LinkedHashMap<>();
-							for (Talent t : tier.keySet()){
-								if (t == replacing){
-									newTier.put(talent, tier.get(replacing));
+							for (LinkedHashMap<Talent, Integer> tier : Dungeon.hero.talents){
+							if (tier.containsKey(replacing)){
+								LinkedHashMap<Talent, Integer> newTier = new LinkedHashMap<>();
+								for (Talent t : tier.keySet()){
+									if (t == replacing){
+										//扭曲现实：获得该天赋时返还该天赋槽启用的天赋点（从0点开始）
+										newTier.put(talent, talent == Talent.REALITY_WARP ? 0 : tier.get(replacing));
 
-									if (!Dungeon.hero.metamorphedTalents.containsValue(replacing)){
+										if (!Dungeon.hero.metamorphedTalents.containsValue(replacing)){
 										Dungeon.hero.metamorphedTalents.put(replacing, talent);
 
 									//if what we're replacing is already a value, we need to simplify the data structure

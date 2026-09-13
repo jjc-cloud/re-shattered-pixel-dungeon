@@ -88,7 +88,8 @@ public class TalismanOfForesight extends Artifact {
 
 		if (action.equals(AC_SCRY)){
 			if (!isEquipped(hero))  GLog.i( Messages.get(Artifact.class, "need_to_equip") );
-			else if (charge < 5)    GLog.i( Messages.get(this, "low_charge") );
+			else if (charge < 5 && !hero.hasTalent(Talent.MANA_OVERLOAD))    GLog.i( Messages.get(this, "low_charge") );
+			else if (charge < 0)    GLog.i( Messages.get(this, "low_charge") );
 			else                    GameScene.selectCell(scry);
 		}
 	}
@@ -284,7 +285,7 @@ public class TalismanOfForesight extends Artifact {
 				//fully charges in 2000 turns at +0, scaling to 1000 turns at +10.
 				float chargeGain = (0.05f+(level()*0.005f));
 				chargeGain *= RingOfEnergy.artifactChargeMultiplier(target);
-				partialCharge += chargeGain;
+				partialCharge += chargeGain * Artifact.negativeRechargeFactor(TalismanOfForesight.this);
 
 				while (partialCharge >= 1){
 					partialCharge--;

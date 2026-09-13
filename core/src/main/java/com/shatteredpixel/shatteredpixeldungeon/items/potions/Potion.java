@@ -36,6 +36,7 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.ItemStatusHandler;
+import com.shatteredpixel.shatteredpixeldungeon.items.RealityWarp;
 import com.shatteredpixel.shatteredpixeldungeon.items.Recipe;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.AquaBrew;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.Brew;
@@ -136,6 +137,7 @@ public class Potion extends Item {
 	protected static ItemStatusHandler<Potion> handler;
 	
 	protected String color;
+	private Potion effectSource;
 
 	//affects how strongly on-potion talents trigger from this potion
 	protected float talentFactor = 1;
@@ -209,9 +211,10 @@ public class Potion extends Item {
 
 	@Override
 	public String defaultAction() {
-		if (isKnown() && mustThrowPots.contains(this.getClass())) {
+		Class<? extends Potion> effect = RealityWarp.resolvePotion(getClass());
+		if (isKnown() && mustThrowPots.contains(effect)) {
 			return AC_THROW;
-		} else if (isKnown() &&canThrowPots.contains(this.getClass())){
+		} else if (isKnown() && canThrowPots.contains(effect)){
 			return AC_CHOOSE;
 		} else {
 			return AC_DRINK;
@@ -236,7 +239,7 @@ public class Potion extends Item {
 			
 		} else if (action.equals( AC_DRINK )) {
 			
-			if (isKnown() && mustThrowPots.contains(getClass())) {
+			if (isKnown() && mustThrowPots.contains(RealityWarp.resolvePotion(getClass()))) {
 				
 					GameScene.show(
 						new WndOptions(new ItemSprite(this),
@@ -262,9 +265,10 @@ public class Potion extends Item {
 	@Override
 	public void doThrow( final Hero hero ) {
 
+		Class<? extends Potion> effect = RealityWarp.resolvePotion(getClass());
 		if (isKnown()
-				&& !mustThrowPots.contains(this.getClass())
-				&& !canThrowPots.contains(this.getClass())) {
+				&& !mustThrowPots.contains(effect)
+				&& !canThrowPots.contains(effect)) {
 		
 			GameScene.show(
 				new WndOptions(new ItemSprite(this),
@@ -285,16 +289,51 @@ public class Potion extends Item {
 		}
 	}
 	
+	public Potion effectOf(Potion source) {
+		effectSource = source;
+		quantity = source.quantity();
+		image = source.image;
+		icon = source.icon;
+		anonymous = source.anonymous;
+		return this;
+	}
+
+	protected Potion sourcePotion() {
+		return effectSource == null ? this : effectSource;
+	}
+
+	@Override
+	protected Item identityItem() {
+		return sourcePotion();
+	}
+
+	@Override
+	protected void identityItem(Item item) {
+		if (effectSource != null) effectSource = (Potion)item;
+	}
+
+	@Override
+	public int quantity() {
+		return effectSource == null ? super.quantity() : effectSource.quantity();
+	}
+
+	@Override
+	public Item quantity(int value) {
+		if (effectSource != null) effectSource.quantity(value);
+		return super.quantity(value);
+	}
+
 	protected void drink( Hero hero ) {
-		
+
 		detach( hero.belongings.backpack );
-		
+
 		hero.spend( TIME_TO_DRINK );
 		hero.busy();
-		apply( hero );
-		
+
+		RealityWarp.applyPotionEffect(this, hero);
+
 		Sample.INSTANCE.play( Assets.Sounds.DRINK );
-		
+
 		hero.sprite.operate( hero.pos );
 
 		if (!anonymous) {
@@ -304,28 +343,30 @@ public class Potion extends Item {
 			}
 		}
 	}
-	
+
 	@Override
 	protected void onThrow( int cell ) {
 		if (Dungeon.level.map[cell] == Terrain.WELL || Dungeon.level.pit[cell]) {
-			
+
 			super.onThrow( cell );
-			
+
 		} else  {
 
 			//aqua brew and storm clouds specifically don't press cells, so they can disarm traps
 			if (!(this instanceof AquaBrew) && !(this instanceof PotionOfStormClouds)){
 				Dungeon.level.pressCell( cell );
 			}
-			shatter( cell );
 
-			if (!anonymous && (mustThrowPots.contains(getClass()) || canThrowPots.contains(getClass()) || this instanceof Brew)) {
+			RealityWarp.shatterPotionEffect(this, cell);
+
+			Class<? extends Potion> effect = RealityWarp.resolvePotion(getClass());
+			if (!anonymous && (mustThrowPots.contains(effect) || canThrowPots.contains(effect) || this instanceof Brew)) {
 				Catalog.countUse(getClass());
 				if (Random.Float() < talentChance) {
 					Talent.onPotionUsed(curUser, cell, talentFactor);
 				}
 			}
-			
+
 		}
 	}
 	
@@ -347,10 +388,16 @@ public class Potion extends Item {
 	}
 	
 	public boolean isKnown() {
-		return anonymous || (handler != null && handler.isKnown( this ));
+		return effectSource == null
+				? anonymous || (handler != null && handler.isKnown(this))
+				: effectSource.isKnown();
 	}
 	
 	public void setKnown() {
+		if (effectSource != null) {
+			effectSource.setKnown();
+			return;
+		}
 		if (!anonymous) {
 			if (!isKnown()) {
 				handler.know(this);
@@ -366,6 +413,10 @@ public class Potion extends Item {
 	
 	@Override
 	public Item identify( boolean byHero ) {
+		if (effectSource != null) {
+			effectSource.identify(byHero);
+			return this;
+		}
 		super.identify(byHero);
 
 		if (!isKnown()) {
@@ -376,23 +427,31 @@ public class Potion extends Item {
 	
 	@Override
 	public String name() {
+		if (effectSource != null) return effectSource.name();
 		return isKnown() ? super.name() : Messages.get(this, color);
 	}
 
 	@Override
 	public String info() {
+		if (effectSource != null) return effectSource.info();
 		//skip custom notes if anonymized and un-Ided
 		return (anonymous && (handler == null || !handler.isKnown( this ))) ? desc() : super.info();
 	}
 
 	@Override
 	public String desc() {
+		if (effectSource != null) return effectSource.desc();
 		return isKnown() ? super.desc() : Messages.get(this, "unknown_desc");
 	}
 	
 	@Override
 	public boolean isIdentified() {
-		return isKnown();
+		return effectSource == null ? isKnown() : effectSource.isIdentified();
+	}
+
+	@Override
+	public int image() {
+		return effectSource == null ? super.image() : effectSource.image();
 	}
 	
 	@Override

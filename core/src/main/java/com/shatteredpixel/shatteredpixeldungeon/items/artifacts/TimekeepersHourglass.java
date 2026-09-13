@@ -109,7 +109,7 @@ public class TimekeepersHourglass extends Artifact {
 					activeBuff.detach();
 					GLog.i( Messages.get(this, "deactivate") );
 				}
-			} else if (charge <= 0)         GLog.i( Messages.get(this, "no_charge") );
+			} else if (charge <= 0 && !hero.hasTalent(Talent.MANA_OVERLOAD)) GLog.i( Messages.get(this, "no_charge") );
 			else if (cursed)                GLog.i( Messages.get(this, "cursed") );
 			else GameScene.show(
 						new WndOptions(new ItemSprite(this),
@@ -180,7 +180,7 @@ public class TimekeepersHourglass extends Artifact {
 	@Override
 	public void charge(Hero target, float amount) {
 		if (charge < chargeCap && !cursed && target.buff(MagicImmune.class) == null){
-			partialCharge += 0.25f*amount;
+			partialCharge += 0.25f*amount * Artifact.negativeRechargeFactor(this);
 			while (partialCharge >= 1){
 				partialCharge--;
 				charge++;
@@ -260,7 +260,7 @@ public class TimekeepersHourglass extends Artifact {
 				//90 turns to charge at full, 60 turns to charge at 0/10
 				float chargeGain = 1 / (90f - (chargeCap - charge)*3f);
 				chargeGain *= RingOfEnergy.artifactChargeMultiplier(target);
-				partialCharge += chargeGain;
+				partialCharge += chargeGain * Artifact.negativeRechargeFactor(TimekeepersHourglass.this);
 
 				while (partialCharge >= 1) {
 					partialCharge --;
@@ -369,7 +369,13 @@ public class TimekeepersHourglass extends Artifact {
 
 			updateQuickslot();
 
-			if (charge < 0 || charge == 0 && turnsToCost <= 0){
+			if (charge < 0){
+				//魔能超载：允许把充能扣至负数，直到无法维持
+				if (!(target instanceof Hero) || !((Hero) target).hasTalent(Talent.MANA_OVERLOAD)) {
+					charge = 0;
+				}
+				detach();
+			} else if (charge == 0 && turnsToCost <= 0){
 				charge = 0;
 				detach();
 			}

@@ -207,6 +207,8 @@ public class Item implements Bundlable {
 	}
 	
 	public boolean collect( Bag container ) {
+		Item identity = identityItem();
+		if (identity != this) return identity.collect(container);
 
 		if (quantity <= 0){
 			return true;
@@ -320,6 +322,15 @@ public class Item implements Bundlable {
 	}
 	
 	public final Item detach( Bag container ) {
+
+		Item identity = identityItem();
+		if (identity != this) {
+			Item detached = identity.detach(container);
+			if (detached == null) return null;
+			identityItem(detached);
+			quantity = detached.quantity();
+			return this;
+		}
 		
 		if (quantity <= 0) {
 			
@@ -346,6 +357,14 @@ public class Item implements Bundlable {
 	}
 	
 	public final Item detachAll( Bag container ) {
+		Item identity = identityItem();
+		if (identity != this) {
+			Item detached = identity.detachAll(container);
+			identityItem(detached);
+			quantity = detached.quantity();
+			return this;
+		}
+
 		Dungeon.quickslot.clearItem( this );
 
 		for (Item item : container.items) {
@@ -369,6 +388,20 @@ public class Item implements Bundlable {
 	
 	public boolean isSimilar( Item item ) {
 		return getClass() == item.getClass();
+	}
+
+	/**
+	 * The physical item represented by a temporary effect proxy. Ordinary items represent
+	 * themselves; effect-only proxies override this so final inventory operations still act
+	 * on the item the hero actually owns.
+	 */
+	protected Item identityItem() {
+		return this;
+	}
+
+	/** Updates the physical item represented by a proxy after a stack is split. */
+	protected void identityItem(Item item) {
+		//ordinary items have no separate identity
 	}
 
 	protected void onDetach(){}

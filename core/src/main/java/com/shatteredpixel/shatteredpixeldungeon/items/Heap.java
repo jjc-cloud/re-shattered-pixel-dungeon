@@ -290,7 +290,7 @@ public class Heap implements Bundlable {
 
 				if (item instanceof Potion) {
 					items.remove(item);
-					((Potion) item).shatter(pos);
+					RealityWarp.shatterPotionEffect((Potion) item, pos);
 
 				} else if (item instanceof Honeypot.ShatteredPot) {
 					items.remove(item);
@@ -331,7 +331,7 @@ public class Heap implements Bundlable {
 				frozen = true;
 			} else if (item instanceof Potion && !item.unique) {
 				items.remove(item);
-				((Potion) item).shatter(pos);
+				RealityWarp.shatterPotionEffect((Potion) item, pos);
 				frozen = true;
 			} else if (item instanceof Bomb && ((Bomb) item).fuse != null){
 				frozen = frozen || ((Bomb) item).fuse.freeze();

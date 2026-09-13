@@ -146,7 +146,9 @@ public class HolyTome extends Artifact {
 	public boolean canCast( Hero hero, ClericSpell spell ){
 		return (isEquipped(hero) || (Dungeon.hero.hasTalent(Talent.LIGHT_READING) && hero.belongings.contains(this)))
 				&& hero.buff(MagicImmune.class) == null
-				&& charge >= spell.chargeUse(hero)
+				&& (charge >= spell.chargeUse(hero)
+					//魔能超载：充能为零/不足时仍可施法，充能会扣至负数
+					|| (charge >= 0 && hero.hasTalent(Talent.MANA_OVERLOAD)))
 				&& spell.canCast(hero);
 	}
 
@@ -214,7 +216,7 @@ public class HolyTome extends Artifact {
 
 		if (charge < chargeCap) {
 			if (!isEquipped(target)) amount *= 0.75f*target.pointsInTalent(Talent.LIGHT_READING)/3f;
-			partialCharge += 0.25f*amount;
+			partialCharge += 0.25f*amount * Artifact.negativeRechargeFactor(this);
 			while (partialCharge >= 1f) {
 				charge++;
 				partialCharge--;
@@ -296,7 +298,7 @@ public class HolyTome extends Artifact {
 					if (!isEquipped(Dungeon.hero)){
 						chargeToGain *= 0.75f*Dungeon.hero.pointsInTalent(Talent.LIGHT_READING)/3f;
 					}
-					partialCharge += chargeToGain;
+					partialCharge += chargeToGain * Artifact.negativeRechargeFactor(HolyTome.this);
 				}
 
 				while (partialCharge >= 1) {

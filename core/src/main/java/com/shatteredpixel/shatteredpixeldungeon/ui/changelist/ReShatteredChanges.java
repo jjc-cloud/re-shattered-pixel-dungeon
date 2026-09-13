@@ -65,6 +65,8 @@ public class ReShatteredChanges {
 				"\n新增商店订购功能，现在可以在商店处订购额外的物资。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V010_VOID_WALKER, "公共天赋",
 				"\n新增公共天赋池，使用蜕变密卷时额外抽取两个属于公共天赋池的天赋。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V010_VOID_WALKER, "公共天赋扩展",
+				"\n公共天赋池新增五个天赋：_魔能超载_、_野蛮寄生_、_完美处决_，以及强大的_扭曲现实_与_交叉火力_（后两者为稀有天赋）。"));
 
 		changes = new ChangeInfo("改动", false, null);
 		changes.hardlight(CharSprite.WARNING);
@@ -79,7 +81,7 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V081_DISPLAY_VERT,"界面回调",
 				"\n使用早期的像素风标题与boss击杀。"));		
 		changes.addButton(new ChangeButton(ChangeIcons.V075_TENGU,"BOSS调整",
-				"\n现在天狗与矮人国王会额外掉落一张蜕变密卷。"));		
+				"\n现在天狗与矮人国王会额外掉落一张蜕变密卷。"));
 
 		changes = new ChangeInfo("增强", false, null);
 		changes.hardlight(CharSprite.POSITIVE);

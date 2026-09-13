@@ -58,6 +58,12 @@ public abstract class Runestone extends Item {
 				Talent.onRunestoneUsed(curUser, cell, getClass());
 			}
 			activate(cell);
+
+			//完美处决：丢出即被消耗的符石叠1层，不要求命中
+			if (!anonymous && curUser != null){
+				Talent.onExecutionStack(curUser, Talent.EXEC_COND_RUNE);
+			}
+
 			if (Actor.findChar(cell) == null) Dungeon.level.pressCell( cell );
 			Invisibility.dispel();
 		}

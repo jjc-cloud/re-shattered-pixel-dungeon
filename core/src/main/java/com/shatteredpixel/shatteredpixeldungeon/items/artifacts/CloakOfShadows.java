@@ -73,7 +73,10 @@ public class CloakOfShadows extends Artifact {
 		if ((isEquipped( hero ) || hero.hasTalent(Talent.LIGHT_CLOAK))
 				&& !cursed
 				&& hero.buff(MagicImmune.class) == null
-				&& (charge > 0 || activeBuff != null)) {
+				&& (charge > 0
+					//魔能超载：充能为零时也能进入潜行
+					|| (charge >= 0 && hero.hasTalent(Talent.MANA_OVERLOAD))
+					|| activeBuff != null)) {
 			actions.add(AC_STEALTH);
 		}
 		return actions;
@@ -91,7 +94,7 @@ public class CloakOfShadows extends Artifact {
 			if (activeBuff == null){
 				if (!isEquipped(hero) && !hero.hasTalent(Talent.LIGHT_CLOAK)) GLog.i( Messages.get(Artifact.class, "need_to_equip") );
 				else if (cursed)       GLog.i( Messages.get(this, "cursed") );
-				else if (charge <= 0)  GLog.i( Messages.get(this, "no_charge") );
+				else if (charge <= 0 && !hero.hasTalent(Talent.MANA_OVERLOAD))  GLog.i( Messages.get(this, "no_charge") );
 				else {
 					hero.spend( 1f );
 					hero.busy();
@@ -180,7 +183,7 @@ public class CloakOfShadows extends Artifact {
 
 		if (charge < chargeCap) {
 			if (!isEquipped(target)) amount *= 0.75f*target.pointsInTalent(Talent.LIGHT_CLOAK)/3f;
-			partialCharge += 0.25f*amount;
+			partialCharge += 0.25f*amount * Artifact.negativeRechargeFactor(this);
 			while (partialCharge >= 1f) {
 				charge++;
 				partialCharge--;
@@ -240,7 +243,7 @@ public class CloakOfShadows extends Artifact {
 					if (!isEquipped(Dungeon.hero)){
 						chargeToGain *= 0.75f*Dungeon.hero.pointsInTalent(Talent.LIGHT_CLOAK)/3f;
 					}
-					partialCharge += chargeToGain;
+					partialCharge += chargeToGain * Artifact.negativeRechargeFactor(CloakOfShadows.this);
 				}
 
 				while (partialCharge >= 1) {
@@ -323,7 +326,10 @@ public class CloakOfShadows extends Artifact {
 			if (turnsToCost <= 0){
 				charge--;
 				if (charge < 0) {
-					charge = 0;
+					//魔能超载：允许潜行把充能扣至负数，直到无法维持
+					if (!(target instanceof Hero) || !((Hero) target).hasTalent(Talent.MANA_OVERLOAD)) {
+						charge = 0;
+					}
 					detach();
 					GLog.w(Messages.get(this, "no_charge"));
 					((Hero) target).interrupt();

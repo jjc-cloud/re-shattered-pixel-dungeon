@@ -246,7 +246,26 @@ public class Artifact extends KindofMisc {
 	}
 
 	protected ArtifactBuff activeBuff() {return null; }
-	
+
+	//魔能超载：充能为零/不足时仍可使用，充能会扣至负数；负充能状态下不可再次使用
+	public boolean overchargeUsable( Hero hero, int cost ){
+		return hero.hasTalent(Talent.MANA_OVERLOAD)
+				&& charge >= 0
+				&& cost > 0;
+	}
+
+	//魔能超载：负充能的回复速度，+1为平常速度，+2为两倍（花费平常0.5倍的回合/经验）
+	public static float negativeRechargeFactor( Artifact artifact ){
+		if (artifact != null
+				&& artifact.charge < 0
+				&& Dungeon.hero != null
+				&& Dungeon.hero.hasTalent(Talent.MANA_OVERLOAD)
+				&& Dungeon.hero.pointsInTalent(Talent.MANA_OVERLOAD) == 2){
+			return 2f;
+		}
+		return 1f;
+	}
+
 	public void charge(Hero target, float amount){
 		//do nothing by default;
 	}

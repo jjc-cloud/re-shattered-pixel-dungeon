@@ -47,14 +47,17 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.Ratmogrify
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.DivineSense;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.RecallInscription;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Brute;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.MirrorImage;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Flare;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.LeafParticle;
+import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.MirrorLink;
+import com.shatteredpixel.shatteredpixeldungeon.items.RealityWarp;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClothArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
@@ -71,17 +74,20 @@ import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ShardOfOblivion;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Grim;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Chasm;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Swiftthistle;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
+import com.shatteredpixel.shatteredpixeldungeon.windows.WndRealityWarp;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
@@ -209,13 +215,16 @@ public enum Talent {
 
 	//public metamorph talents
 	UPLIFTING_MEAL(224), MULTIPLE_EXISTENCE(225), ESCAPE_PLAN(226), VOID_WALKER(227),
+	MANA_OVERLOAD(230, 2), SAVAGE_PARASITE(231, 2),
+	REALITY_WARP(229, 2, true), CROSSFIRE(233, 2, true), PERFECT_EXECUTION(232, 2, true),
 	FIREPOWER_BARRAGE(228, 2, true);
 
 	private static final Talent[] COMMON_METAMORPH_TALENTS = {
-			UPLIFTING_MEAL, MULTIPLE_EXISTENCE, ESCAPE_PLAN, VOID_WALKER
+			UPLIFTING_MEAL, MULTIPLE_EXISTENCE, ESCAPE_PLAN, VOID_WALKER,
+			MANA_OVERLOAD, SAVAGE_PARASITE
 	};
 	private static final Talent[] RARE_METAMORPH_TALENTS = {
-			FIREPOWER_BARRAGE
+			FIREPOWER_BARRAGE, REALITY_WARP, CROSSFIRE, PERFECT_EXECUTION
 	};
 
 	public static class ImprovisedProjectileCooldown extends FlavourBuff{
@@ -558,6 +567,18 @@ public enum Talent {
 			ensureSpecialItems(hero);
 			Dungeon.observe();
 		}
+		//扭曲现实：升级时弹出选品窗口，+1选药水，+2选卷轴
+		if (talent == REALITY_WARP){
+			if (hero.pointsInTalent(REALITY_WARP) == 1){
+				GameScene.show(new WndRealityWarp(WndRealityWarp.Mode.POTION));
+			} else if (hero.pointsInTalent(REALITY_WARP) == 2){
+				GameScene.show(new WndRealityWarp(WndRealityWarp.Mode.SCROLL));
+			}
+		}
+		//交叉火力：获得后挂上连击计数buff
+		if (talent == CROSSFIRE){
+			Buff.affect(hero, CrossfireTracker.class);
+		}
 		//for metamorphosis
 		if (talent == VETERANS_INTUITION && hero.pointsInTalent(VETERANS_INTUITION) == 2){
 			if (hero.belongings.armor() != null && !ShardOfOblivion.passiveIDDisabled())  {
@@ -749,6 +770,14 @@ public enum Talent {
 	}
 
 	public static void onTalentRemoved( Hero hero, Talent talent ){
+		if (talent == CROSSFIRE && !hero.hasTalent(CROSSFIRE)){
+			CrossfireTracker tracker = hero.buff(CrossfireTracker.class);
+			if (tracker != null) tracker.detach();
+		}
+		if (talent == PERFECT_EXECUTION && !hero.hasTalent(PERFECT_EXECUTION)){
+			PerfectExecutionTracker tracker = hero.buff(PerfectExecutionTracker.class);
+			if (tracker != null) tracker.detach();
+		}
 		if (talent == MULTIPLE_EXISTENCE && !hero.hasTalent(MULTIPLE_EXISTENCE)){
 			MirrorLink link = hero.belongings.getItem(MirrorLink.class);
 			if (link != null){
@@ -1019,6 +1048,15 @@ public enum Talent {
 			}
 		}
 
+		//完美处决：处决就绪时手中武器命中触发处决；投掷武器命中（含灵能短弓）叠1/3层
+		if (hero.hasTalent(PERFECT_EXECUTION) && enemy.alignment == Char.Alignment.ENEMY){
+			if (hero.belongings.attackingWeapon() instanceof MissileWeapon){
+				onExecutionStack(hero, EXEC_COND_THROWN);
+			} else {
+				tryExecuteOnAttack(hero, enemy);
+			}
+		}
+
 		return dmg;
 	}
 
@@ -1075,6 +1113,293 @@ public enum Talent {
 	}
 
 	public static final int MAX_TALENT_TIERS = 4;
+
+	//完美处决的三个叠层条件（位标记）：投掷武器命中（含灵能短弓）、法杖命中、丢出即被消耗的符石；叠满后手中武器命中触发处决
+	public static final int EXEC_COND_THROWN    = 1; //投掷武器命中（含灵能短弓）
+	public static final int EXEC_COND_WAND      = 2; //法杖命中
+	public static final int EXEC_COND_RUNE      = 4; //丢出即被消耗的符石（不要求命中）
+	public static final int EXEC_COND_ALL       = EXEC_COND_THROWN | EXEC_COND_WAND | EXEC_COND_RUNE;
+
+	//本局处决后仍未死亡的怪物id（大部分怪会被直接处决，无需记录），处决不能对同一个怪物生效两次
+	private static final HashSet<Integer> executionSurvivors = new HashSet<>();
+
+	//扭曲现实：是否有尚未完成的互换选择（用于点击天赋时重新打开选品窗口）
+	public static boolean realityWarpSelectionPending( Hero hero ){
+		int pts = hero.pointsInTalent(REALITY_WARP);
+		if (pts >= 1 && !RealityWarp.potionSwapped()) return true;
+		if (pts >= 2 && !RealityWarp.scrollSwapped()) return true;
+		return false;
+	}
+
+	//野蛮寄生：目标是否可以被寄生，+1仅限生物，+2对非生物目标也生效
+	public static boolean canParasitize( Hero hero, Char target ){
+		if (target == null || target == hero || !target.isAlive()) return false;
+		if (target.alignment != Char.Alignment.ENEMY) return false;
+		if (hero.pointsInTalent(SAVAGE_PARASITE) < 2
+				&& (Char.hasProp(target, Char.Property.INORGANIC)
+					|| Char.hasProp(target, Char.Property.UNDEAD))){
+			return false;
+		}
+		return true;
+	}
+
+	//野蛮寄生：向敌人投掷种子时调用，命中返回true，种子随之消失
+	public static boolean trySavageParasite( Hero hero, Plant.Seed seed, Char target ){
+		if (!hero.hasTalent(SAVAGE_PARASITE) || !canParasitize(hero, target)) return false;
+
+		//吸取10%的生命生根，可以吸取至死亡
+		int drain = Math.min(Math.round(target.HT * 0.10f), target.HP);
+		if (drain > 0){
+			target.HP -= drain;
+			if (target.sprite != null){
+				target.sprite.showStatusWithIcon(CharSprite.NEGATIVE, Integer.toString(drain), FloatingText.PHYS_DMG);
+			}
+		}
+		if (!target.isAlive()){
+			for (Buff b : target.buffs(Brute.BruteRage.class)){
+				b.detach();
+			}
+			if (!target.isAlive()){
+				target.die( hero );
+				return true; //目标已被吸干，种子随之消失
+			}
+		}
+
+		SavageParasitism parasite = Buff.affect(target, SavageParasitism.class);
+		parasite.seedClass = seed.getClass();
+		GLog.i( Messages.get(Talent.class, "savage_parasite.rooted", target.name()) );
+		return true;
+	}
+
+	//完美处决：达成一个叠层条件；+1时须按 投掷→法杖→符石 的顺序连续叠层，顺序不符则清空进度，+2任意顺序，全部叠满后处决就绪
+	public static void onExecutionStack( Hero hero, int cond ){
+		if (!hero.hasTalent(PERFECT_EXECUTION)) return;
+		if (cond != EXEC_COND_THROWN && cond != EXEC_COND_WAND && cond != EXEC_COND_RUNE) return;
+
+		PerfectExecutionTracker tracker = hero.buff(PerfectExecutionTracker.class);
+		if (tracker == null){
+			tracker = Buff.affect(hero, PerfectExecutionTracker.class);
+			tracker.conds = 0;
+		}
+
+		//+1时顺序不符的行动会清空已有进度；已就绪时不再受叠层条件影响
+		if (hero.pointsInTalent(PERFECT_EXECUTION) < 2
+				&& tracker.conds != EXEC_COND_ALL
+				&& Integer.numberOfTrailingZeros(cond) != Integer.bitCount(tracker.conds)){
+			tracker.conds = 0;
+			return;
+		}
+
+		if ((tracker.conds & cond) != 0) return;
+
+		tracker.conds |= cond;
+		if (tracker.conds != EXEC_COND_ALL){
+			GLog.i( Messages.get(Talent.class, "perfect_execution.progress", Integer.bitCount(tracker.conds)) );
+		}
+	}
+
+	//完美处决：手中武器命中敌人时若处决已就绪（三层叠满），则触发处决并消耗就绪状态，返回是否触发
+	public static boolean tryExecuteOnAttack( Hero hero, Char enemy ){
+		if (!hero.hasTalent(PERFECT_EXECUTION)) return false;
+		if (enemy == null || enemy == hero || !enemy.isAlive()) return false;
+		if (enemy.alignment != Char.Alignment.ENEMY) return false;
+		if (executionSurvivors.contains(enemy.id())) return false;
+
+		PerfectExecutionTracker tracker = hero.buff(PerfectExecutionTracker.class);
+		if (tracker == null || tracker.conds != EXEC_COND_ALL) return false;
+
+		executeTarget(hero, enemy);
+		return true;
+	}
+
+	//交叉火力：英雄的近战/投掷/法杖攻击动作做出即触发（无论是否命中），连段重置为1层
+	public static void onCrossfireHeroAttack(){
+		if (Dungeon.hero == null || !Dungeon.hero.hasTalent(CROSSFIRE)) return;
+		CrossfireTracker tracker = Dungeon.hero.buff(CrossfireTracker.class);
+		if (tracker == null) tracker = Buff.affect(Dungeon.hero, CrossfireTracker.class);
+		tracker.onHeroAttack();
+	}
+
+	//交叉火力：友方单位每次攻击敌方单位（无论是否命中）都会叠加1层
+	public static void onCrossfireAllyAttack(){
+		if (Dungeon.hero == null || !Dungeon.hero.hasTalent(CROSSFIRE)) return;
+		CrossfireTracker tracker = Dungeon.hero.buff(CrossfireTracker.class);
+		if (tracker == null) tracker = Buff.affect(Dungeon.hero, CrossfireTracker.class);
+		tracker.onAllyAttack();
+	}
+
+	//处决等同于触发一次死神附魔，可以对boss使用（boss按死神附魔抗性结算）
+	private static void executeTarget( Hero hero, Char target ){
+		hero.buff(PerfectExecutionTracker.class).detach();
+
+		int dmg = Math.round(target.HP * target.resist(Grim.class));
+		target.HP = Math.max(0, target.HP - dmg);
+
+		if (target.sprite != null){
+			target.sprite.emitter().burst( ShadowParticle.UP, 5 );
+			target.sprite.showStatus( CharSprite.NEGATIVE, Messages.get(Talent.class, "perfect_execution.executed") );
+		}
+		GLog.i( Messages.get(Talent.class, "perfect_execution.killed", target.name()) );
+
+		if (!target.isAlive()){
+			for (Buff b : target.buffs(Brute.BruteRage.class)){
+				b.detach();
+			}
+			if (!target.isAlive()){
+				target.die( hero );
+			}
+		} else {
+			//处决后仍未死亡（如boss承受一半死神伤害），只需记录这些没被处决的怪
+			executionSurvivors.add(target.id());
+		}
+	}
+
+	//交叉火力的跟进连段：英雄攻击动作做出（无论是否命中）即重置为1层，友方每次攻击敌方单位叠1层；
+	//英雄的非攻击行动会结束连段并隐藏图标
+	public static class CrossfireTracker extends Buff {
+		{ type = buffType.POSITIVE; actPriority = HERO_PRIO+1; }
+		public int stacks = 0;               //当前连段层数，0为未激活（不显示图标）
+		public boolean heroAttacked = false; //英雄刚结束的行动是否为攻击动作
+
+		//层数为0时隐藏图标，仅在攻击后显示
+		public int icon() { return stacks > 0 ? BuffIndicator.INVERT_MARK : BuffIndicator.NONE; }
+		public void tintIcon(Image icon) { icon.hardlight(1f, 0.5f, 0f); }
+		public String iconTextDisplay() { return Integer.toString(stacks); }
+
+		//英雄近战/投掷/法杖攻击动作做出（无论是否命中）：连段重置为1层
+		public void onHeroAttack() {
+			heroAttacked = true;
+			if (stacks != 1){
+				stacks = 1;
+				BuffIndicator.refreshHero();
+			}
+		}
+
+		//友方单位攻击敌方单位的动作做出（无论是否命中）：叠1层
+		public void onAllyAttack() {
+			if (stacks > 0){
+				stacks++;
+				BuffIndicator.refreshHero();
+			}
+		}
+
+		@Override
+		public boolean act() {
+			//英雄的每次行动之后结算：攻击行动保持连段（已在攻击时重置为1层），非攻击行动结束连段
+			if (heroAttacked){
+				heroAttacked = false;
+			} else if (stacks > 0){
+				stacks = 0;
+				BuffIndicator.refreshHero();
+			}
+			spend( TICK );
+			return true;
+		}
+
+		private static final String STACKS = "ally_hits";
+		@Override
+		public void storeInBundle(Bundle bundle) {
+			super.storeInBundle(bundle);
+			bundle.put(STACKS, stacks);
+		}
+		@Override
+		public void restoreFromBundle(Bundle bundle) {
+			super.restoreFromBundle(bundle);
+			stacks = bundle.getInt(STACKS);
+		}
+	}
+
+	//完美处决的叠层记录：三个条件叠满后显示就绪图标，buff存在时下一次手中武器命中触发处决
+	public static class PerfectExecutionTracker extends Buff {
+		{ type = buffType.POSITIVE; }
+		public int conds = 0;
+
+		//叠满后才显示图标
+		@Override
+		public int icon() {
+			return conds == EXEC_COND_ALL ? BuffIndicator.INVERT_MARK : BuffIndicator.NONE;
+		}
+		@Override
+		public void tintIcon(Image icon) { icon.hardlight(1f, 0.2f, 0.2f); }
+
+		@Override
+		public boolean act() {
+			spend( TICK );
+			return true;
+		}
+
+		private static final String CONDS = "conds";
+		@Override
+		public void storeInBundle(Bundle bundle) {
+			super.storeInBundle(bundle);
+			bundle.put(CONDS, conds);
+		}
+		@Override
+		public void restoreFromBundle(Bundle bundle) {
+			super.restoreFromBundle(bundle);
+			conds = bundle.getInt(CONDS);
+		}
+	}
+
+	//寄生负面效果，宿主被攻击时结算对应种子的效果；挂上时自动弹出“寄生”负面提示（同石化等负面效果的announced机制）
+	public static class SavageParasitism extends Buff {
+		{ type = buffType.NEGATIVE; announced = true; }
+		public Class<? extends Plant.Seed> seedClass;
+
+		public int icon() { return BuffIndicator.INVERT_MARK; }
+		public void tintIcon(Image icon) { icon.hardlight(0f, 0.75f, 0.2f); }
+
+		@Override
+		public boolean act() {
+			spend( TICK );
+			return true;
+		}
+
+		public void trigger(){
+			Char host = target;
+			detach();
+			if (host == null || seedClass == null || Dungeon.level == null) return;
+			//使用自然之履的催发逻辑：直接结算种子的效果，不受荒芜之地挑战影响
+			Plant plant = Reflection.newInstance(seedClass).couch(host.pos, null);
+			if (Dungeon.level.heroFOV[host.pos]){
+				CellEmitter.get(host.pos).burst(LeafParticle.GENERAL, 6);
+				Sample.INSTANCE.play(Assets.Sounds.PLANT);
+			}
+			plant.activate( host );
+		}
+
+		private static final String SEED_CLASS = "seed_class";
+		@Override
+		public void storeInBundle(Bundle bundle) {
+			super.storeInBundle(bundle);
+			bundle.put(SEED_CLASS, seedClass);
+		}
+		@Override
+		public void restoreFromBundle(Bundle bundle) {
+			super.restoreFromBundle(bundle);
+			seedClass = bundle.getClass(SEED_CLASS);
+		}
+	}
+
+	private static final String EXECUTION_SURVIVORS = "execution_survivors";
+
+	public static void storeExecutedTargets( Bundle bundle ){
+		int[] ids = new int[executionSurvivors.size()];
+		int i = 0;
+		for (int id : executionSurvivors){
+			ids[i++] = id;
+		}
+		bundle.put( EXECUTION_SURVIVORS, ids );
+	}
+
+	public static void restoreExecutedTargets( Bundle bundle ){
+		executionSurvivors.clear();
+		if (bundle.contains(EXECUTION_SURVIVORS)){
+			for (int id : bundle.getIntArray(EXECUTION_SURVIVORS)){
+				executionSurvivors.add(id);
+			}
+		}
+	}
 
 	public static void initClassTalents( Hero hero ){
 		initClassTalents( hero.heroClass, hero.talents, hero.metamorphedTalents );

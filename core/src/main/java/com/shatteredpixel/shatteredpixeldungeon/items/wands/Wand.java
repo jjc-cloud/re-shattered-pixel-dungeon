@@ -108,7 +108,9 @@ public abstract class Wand extends Item {
 	@Override
 	public ArrayList<String> actions( Hero hero ) {
 		ArrayList<String> actions = super.actions( hero );
-		if (curCharges > 0 || !curChargeKnown) {
+		if (curCharges > 0 || !curChargeKnown
+				//魔能超载：充能为零时也能施法
+				|| (curCharges >= 0 && hero.hasTalent(Talent.MANA_OVERLOAD))) {
 			actions.add( AC_ZAP );
 		}
 
@@ -167,12 +169,26 @@ public abstract class Wand extends Item {
 		}
 
 		//if we're using wild magic, then assume we have charges
-		if ( owner.buff(WildMagic.WildMagicTracker.class) != null || curCharges >= chargesPerCast()){
+		//魔能超载：充能为零/不足时仍可施法，充能会在使用后扣至负数
+		if ( owner.buff(WildMagic.WildMagicTracker.class) != null
+				|| curCharges >= chargesPerCast()
+				|| (curCharges >= 0 && owner.hasTalent(Talent.MANA_OVERLOAD))){
 			return true;
 		} else {
 			GLog.w(Messages.get(this, "fizzles"));
 			return false;
 		}
+	}
+
+	//魔能超载：负充能的回复速度，+1为平常速度，+2为两倍（花费平常0.5倍的回合）
+	public float negativeRechargeFactor(){
+		if (curCharges < 0
+				&& Dungeon.hero != null
+				&& Dungeon.hero.hasTalent(Talent.MANA_OVERLOAD)
+				&& Dungeon.hero.pointsInTalent(Talent.MANA_OVERLOAD) == 2){
+			return 2f;
+		}
+		return 1f;
 	}
 
 	@Override
@@ -195,7 +211,7 @@ public abstract class Wand extends Item {
 	}
 
 	public void gainCharge( float amt, boolean overcharge ){
-		partialCharge += amt;
+		partialCharge += amt * negativeRechargeFactor();
 		while (partialCharge >= 1) {
 			if (overcharge) curCharges = Math.min(maxCharges+(int)amt, curCharges+1);
 			else curCharges = Math.min(maxCharges, curCharges+1);
@@ -734,7 +750,17 @@ public abstract class Wand extends Item {
 					QuickSlotButton.target(Actor.findChar(cell));
 				
 				if (curWand.beginZap(curUser, target)) {
-					
+
+					//交叉火力：法杖攻击动作做出即触发（无论是否命中）
+					Talent.onCrossfireHeroAttack();
+
+					//完美处决：法杖命中叠1层
+					Char zapped = Actor.findChar(cell);
+					if (zapped != null && zapped != curUser && zapped.isAlive()
+							&& zapped.alignment == Char.Alignment.ENEMY){
+						Talent.onExecutionStack(curUser, Talent.EXEC_COND_WAND);
+					}
+
 					curUser.busy();
 
 					//backup barrier logic
@@ -866,23 +892,24 @@ public abstract class Wand extends Item {
 							target instanceof Hero && ((Hero) target).heroClass == HeroClass.MAGE
 									? MagesStaff.STAFF_SCALE_FACTOR : scalingFactor, missingCharges)));
 
+			float negFactor = negativeRechargeFactor();
 			if (Regeneration.regenOn())
-				partialCharge += (1f/turnsToCharge) * RingOfEnergy.wandChargeMultiplier(target);
+				partialCharge += (1f/turnsToCharge) * RingOfEnergy.wandChargeMultiplier(target) * negFactor;
 
 			for (Recharging bonus : target.buffs(Recharging.class)){
 				if (bonus != null && bonus.remainder() > 0f) {
-					partialCharge += CHARGE_BUFF_BONUS * bonus.remainder();
+					partialCharge += CHARGE_BUFF_BONUS * bonus.remainder() * negFactor;
 				}
 			}
 		}
-		
+
 		public Wand wand(){
 			return Wand.this;
 		}
 
 		public void gainCharge(float charge){
 			if (curCharges < maxCharges) {
-				partialCharge += charge;
+				partialCharge += charge * negativeRechargeFactor();
 				while (partialCharge >= 1f) {
 					curCharges++;
 					partialCharge--;

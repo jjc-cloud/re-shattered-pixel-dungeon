@@ -126,7 +126,9 @@ public class UnstableSpellbook extends Artifact {
 
 			if (hero.buff( Blindness.class ) != null) GLog.w( Messages.get(this, "blinded") );
 			else if (!isEquipped( hero ))             GLog.i( Messages.get(Artifact.class, "need_to_equip") );
-			else if (charge <= 0)                     GLog.i( Messages.get(this, "no_charge") );
+			else if (charge <= 0
+					&& !hero.hasTalent(Talent.MANA_OVERLOAD)) GLog.i( Messages.get(this, "no_charge") );
+			else if (charge < 0)                      GLog.i( Messages.get(this, "no_charge") );
 			else if (cursed)                          GLog.i( Messages.get(this, "cursed") );
 			else {
 				doReadEffect(hero);
@@ -263,7 +265,7 @@ public class UnstableSpellbook extends Artifact {
 	@Override
 	public void charge(Hero target, float amount) {
 		if (charge < chargeCap && !cursed && target.buff(MagicImmune.class) == null){
-			partialCharge += 0.1f*amount;
+			partialCharge += 0.1f*amount * Artifact.negativeRechargeFactor(this);
 			while (partialCharge >= 1){
 				partialCharge--;
 				charge++;
@@ -349,7 +351,7 @@ public class UnstableSpellbook extends Artifact {
 				//120 turns to charge at full, 80 turns to charge at 0/8
 				float chargeGain = 1 / (120f - (chargeCap - charge)*5f);
 				chargeGain *= RingOfEnergy.artifactChargeMultiplier(target);
-				partialCharge += chargeGain;
+				partialCharge += chargeGain * Artifact.negativeRechargeFactor(UnstableSpellbook.this);
 
 				while (partialCharge >= 1) {
 					partialCharge --;

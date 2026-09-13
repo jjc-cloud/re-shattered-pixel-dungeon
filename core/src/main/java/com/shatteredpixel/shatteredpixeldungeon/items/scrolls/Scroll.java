@@ -32,6 +32,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.ItemStatusHandler;
+import com.shatteredpixel.shatteredpixeldungeon.items.RealityWarp;
 import com.shatteredpixel.shatteredpixeldungeon.items.Recipe;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.UnstableSpellbook;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ExoticScroll;
@@ -90,6 +91,7 @@ public abstract class Scroll extends Item {
 	protected static ItemStatusHandler<Scroll> handler;
 	
 	protected String rune;
+	private Scroll effectSource;
 
 	//affects how strongly on-scroll talents trigger from this scroll
 	public float talentFactor = 1;
@@ -182,10 +184,13 @@ public abstract class Scroll extends Item {
 				GLog.w( Messages.get(this, "blinded") );
 			} else if (hero.buff(UnstableSpellbook.bookRecharge.class) != null
 					&& hero.buff(UnstableSpellbook.bookRecharge.class).isCursed()
-					&& !(this instanceof ScrollOfRemoveCurse || this instanceof ScrollOfAntiMagic)){
+					&& !(RealityWarp.resolveScroll(getClass()) == ScrollOfRemoveCurse.class
+					|| RealityWarp.resolveScroll(getClass()) == ScrollOfAntiMagic.class)){
 				GLog.n( Messages.get(this, "cursed") );
 			} else {
-				doRead();
+				Scroll effect = RealityWarp.scrollEffect(this);
+				curItem = effect;
+				effect.doRead();
 			}
 			
 		}
@@ -193,26 +198,69 @@ public abstract class Scroll extends Item {
 	
 	public abstract void doRead();
 
+	public Scroll effectOf(Scroll source) {
+		effectSource = source;
+		quantity = source.quantity();
+		image = source.image;
+		icon = source.icon;
+		anonymous = source.anonymous;
+		talentFactor = source.talentFactor;
+		talentChance = source.talentChance;
+		return this;
+	}
+
+	protected Scroll sourceScroll() {
+		return effectSource == null ? this : effectSource;
+	}
+
+	@Override
+	protected Item identityItem() {
+		return sourceScroll();
+	}
+
+	@Override
+	protected void identityItem(Item item) {
+		if (effectSource != null) effectSource = (Scroll)item;
+	}
+
+	@Override
+	public int quantity() {
+		return effectSource == null ? super.quantity() : effectSource.quantity();
+	}
+
+	@Override
+	public Item quantity(int value) {
+		if (effectSource != null) effectSource.quantity(value);
+		return super.quantity(value);
+	}
+
 	public void readAnimation() {
 		Invisibility.dispel();
 		curUser.spend( TIME_TO_READ );
 		curUser.busy();
 		((HeroSprite)curUser.sprite).read();
 
-		if (!anonymous) {
-			Catalog.countUse(getClass());
+		Scroll source = sourceScroll();
+		if (!source.anonymous) {
+			Catalog.countUse(source.getClass());
 		}
-		if (Random.Float() < talentChance) {
-			Talent.onScrollUsed(curUser, curUser.pos, talentFactor, getClass());
+		if (Random.Float() < source.talentChance) {
+			Talent.onScrollUsed(curUser, curUser.pos, source.talentFactor, source.getClass());
 		}
 
 	}
 	
 	public boolean isKnown() {
-		return anonymous || (handler != null && handler.isKnown( this ));
+		return effectSource == null
+				? anonymous || (handler != null && handler.isKnown(this))
+				: effectSource.isKnown();
 	}
 	
 	public void setKnown() {
+		if (effectSource != null) {
+			effectSource.setKnown();
+			return;
+		}
 		if (!anonymous) {
 			if (!isKnown()) {
 				handler.know(this);
@@ -228,6 +276,10 @@ public abstract class Scroll extends Item {
 	
 	@Override
 	public Item identify( boolean byHero ) {
+		if (effectSource != null) {
+			effectSource.identify(byHero);
+			return this;
+		}
 		super.identify(byHero);
 
 		if (!isKnown()) {
@@ -238,17 +290,20 @@ public abstract class Scroll extends Item {
 	
 	@Override
 	public String name() {
+		if (effectSource != null) return effectSource.name();
 		return isKnown() ? super.name() : Messages.get(this, rune);
 	}
 
 	@Override
 	public String info() {
+		if (effectSource != null) return effectSource.info();
 		//skip custom notes if anonymized and un-Ided
 		return (anonymous && (handler == null || !handler.isKnown( this ))) ? desc() : super.info();
 	}
 
 	@Override
 	public String desc() {
+		if (effectSource != null) return effectSource.desc();
 		return isKnown() ? super.desc() : Messages.get(this, "unknown_desc");
 	}
 	
@@ -259,7 +314,12 @@ public abstract class Scroll extends Item {
 	
 	@Override
 	public boolean isIdentified() {
-		return isKnown();
+		return effectSource == null ? isKnown() : effectSource.isIdentified();
+	}
+
+	@Override
+	public int image() {
+		return effectSource == null ? super.image() : effectSource.image();
 	}
 	
 	public static HashSet<Class<? extends Scroll>> getKnown() {
@@ -326,11 +386,15 @@ public abstract class Scroll extends Item {
 		@Override
 		public boolean testIngredients(ArrayList<Item> ingredients) {
 			if (ingredients.size() != 1
-					|| !(ingredients.get(0) instanceof Scroll)
-					|| !stones.containsKey(ingredients.get(0).getClass())){
+					|| !(ingredients.get(0) instanceof Scroll)){
 				return false;
 			}
-			
+
+			Scroll s = (Scroll) ingredients.get(0);
+			if (!stones.containsKey(s.getClass())){
+				return false;
+			}
+
 			return true;
 		}
 		
@@ -356,11 +420,11 @@ public abstract class Scroll extends Item {
 			
 			return Reflection.newInstance(stones.get(s.getClass())).quantity(2);
 		}
-		
+
 		@Override
 		public Item sampleOutput(ArrayList<Item> ingredients) {
 			if (!testIngredients(ingredients)) return null;
-			
+
 			Scroll s = (Scroll) ingredients.get(0);
 
 			if (!s.isKnown()){
