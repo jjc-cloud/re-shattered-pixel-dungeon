@@ -1245,16 +1245,23 @@ public abstract class Level implements Bundlable {
 		Trap trap = null;
 		
 		switch (map[cell]) {
-		
+
 		case Terrain.SECRET_TRAP:
 			if (hard) {
 				trap = traps.get( cell );
-				GLog.i(Messages.get(Level.class, "hidden_trap", trap.name()));
+				if (primeOutdatedTrap(trap)) {
+					trap = null;
+				} else {
+					GLog.i(Messages.get(Level.class, "hidden_trap", trap.name()));
+				}
 			}
 			break;
-			
+
 		case Terrain.TRAP:
 			trap = traps.get( cell );
+			if (primeOutdatedTrap(trap)) {
+				trap = null;
+			}
 			break;
 			
 		case Terrain.HIGH_GRASS:
@@ -1316,6 +1323,19 @@ public abstract class Level implements Bundlable {
 		if (hard && Blob.volumeAt(cell, Web.class) > 0){
 			blobs.get(Web.class).clear(cell);
 		}
+	}
+
+	//outdated design challenge: the first time an outdated trap is triggered (by anything) it silently
+	//primes instead of triggering, with no sound or reveal. Returns true if the trap was primed
+	private boolean primeOutdatedTrap( Trap trap ){
+		if (Dungeon.isChallenged(Challenges.OUTDATED_DESIGN)
+				&& trap != null
+				&& trap.outdated
+				&& !trap.primed){
+			trap.primed = true;
+			return true;
+		}
+		return false;
 	}
 
 	private static boolean[] heroMindFov;

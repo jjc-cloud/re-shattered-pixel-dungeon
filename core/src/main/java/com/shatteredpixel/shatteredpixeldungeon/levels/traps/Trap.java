@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels.traps;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
@@ -31,6 +32,7 @@ import com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoTrap;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundlable;
 import com.watabou.utils.Bundle;
+import com.watabou.utils.Random;
 
 public abstract class Trap implements Bundlable {
 
@@ -68,6 +70,17 @@ public abstract class Trap implements Bundlable {
 	public boolean canBeSearched = true;
 
 	public boolean avoidsHallways = false; //whether this trap should avoid being placed in hallways
+
+	//outdated design challenge: whether this trap only takes effect the second time it is triggered
+	public boolean outdated = false;
+	//outdated design challenge: whether an outdated trap has been silently primed by its first trigger
+	public boolean primed = false;
+
+	//outdated design challenge: 50% chance for a newly placed trap to only take effect on its second trigger
+	public Trap rollOutdated(){
+		outdated = Dungeon.isChallenged(Challenges.OUTDATED_DESIGN) && Random.Int(2) == 0;
+		return this;
+	}
 
 	public Trap set(int pos){
 		this.pos = pos;
@@ -133,6 +146,8 @@ public abstract class Trap implements Bundlable {
 	private static final String POS	= "pos";
 	private static final String VISIBLE	= "visible";
 	private static final String ACTIVE = "active";
+	private static final String OUTDATED = "outdated";
+	private static final String PRIMED = "primed";
 
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
@@ -141,6 +156,8 @@ public abstract class Trap implements Bundlable {
 		if (bundle.contains(ACTIVE)){
 			active = bundle.getBoolean(ACTIVE);
 		}
+		outdated = bundle.getBoolean( OUTDATED );
+		primed = bundle.getBoolean( PRIMED );
 	}
 
 	@Override
@@ -148,6 +165,8 @@ public abstract class Trap implements Bundlable {
 		bundle.put( POS, pos );
 		bundle.put( VISIBLE, visible );
 		bundle.put( ACTIVE, active );
+		bundle.put( OUTDATED, outdated );
+		bundle.put( PRIMED, primed );
 	}
 
 	//this buff is used to keep track of hazards recently affecting a character
