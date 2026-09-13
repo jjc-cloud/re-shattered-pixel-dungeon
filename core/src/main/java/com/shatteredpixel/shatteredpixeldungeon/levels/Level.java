@@ -189,6 +189,10 @@ public abstract class Level implements Bundlable {
 	public HashMap<Class<? extends Blob>,Blob> blobs;
 	public SparseArray<Plant> plants;
 	public SparseArray<Trap> traps;
+
+	//outdated design challenge: counts traps placed on this level, so that every second one
+	//needs a second trigger to take effect. Starts at a random phase each level
+	public int outdatedTrapCounter = Random.Int(2);
 	public ArrayList<CustomTilemap> customTiles;
 	public ArrayList<CustomTilemap> customTerrain;
 	public ArrayList<CustomTilemap> customWalls;
