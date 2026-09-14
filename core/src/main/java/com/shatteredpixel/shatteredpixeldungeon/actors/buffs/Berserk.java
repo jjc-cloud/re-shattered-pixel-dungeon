@@ -127,7 +127,8 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 	public float damageMultiplier() {
 		if (power < 2f) return 1f + 0.5f * power;
 		if (power < 3f) return 2f - 0.5f * (power - 2f);
-		return 1.5f + power - 3f;
+		//狂暴期前快后慢：325%即达2.0倍，400%封顶2.5倍
+		return 1.5f + (float) Math.sqrt(power - 3f);
 	}
 
 	public float incomingDamageMultiplier() {
