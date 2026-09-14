@@ -33,6 +33,7 @@ import com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoTrap;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundlable;
 import com.watabou.utils.Bundle;
+import com.watabou.utils.Random;
 
 public abstract class Trap implements Bundlable {
 
@@ -80,6 +81,13 @@ public abstract class Trap implements Bundlable {
 	//trigger to take effect, instead of rolling pure chance for each trap
 	public Trap rollOutdated( Level level ){
 		outdated = Dungeon.isChallenged(Challenges.OUTDATED_DESIGN) && (level.outdatedTrapCounter++ % 2 == 0);
+		return this;
+	}
+
+	//outdated design challenge: for traps painted consecutively inside rooms the counter would
+	//make the pattern visible, so those roll pure 50% chance instead
+	public Trap rollOutdatedRandom( Level level ){
+		outdated = Dungeon.isChallenged(Challenges.OUTDATED_DESIGN) && Random.Int(2) == 0;
 		return this;
 	}
 
