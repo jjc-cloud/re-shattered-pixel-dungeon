@@ -27,13 +27,49 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.effects.BlobEmitter;
+import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.FlameParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 
 public class Fire extends Blob {
+
+	@Override
+	public void seed( Level level, int cell, int amount ) {
+		if (level.water[cell]) {
+			Level.set(cell, Terrain.EMPTY, level);
+			//Hero-side effects generate before blobs act, while mob-side effects generate
+			//after them. Give early generators one setup tick so both timings leave the
+			//steam visible for one complete turn.
+			int duration = Actor.curActorPriority() < BLOB_PRIO ? 1 : 2;
+			WaterVapor currentVapor = (WaterVapor)level.blobs.get(WaterVapor.class);
+			//A zero-volume blob does not store its cell arrays. It can therefore exist
+			//with a null cur array after loading a save in which steam just dissipated.
+			int currentDuration = currentVapor == null || currentVapor.cur == null
+					? 0 : currentVapor.cur[cell];
+			WaterVapor vapor = Blob.seed(cell, Math.max(0, duration - currentDuration),
+					WaterVapor.class, level);
+			if (level == Dungeon.level) {
+				Char ch = Actor.findChar(cell);
+				if (ch != null) {
+					vapor.affectOnEntry(ch);
+				}
+				GameScene.updateMap(cell);
+				GameScene.add(vapor);
+				if (vapor.emitter != null) {
+					CellEmitter.get(cell).burst(Speck.factory(Speck.STEAM), 20);
+				}
+				Dungeon.observe();
+			}
+			return;
+		}
+		super.seed(level, cell, amount);
+	}
 
 	@Override
 	protected void evolve() {

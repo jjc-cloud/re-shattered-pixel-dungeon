@@ -34,6 +34,7 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle
 import com.shatteredpixel.shatteredpixeldungeon.items.EquipableItem;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -83,6 +84,13 @@ public class ScrollOfRemoveCurse extends InventoryScroll {
 	}
 
 	public static boolean uncursable( Item item ){
+		if (item instanceof DriedRose) {
+			DriedRose rose = (DriedRose)item;
+			if ((rose.ghostWeapon() != null && uncursable(rose.ghostWeapon()))
+					|| (rose.ghostArmor() != null && uncursable(rose.ghostArmor()))) {
+				return true;
+			}
+		}
 		if (item.isEquipped(Dungeon.hero) && Dungeon.hero.buff(Degrade.class) != null) {
 			return true;
 		} if ((item instanceof EquipableItem || item instanceof Wand) && ((!item.isIdentified() && !item.cursedKnown) || item.cursed)){
@@ -118,6 +126,10 @@ public class ScrollOfRemoveCurse extends InventoryScroll {
 		
 		boolean procced = false;
 		for (Item item : items) {
+			if (item instanceof DriedRose) {
+				DriedRose rose = (DriedRose)item;
+				procced |= uncurse(null, rose.ghostWeapon(), rose.ghostArmor());
+			}
 			if (item != null) {
 				item.cursedKnown = true;
 				if (item.cursed) {

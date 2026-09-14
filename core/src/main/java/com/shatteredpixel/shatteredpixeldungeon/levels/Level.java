@@ -33,6 +33,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.SacrificialFire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.SmokeScreen;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.VaultFlameTraps;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.WaterVapor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Web;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.WellWater;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Awareness;
@@ -1390,6 +1391,21 @@ public abstract class Level implements Bundlable {
 				Blob s = Dungeon.level.blobs.get(SmokeScreen.class);
 				for (int i = 0; i < blocking.length; i++){
 					if (!blocking[i] && s.cur[i] > 0){
+						blocking[i] = true;
+					}
+				}
+			}
+
+			//Water vapor blocks sight for everyone while it persists.
+			if (Dungeon.level.blobs.containsKey(WaterVapor.class)
+					&& Dungeon.level.blobs.get(WaterVapor.class).volume > 0) {
+				if (blocking == null) {
+					System.arraycopy(Dungeon.level.losBlocking, 0, modifiableBlocking, 0, modifiableBlocking.length);
+					blocking = modifiableBlocking;
+				}
+				Blob vapor = Dungeon.level.blobs.get(WaterVapor.class);
+				for (int i = 0; i < blocking.length; i++){
+					if (!blocking[i] && vapor.cur[i] > 0){
 						blocking[i] = true;
 					}
 				}
