@@ -30,7 +30,7 @@ public class Petrification extends Buff implements Hero.Doom {
 	}
 
 	public static boolean apply(Char victim) {
-		return apply(victim, 0.2f);
+		return apply(victim, 0.25f);
 	}
 
 	public static boolean apply(Char victim, float amount) {
