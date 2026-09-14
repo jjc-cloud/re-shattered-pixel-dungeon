@@ -12,7 +12,9 @@ package com.shatteredpixel.shatteredpixeldungeon.items.scrolls;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
+import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 
 public class ScrollOfMagicMap extends ScrollOfMagicMapping {
 
@@ -24,6 +26,11 @@ public class ScrollOfMagicMap extends ScrollOfMagicMapping {
 	public void doRead() {
 		Dungeon.revealCurrentRegion();
 		super.doRead();
+	}
+
+	@Override
+	protected void logLayout() {
+		GLog.p( Messages.get(this, "layout") );
 	}
 
 	@Override
