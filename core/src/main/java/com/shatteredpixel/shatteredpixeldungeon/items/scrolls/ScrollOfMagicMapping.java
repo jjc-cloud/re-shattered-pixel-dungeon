@@ -49,7 +49,7 @@ public class ScrollOfMagicMapping extends Scroll {
 		boolean noticed = reveal(Dungeon.level, true);
 		GameScene.updateFog();
 		
-		GLog.i( Messages.get(this, "layout") );
+		logLayout();
 		if (noticed) {
 			Sample.INSTANCE.play( Assets.Sounds.SECRET );
 		}
@@ -73,6 +73,11 @@ public class ScrollOfMagicMapping extends Scroll {
 			return Random.Float() < 0.20f ? new ScrollOfDungeonBlueprint() : new ScrollOfMagicMap();
 		}
 		return this;
+	}
+
+	//魔法地图与地牢蓝图覆写为绿色输出，基础探地卷轴保持默认色
+	protected void logLayout() {
+		GLog.i( Messages.get(this, "layout") );
 	}
 
 	public static boolean reveal( Level level, boolean showEffects ) {

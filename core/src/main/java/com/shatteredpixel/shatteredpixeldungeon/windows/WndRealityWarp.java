@@ -148,12 +148,12 @@ public class WndRealityWarp extends Window {
 				if (mode == Mode.POTION) {
 					RealityWarp.setPotionSwap((Class<? extends Potion>) chosen[0].getClass(),
 							(Class<? extends Potion>) chosen[1].getClass());
-					GLog.i(Messages.get(WndRealityWarp.class, "potion_swapped",
+					GLog.p(Messages.get(WndRealityWarp.class, "potion_swapped",
 							chosen[0].name(), chosen[1].name()));
 				} else {
 					RealityWarp.setScrollSwap((Class<? extends Scroll>) chosen[0].getClass(),
 							(Class<? extends Scroll>) chosen[1].getClass());
-					GLog.i(Messages.get(WndRealityWarp.class, "scroll_swapped",
+					GLog.p(Messages.get(WndRealityWarp.class, "scroll_swapped",
 							chosen[0].name(), chosen[1].name()));
 				}
 				hide();
