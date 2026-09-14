@@ -45,6 +45,7 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShaftParticle;
+import com.shatteredpixel.shatteredpixeldungeon.items.EquipableItem;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
@@ -366,6 +367,18 @@ public class DriedRose extends Artifact {
 	
 	public Armor ghostArmor(){
 		return armor;
+	}
+
+	private static boolean detachEquippedItem( EquipableItem item ) {
+		if (!item.isEquipped(Dungeon.hero)) return true;
+
+		//The ghost can take cursed gear from the hero even though the hero could not
+		//normally remove it. Preserve the curse after using the existing unequip path.
+		boolean cursed = item.cursed;
+		item.cursed = false;
+		boolean detached = item.doUnequip(Dungeon.hero, false, false);
+		item.cursed = cursed;
+		return detached;
 	}
 
 	private static final String TALKEDTO =      "talkedto";
@@ -902,7 +915,7 @@ public class DriedRose extends Artifact {
 			add( titlebar );
 			
 			RenderedTextBlock message =
-					PixelScene.renderTextBlock(Messages.get(this, "desc", rose.ghostStrength()), 6);
+					PixelScene.renderTextBlock(Messages.get(this, "desc"), 6);
 			message.maxWidth( WIDTH );
 			message.setPos(0, titlebar.bottom() + GAP);
 			add( message );
@@ -941,19 +954,11 @@ public class DriedRose extends Artifact {
 								} else if (item.unique) {
 									GLog.w( Messages.get(WndGhostHero.class, "cant_unique"));
 									hide();
-								} else if (item.cursed || !item.cursedKnown) {
-									GLog.w(Messages.get(WndGhostHero.class, "cant_cursed"));
-									hide();
-								}  else if (!item.levelKnown && ((MeleeWeapon)item).STRReq(0) > rose.ghostStrength()){
-									GLog.w( Messages.get(WndGhostHero.class, "cant_strength_unknown"));
-									hide();
-								} else if (((MeleeWeapon)item).STRReq() > rose.ghostStrength()) {
-									GLog.w( Messages.get(WndGhostHero.class, "cant_strength"));
-									hide();
 								} else {
-									if (item.isEquipped(Dungeon.hero)){
-										((MeleeWeapon) item).doUnequip(Dungeon.hero, false, false);
-									} else {
+									if (!detachEquippedItem((MeleeWeapon) item)){
+										return;
+									}
+									if (!item.isEquipped(Dungeon.hero)){
 										item.detach(Dungeon.hero.belongings.backpack);
 									}
 									rose.weapon = (MeleeWeapon) item;
@@ -1016,19 +1021,11 @@ public class DriedRose extends Artifact {
 								} else if (item.unique || ((Armor) item).checkSeal() != null) {
 									GLog.w( Messages.get(WndGhostHero.class, "cant_unique"));
 									hide();
-								} else if (item.cursed || !item.cursedKnown) {
-									GLog.w(Messages.get(WndGhostHero.class, "cant_cursed"));
-									hide();
-								}  else if (!item.levelKnown && ((Armor)item).STRReq(0) > rose.ghostStrength()){
-									GLog.w( Messages.get(WndGhostHero.class, "cant_strength_unknown"));
-									hide();
-								} else if (((Armor)item).STRReq() > rose.ghostStrength()) {
-									GLog.w( Messages.get(WndGhostHero.class, "cant_strength"));
-									hide();
 								} else {
-									if (item.isEquipped(Dungeon.hero)){
-										((Armor) item).doUnequip(Dungeon.hero, false, false);
-									} else {
+									if (!detachEquippedItem((Armor) item)){
+										return;
+									}
+									if (!item.isEquipped(Dungeon.hero)){
 										item.detach(Dungeon.hero.belongings.backpack);
 									}
 									rose.armor = (Armor) item;

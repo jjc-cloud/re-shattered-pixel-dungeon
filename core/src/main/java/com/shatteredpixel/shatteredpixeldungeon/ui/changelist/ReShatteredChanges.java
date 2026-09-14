@@ -35,9 +35,48 @@ import java.util.ArrayList;
 public class ReShatteredChanges {
 
 	public static void addAllChanges(ArrayList<ChangeInfo> changeInfos) {
+		add_v0_1_1_Changes(changeInfos);
 		add_v0_1_0_Changes(changeInfos);
+		add_01_ImportantChanges(changeInfos);
 		addDevelopmentPreview(changeInfos);
 	}
+
+	public static void add_v0_1_1_Changes(ArrayList<ChangeInfo> changeInfos) {
+
+		ChangeInfo changes = new ChangeInfo("v0.1.1", true, "");
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+
+		changes = new ChangeInfo("新内容", false, null);
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+
+		changes.addButton(new ChangeButton(ChangeIcons.V21_SHOPKEEPER, "订购",
+				"\n新增商店订购功能，现在可以在商店处订购额外的物资。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V010_VOID_WALKER, "公共天赋",
+				"\n新增公共天赋池，使用蜕变密卷时额外抽取两个属于公共天赋池的天赋。\n-振奋一餐：进食冻结周围时间。\n-多重存在：操纵镜像的行为，并获得它们的视野。\n-逃脱计划：可以与一名敌人互换位置。\n-虚空行者：暂时不掉下悬崖。\n-魔能超载：无视充能限制使用法杖神器。\n-野蛮寄生：种子可以在生物上发芽生效。\n-扭曲现实：唯心的改写现实，交换两种药剂或卷轴的效果。\n-交叉火力：大幅增加友军伤害。\n-隐藏技：处决敌人。\n-火力倾泻：法杖与投掷武器不消耗时间。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V064_CHALLENGES, "新挑战",
+				"\n新增一个陷阱相关挑战，生成更多的陷阱，所有陷阱有一半概率只有第二次经过才会触发，可见陷阱有一半概率需要两次才会触发。"));
+
+		changes = new ChangeInfo("增强", false, null);
+		changes.hardlight(CharSprite.POSITIVE);
+		changeInfos.add(changes);
+
+		changes.addButton(new ChangeButton(ChangeIcons.V035_WARRIOR_HEROARM, "战士转职",
+				"\n降低了狂战士的怒气惩罚，提高了理智状态下的收益。"));	
+		changes.addButton(new ChangeButton(ChangeIcons.PD_GHOST, "幽妹调整",
+				"\n现在幽妹可以和英雄一样无视限制穿戴任何非特殊装备，并且可以转移玩家已穿戴的诅咒装备。驱邪会一次性驱除幽妹的所有诅咒。"));	
+
+		changes = new ChangeInfo("削弱", false, null);
+		changes.hardlight(CharSprite.NEGATIVE);
+		changeInfos.add(changes);
+
+		changes.addButton(new ChangeButton(ChangeIcons.V035_WARRIOR_HEROARM, "战士转职",
+				"\n削弱了角斗士纹章的特殊能力，现在和狂战士一样需要损失百分比最大生命值触发；下调了狂战士的攻击倍率。"));	
+		changes.addButton(new ChangeButton(ChangeIcons.V010_MEDUSA_EYE, "蛇发邪眼",
+				"\n石化进度从33%下调为25%，现在在玩家视角不会被两回合击杀。"));
+	}
+
 
 	public static void add_v0_1_0_Changes(ArrayList<ChangeInfo> changeInfos) {
 
@@ -50,30 +89,18 @@ public class ReShatteredChanges {
 		changeInfos.add(changes);
 
 		changes.addButton(new ChangeButton(ChangeIcons.V035_WARRIOR_HEROARM, "战士转职重做",
-				"\n现在战士转职后会破损纹章会修复为完整纹章，根据转职获得不同的效果。现在角斗士更专注于战斗技巧与抵御伤害，狂战士则更专注于进攻及怒气控制。"));
-		changes.addButton(new ChangeButton(ChangeIcons.V010_FLUORESCENT_MOSS, "环境感知",
-				"\n现在灯火、地面的发光苔藓与火焰会照亮周围的环境，怪物在水面上移动时更容易被玩家发现。"));
+				"\n现在战士转职后会破损纹章会修复为完整纹章，根据转职获得不同的效果。现在角斗士更专注于战斗技巧与抵御伤害，狂战士则更专注于进攻及怒气控制，预期强度会过高。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V010_WAND_OF_PETRIFICATION, "石化法杖",
 				"\n新增石化法杖，发射石化光线使敌人石化为雕像，雕像可以阻挡敌人，但可被摧毁。"));
-		changes.addButton(new ChangeButton(ChangeIcons.V070_ALCHEMY_POT, "实验性炼金",
-				"\n新增实验性炼金，可以在未鉴定的情况下定向炼金，增加了一部分只能在实验性炼金中获得的物品。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V010_MEDUSA_EYE, "蛇发邪眼",
 				"\n新增邪眼稀有变种，蛇发邪眼会给予玩家不可逆的负面效果，_极度危险_。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V010_DUNGEON_BLUEPRINT, "地牢蓝图",
 				"\n新增探地卷轴变种，探地卷轴有极低的概率生成为魔法地图或地牢蓝图，这两者都拥有强大的效果。"));
-		changes.addButton(new ChangeButton(ChangeIcons.V21_SHOPKEEPER, "订购",
-				"\n新增商店订购功能，现在可以在商店处订购额外的物资。"));
-		changes.addButton(new ChangeButton(ChangeIcons.V010_VOID_WALKER, "公共天赋",
-				"\n新增公共天赋池，使用蜕变密卷时额外抽取两个属于公共天赋池的天赋。\n-振奋一餐：进食冻结周围时间。\n-多重存在：操纵镜像的行为，并获得它们的视野。\n-逃脱计划：可以与一名敌人互换位置。\n-虚空行者：暂时不掉下悬崖。\n-魔能超载：无视充能限制使用法杖神器。\n-野蛮寄生：种子可以在生物上发芽生效。\n-扭曲现实：唯心的改写现实，交换两种药剂或卷轴的效果。\n-交叉火力：大幅增加友军伤害。\n-隐藏技：处决敌人。\n-火力倾泻：法杖与投掷武器不消耗时间。"));
-		changes.addButton(new ChangeButton(ChangeIcons.V064_CHALLENGES, "新挑战",
-				"\n新增一个陷阱相关挑战，生成更多的陷阱，所有陷阱有一半概率只有第二次经过才会触发，可见陷阱有一半概率需要两次才会触发。"));
 
 		changes = new ChangeInfo("改动", false, null);
 		changes.hardlight(CharSprite.WARNING);
 		changeInfos.add(changes);
 
-		changes.addButton(new ChangeButton(ChangeIcons.V23_ARROWS, "基础属性调整",
-				"\n现在所有角色的基础属性做出了区分。\n\n-战士拥有更快的生命回复速度。\n\n-法师拥有更快的法杖充能速度，不仅限于魔杖，但神器充能速度下降。\n\n-盗贼更加耐饿，且更容易发现地牢的秘密，但法杖充能速度下降。\n\n-女猎手更难以被怪物发现。\n\n-决斗家可以双持武器。\n\n-牧师拥有更快的神器充能速度，但受到的伤害更多。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V20_DUELIST_CLOTH,"决斗家调整",
 				"\n现在决斗家初始双持独特的刺剑与破损的短剑，转职成勇士后会获得二连击，转职成武僧则会失去所有武器栏，并获得一个额外的饰品栏。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V010_HOLD_FAST,"天赋调整",
@@ -92,12 +119,22 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V30_SHARED_UPGRADES,"联动升级",
 				"\n联动升级无上限等级限制，且现在按投掷武器的阶数提供增幅，每阶提供2.5%/5%/7.5%伤害，每级提供倍数伤害。"));
 
-		changes = new ChangeInfo("削弱", false, null);
-		changes.hardlight(CharSprite.NEGATIVE);
+
+	}
+
+	public static void add_01_ImportantChanges(ArrayList<ChangeInfo> changeInfos) {
+
+		ChangeInfo changes = new ChangeInfo("重要改动", true, "");
+		changes.hardlight(Window.TITLE_COLOR);
 		changeInfos.add(changes);
 
-		changes.addButton(new ChangeButton(ChangeIcons.V035_WARRIOR_HEROARM, "战士转职",
-				"\n调整了转职的数值，使其更加合理。"));	
+		changes.addButton(new ChangeButton(ChangeIcons.V23_ARROWS, "基础属性调整",
+				"\n现在所有角色的基础属性做出了区分。\n\n-战士拥有更快的生命回复速度。\n\n-法师拥有更快的法杖充能速度，不仅限于魔杖，但神器充能速度下降。\n\n-盗贼更加耐饿，且更容易发现地牢的秘密，但法杖充能速度下降。\n\n-女猎手更难以被怪物发现。\n\n-决斗家可以双持武器。\n\n-牧师拥有更快的神器充能速度，但受到的伤害更多。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V010_FLUORESCENT_MOSS, "环境",
+				"\n现在灯火、地面的发光苔藓与火焰会照亮周围的环境，怪物在水面上移动时更容易被玩家发现，火焰会使水蒸发。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V070_ALCHEMY_POT, "实验性炼金",
+				"\n新增实验性炼金，可以在未鉴定的情况下定向炼金，增加了一部分只能在实验性炼金中获得的物品。"));
+
 	}
 
 	public static void addDevelopmentPreview(ArrayList<ChangeInfo> changeInfos) {
