@@ -250,10 +250,10 @@ public class Shopkeeper extends NPC {
 		Game.runOnRenderThread(new Callback() {
 			@Override
 			public void call() {
-				//订购物品全部买走后，商人会说一句专属的话（只弹一次）
+				//订购物品全部买走后，商人会说一句专属的话（只弹一次）；有货物被偷时换成失窃版台词
 				if (ShopOrder.takeDoneDialog()) {
 					GameScene.show(new WndOptions(sprite(), Messages.titleCase(name()),
-							orderDoneText(),
+							ShopOrder.doneDialogWasTheft() ? orderDoneTheftText() : orderDoneText(),
 							Messages.get(Shopkeeper.this, "order_done_continue")) {
 						@Override
 						protected void onSelect(int index) {
@@ -272,6 +272,11 @@ public class Shopkeeper extends NPC {
 	//订单全部买走时的台词；普通店主按商店层数分键，便于逐位商人自定义，子类（如小恶魔）可覆盖
 	protected String orderDoneText() {
 		return Messages.get(Shopkeeper.this, "order_done_" + Dungeon.depth);
+	}
+
+	//有订购物被偷走、店里剩下的也全买光时的台词；普通店主按商店层数分键，子类（如小恶魔）可覆盖
+	protected String orderDoneTheftText() {
+		return Messages.get(Shopkeeper.this, "order_done_theft_" + Dungeon.depth);
 	}
 
 	private void showShopDialog() {
