@@ -52,7 +52,7 @@ import com.watabou.utils.Bundle;
 
 import java.util.ArrayList;
 
-public class HornOfPlenty extends Artifact {
+public class HornOfPlenty extends ChargedArtifact {
 
 
 	{
@@ -77,7 +77,7 @@ public class HornOfPlenty extends Artifact {
 	public ArrayList<String> actions( Hero hero ) {
 		ArrayList<String> actions = super.actions( hero );
 		if (hero.buff(MagicImmune.class) != null) return actions;
-		if (isEquipped( hero ) && charge > 0) {
+		if (isEquipped( hero ) && canSpendCharge(hero, 1)) {
 			actions.add(AC_SNACK);
 			actions.add(AC_EAT);
 		}
@@ -97,8 +97,7 @@ public class HornOfPlenty extends Artifact {
 		if (action.equals(AC_EAT) || action.equals(AC_SNACK)){
 
 			if (!isEquipped(hero)) GLog.i( Messages.get(Artifact.class, "need_to_equip") );
-			else if (charge == 0 && !hero.hasTalent(Talent.MANA_OVERLOAD))  GLog.i( Messages.get(this, "no_food") );
-			else if (charge < 0)   GLog.i( Messages.get(this, "no_food") );
+			else if (!canSpendCharge(hero, 1)) GLog.i( Messages.get(this, "no_food") );
 			else {
 				//consume as much food as it takes to be full, to a minimum of 1
 				int satietyPerCharge = (int) (Hunger.STARVING/5f);
@@ -108,8 +107,7 @@ public class HornOfPlenty extends Artifact {
 
 				Hunger hunger = Buff.affect(Dungeon.hero, Hunger.class);
 				int chargesToUse = Math.max( 1, hunger.hunger() / satietyPerCharge);
-				//魔能超载：充能不足时至少消耗1点，把充能扣至负数
-				if (chargesToUse > charge && !hero.hasTalent(Talent.MANA_OVERLOAD)) chargesToUse = charge;
+				if (!canSpendCharge(hero, chargesToUse)) chargesToUse = charge;
 
 				//always use 1 charge if snacking
 				if (action.equals(AC_SNACK)){
@@ -136,7 +134,7 @@ public class HornOfPlenty extends Artifact {
 
 		Statistics.foodEaten++;
 
-		charge -= chargesToUse;
+		spendCharge(chargesToUse);
 		Talent.onArtifactUsed(hero);
 
 		hero.sprite.operate(hero.pos);
@@ -176,7 +174,7 @@ public class HornOfPlenty extends Artifact {
 	@Override
 	public void charge(Hero target, float amount) {
 		if (charge < chargeCap && !cursed && target.buff(MagicImmune.class) == null){
-			partialCharge += 0.25f*amount * Artifact.negativeRechargeFactor(this);
+			gainChargeProgress(target, 0.25f*amount);
 			while (partialCharge >= 1){
 				partialCharge--;
 				charge++;
@@ -287,7 +285,7 @@ public class HornOfPlenty extends Artifact {
 
 				//each charge is equal to 1/5 the max hunger value
 				chargeGain /= Hunger.STARVING/5;
-				partialCharge += chargeGain;
+				gainChargeProgress(target, chargeGain);
 
 				//charge is in increments of 1/5 max hunger value.
 				while (partialCharge >= 1) {

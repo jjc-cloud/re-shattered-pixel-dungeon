@@ -19,14 +19,8 @@
 package com.shatteredpixel.shatteredpixeldungeon.items;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Shopkeeper;
-import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
-import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Bundlable;
-import com.watabou.utils.PathFinder;
 
 import java.util.ArrayList;
 
@@ -57,8 +51,9 @@ public class ShopOrder {
 
 	public static boolean canOrder() {
 		if (broken) return false;
-		if (nextShopTier() == -1) return false;            //没有下一间商店接单
-		if (Dungeon.depth != lastShopDepth) return false;  //不是最新的商店
+		if (lastShopDepth == 0 || Dungeon.depth != lastShopDepth) return false; //不是最新的商店
+		//下一地区已经超出常规装备阶层，也就没有后续商店可以接单
+		if ((Dungeon.depth + 5) / 5 >= Generator.wepTiers.length) return false;
 		if (!pending.isEmpty()) return false;              //已有待交付的订单
 		//本店还摆放着上一间商店订购来的货物且没有买完
 		if (deliveredSeq != 0 && deliveredShopDepth == Dungeon.depth && remaining > 0) return false;
@@ -68,20 +63,6 @@ public class ShopOrder {
 			return false;
 		}
 		return true;
-	}
-
-	//下一间商店出售的装备阶数（与 ShopRoom.generateItems 的深度映射保持一致），-1表示没有下一间商店
-	public static int nextShopTier() {
-		switch (Dungeon.depth) {
-			case 6:
-				return 3;  //11层商店出售三阶装备
-			case 11:
-				return 4;  //16层商店出售四阶装备
-			case 16:
-				return 5;  //小恶魔商店出售五阶装备
-			default:
-				return -1;
-		}
 	}
 
 	public static void place(ArrayList<Item> items) {
@@ -99,52 +80,28 @@ public class ShopOrder {
 		return deliveredSeq != 0 && remaining > 0 && deliveredShopDepth == Dungeon.depth;
 	}
 
-	//商店实体化时调用（普通商店在 ShopRoom.paint，小恶魔商店在 ImpShopRoom.spawnShop）
-	public static void onShopGenerated(Level level) {
-		lastShopDepth = Dungeon.depth;
+	public static int pendingCount() {
+		return pending.size();
+	}
 
-		Shopkeeper keeper = null;
-		for (Mob mob : level.mobs) {
-			if (mob instanceof Shopkeeper) {
-				keeper = (Shopkeeper) mob;
-				break;
-			}
-		}
-		if (keeper == null) return;
+	//商店实体化时取走待交付货物；具体摆放继续交给商店房间处理
+	public static ArrayList<Item> onShopGenerated() {
+		lastShopDepth = Dungeon.depth;
 
 		//生成下一间商店时上一笔订购物品没买完，之后不再提供订购
 		if (deliveredSeq != 0 && remaining > 0) {
 			broken = true;
 		}
 
-		if (pending.isEmpty()) return;
+		if (pending.isEmpty()) return new ArrayList<>();
 
-		ArrayList<Integer> freeCells = new ArrayList<>();
-		for (int i : PathFinder.NEIGHBOURS8) {
-			int cell = keeper.pos + i;
-			//生成阶段 passable 数组尚未填充，改用地形标记判定
-			if ((Terrain.flags[level.map[cell]] & Terrain.PASSABLE) != 0
-					&& level.heaps.get(cell) == null
-					&& Actor.findChar(cell) == null) {
-				freeCells.add(cell);
-			}
-		}
-
-		for (int i = 0; i < pending.size(); i++) {
-			int cell;
-			if (i < freeCells.size()) {
-				cell = freeCells.get(i);
-			} else {
-				//老板周围没有更多空格时，并入周围已有的一格
-				cell = keeper.pos + PathFinder.NEIGHBOURS8[i % PathFinder.NEIGHBOURS8.length];
-			}
-			level.drop(pending.get(i), cell).type = Heap.Type.FOR_SALE;
-		}
+		ArrayList<Item> delivery = pending;
 		deliveredSeq = pendingSeq;
 		deliveredPlacedDepth = pendingPlacedDepth;
 		deliveredShopDepth = Dungeon.depth;
 		remaining = pending.size();
 		pending = new ArrayList<>();
+		return delivery;
 	}
 
 	//玩家从商店买走订购物品时回调

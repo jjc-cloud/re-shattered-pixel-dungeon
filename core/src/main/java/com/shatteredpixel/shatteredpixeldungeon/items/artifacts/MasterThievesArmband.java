@@ -52,7 +52,7 @@ import com.watabou.utils.Random;
 
 import java.util.ArrayList;
 
-public class MasterThievesArmband extends Artifact {
+public class MasterThievesArmband extends ChargedArtifact {
 
 	{
 		image = ItemSpriteSheet.ARTIFACT_ARMBAND;
@@ -72,7 +72,7 @@ public class MasterThievesArmband extends Artifact {
 	public ArrayList<String> actions(Hero hero) {
 		ArrayList<String> actions = super.actions(hero);
 		if (isEquipped(hero)
-				&& charge > 0
+				&& canSpendCharge(hero, 1)
 				&& hero.buff(MagicImmune.class) == null
 				&& !cursed) {
 			actions.add(AC_STEAL);
@@ -94,11 +94,7 @@ public class MasterThievesArmband extends Artifact {
 				GLog.i( Messages.get(Artifact.class, "need_to_equip") );
 				usesTargeting = false;
 
-			} else if (charge < 1 && !hero.hasTalent(Talent.MANA_OVERLOAD)) {
-				GLog.i( Messages.get(this, "no_charge") );
-				usesTargeting = false;
-
-			} else if (charge < 0) {
+			} else if (!canSpendCharge(hero, 1)) {
 				GLog.i( Messages.get(this, "no_charge") );
 				usesTargeting = false;
 
@@ -186,7 +182,7 @@ public class MasterThievesArmband extends Artifact {
 
 							artifactProc(ch, visiblyUpgraded(), 1);
 
-							charge--;
+							spendCharge(1);
 							exp += 3;
 							Talent.onArtifactUsed(Dungeon.hero);
 							while (exp >= (10 + Math.round(3.33f * level())) && level() < levelCap) {
@@ -227,7 +223,7 @@ public class MasterThievesArmband extends Artifact {
 	public void charge(Hero target, float amount) {
 		if (cursed || target.buff(MagicImmune.class) != null) return;
 		if (charge < chargeCap) {
-			partialCharge += 0.1f * amount * Artifact.negativeRechargeFactor(this);
+			gainChargeProgress(target, 0.1f * amount);
 			while (partialCharge >= 1f) {
 				charge++;
 				partialCharge--;
@@ -283,8 +279,8 @@ public class MasterThievesArmband extends Artifact {
 				float chargeGain = (3f + 0.15f*level()) * levelPortion;
 				chargeGain *= RingOfEnergy.artifactChargeMultiplier(target);
 
-				partialCharge += chargeGain * Artifact.negativeRechargeFactor(MasterThievesArmband.this);
-				while (partialCharge > 1f){
+				gainChargeProgress(target, chargeGain);
+				while (partialCharge >= 1f){
 					partialCharge--;
 					charge++;
 					updateQuickslot();

@@ -130,9 +130,7 @@ public class SandalsOfNature extends Artifact {
 		if (isEquipped( hero )
 				&& !cursed
 				&& curSeedEffect != null
-				&& (charge >= seedChargeReqs.get(curSeedEffect)
-					//魔能超载：充能为零/不足时也能催发
-					|| (charge >= 0 && hero.hasTalent(Talent.MANA_OVERLOAD)))) {
+				&& charge >= seedChargeReqs.get(curSeedEffect)) {
 			actions.add(AC_ROOT);
 		}
 		return actions;
@@ -152,9 +150,7 @@ public class SandalsOfNature extends Artifact {
 
 			if (!isEquipped( hero ))                                GLog.i( Messages.get(Artifact.class, "need_to_equip") );
 			else if (curSeedEffect == null)                         GLog.i( Messages.get(this, "no_effect") );
-			else if (charge < seedChargeReqs.get(curSeedEffect)
-					&& !hero.hasTalent(Talent.MANA_OVERLOAD))       GLog.i( Messages.get(this, "low_charge") );
-			else if (charge < 0)                                    GLog.i( Messages.get(this, "low_charge") );
+			else if (charge < seedChargeReqs.get(curSeedEffect))    GLog.i( Messages.get(this, "low_charge") );
 			else {
 				GameScene.selectCell(cellSelector);
 			}
@@ -170,7 +166,7 @@ public class SandalsOfNature extends Artifact {
 	public void charge(Hero target, float amount) {
 		if (cursed || target.buff(MagicImmune.class) != null) return;
 		if (charge < chargeCap) {
-			partialCharge += 2*amount * Artifact.negativeRechargeFactor(this);
+			partialCharge += 2*amount;
 			while (partialCharge >= 1f){
 				charge++;
 				partialCharge--;
@@ -279,7 +275,7 @@ public class SandalsOfNature extends Artifact {
 				//0.5 charge per grass at +0, up to 1.5 at +10
 				float chargeGain = (3f + 2*level())/6f;
 				chargeGain *= RingOfEnergy.artifactChargeMultiplier(target);
-				partialCharge += Math.max(0, chargeGain) * Artifact.negativeRechargeFactor(SandalsOfNature.this);
+				partialCharge += Math.max(0, chargeGain);
 				while (partialCharge >= 1){
 					charge++;
 					partialCharge--;

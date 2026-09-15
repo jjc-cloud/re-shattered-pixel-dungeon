@@ -61,7 +61,7 @@ import com.watabou.utils.Random;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class SkeletonKey extends Artifact {
+public class SkeletonKey extends ChargedArtifact {
 
 	{
 		image = ItemSpriteSheet.ARTIFACT_KEY;
@@ -149,7 +149,7 @@ public class SkeletonKey extends Artifact {
 							GLog.w(Messages.get(SkeletonKey.class, "wont_open"));
 							return;
 						}
-						if (charge < 1 && !curUser.hasTalent(Talent.MANA_OVERLOAD)){
+						if (!canSpendCharge(curUser, 1)){
 							GLog.i( Messages.get(SkeletonKey.class, "iron_charges") );
 							return;
 						}
@@ -160,7 +160,7 @@ public class SkeletonKey extends Artifact {
 								Buff.affect(curUser, KeyReplacementTracker.class).processIronLockOpened();
 								Level.set(target, Terrain.DOOR);
 								GameScene.updateMap(target);
-								charge -= 1;
+								spendCharge(1);
 								gainExp(2 + 1);
 								Talent.onArtifactUsed(Dungeon.hero);
 								curUser.spendAndNext(Actor.TICK);
@@ -187,7 +187,7 @@ public class SkeletonKey extends Artifact {
 						return;
 					} else if (Dungeon.level.map[target] == Terrain.CRYSTAL_DOOR) {
 
-						if (charge < 5 && !curUser.hasTalent(Talent.MANA_OVERLOAD)) {
+						if (!canSpendCharge(curUser, 5)) {
 							GLog.i(Messages.get(SkeletonKey.class, "crystal_charges"));
 							return;
 						}
@@ -198,7 +198,7 @@ public class SkeletonKey extends Artifact {
 								Buff.affect(curUser, KeyReplacementTracker.class).processCrystalLockOpened();
 								Level.set(target, Terrain.EMPTY);
 								GameScene.updateMap(target);
-								charge -= 5;
+								spendCharge(5);
 								gainExp(2 + 5);
 								Talent.onArtifactUsed(Dungeon.hero);
 								Sample.INSTANCE.play(Assets.Sounds.TELEPORT);
@@ -214,7 +214,7 @@ public class SkeletonKey extends Artifact {
 						return;
 					} else if (Dungeon.level.map[target] == Terrain.DOOR || Dungeon.level.map[target] == Terrain.OPEN_DOOR){
 
-						if (charge < 2 && !curUser.hasTalent(Talent.MANA_OVERLOAD)) {
+						if (!canSpendCharge(curUser, 2)) {
 							GLog.i(Messages.get(SkeletonKey.class, "lock_charges"));
 							return;
 						}
@@ -260,7 +260,7 @@ public class SkeletonKey extends Artifact {
 							public void call() {
 								Level.set(target, Terrain.HERO_LKD_DR);
 								GameScene.updateMap(target);
-								charge -= 2;
+								spendCharge(2);
 								gainExp(2);
 								Talent.onArtifactUsed(Dungeon.hero);
 								curUser.spendAndNext(Actor.TICK);
@@ -287,7 +287,7 @@ public class SkeletonKey extends Artifact {
 						return;
 
 					} else if (Dungeon.level.heaps.get(target) != null && Dungeon.level.heaps.get(target).type == Heap.Type.LOCKED_CHEST){
-						if (charge < 2 && !curUser.hasTalent(Talent.MANA_OVERLOAD)) {
+						if (!canSpendCharge(curUser, 2)) {
 							GLog.i(Messages.get(SkeletonKey.class, "gold_charges"));
 							return;
 						}
@@ -297,7 +297,7 @@ public class SkeletonKey extends Artifact {
 							public void call() {
 								Buff.affect(curUser, KeyReplacementTracker.class).processGoldLockOpened();
 								Dungeon.level.heaps.get(target).open(curUser);
-								charge -= 2;
+								spendCharge(2);
 								gainExp(2 + 2);
 								Talent.onArtifactUsed(Dungeon.hero);
 								curUser.spendAndNext(Actor.TICK);
@@ -308,7 +308,7 @@ public class SkeletonKey extends Artifact {
 						return;
 
 					} else if (Dungeon.level.heaps.get(target) != null && Dungeon.level.heaps.get(target).type == Heap.Type.CRYSTAL_CHEST){
-						if (charge < 5 && !curUser.hasTalent(Talent.MANA_OVERLOAD)) {
+						if (!canSpendCharge(curUser, 5)) {
 							GLog.i(Messages.get(SkeletonKey.class, "crystal_charges"));
 							return;
 						}
@@ -318,7 +318,7 @@ public class SkeletonKey extends Artifact {
 							public void call() {
 								Buff.affect(curUser, KeyReplacementTracker.class).processCrystalLockOpened();
 								Dungeon.level.heaps.get(target).open(curUser);
-								charge -= 5;
+								spendCharge(5);
 								gainExp(2 + 5);
 								Talent.onArtifactUsed(Dungeon.hero);
 								curUser.spendAndNext(Actor.TICK);
@@ -331,7 +331,7 @@ public class SkeletonKey extends Artifact {
 					}
 				}
 
-				if (charge < 2 && !curUser.hasTalent(Talent.MANA_OVERLOAD)){
+				if (!canSpendCharge(curUser, 2)){
 					GLog.i(Messages.get(SkeletonKey.class, "wall_charges"));
 					return;
 				}
@@ -369,7 +369,7 @@ public class SkeletonKey extends Artifact {
 							placeWall(curUser.pos+2*PathFinder.CIRCLE8[(finalClosestIdx +1)%8], knockBackDir);
 						}
 
-						charge -= 2;
+						spendCharge(2);
 						gainExp(2);
 
 						Dungeon.observe();
@@ -401,7 +401,7 @@ public class SkeletonKey extends Artifact {
 	@Override
 	public void charge(Hero target, float amount) {
 		if (charge < chargeCap && !cursed && target.buff(MagicImmune.class) == null){
-			partialCharge += 0.133f*amount * Artifact.negativeRechargeFactor(this);
+			gainChargeProgress(target, 0.133f*amount);
 			while (partialCharge >= 1){
 				partialCharge--;
 				charge++;
@@ -436,9 +436,9 @@ public class SkeletonKey extends Artifact {
 					&& target.buff(MagicImmune.class) == null
 					&& Regeneration.regenOn()) {
 				//120 turns to charge at full, 60 turns to charge at 0/8
-				float chargeGain = 1 / (120f - (chargeCap - charge)*7.5f);
+				float chargeGain = 1 / (120f - (chargeCap - rechargeReferenceCharge())*7.5f);
 				chargeGain *= RingOfEnergy.artifactChargeMultiplier(target);
-				partialCharge += chargeGain * Artifact.negativeRechargeFactor(SkeletonKey.this);
+				gainChargeProgress(target, chargeGain);
 
 				while (partialCharge >= 1) {
 					partialCharge --;

@@ -18,6 +18,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Honeypot;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -140,45 +141,45 @@ public class WndShopOrder extends Window {
 	@SuppressWarnings("unchecked")
 	private ArrayList<Item> categoryItems(int category) {
 		ArrayList<Item> result = new ArrayList<>();
+		Class<?>[] classes = null;
+		java.util.Set<?> availableClasses = null;
+		boolean prepareEquipment = false;
 		switch (category) {
-			case 0: //药剂：仅展示已鉴定的种类
-				for (Class<?> cls : Generator.Category.POTION.classes) {
-					Potion item = Reflection.newInstance((Class<Potion>) cls);
-					if (item.isKnown()) result.add(item);
-				}
+			case 0: //药剂：直接使用现有的已鉴定类型集合
+				classes = Generator.Category.POTION.classes;
+				availableClasses = Potion.getKnown();
 				break;
-			case 1: //卷轴：仅展示已鉴定的种类
-				for (Class<?> cls : Generator.Category.SCROLL.classes) {
-					Scroll item = Reflection.newInstance((Class<Scroll>) cls);
-					if (item.isKnown()) result.add(item);
-				}
+			case 1: //卷轴：直接使用现有的已鉴定类型集合
+				classes = Generator.Category.SCROLL.classes;
+				availableClasses = Scroll.getKnown();
 				break;
 			case 2: //投掷武器：展示下一间商店售卖阶数的全部种类
-			case 3: { //武器：展示下一间商店售卖阶数的全部种类
-				int tier = ShopOrder.nextShopTier();
-				if (tier != -1) {
-					Generator.Category cat = Generator.Category.valueOf(
-							(category == 2 ? "MIS_T" : "WEP_T") + tier);
-					for (Class<?> cls : cat.classes) {
-						Item item = Reflection.newInstance((Class<Item>) cls);
-						if (item instanceof Weapon) {
-							//与商店货架上的武器保持同等待遇
-							((Weapon) item).enchant(null);
-							item.cursed = false;
-							item.level(0);
-							item.identify(false);
-						}
-						result.add(item);
-					}
-				}
+			case 3: //武器：展示下一间商店售卖阶数的全部种类
+				int floorSet = (Dungeon.depth + 5) / 5;
+				Generator.Category[] tiers = category == 2 ? Generator.misTiers : Generator.wepTiers;
+				classes = tiers[floorSet].classes;
+				prepareEquipment = true;
 				break;
-			}
 			case 4: //杂项
 				result.add(new Stylus());
 				result.add(new Honeypot());
 				result.add(new StoneOfAugmentation());
 				result.add(new Bomb());
 				break;
+		}
+		if (classes != null) {
+			for (Class<?> cls : classes) {
+				if (availableClasses != null && !availableClasses.contains(cls)) continue;
+				Item item = Reflection.newInstance((Class<Item>) cls);
+				if (prepareEquipment) {
+					//与商店货架上的武器保持同等待遇
+					((Weapon) item).enchant(null);
+					item.cursed = false;
+					item.level(0);
+					item.identify(false);
+				}
+				result.add(item);
+			}
 		}
 		return result;
 	}

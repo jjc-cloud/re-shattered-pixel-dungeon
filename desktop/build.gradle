@@ -107,6 +107,19 @@ runtime {
 
 }
 
+//portable build: a folder that can be extracted and run directly, no installer needed
+tasks.register('portableZip', Zip) {
+    dependsOn jpackageImage
+
+    def platform = osName.contains('windows') ? 'Windows' : osName.contains('mac') ? 'macOS' : 'Linux'
+    archiveFileName = "ShatteredPD-v${appVersionName}-${platform}.zip"
+    destinationDirectory = file("$buildDir/release")
+
+    from("$buildDir/jpackage/$appName") {
+        into(appName)
+    }
+}
+
 dependencies {
     implementation project(':core')
 

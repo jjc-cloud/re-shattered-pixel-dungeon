@@ -60,6 +60,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.watabou.utils.Point;
+import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
@@ -68,6 +69,7 @@ import java.util.HashMap;
 public class ShopRoom extends SpecialRoom {
 
 	protected ArrayList<Item> itemsToSpawn;
+	protected int shopkeeperPos;
 	
 	@Override
 	public int minWidth() {
@@ -85,7 +87,7 @@ public class ShopRoom extends SpecialRoom {
 		//sandbags spawn based on current level of an hourglass the player may be holding
 		// so, to avoid rare cases of min sizes differing based on that, we ignore all sandbags
 		// and then add 4 items in all cases, which is max number of sandbags that can be in the shop
-		int spacesNeeded = itemsToSpawn.size();
+		int spacesNeeded = itemsToSpawn.size() + ShopOrder.pendingCount();
 		for (Item i : itemsToSpawn){
 			if (i instanceof TimekeepersHourglass.sandBag){
 				spacesNeeded--;
@@ -105,10 +107,9 @@ public class ShopRoom extends SpecialRoom {
 
 		placeShopkeeper( level );
 
+		ArrayList<Item> orderedItems = ShopOrder.onShopGenerated();
 		placeItems( level );
-
-		//交付玩家在上一间商店预订的货物
-		ShopOrder.onShopGenerated( level );
+		placeOrderedItems(level, orderedItems);
 
 		for (Door door : connected.values()) {
 			door.set( Door.Type.REGULAR );
@@ -118,12 +119,42 @@ public class ShopRoom extends SpecialRoom {
 
 	protected void placeShopkeeper( Level level ) {
 
-		int pos = level.pointToCell(center());
+		shopkeeperPos = level.pointToCell(center());
 
 		Mob shopkeeper = new Shopkeeper();
-		shopkeeper.pos = pos;
+		shopkeeper.pos = shopkeeperPos;
 		level.mobs.add( shopkeeper );
 
+	}
+
+	protected void placeOrderedItems(Level level, ArrayList<Item> orderedItems) {
+		if (orderedItems.isEmpty()) return;
+
+		ArrayList<Integer> emptyCells = orderedItemCells(level);
+		if (emptyCells.isEmpty()) {
+			ShatteredPixelDungeon.reportException(new RuntimeException("failed to place ordered shop items!"));
+			return;
+		}
+		for (int i = 0; i < orderedItems.size(); i++) {
+			int cell = emptyCells.get(i % emptyCells.size());
+			level.drop(orderedItems.get(i), cell).type = Heap.Type.FOR_SALE;
+		}
+	}
+
+	protected ArrayList<Integer> orderedItemCells(Level level) {
+		ArrayList<Integer> emptyCells = new ArrayList<>();
+		ArrayList<Integer> occupiedCells = new ArrayList<>();
+		for (int offset : PathFinder.NEIGHBOURS8) {
+			int cell = shopkeeperPos + offset;
+			Point point = level.cellToPoint(cell);
+			//订单必须紧挨店主并位于房间内部，不能落在最外圈墙边
+			if (point.x <= left || point.x >= right || point.y <= top || point.y >= bottom) continue;
+			if ((Terrain.flags[level.map[cell]] & Terrain.PASSABLE) == 0 || level.findMob(cell) != null) continue;
+			if (level.heaps.get(cell) == null) emptyCells.add(cell);
+			else occupiedCells.add(cell);
+		}
+		emptyCells.addAll(occupiedCells);
+		return emptyCells;
 	}
 
 	protected void placeItems( Level level ){

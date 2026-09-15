@@ -157,9 +157,7 @@ public class DriedRose extends Artifact {
 			if (!Ghost.Quest.completed())   GameScene.show(new WndUseItem(null, this));
 			else if (ghost != null)         GLog.i( Messages.get(this, "spawned") );
 			else if (!isEquipped( hero ))   GLog.i( Messages.get(Artifact.class, "need_to_equip") );
-			else if (charge != chargeCap
-					&& !hero.hasTalent(Talent.MANA_OVERLOAD))   GLog.i( Messages.get(this, "no_charge") );
-			else if (charge < 0)            GLog.i( Messages.get(this, "no_charge") );
+			else if (charge != chargeCap)   GLog.i( Messages.get(this, "no_charge") );
 			else if (cursed)                GLog.i( Messages.get(this, "cursed") );
 			else {
 				ArrayList<Integer> spawnPoints = new ArrayList<>();
@@ -200,12 +198,7 @@ public class DriedRose extends Artifact {
 
 					Invisibility.dispel(hero);
 					Talent.onArtifactUsed(hero);
-					//魔能超载：充能不足时召唤，充能会扣至负数
-					if (hero.hasTalent(Talent.MANA_OVERLOAD)){
-						charge = Math.min(0, charge - chargeCap);
-					} else {
-						charge = 0;
-					}
+					charge = 0;
 					partialCharge = 0;
 					updateQuickslot();
 
@@ -321,7 +314,7 @@ public class DriedRose extends Artifact {
 
 		if (ghost == null){
 			if (charge < chargeCap) {
-				partialCharge += 4*amount * Artifact.negativeRechargeFactor(this);
+				partialCharge += 4*amount;
 				while (partialCharge >= 1f){
 					charge++;
 					partialCharge--;
@@ -457,7 +450,7 @@ public class DriedRose extends Artifact {
 					&& target.buff(MagicImmune.class) == null
 					&& Regeneration.regenOn()) {
 				//500 turns to a full charge
-				partialCharge += (1/5f * RingOfEnergy.artifactChargeMultiplier(target)) * Artifact.negativeRechargeFactor(DriedRose.this);
+				partialCharge += 1/5f * RingOfEnergy.artifactChargeMultiplier(target);
 				while (partialCharge > 1){
 					charge++;
 					partialCharge--;

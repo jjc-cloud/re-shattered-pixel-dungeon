@@ -47,7 +47,7 @@ import com.watabou.utils.Bundle;
 
 import java.util.ArrayList;
 
-public class CloakOfShadows extends Artifact {
+public class CloakOfShadows extends ChargedArtifact {
 
 	{
 		image = ItemSpriteSheet.ARTIFACT_CLOAK;
@@ -73,10 +73,7 @@ public class CloakOfShadows extends Artifact {
 		if ((isEquipped( hero ) || hero.hasTalent(Talent.LIGHT_CLOAK))
 				&& !cursed
 				&& hero.buff(MagicImmune.class) == null
-				&& (charge > 0
-					//魔能超载：充能为零时也能进入潜行
-					|| (charge >= 0 && hero.hasTalent(Talent.MANA_OVERLOAD))
-					|| activeBuff != null)) {
+				&& (canSpendCharge(hero, 1) || activeBuff != null)) {
 			actions.add(AC_STEALTH);
 		}
 		return actions;
@@ -94,7 +91,7 @@ public class CloakOfShadows extends Artifact {
 			if (activeBuff == null){
 				if (!isEquipped(hero) && !hero.hasTalent(Talent.LIGHT_CLOAK)) GLog.i( Messages.get(Artifact.class, "need_to_equip") );
 				else if (cursed)       GLog.i( Messages.get(this, "cursed") );
-				else if (charge <= 0 && !hero.hasTalent(Talent.MANA_OVERLOAD))  GLog.i( Messages.get(this, "no_charge") );
+				else if (!canSpendCharge(hero, 1)) GLog.i( Messages.get(this, "no_charge") );
 				else {
 					hero.spend( 1f );
 					hero.busy();
@@ -183,7 +180,7 @@ public class CloakOfShadows extends Artifact {
 
 		if (charge < chargeCap) {
 			if (!isEquipped(target)) amount *= 0.75f*target.pointsInTalent(Talent.LIGHT_CLOAK)/3f;
-			partialCharge += 0.25f*amount * Artifact.negativeRechargeFactor(this);
+			gainChargeProgress(target, 0.25f*amount);
 			while (partialCharge >= 1f) {
 				charge++;
 				partialCharge--;
@@ -235,7 +232,7 @@ public class CloakOfShadows extends Artifact {
 		public boolean act() {
 			if (charge < chargeCap && !cursed && target.buff(MagicImmune.class) == null) {
 				if (activeBuff == null && Regeneration.regenOn()) {
-					float missing = (chargeCap - charge);
+					float missing = (chargeCap - rechargeReferenceCharge());
 					if (level() > 7) missing += 5*(level() - 7)/3f;
 					float turnsToCharge = (45 - missing);
 					turnsToCharge /= RingOfEnergy.artifactChargeMultiplier(target);
@@ -243,7 +240,7 @@ public class CloakOfShadows extends Artifact {
 					if (!isEquipped(Dungeon.hero)){
 						chargeToGain *= 0.75f*Dungeon.hero.pointsInTalent(Talent.LIGHT_CLOAK)/3f;
 					}
-					partialCharge += chargeToGain * Artifact.negativeRechargeFactor(CloakOfShadows.this);
+					gainChargeProgress(target, chargeToGain);
 				}
 
 				while (partialCharge >= 1) {
@@ -324,36 +321,37 @@ public class CloakOfShadows extends Artifact {
 			turnsToCost--;
 			
 			if (turnsToCost <= 0){
-				charge--;
-				if (charge < 0) {
-					//魔能超载：允许潜行把充能扣至负数，直到无法维持
-					if (!(target instanceof Hero) || !((Hero) target).hasTalent(Talent.MANA_OVERLOAD)) {
-						charge = 0;
-					}
+				if (!(target instanceof Hero) || !canSpendCharge((Hero) target, 1)) {
 					detach();
 					GLog.w(Messages.get(this, "no_charge"));
 					((Hero) target).interrupt();
 				} else {
-					//target hero level is 1 + 2*cloak level
-					int lvlDiffFromTarget = ((Hero) target).lvl - (1+level()*2);
-					//plus an extra one for each level after 6
-					if (level() >= 7){
-						lvlDiffFromTarget -= level()-6;
-					}
-					if (lvlDiffFromTarget >= 0){
-						exp += Math.round(10f * Math.pow(1.1f, lvlDiffFromTarget));
+					spendCharge(1);
+					if (charge < 0) {
+						detach();
+						GLog.w(Messages.get(this, "no_charge"));
+						((Hero) target).interrupt();
 					} else {
-						exp += Math.round(10f * Math.pow(0.75f, -lvlDiffFromTarget));
+						//target hero level is 1 + 2*cloak level
+						int lvlDiffFromTarget = ((Hero) target).lvl - (1+level()*2);
+						//plus an extra one for each level after 6
+						if (level() >= 7){
+							lvlDiffFromTarget -= level()-6;
+						}
+						if (lvlDiffFromTarget >= 0){
+							exp += Math.round(10f * Math.pow(1.1f, lvlDiffFromTarget));
+						} else {
+							exp += Math.round(10f * Math.pow(0.75f, -lvlDiffFromTarget));
+						}
+
+						if (exp >= (level() + 1) * 50 && level() < levelCap) {
+							upgrade();
+							Catalog.countUse(CloakOfShadows.class);
+							exp -= level() * 50;
+							GLog.p(Messages.get(this, "levelup"));
+						}
+						turnsToCost = 4;
 					}
-					
-					if (exp >= (level() + 1) * 50 && level() < levelCap) {
-						upgrade();
-						Catalog.countUse(CloakOfShadows.class);
-						exp -= level() * 50;
-						GLog.p(Messages.get(this, "levelup"));
-						
-					}
-					turnsToCost = 4;
 				}
 				updateQuickslot();
 			}
@@ -364,8 +362,8 @@ public class CloakOfShadows extends Artifact {
 		}
 
 		public void dispel(){
-			if (turnsToCost <= 0 && charge > 0){
-				charge--;
+			if (turnsToCost <= 0 && target instanceof Hero && canSpendCharge((Hero) target, 1)){
+				spendCharge(1);
 			}
 			updateQuickslot();
 			detach();

@@ -55,14 +55,23 @@ public class PublicTalentsRegression {
 		check(Talent.FIREPOWER_BARRAGE.icon() == 228 && Talent.FIREPOWER_BARRAGE.isRare(), "rare barrage icon");
 		check(Talent.MANA_OVERLOAD.icon() == 230 && !Talent.MANA_OVERLOAD.isRare(), "mana overload icon");
 		check(Talent.SAVAGE_PARASITE.icon() == 231 && !Talent.SAVAGE_PARASITE.isRare(), "savage parasite icon");
-		check(Talent.PERFECT_EXECUTION.icon() == 232 && !Talent.PERFECT_EXECUTION.isRare(), "perfect execution icon");
+		check(Talent.PERFECT_EXECUTION.icon() == 232 && Talent.PERFECT_EXECUTION.isRare(), "hidden skill is rare");
 		check(Talent.REALITY_WARP.icon() == 229 && Talent.REALITY_WARP.isRare(), "rare reality warp icon");
-		check(Talent.CROSSFIRE.icon() == 233 && Talent.CROSSFIRE.isRare(), "rare crossfire icon");
+		check(Talent.CROSSFIRE.icon() == 233 && !Talent.CROSSFIRE.isRare(), "crossfire is common");
 		check(Talent.publicMetamorphTalentsAvailable(1) && Talent.publicMetamorphTalentsAvailable(2), "public tier one and two");
 		check(!Talent.publicMetamorphTalentsAvailable(3) && !Talent.publicMetamorphTalentsAvailable(4), "no public tier three or four");
 		Talent rareRoll = Talent.randomPublicMetamorphTalent(true, new HashSet<>());
-		check(rareRoll == Talent.FIREPOWER_BARRAGE || rareRoll == Talent.REALITY_WARP || rareRoll == Talent.CROSSFIRE,
+		check(rareRoll == Talent.FIREPOWER_BARRAGE || rareRoll == Talent.REALITY_WARP || rareRoll == Talent.PERFECT_EXECUTION,
 				"rare pool contains three talents");
+		HashSet<Talent> commonExclusions = new HashSet<>();
+		commonExclusions.add(Talent.UPLIFTING_MEAL);
+		commonExclusions.add(Talent.MULTIPLE_EXISTENCE);
+		commonExclusions.add(Talent.ESCAPE_PLAN);
+		commonExclusions.add(Talent.VOID_WALKER);
+		commonExclusions.add(Talent.MANA_OVERLOAD);
+		commonExclusions.add(Talent.SAVAGE_PARASITE);
+		check(Talent.randomPublicMetamorphTalent(false, commonExclusions) == Talent.CROSSFIRE,
+				"crossfire is selected from the common pool");
 	}
 
 	private static void mealAndMirrorLink(){
@@ -269,13 +278,113 @@ public class PublicTalentsRegression {
 		check(!wand.tryToZap(hero, 313), "empty wand fizzles without talent");
 		hero.talents.get(0).put(Talent.MANA_OVERLOAD, 1);
 		check(wand.tryToZap(hero, 313), "empty wand casts with talent");
-		wand.curCharges = -1;
+		wand.spendCharge(1);
+		check(wand.curCharges == -1, "empty wand spends into debt");
 		check(!wand.tryToZap(hero, 313), "negative charge wand cannot recast");
-		check(wand.negativeRechargeFactor() == 1f, "rank one recovers at normal pace");
+		check(wand.rechargeReferenceCharge() == 0, "wand debt recharges from the zero-charge rate");
+		check(wand.adjustRechargeGain(hero, 0.25f) == 0.25f, "rank one recovers at normal pace");
 		hero.talents.get(0).put(Talent.MANA_OVERLOAD, 2);
-		check(wand.negativeRechargeFactor() == 2f, "rank two recovers at double pace");
-		wand.curCharges = 0;
-		check(wand.negativeRechargeFactor() == 1f, "non-negative charges recover normally");
+		check(wand.adjustRechargeGain(hero, 0.25f) == 0.5f, "rank two recovers at double pace");
+
+		TestChargedArtifact artifact = new TestChargedArtifact();
+		check(artifact instanceof com.shatteredpixel.shatteredpixeldungeon.items.ChargeItem,
+				"standard artifact automatically implements charge rules");
+		artifact.setCharge(0, 10, 0f);
+		check(artifact.canSpendCharge(hero, 3), "standard artifact can spend from zero with talent");
+		artifact.spendCharge(3);
+		check(artifact.currentCharge() == -3 && !artifact.canSpendCharge(hero, 1),
+				"standard artifact records debt and blocks repeated spending");
+		check(artifact.rechargeReferenceCharge() == 0, "artifact debt uses its zero-charge rate");
+		artifact.setCharge(-1, 10, 0.75f);
+		artifact.gain(hero, 1f);
+		check(artifact.currentCharge() == 0 && artifact.partialCharge() == 0f,
+				"debt recovery stops exactly at zero without accelerated overflow");
+		artifact.gain(hero, 0.25f);
+		check(artifact.currentCharge() == 0 && artifact.partialCharge() == 0.25f,
+				"positive recharge resumes at normal speed");
+
+		TestPlainArtifact plain = new TestPlainArtifact();
+		check(!(plain instanceof com.shatteredpixel.shatteredpixeldungeon.items.ChargeItem),
+				"plain artifact does not opt into mana overload");
+		check(new com.shatteredpixel.shatteredpixeldungeon.items.artifacts.CloakOfShadows()
+				instanceof com.shatteredpixel.shatteredpixeldungeon.items.ChargeItem, "cloak uses standard charges");
+		check(new com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HolyTome()
+				instanceof com.shatteredpixel.shatteredpixeldungeon.items.ChargeItem, "tome uses standard charges");
+		check(new com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HornOfPlenty()
+				instanceof com.shatteredpixel.shatteredpixeldungeon.items.ChargeItem, "horn uses standard charges");
+		check(new com.shatteredpixel.shatteredpixeldungeon.items.artifacts.LloydsBeacon()
+				instanceof com.shatteredpixel.shatteredpixeldungeon.items.ChargeItem, "beacon uses standard charges");
+		check(new com.shatteredpixel.shatteredpixeldungeon.items.artifacts.MasterThievesArmband()
+				instanceof com.shatteredpixel.shatteredpixeldungeon.items.ChargeItem, "armband uses standard charges");
+		check(new com.shatteredpixel.shatteredpixeldungeon.items.artifacts.SkeletonKey()
+				instanceof com.shatteredpixel.shatteredpixeldungeon.items.ChargeItem, "key uses standard charges");
+		check(new com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass()
+				instanceof com.shatteredpixel.shatteredpixeldungeon.items.ChargeItem, "hourglass uses standard charges");
+		check(new com.shatteredpixel.shatteredpixeldungeon.items.artifacts.UnstableSpellbook()
+				instanceof com.shatteredpixel.shatteredpixeldungeon.items.ChargeItem, "spellbook uses standard charges");
+		check(!(new com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose()
+				instanceof com.shatteredpixel.shatteredpixeldungeon.items.ChargeItem), "rose is excluded");
+		check(!(new com.shatteredpixel.shatteredpixeldungeon.items.artifacts.ChaliceOfBlood()
+				instanceof com.shatteredpixel.shatteredpixeldungeon.items.ChargeItem), "chalice is excluded");
+		check(!(new com.shatteredpixel.shatteredpixeldungeon.items.artifacts.EtherealChains()
+				instanceof com.shatteredpixel.shatteredpixeldungeon.items.ChargeItem), "chains are excluded");
+		check(!(new com.shatteredpixel.shatteredpixeldungeon.items.artifacts.SandalsOfNature()
+				instanceof com.shatteredpixel.shatteredpixeldungeon.items.ChargeItem), "sandals are excluded");
+		check(!(new com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TalismanOfForesight()
+				instanceof com.shatteredpixel.shatteredpixeldungeon.items.ChargeItem), "talisman is excluded");
+
+		Hero actionHero = hero(Talent.MANA_OVERLOAD, 2);
+		TestHorn horn = new TestHorn();
+		actionHero.belongings.artifact = horn;
+		horn.setCharge(0);
+		check(horn.actions(actionHero).contains(com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HornOfPlenty.AC_EAT),
+				"standard artifact action is available for a zero-charge overload");
+		horn.setCharge(-1);
+		check(!horn.actions(actionHero).contains(com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HornOfPlenty.AC_EAT),
+				"standard artifact action is hidden while in debt");
+
+		TestArmband armband = new TestArmband();
+		armband.setCharge(2);
+		com.shatteredpixel.shatteredpixeldungeon.items.artifacts.MasterThievesArmband.Thievery thievery =
+				armband.new Thievery();
+		int shopCost = thievery.chargesToUse(new ThrowingStone());
+		hero.talents.get(0).put(Talent.MANA_OVERLOAD, 0);
+		check(thievery.chargesToUse(new ThrowingStone()) == shopCost,
+				"shop theft charge calculation ignores mana overload");
+	}
+
+	public static class TestChargedArtifact extends
+			com.shatteredpixel.shatteredpixeldungeon.items.artifacts.ChargedArtifact {
+		public void setCharge(int charge, int cap, float partial) {
+			this.charge = charge;
+			this.chargeCap = cap;
+			this.partialCharge = partial;
+		}
+		public void gain(Hero hero, float amount) {
+			gainChargeProgress(hero, amount);
+			while (partialCharge >= 1f && charge < chargeCap) {
+				charge++;
+				partialCharge--;
+			}
+		}
+	}
+
+	public static class TestPlainArtifact extends
+			com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact {
+	}
+
+	public static class TestArmband extends
+			com.shatteredpixel.shatteredpixeldungeon.items.artifacts.MasterThievesArmband {
+		public void setCharge(int charge) {
+			this.charge = charge;
+		}
+	}
+
+	public static class TestHorn extends
+			com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HornOfPlenty {
+		public void setCharge(int charge) {
+			this.charge = charge;
+		}
 	}
 
 	private static void savageParasite(){
@@ -460,7 +569,7 @@ public class PublicTalentsRegression {
 		check(target.HP == 920 - 10, "ally damage returns to normal after hero acts");
 	}
 
-	public static void main(String[] args){
+	private static void setup(){
 		WarriorTalentsRegression.setupHeadless();
 		Dungeon.level.setSize(25, 25);
 		Arrays.fill(Dungeon.level.map, Terrain.EMPTY);
@@ -471,6 +580,20 @@ public class PublicTalentsRegression {
 		Dungeon.level.traps = new com.watabou.utils.SparseArray<>();
 		Dungeon.level.buildFlagMaps();
 		Dungeon.level.heroFOV = new boolean[Dungeon.level.length()];
+	}
+
+	public static void main(String[] args){
+		setup();
+		if (args.length > 0 && "talent-pools".equals(args[0])) {
+			indexingAndPools();
+			System.out.println("PASS: public talent common and rare pools");
+			return;
+		}
+		if (args.length > 0 && "mana-overload".equals(args[0])) {
+			manaOverload();
+			System.out.println("PASS: mana overload standard charge rules");
+			return;
+		}
 		indexingAndPools();
 		mealAndMirrorLink();
 		escapePlan();

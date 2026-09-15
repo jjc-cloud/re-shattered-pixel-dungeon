@@ -49,6 +49,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.GuidingLight;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Flare;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
+import com.shatteredpixel.shatteredpixeldungeon.items.ChargeItem;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TalismanOfForesight;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
@@ -75,7 +76,7 @@ import com.watabou.utils.Random;
 
 import java.util.ArrayList;
 
-public abstract class Wand extends Item {
+public abstract class Wand extends Item implements ChargeItem {
 
 	public static final String AC_ZAP	= "ZAP";
 
@@ -108,9 +109,7 @@ public abstract class Wand extends Item {
 	@Override
 	public ArrayList<String> actions( Hero hero ) {
 		ArrayList<String> actions = super.actions( hero );
-		if (curCharges > 0 || !curChargeKnown
-				//魔能超载：充能为零时也能施法
-				|| (curCharges >= 0 && hero.hasTalent(Talent.MANA_OVERLOAD))) {
+		if (!curChargeKnown || canSpendCharge(hero, chargesPerCast())) {
 			actions.add( AC_ZAP );
 		}
 
@@ -169,10 +168,8 @@ public abstract class Wand extends Item {
 		}
 
 		//if we're using wild magic, then assume we have charges
-		//魔能超载：充能为零/不足时仍可施法，充能会在使用后扣至负数
 		if ( owner.buff(WildMagic.WildMagicTracker.class) != null
-				|| curCharges >= chargesPerCast()
-				|| (curCharges >= 0 && owner.hasTalent(Talent.MANA_OVERLOAD))){
+				|| canSpendCharge(owner, chargesPerCast())){
 			return true;
 		} else {
 			GLog.w(Messages.get(this, "fizzles"));
@@ -180,15 +177,28 @@ public abstract class Wand extends Item {
 		}
 	}
 
-	//魔能超载：负充能的回复速度，+1为平常速度，+2为两倍（花费平常0.5倍的回合）
-	public float negativeRechargeFactor(){
-		if (curCharges < 0
-				&& Dungeon.hero != null
-				&& Dungeon.hero.hasTalent(Talent.MANA_OVERLOAD)
-				&& Dungeon.hero.pointsInTalent(Talent.MANA_OVERLOAD) == 2){
-			return 2f;
+	@Override
+	public int currentCharge() {
+		return curCharges;
+	}
+
+	@Override
+	public int maxCharge() {
+		return maxCharges;
+	}
+
+	@Override
+	public float partialCharge() {
+		return partialCharge;
+	}
+
+	@Override
+	public void spendCharge(float cost) {
+		partialCharge -= cost;
+		while (partialCharge < 0) {
+			curCharges--;
+			partialCharge++;
 		}
-		return 1f;
 	}
 
 	@Override
@@ -211,7 +221,7 @@ public abstract class Wand extends Item {
 	}
 
 	public void gainCharge( float amt, boolean overcharge ){
-		partialCharge += amt * negativeRechargeFactor();
+		partialCharge += adjustRechargeGain(Dungeon.hero, amt);
 		while (partialCharge >= 1) {
 			if (overcharge) curCharges = Math.min(maxCharges+(int)amt, curCharges+1);
 			else curCharges = Math.min(maxCharges, curCharges+1);
@@ -514,7 +524,7 @@ public abstract class Wand extends Item {
 			}
 		}
 		
-		curCharges -= cursed ? 1 : chargesPerCast();
+		spendCharge(cursed ? 1 : chargesPerCast());
 
 		//remove magic charge at a higher priority, if we are benefiting from it are and not the
 		//wand that just applied it
@@ -884,7 +894,7 @@ public abstract class Wand extends Item {
 		}
 
 		private void recharge(){
-			int missingCharges = maxCharges - curCharges;
+			int missingCharges = maxCharges - rechargeReferenceCharge();
 			missingCharges = Math.max(0, missingCharges);
 
 			float turnsToCharge = (float) (BASE_CHARGE_DELAY
@@ -892,13 +902,14 @@ public abstract class Wand extends Item {
 							target instanceof Hero && ((Hero) target).heroClass == HeroClass.MAGE
 									? MagesStaff.STAFF_SCALE_FACTOR : scalingFactor, missingCharges)));
 
-			float negFactor = negativeRechargeFactor();
 			if (Regeneration.regenOn())
-				partialCharge += (1f/turnsToCharge) * RingOfEnergy.wandChargeMultiplier(target) * negFactor;
+				partialCharge += adjustRechargeGain(target instanceof Hero ? (Hero) target : null,
+						(1f/turnsToCharge) * RingOfEnergy.wandChargeMultiplier(target));
 
 			for (Recharging bonus : target.buffs(Recharging.class)){
 				if (bonus != null && bonus.remainder() > 0f) {
-					partialCharge += CHARGE_BUFF_BONUS * bonus.remainder() * negFactor;
+					partialCharge += adjustRechargeGain(target instanceof Hero ? (Hero) target : null,
+							CHARGE_BUFF_BONUS * bonus.remainder());
 				}
 			}
 		}
@@ -909,7 +920,7 @@ public abstract class Wand extends Item {
 
 		public void gainCharge(float charge){
 			if (curCharges < maxCharges) {
-				partialCharge += charge * negativeRechargeFactor();
+				partialCharge += adjustRechargeGain(target instanceof Hero ? (Hero) target : null, charge);
 				while (partialCharge >= 1f) {
 					curCharges++;
 					partialCharge--;
