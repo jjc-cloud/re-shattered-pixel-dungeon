@@ -72,17 +72,17 @@ public class ImpShopRoom extends ShopRoom {
 	@Override
 	protected void placeShopkeeper(Level level) {
 
-		int pos = level.pointToCell(center());
+		shopkeeperPos = level.pointToCell(center());
 
 		for (Point p : getPoints()){
 			if (level.map[level.pointToCell(p)] == Terrain.PEDESTAL){
-				pos = level.pointToCell(p);
+				shopkeeperPos = level.pointToCell(p);
 				break;
 			}
 		}
 
 		Mob shopkeeper = new ImpShopkeeper();
-		shopkeeper.pos = pos;
+		shopkeeper.pos = shopkeeperPos;
 		if (ShatteredPixelDungeon.scene() instanceof GameScene) {
 			GameScene.add(shopkeeper);
 		} else {
@@ -100,9 +100,9 @@ public class ImpShopRoom extends ShopRoom {
 	public void spawnShop(Level level){
 		impSpawned = true;
 		placeShopkeeper(level);
+		ArrayList<Item> orderedItems = ShopOrder.onShopGenerated();
 		placeItems(level);
-		//交付玩家预订的货物（16层商店的订单会送到小恶魔这里）
-		ShopOrder.onShopGenerated(level);
+		placeOrderedItems(level, orderedItems);
 	}
 
 	@Override

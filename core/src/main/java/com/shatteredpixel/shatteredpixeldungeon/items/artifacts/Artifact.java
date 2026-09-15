@@ -27,9 +27,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicImmune;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.GuidingLight;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.KindofMisc;
@@ -246,25 +246,6 @@ public class Artifact extends KindofMisc {
 	}
 
 	protected ArtifactBuff activeBuff() {return null; }
-
-	//魔能超载：充能为零/不足时仍可使用，充能会扣至负数；负充能状态下不可再次使用
-	public boolean overchargeUsable( Hero hero, int cost ){
-		return hero.hasTalent(Talent.MANA_OVERLOAD)
-				&& charge >= 0
-				&& cost > 0;
-	}
-
-	//魔能超载：负充能的回复速度，+1为平常速度，+2为两倍（花费平常0.5倍的回合/经验）
-	public static float negativeRechargeFactor( Artifact artifact ){
-		if (artifact != null
-				&& artifact.charge < 0
-				&& Dungeon.hero != null
-				&& Dungeon.hero.hasTalent(Talent.MANA_OVERLOAD)
-				&& Dungeon.hero.pointsInTalent(Talent.MANA_OVERLOAD) == 2){
-			return 2f;
-		}
-		return 1f;
-	}
 
 	public void charge(Hero target, float amount){
 		//do nothing by default;

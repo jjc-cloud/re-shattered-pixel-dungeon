@@ -46,7 +46,7 @@ import com.watabou.utils.Bundle;
 
 import java.util.ArrayList;
 
-public class HolyTome extends Artifact {
+public class HolyTome extends ChargedArtifact {
 
 	{
 		image = ItemSpriteSheet.ARTIFACT_TOME;
@@ -146,18 +146,12 @@ public class HolyTome extends Artifact {
 	public boolean canCast( Hero hero, ClericSpell spell ){
 		return (isEquipped(hero) || (Dungeon.hero.hasTalent(Talent.LIGHT_READING) && hero.belongings.contains(this)))
 				&& hero.buff(MagicImmune.class) == null
-				&& (charge >= spell.chargeUse(hero)
-					//魔能超载：充能为零/不足时仍可施法，充能会扣至负数
-					|| (charge >= 0 && hero.hasTalent(Talent.MANA_OVERLOAD)))
+				&& canSpendCharge(hero, spell.chargeUse(hero))
 				&& spell.canCast(hero);
 	}
 
 	public void spendCharge( float chargesSpent ){
-		partialCharge -= chargesSpent;
-		while (partialCharge < 0){
-			charge--;
-			partialCharge++;
-		}
+		super.spendCharge(chargesSpent);
 
 		//target hero level is 1 + 2*tome level
 		int lvlDiffFromTarget = Dungeon.hero.lvl - (1+level()*2);
@@ -216,7 +210,7 @@ public class HolyTome extends Artifact {
 
 		if (charge < chargeCap) {
 			if (!isEquipped(target)) amount *= 0.75f*target.pointsInTalent(Talent.LIGHT_READING)/3f;
-			partialCharge += 0.25f*amount * Artifact.negativeRechargeFactor(this);
+			gainChargeProgress(target, 0.25f*amount);
 			while (partialCharge >= 1f) {
 				charge++;
 				partialCharge--;
@@ -290,7 +284,7 @@ public class HolyTome extends Artifact {
 		public boolean act() {
 			if (charge < chargeCap && !cursed && target.buff(MagicImmune.class) == null) {
 				if (Regeneration.regenOn()) {
-					float missing = (chargeCap - charge);
+					float missing = (chargeCap - rechargeReferenceCharge());
 					if (level() > 7) missing += 5*(level() - 7)/3f;
 					float turnsToCharge = (45 - missing);
 					turnsToCharge /= RingOfEnergy.artifactChargeMultiplier(target);
@@ -298,7 +292,7 @@ public class HolyTome extends Artifact {
 					if (!isEquipped(Dungeon.hero)){
 						chargeToGain *= 0.75f*Dungeon.hero.pointsInTalent(Talent.LIGHT_READING)/3f;
 					}
-					partialCharge += chargeToGain * Artifact.negativeRechargeFactor(HolyTome.this);
+					gainChargeProgress(target, chargeToGain);
 				}
 
 				while (partialCharge >= 1) {

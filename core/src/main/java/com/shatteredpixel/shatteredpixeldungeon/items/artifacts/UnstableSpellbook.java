@@ -62,7 +62,7 @@ import com.watabou.utils.Reflection;
 
 import java.util.ArrayList;
 
-public class UnstableSpellbook extends Artifact {
+public class UnstableSpellbook extends ChargedArtifact {
 
 	{
 		image = ItemSpriteSheet.ARTIFACT_SPELLBOOK;
@@ -106,7 +106,7 @@ public class UnstableSpellbook extends Artifact {
 	@Override
 	public ArrayList<String> actions( Hero hero ) {
 		ArrayList<String> actions = super.actions( hero );
-		if (isEquipped( hero ) && charge > 0 && !cursed && hero.buff(MagicImmune.class) == null) {
+		if (isEquipped( hero ) && canSpendCharge(hero, 1) && !cursed && hero.buff(MagicImmune.class) == null) {
 			actions.add(AC_READ);
 		}
 		if (isEquipped( hero ) && level() < levelCap && !cursed && hero.buff(MagicImmune.class) == null) {
@@ -126,9 +126,7 @@ public class UnstableSpellbook extends Artifact {
 
 			if (hero.buff( Blindness.class ) != null) GLog.w( Messages.get(this, "blinded") );
 			else if (!isEquipped( hero ))             GLog.i( Messages.get(Artifact.class, "need_to_equip") );
-			else if (charge <= 0
-					&& !hero.hasTalent(Talent.MANA_OVERLOAD)) GLog.i( Messages.get(this, "no_charge") );
-			else if (charge < 0)                      GLog.i( Messages.get(this, "no_charge") );
+			else if (!canSpendCharge(hero, 1))         GLog.i( Messages.get(this, "no_charge") );
 			else if (cursed)                          GLog.i( Messages.get(this, "cursed") );
 			else {
 				doReadEffect(hero);
@@ -140,7 +138,7 @@ public class UnstableSpellbook extends Artifact {
 	}
 
 	public void doReadEffect(Hero hero){
-		charge--;
+		spendCharge(1);
 
 		Scroll scroll;
 		do {
@@ -159,7 +157,7 @@ public class UnstableSpellbook extends Artifact {
 		curUser = hero;
 
 		//if there are charges left and the scroll has been given to the book
-		if (charge > 0 && !scrolls.contains(scroll.getClass())) {
+		if (canSpendCharge(hero, 1) && !scrolls.contains(scroll.getClass())) {
 			final Scroll fScroll = scroll;
 
 			final ExploitHandler handler = Buff.affect(hero, ExploitHandler.class);
@@ -176,7 +174,7 @@ public class UnstableSpellbook extends Artifact {
 					if (index == 1){
 						Scroll scroll = Reflection.newInstance(ExoticScroll.regToExo.get(fScroll.getClass()));
 						curItem = scroll;
-						charge--;
+						spendCharge(1);
 						scroll.anonymize();
 						scroll.talentChance = 0;
 						checkForArtifactProc(curUser, scroll);
@@ -265,7 +263,7 @@ public class UnstableSpellbook extends Artifact {
 	@Override
 	public void charge(Hero target, float amount) {
 		if (charge < chargeCap && !cursed && target.buff(MagicImmune.class) == null){
-			partialCharge += 0.1f*amount * Artifact.negativeRechargeFactor(this);
+			gainChargeProgress(target, 0.1f*amount);
 			while (partialCharge >= 1){
 				partialCharge--;
 				charge++;
@@ -349,9 +347,9 @@ public class UnstableSpellbook extends Artifact {
 					&& target.buff(MagicImmune.class) == null
 					&& Regeneration.regenOn()) {
 				//120 turns to charge at full, 80 turns to charge at 0/8
-				float chargeGain = 1 / (120f - (chargeCap - charge)*5f);
+				float chargeGain = 1 / (120f - (chargeCap - rechargeReferenceCharge())*5f);
 				chargeGain *= RingOfEnergy.artifactChargeMultiplier(target);
-				partialCharge += chargeGain * Artifact.negativeRechargeFactor(UnstableSpellbook.this);
+				gainChargeProgress(target, chargeGain);
 
 				while (partialCharge >= 1) {
 					partialCharge --;

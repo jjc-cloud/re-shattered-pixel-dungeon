@@ -51,7 +51,7 @@ import com.watabou.utils.PathFinder;
 
 import java.util.ArrayList;
 
-public class LloydsBeacon extends Artifact {
+public class LloydsBeacon extends ChargedArtifact {
 
 	public static final float TIME_TO_USE = 1;
 
@@ -135,12 +135,7 @@ public class LloydsBeacon extends Artifact {
 				GLog.i( Messages.get(Artifact.class, "need_to_equip") );
 				QuickSlotButton.cancel();
 
-		} else if (charge < chargesToUse
-				&& !hero.hasTalent(Talent.MANA_OVERLOAD)) {
-				GLog.i( Messages.get(this, "no_charge") );
-				QuickSlotButton.cancel();
-
-		} else if (charge < 0) {
+		} else if (!canSpendCharge(hero, chargesToUse)) {
 				GLog.i( Messages.get(this, "no_charge") );
 				QuickSlotButton.cancel();
 
@@ -201,7 +196,7 @@ public class LloydsBeacon extends Artifact {
 			if (target == null) return;
 
 			Invisibility.dispel();
-			charge -= Dungeon.scalingDepth() > 20 ? 2 : 1;
+			spendCharge(Dungeon.scalingDepth() > 20 ? 2 : 1);
 			updateQuickslot();
 
 			if (Actor.findChar(target) == curUser){
@@ -281,7 +276,7 @@ public class LloydsBeacon extends Artifact {
 	@Override
 	public void charge(Hero target, float amount) {
 		if (charge < chargeCap){
-			partialCharge += 0.25f*amount * Artifact.negativeRechargeFactor(this);
+			gainChargeProgress(target, 0.25f*amount);
 			while (partialCharge >= 1){
 				partialCharge--;
 				charge++;
@@ -323,7 +318,7 @@ public class LloydsBeacon extends Artifact {
 		@Override
 		public boolean act() {
 			if (charge < chargeCap && !cursed && Regeneration.regenOn()) {
-				partialCharge += (1 / (100f - (chargeCap - charge)*10f)) * Artifact.negativeRechargeFactor(LloydsBeacon.this);
+				gainChargeProgress(target, 1 / (100f - (chargeCap - rechargeReferenceCharge())*10f));
 
 				while (partialCharge >= 1) {
 					partialCharge --;

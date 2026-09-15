@@ -56,7 +56,7 @@ import com.watabou.utils.Random;
 
 import java.util.ArrayList;
 
-public class TimekeepersHourglass extends Artifact {
+public class TimekeepersHourglass extends ChargedArtifact {
 
 	{
 		image = ItemSpriteSheet.ARTIFACT_HOURGLASS;
@@ -87,7 +87,7 @@ public class TimekeepersHourglass extends Artifact {
 		if (isEquipped( hero )
 				&& !cursed
 				&& hero.buff(MagicImmune.class) == null
-				&& (charge > 0 || activeBuff != null)) {
+				&& (canSpendCharge(hero, 1) || activeBuff != null)) {
 			actions.add(AC_ACTIVATE);
 		}
 		return actions;
@@ -109,7 +109,7 @@ public class TimekeepersHourglass extends Artifact {
 					activeBuff.detach();
 					GLog.i( Messages.get(this, "deactivate") );
 				}
-			} else if (charge <= 0 && !hero.hasTalent(Talent.MANA_OVERLOAD)) GLog.i( Messages.get(this, "no_charge") );
+			} else if (!canSpendCharge(hero, 1)) GLog.i( Messages.get(this, "no_charge") );
 			else if (cursed)                GLog.i( Messages.get(this, "cursed") );
 			else GameScene.show(
 						new WndOptions(new ItemSprite(this),
@@ -144,7 +144,7 @@ public class TimekeepersHourglass extends Artifact {
 									activeBuff = new timeFreeze();
 									Talent.onArtifactUsed(Dungeon.hero);
 									activeBuff.attachTo(Dungeon.hero);
-									charge--;
+									spendCharge(1);
 									((timeFreeze)activeBuff).processTime(0f);
 								}
 							}
@@ -180,7 +180,7 @@ public class TimekeepersHourglass extends Artifact {
 	@Override
 	public void charge(Hero target, float amount) {
 		if (charge < chargeCap && !cursed && target.buff(MagicImmune.class) == null){
-			partialCharge += 0.25f*amount * Artifact.negativeRechargeFactor(this);
+			gainChargeProgress(target, 0.25f*amount);
 			while (partialCharge >= 1){
 				partialCharge--;
 				charge++;
@@ -258,9 +258,9 @@ public class TimekeepersHourglass extends Artifact {
 					&& target.buff(MagicImmune.class) == null
 					&& Regeneration.regenOn()) {
 				//90 turns to charge at full, 60 turns to charge at 0/10
-				float chargeGain = 1 / (90f - (chargeCap - charge)*3f);
+				float chargeGain = 1 / (90f - (chargeCap - rechargeReferenceCharge())*3f);
 				chargeGain *= RingOfEnergy.artifactChargeMultiplier(target);
-				partialCharge += chargeGain * Artifact.negativeRechargeFactor(TimekeepersHourglass.this);
+				gainChargeProgress(target, chargeGain);
 
 				while (partialCharge >= 1) {
 					partialCharge --;
@@ -295,7 +295,8 @@ public class TimekeepersHourglass extends Artifact {
 
 				Invisibility.dispel();
 
-				int usedCharge = Math.min(charge, 2);
+				int usedCharge = target instanceof Hero && canSpendCharge((Hero) target, 2)
+						? 2 : Math.min(charge, 2);
 				//buffs always act last, so the stasis buff should end a turn early.
 				spend(5*usedCharge);
 
@@ -305,7 +306,7 @@ public class TimekeepersHourglass extends Artifact {
 					hunger.satisfy(5 * usedCharge);
 				}
 
-				charge -= usedCharge;
+				spendCharge(usedCharge);
 
 				target.invisible++;
 				target.paralysed++;
@@ -364,16 +365,17 @@ public class TimekeepersHourglass extends Artifact {
 			//use 1/1,000 to account for rounding errors
 			while (turnsToCost < -0.001f){
 				turnsToCost += 2f;
-				charge --;
+				if (target instanceof Hero && canSpendCharge((Hero) target, 1)) {
+					spendCharge(1);
+				} else {
+					detach();
+					return;
+				}
 			}
 
 			updateQuickslot();
 
 			if (charge < 0){
-				//魔能超载：允许把充能扣至负数，直到无法维持
-				if (!(target instanceof Hero) || !((Hero) target).hasTalent(Talent.MANA_OVERLOAD)) {
-					charge = 0;
-				}
 				detach();
 			} else if (charge == 0 && turnsToCost <= 0){
 				charge = 0;
