@@ -62,12 +62,17 @@ public class ImpShopkeeper extends Shopkeeper {
 	}
 
 	@Override
+	protected String orderDoneTheftText() {
+		return Messages.get(ImpShopkeeper.class, "order_done_theft");
+	}
+
+	@Override
 	public boolean interact(Char c) {
 		if (c != Dungeon.hero) {
 			return true;
 		}
-		//正替商人保管订购物品时，先说明情况
-		if (ShopOrder.impHoldingGoods()) {
+		//首次点击且店内还有代管货物时，先说明情况（只播一次）
+		if (ShopOrder.takeImpNote()) {
 			Game.runOnRenderThread(new Callback() {
 				@Override
 				public void call() {

@@ -70,8 +70,8 @@ public class BerserkerRegression {
 		checkFactors(1.5f, 1.75f, 1.375f, 1.375f, 0.85f, 1f);
 		checkFactors(2f,   2f,    1f,     1.5f,   0.8f,  1f);
 		checkFactors(2.5f, 1.75f, 1f,     1.75f,  0.9f,  1.125f);
-		checkFactors(3f,   1.5f,  1.5f,   2f,     0.2f,  1.25f);
-		checkFactors(3.5f, 2f,    1.75f,  3.5f,   0.2f,  1.375f);
+		checkFactors(3f,   1.5f,  1.5f,   2f,     1f,    1.25f);
+		checkFactors(3.5f, 2.2071f, 1.75f,  3.5f,   0.6f,  1.375f);
 		checkFactors(4f,   2.5f,  2f,     5f,     0.2f,  1.5f);
 		if (!rage(0f).name().equals("愤怒")) throw new AssertionError("zero rage displays current anger name");
 
@@ -126,16 +126,16 @@ public class BerserkerRegression {
 			throw new AssertionError("rank three catalyst removes cursed weapons");
 		}
 
-		Berserk normalDecay = rage(1f);
-		normalDecay.powerLossBuffer = 0;
-		normalDecay.act();
-		checkClose(normalDecay.power(), 0.95f, "normal rage decay");
-		Berserk sanityDecay = rage(2.5f);
-		sanityDecay.powerLossBuffer = 0;
-		sanityDecay.act();
-		checkClose(sanityDecay.power(), 2.4f, "sanity rage decays twice as fast");
+		Berserk angeredDecay = rage(1f);
+		angeredDecay.act();
+		checkClose(angeredDecay.power(), 1f, "angered rage does not decay");
+		Berserk saneDecay = rage(2.5f);
+		for (int i = 0; i < 5; i++) saneDecay.act();
+		checkClose(saneDecay.power(), 2.49f, "sane rage loses one percent per five turns");
+		Berserk saneFloor = rage(2f);
+		for (int i = 0; i < 10; i++) saneFloor.act();
+		checkClose(saneFloor.power(), 2f, "sane rage decay stops at the stance floor");
 		Berserk frenzyDecay = rage(3.5f);
-		frenzyDecay.powerLossBuffer = 0;
 		frenzyDecay.act();
 		checkClose(frenzyDecay.power(), 3.5f, "frenzy rage does not decay");
 

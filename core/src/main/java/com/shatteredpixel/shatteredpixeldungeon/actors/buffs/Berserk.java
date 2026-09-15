@@ -42,15 +42,15 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 		type = buffType.POSITIVE;
 	}
 
-	public int powerLossBuffer;
 	private float power;
+	private int saneDecayTurns;
 	private float pendingDamageRage;
 	private Object pendingDamageSource;
 	private boolean deathDefianceAvailable = true;
 	private int levelsUntilDefiance;
 
 	private static final String POWER = "power";
-	private static final String POWER_BUFFER = "power_buffer";
+	private static final String SANE_DECAY_TURNS = "sane_decay_turns";
 	private static final String DEATH_DEFIANCE = "death_defiance";
 	private static final String LEVELS_UNTIL_DEFIANCE = "levels_until_defiance";
 
@@ -58,7 +58,7 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
 		bundle.put(POWER, power);
-		bundle.put(POWER_BUFFER, powerLossBuffer);
+		bundle.put(SANE_DECAY_TURNS, saneDecayTurns);
 		bundle.put(DEATH_DEFIANCE, deathDefianceAvailable);
 		bundle.put(LEVELS_UNTIL_DEFIANCE, levelsUntilDefiance);
 	}
@@ -67,7 +67,7 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
 		power = GameMath.gate(0f, bundle.getFloat(POWER), 4f);
-		powerLossBuffer = bundle.getInt(POWER_BUFFER);
+		saneDecayTurns = bundle.getInt(SANE_DECAY_TURNS);
 		deathDefianceAvailable = !bundle.contains(DEATH_DEFIANCE) || bundle.getBoolean(DEATH_DEFIANCE);
 		levelsUntilDefiance = bundle.getInt(LEVELS_UNTIL_DEFIANCE);
 	}
@@ -75,13 +75,14 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 	@Override
 	public boolean act() {
 		if (target.buff(DeathDefianceIndicator.class) == null) Buff.affect(target, DeathDefianceIndicator.class);
-		if (powerLossBuffer > 0) {
-			powerLossBuffer--;
-		} else if (power > 0f && power < 3f) {
-			float decay = GameMath.gate(0.1f, power, 1f) * 0.05f
-					* (float) Math.pow(target.HP / (float) target.HT, 2);
-			if (power >= 2f) decay *= 2f;
-			power = Math.max(0f, power - decay);
+		//仅理智状态自然流失：每5回合固定-1%怒气，流失到200%为止；愤怒与狂暴均不流失
+		if (power >= 2f && power < 3f) {
+			if (++saneDecayTurns >= 5) {
+				saneDecayTurns = 0;
+				power = Math.max(2f, power - 0.01f);
+			}
+		} else {
+			saneDecayTurns = 0;
 		}
 		BuffIndicator.refreshHero();
 		if (ActionIndicator.action != this) ActionIndicator.setAction(this);
@@ -112,14 +113,12 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 	public void gainRage(float amount) {
 		if (amount <= 0f) return;
 		power = Math.max(power, Math.min(maxPower(), power + amount));
-		powerLossBuffer = 3;
 		BuffIndicator.refreshHero();
 		ActionIndicator.refresh();
 	}
 
 	public void forceRage(float amount) {
 		power = GameMath.gate(0f, amount, 4f);
-		powerLossBuffer = 3;
 		BuffIndicator.refreshHero();
 		ActionIndicator.refresh();
 	}

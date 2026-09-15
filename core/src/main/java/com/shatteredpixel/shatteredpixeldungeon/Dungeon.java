@@ -267,6 +267,7 @@ public class Dungeon {
 		
 		Statistics.reset();
 		Notes.reset();
+		ShopOrder.reset();
 
 		quickslot.reset();
 		QuickSlotButton.reset();

@@ -167,7 +167,9 @@ public class WndTradeItem extends WndInfoItem {
 				@Override
 				protected void onClick() {
 					if (chance >= 1){
-						thievery.steal(item);
+						if (thievery.steal(item)) {
+							ShopOrder.notifyStolen(item);
+						}
 						Hero hero = Dungeon.hero;
 						Item item = heap.pickUp();
 						hide();
@@ -184,11 +186,12 @@ public class WndTradeItem extends WndInfoItem {
 							@Override
 							protected void onSelect(int index) {
 								super.onSelect(index);
-								if (index == 0){
-									if (thievery.steal(item)) {
-										Hero hero = Dungeon.hero;
-										Item item = heap.pickUp();
-										WndTradeItem.this.hide();
+									if (index == 0){
+										if (thievery.steal(item)) {
+											ShopOrder.notifyStolen(item);
+											Hero hero = Dungeon.hero;
+											Item item = heap.pickUp();
+											WndTradeItem.this.hide();
 
 										if (!item.doPickUp(hero)) {
 											Dungeon.level.drop(item, heap.pos).sprite.drop();
