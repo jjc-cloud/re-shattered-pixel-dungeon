@@ -44,11 +44,6 @@ public class TestSupplies extends Item {
 		for (Class<?> type : category.items()) {
 			if (Item.class.isAssignableFrom(type)) result.add(type.asSubclass(Item.class));
 		}
-		// This project's special warrior weapon is not in the random loot catalog.
-		if (category == Catalog.MELEE_WEAPONS
-				&& !result.contains(com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WarriorsShortsword.class)) {
-			result.add(com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WarriorsShortsword.class);
-		}
 		return result;
 	}
 

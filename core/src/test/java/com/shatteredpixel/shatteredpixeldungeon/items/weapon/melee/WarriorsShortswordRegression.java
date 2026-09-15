@@ -4,12 +4,13 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.WarriorTalentsRegression;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
+import com.shatteredpixel.shatteredpixeldungeon.journal.Catalog;
 
 /** Standalone checks for the warrior's unique starting sword. */
 public class WarriorsShortswordRegression {
 
 	public static void main(String[] args) {
-		WarriorTalentsRegression.main(args);
+		WarriorTalentsRegression.setupHeadless();
 
 		Hero hero = new WarriorTalentsRegression.TestHero();
 		Dungeon.hero = hero;
@@ -52,8 +53,10 @@ public class WarriorsShortswordRegression {
 		}
 		check(!generated, "starting sword is excluded from random generation and transmutation");
 		check(wornStillGenerated, "ordinary worn shortsword remains in the tier-one pool");
+		check(Catalog.MELEE_WEAPONS.items().contains(WarriorsShortsword.class),
+				"starting sword is listed in the melee weapon catalog");
 
-		System.out.println("PASS: warrior starting sword upgrade, reforge, consumption and transmutation exclusion");
+		System.out.println("PASS: warrior starting sword upgrade, reforge, catalog and transmutation exclusion");
 	}
 
 	private static void check(boolean value, String message) {
