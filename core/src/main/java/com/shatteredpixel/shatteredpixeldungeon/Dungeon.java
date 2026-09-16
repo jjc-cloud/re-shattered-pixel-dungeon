@@ -134,6 +134,7 @@ public class Dungeon {
 		SLIME_WEP,
 		SKELE_WEP,
 		THEIF_MISC,
+		GUARD_CHAINS,
 		GUARD_ARM,
 		SHAMAN_WAND,
 		DM200_EQUIP,

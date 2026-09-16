@@ -1108,6 +1108,7 @@ public abstract class Char extends Actor {
 			if (src instanceof GeyserTrap || src instanceof StormCloud) icon = FloatingText.WATER;
 			if (src instanceof Burning)                                 icon = FloatingText.BURNING;
 			if (src instanceof Electricity)                             icon = FloatingText.SHOCKING;
+			if (src instanceof WaterVapor)                               icon = FloatingText.STEAM;
 			if (src instanceof Bleeding)                                icon = FloatingText.BLEEDING;
 			if (src instanceof ToxicGas)                                icon = FloatingText.TOXIC;
 			if (src instanceof Corrosion)                               icon = FloatingText.CORROSION;
@@ -1411,9 +1412,6 @@ public abstract class Char extends Actor {
 		
 		Dungeon.level.occupyCell(this );
 
-		if (pos != previousPos && WaterVapor.volumeAt(pos, WaterVapor.class) > 0) {
-			((WaterVapor)Dungeon.level.blobs.get(WaterVapor.class)).affectOnEntry(this);
-		}
 	}
 	
 	public int distance( Char other ) {
