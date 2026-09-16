@@ -22,31 +22,9 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.BlobEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
-import java.util.HashMap;
-
 public class WaterVapor extends Blob implements Hero.Doom {
-
-	private HashMap<Integer, Float> entryTimes = new HashMap<>();
-
-	private HashMap<Integer, Float> entryTimes() {
-		if (entryTimes == null) entryTimes = new HashMap<>();
-		return entryTimes;
-	}
-
-	public void affectOnEntry( Char ch ) {
-		entryTimes().put(ch.id(), Actor.now());
-		damage(ch);
-	}
-
-	@Override
-	public void restoreFromBundle( Bundle bundle ) {
-		super.restoreFromBundle(bundle);
-		//Entry timestamps are turn-local and must never survive a save/load boundary.
-		entryTimes().clear();
-	}
 
 	private void damage( Char ch ) {
 		if (ch.isAlive() && !ch.isImmune(getClass())) {
@@ -64,22 +42,20 @@ public class WaterVapor extends Blob implements Hero.Doom {
 			for (int x = area.left; x < area.right; x++) {
 				int cell = x + y * Dungeon.level.width();
 				Char ch = Actor.findChar(cell);
-				if (cur[cell] == 1 && ch != null
-						&& !entryTimes().getOrDefault(ch.id(), Float.NEGATIVE_INFINITY).equals(Actor.now())) {
+				if (cur[cell] > 0 && ch != null) {
 					damage(ch);
 				}
 				int duration = Math.max(0, cur[cell] - 1);
 				volume += (off[cell] = duration);
 			}
 		}
-		entryTimes().clear();
 		Dungeon.observe();
 	}
 
 	@Override
 	public void use( BlobEmitter emitter ) {
 		super.use(emitter);
-		emitter.pour(Speck.factory(Speck.STEAM), 0.03f);
+		emitter.pour(Speck.factory(Speck.STEAM), 0.04f);
 	}
 
 	@Override

@@ -31,10 +31,12 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Inferno;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ParalyticGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Regrowth;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.SmokeScreen;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.SteamCarrier;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.StenchGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.StormCloud;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.VaultFlameTraps;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.WaterVapor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Web;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Tengu;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MagicalFireRoom;
@@ -71,9 +73,11 @@ public class BlobImmunity extends FlavourBuff {
 		immunities.add( ParalyticGas.class );
 		immunities.add( Regrowth.class );
 		immunities.add( SmokeScreen.class );
+		immunities.add( SteamCarrier.class );
 		immunities.add( StenchGas.class );
 		immunities.add( StormCloud.class );
 		immunities.add( ToxicGas.class );
+		immunities.add( WaterVapor.class );
 		immunities.add( Web.class );
 
 		immunities.add(Tengu.FireAbility.FireBlob.class);

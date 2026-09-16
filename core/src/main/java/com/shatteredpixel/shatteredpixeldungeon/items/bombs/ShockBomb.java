@@ -47,7 +47,12 @@ public class ShockBomb extends Bomb {
 			GameScene.flash(0x80FFFFFF);
 		}
 		for (Char ch : Actor.chars().toArray(new Char[0])) {
-			if (ch.isAlive() && visible[ch.pos]) {
+			//只摧毁能看见炸弹的单位。视线被遮挡、或视野本身就够不到炸弹时，
+			//引擎维护的视野数组里都不含炸弹所在格。
+			boolean seesBomb = ch.fieldOfView != null
+					&& ch.fieldOfView.length == Dungeon.level.length()
+					&& ch.fieldOfView[cell];
+			if (ch.isAlive() && visible[ch.pos] && seesBomb) {
 				ch.damage(Math.round(ch.HT / 2f + ch.HP / 2f), this);
 				if (ch == Dungeon.hero && !ch.isAlive()) {
 					Badges.validateDeathFromFriendlyMagic();
