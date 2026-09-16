@@ -42,18 +42,27 @@ public class Freezing extends Blob {
 		int cell;
 		
 		Fire fire = (Fire)Dungeon.level.blobs.get( Fire.class );
-		
+		SteamCarrier steam = (SteamCarrier)Dungeon.level.blobs.get( SteamCarrier.class );
+
 		for (int i = area.left-1; i <= area.right; i++) {
 			for (int j = area.top-1; j <= area.bottom; j++) {
 				cell = i + j*Dungeon.level.width();
 				if (cur[cell] > 0) {
-					
+
 					if (fire != null && fire.volume > 0 && fire.cur[cell] > 0){
 						fire.clear(cell);
 						off[cell] = cur[cell] = 0;
 						continue;
 					}
-					
+
+					//和火一样整格抵消，只是气浪熄灭后冷凝成水
+					if (steam != null && steam.volume > 0 && steam.cur[cell] > 0){
+						steam.clear(cell);
+						off[cell] = cur[cell] = 0;
+						Dungeon.level.setCellToWater(true, cell);
+						continue;
+					}
+
 					Freezing.freeze(cell);
 					
 					off[cell] = cur[cell] - 1;
@@ -119,6 +128,12 @@ public class Freezing extends Blob {
 		Fire fire = (Fire) Dungeon.level.blobs.get(Fire.class);
 		if (fire != null && fire.volume > 0) {
 			fire.clear( cell );
+		}
+
+		SteamCarrier steam = (SteamCarrier) Dungeon.level.blobs.get(SteamCarrier.class);
+		if (steam != null && steam.volume > 0) {
+			steam.clear( cell );
+			Dungeon.level.setCellToWater(true, cell);
 		}
 
 		MagicalFireRoom.EternalFire eternalFire = (MagicalFireRoom.EternalFire)Dungeon.level.blobs.get(MagicalFireRoom.EternalFire.class);

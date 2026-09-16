@@ -75,11 +75,11 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 	@Override
 	public boolean act() {
 		if (target.buff(DeathDefianceIndicator.class) == null) Buff.affect(target, DeathDefianceIndicator.class);
-		//仅理智状态自然流失：每5回合固定-1%怒气，流失到200%为止；愤怒与狂暴均不流失
+		//仅理智状态自然流失：每5回合固定-1%怒气，跌入愤怒状态后停止；愤怒与狂暴均不流失
 		if (power >= 2f && power < 3f) {
 			if (++saneDecayTurns >= 5) {
 				saneDecayTurns = 0;
-				power = Math.max(2f, power - 0.01f);
+				power -= 0.01f;
 			}
 		} else {
 			saneDecayTurns = 0;

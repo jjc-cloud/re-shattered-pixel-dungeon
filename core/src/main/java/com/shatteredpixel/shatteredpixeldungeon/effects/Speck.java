@@ -72,6 +72,7 @@ public class Speck extends Image {
 	public static final int BLIZZARD    = 119;
 	public static final int YELLOW_LIGHT= 120;
 	public static final int BLUE_LIGHT  = 121;
+	public static final int STEAM_CARRIER = 122;
 	
 	private static final int SIZE = 7;
 	
@@ -140,6 +141,7 @@ public class Speck extends Image {
 		case DUST:
 		case SMOKE:
 		case BLIZZARD:
+		case STEAM_CARRIER:
 		case INFERNO:
 			frame( film.get( STEAM ) );
 			break;
@@ -385,6 +387,13 @@ public class Speck extends Image {
 			angle = Random.Float( 360 );
 			lifespan = Random.Float( 1f, 3f );
 			break;
+
+		case STEAM_CARRIER:
+			hardlight( 0xD0E2EA );
+			angularSpeed = Random.Float( 200, 300 ) * (Random.Int(2) == 0 ? -1 : 1);
+			angle = Random.Float( 360 );
+			lifespan = Random.Float( 1f, 3f );
+			break;
 			
 		case SMOKE:
 			hardlight( 0x000000 );
@@ -507,6 +516,7 @@ public class Speck extends Image {
 			case CONFUSION:
 			case STORM:
 			case BLIZZARD:
+			case STEAM_CARRIER:
 			case INFERNO:
 			case DUST:
 				am = (float)Math.sqrt( (p < 0.5f ? p : 1 - p) * 0.5f );

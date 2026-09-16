@@ -30,6 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Honeypot;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.MasterThievesArmband;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ThiefSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
@@ -91,8 +92,9 @@ public class Thief extends Mob {
 	@Override
 	public float lootChance() {
 		//each drop makes future drops 1/3 as likely
-		// so loot chance looks like: 1/33, 1/100, 1/300, 1/900, etc.
-		return super.lootChance() * (float)Math.pow(1/3f, Dungeon.LimitedDrops.THEIF_MISC.count);
+		//the armband and first miscellaneous drop use the base chance, then 1/3, 1/9, etc.
+		return super.lootChance() * (float)Math.pow(1/3f,
+				Math.max(0, Dungeon.LimitedDrops.THEIF_MISC.count - 1));
 	}
 
 	@Override
@@ -109,6 +111,9 @@ public class Thief extends Mob {
 	@Override
 	public Item createLoot() {
 		Dungeon.LimitedDrops.THEIF_MISC.count++;
+		if (Dungeon.LimitedDrops.THEIF_MISC.count == 1) {
+			return Generator.random(MasterThievesArmband.class);
+		}
 		return super.createLoot();
 	}
 

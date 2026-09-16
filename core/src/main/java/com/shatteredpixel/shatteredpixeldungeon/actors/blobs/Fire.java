@@ -55,14 +55,10 @@ public class Fire extends Blob {
 			WaterVapor vapor = Blob.seed(cell, Math.max(0, duration - currentDuration),
 					WaterVapor.class, level);
 			if (level == Dungeon.level) {
-				Char ch = Actor.findChar(cell);
-				if (ch != null) {
-					vapor.affectOnEntry(ch);
-				}
 				GameScene.updateMap(cell);
 				GameScene.add(vapor);
 				if (vapor.emitter != null) {
-					CellEmitter.get(cell).burst(Speck.factory(Speck.STEAM), 20);
+					CellEmitter.get(cell).burst(Speck.factory(Speck.STEAM), 10);
 				}
 				Dungeon.observe();
 			}

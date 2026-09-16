@@ -33,9 +33,11 @@ import com.shatteredpixel.shatteredpixeldungeon.items.food.StewedMeat;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.AquaBrew;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.BlizzardBrew;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.Brew;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.CausticBrew;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.InfernalBrew;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.ShockingBrew;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.SteamBrew;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.UnstableBrew;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfAquaticRejuvenation;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfArcaneArmor;
@@ -47,6 +49,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfMi
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfKineticEnergy;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfToxicEssence;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.ExoticPotion;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.PotionOfStormClouds;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRetribution;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ExoticScroll;
@@ -254,6 +257,12 @@ public abstract class Recipe {
 	public static final int EXPERIMENTAL_BREWS = 1;
 	public static final int EXPERIMENTAL_SPELLS = 2;
 
+	// 特殊配方在炼金图鉴里的栏位。魔药与秘药页分上下两栏，其余两页各只有一栏。
+	public static final int GUIDE_BOMB = 0;
+	public static final int GUIDE_BREW = 1;
+	public static final int GUIDE_ELIXIR = 2;
+	public static final int GUIDE_SPELL = 3;
+
 	public static class SpecialRecipe extends SimpleRecipe {
 
 		private final int category;
@@ -272,6 +281,22 @@ public abstract class Recipe {
 
 		public int category() {
 			return category;
+		}
+
+		/**
+		 * 本配方在炼金图鉴中应归入的栏位。分类由 category 决定页，
+		 * 魔药与秘药页再用产物类型区分上下栏：魔药走上栏，其余（秘药）走下列，
+		 * 这样新增特殊配方只要 category 正确就会自动进对栏，也不会漏掉条目。
+		 */
+		public int guideSection() {
+			if (category == EXPERIMENTAL_BREWS) {
+				return output != null && Brew.class.isAssignableFrom(output)
+						? GUIDE_BREW : GUIDE_ELIXIR;
+			} else if (category == EXPERIMENTAL_BOMBS) {
+				return GUIDE_BOMB;
+			} else {
+				return GUIDE_SPELL;
+			}
 		}
 
 		@Override
@@ -319,7 +344,9 @@ public abstract class Recipe {
 			new SpecialRecipe(EXPERIMENTAL_SPELLS, 4, ExperimentalTengusMask.class,
 					TengusMask.class, ScrollOfMetamorphosis.class),
 			new SpecialRecipe(EXPERIMENTAL_SPELLS, 6, ExperimentalKingsCrown.class,
-					KingsCrown.class, ScrollOfMetamorphosis.class)
+					KingsCrown.class, ScrollOfMetamorphosis.class),
+			new SpecialRecipe(EXPERIMENTAL_BREWS, 4, SteamBrew.class,
+					InfernalBrew.class, PotionOfStormClouds.class)
 	};
 
 	private static final LinkedHashMap<String, Integer> specialRecipeCosts = new LinkedHashMap<>();
@@ -332,7 +359,7 @@ public abstract class Recipe {
 			{
 					new UnstableBrew.Recipe(), new CausticBrew.Recipe(),
 					new BlizzardBrew.Recipe(), new ShockingBrew.Recipe(),
-					new InfernalBrew.Recipe(), new AquaBrew.Recipe(),
+					new InfernalBrew.Recipe(), specialRecipes[7], new AquaBrew.Recipe(),
 					new ElixirOfHoneyedHealing.Recipe(), new ElixirOfAquaticRejuvenation.Recipe(),
 					new ElixirOfArcaneArmor.Recipe(), new ElixirOfIcyTouch.Recipe(),
 					new ElixirOfToxicEssence.Recipe(), new ElixirOfDragonsBlood.Recipe(),
@@ -494,11 +521,21 @@ public abstract class Recipe {
 				}
 			}
 		}
+
+		for (SpecialRecipe recipe : specialRecipes) {
+			if (discoveredSpecialCost(recipe) >= 0 && recipe.testIngredients(ingredients)) {
+				result.add(recipe);
+			}
+		}
 		
 		return result;
 	}
 
 	public static int cost(Recipe recipe, ArrayList<Item> ingredients) {
+		if (recipe instanceof SpecialRecipe) {
+			int discoveredCost = discoveredSpecialCost((SpecialRecipe)recipe);
+			if (discoveredCost >= 0) return discoveredCost;
+		}
 		return recipe.cost(RealityWarp.alchemyIngredients(ingredients));
 	}
 

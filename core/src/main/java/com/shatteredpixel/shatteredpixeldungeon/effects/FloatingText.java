@@ -86,6 +86,7 @@ public class FloatingText extends RenderedTextBlock {
 	public static int HUNGER    = 5;
 	public static int BURNING   = 6;
 	public static int SHOCKING  = 7;
+	public static int STEAM     = 25;
 	public static int FROST     = 8;
 	public static int WATER     = 9;
 	public static int BLEEDING  = 10;
