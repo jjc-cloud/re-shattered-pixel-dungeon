@@ -346,7 +346,7 @@ public class QuickRecipe extends Component {
 					result.add(new QuickRecipe( r, in, r.sampleOutput(in)));
 					i++;
 				}
-				addDiscoveredSpecialRecipes(result, pageIdx);
+				addDiscoveredSpecialRecipes(result, pageIdx, Recipe.GUIDE_BOMB);
 				return result;
 			case 6:
 				result.add(new QuickRecipe( new LiquidMetal.Recipe(),
@@ -363,6 +363,8 @@ public class QuickRecipe extends Component {
 				result.add(new QuickRecipe(new ShockingBrew.Recipe()));
 				result.add(new QuickRecipe(new InfernalBrew.Recipe()));
 				result.add(new QuickRecipe(new AquaBrew.Recipe()));
+				//魔药板块末尾，栏间分隔之前
+				addDiscoveredSpecialRecipes(result, pageIdx, Recipe.GUIDE_BREW);
 				result.add(null);
 				result.add(null);
 				result.add(new QuickRecipe(new ElixirOfHoneyedHealing.Recipe()));
@@ -373,7 +375,8 @@ public class QuickRecipe extends Component {
 				result.add(new QuickRecipe(new ElixirOfDragonsBlood.Recipe()));
 				result.add(new QuickRecipe(new ElixirOfFeatherFall.Recipe()));
 				result.add(new QuickRecipe(new ElixirOfMight.Recipe()));
-				addDiscoveredSpecialRecipes(result, pageIdx);
+				//秘药板块末尾
+				addDiscoveredSpecialRecipes(result, pageIdx, Recipe.GUIDE_ELIXIR);
 				return result;
 			case 8:
 				result.add(new QuickRecipe(new UnstableSpell.Recipe(), new ArrayList<>(Arrays.asList(new Scroll.PlaceHolder(), new  Runestone.PlaceHolder())), new UnstableSpell()));
@@ -391,15 +394,19 @@ public class QuickRecipe extends Component {
 				result.add(new QuickRecipe(new ReclaimTrap.Recipe()));
 				result.add(new QuickRecipe(new SummonElemental.Recipe()));
 				result.add(new QuickRecipe(new BeaconOfReturning.Recipe()));
-				addDiscoveredSpecialRecipes(result, pageIdx);
+				addDiscoveredSpecialRecipes(result, pageIdx, Recipe.GUIDE_SPELL);
 				return result;
 			case 9:
 				return result;
 		}
 	}
 
-	private static void addDiscoveredSpecialRecipes(ArrayList<QuickRecipe> result, int pageIdx) {
-		ArrayList<Recipe.SpecialRecipe> special = Recipe.discoveredSpecialRecipes(pageIdx);
+	//把本页已发现的特殊配方按栏位归入对应板块，只插入属于该栏位的条目
+	private static void addDiscoveredSpecialRecipes(ArrayList<QuickRecipe> result, int pageIdx, int guideSection) {
+		ArrayList<Recipe.SpecialRecipe> special = new ArrayList<>();
+		for (Recipe.SpecialRecipe recipe : Recipe.discoveredSpecialRecipes(pageIdx)) {
+			if (recipe.guideSection() == guideSection) special.add(recipe);
+		}
 		if (special.isEmpty()) return;
 		result.add(null);
 		for (Recipe.SpecialRecipe recipe : special) {

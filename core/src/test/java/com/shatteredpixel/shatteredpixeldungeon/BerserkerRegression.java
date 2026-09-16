@@ -134,7 +134,7 @@ public class BerserkerRegression {
 		checkClose(saneDecay.power(), 2.49f, "sane rage loses one percent per five turns");
 		Berserk saneFloor = rage(2f);
 		for (int i = 0; i < 10; i++) saneFloor.act();
-		checkClose(saneFloor.power(), 2f, "sane rage decay stops at the stance floor");
+		checkClose(saneFloor.power(), 1.99f, "two hundred percent rage decays into anger");
 		Berserk frenzyDecay = rage(3.5f);
 		frenzyDecay.act();
 		checkClose(frenzyDecay.power(), 3.5f, "frenzy rage does not decay");

@@ -31,6 +31,8 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Effects;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.EtherealChains;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.MasterThievesArmband;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -149,6 +151,24 @@ public class Guard extends Mob {
 		//each drop makes future drops 1/3 as likely
 		// so loot chance looks like: 1/5, 1/15, 1/45, 1/135, etc.
 		return super.lootChance() * (float)Math.pow(1/3f, Dungeon.LimitedDrops.GUARD_ARM.count);
+	}
+
+	@Override
+	public void rollToDropLoot() {
+		MasterThievesArmband.StolenTracker stolen = buff(MasterThievesArmband.StolenTracker.class);
+		if (Dungeon.hero.lvl <= maxLvl + 2
+				&& !Dungeon.LimitedDrops.GUARD_CHAINS.dropped()
+				&& (stolen == null || !stolen.itemWasStolen())) {
+			float armorChance = lootChance;
+			lootChance = 0.03f;
+			if (Random.Float() < super.lootChance()) {
+				Dungeon.LimitedDrops.GUARD_CHAINS.drop();
+				Dungeon.level.drop(Generator.random(EtherealChains.class), pos).sprite.drop();
+			}
+			lootChance = armorChance;
+		}
+
+		super.rollToDropLoot();
 	}
 
 	@Override

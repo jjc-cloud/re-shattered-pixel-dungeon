@@ -38,6 +38,7 @@ public class Blizzard extends Blob {
 		Freezing freeze = (Freezing)Dungeon.level.blobs.get( Freezing.class );
 		
 		Inferno inf = (Inferno)Dungeon.level.blobs.get( Inferno.class );
+		SteamCarrier steam = (SteamCarrier)Dungeon.level.blobs.get(SteamCarrier.class);
 		
 		for (int i = area.left; i < area.right; i++) {
 			for (int j = area.top; j < area.bottom; j++) {
@@ -50,6 +51,13 @@ public class Blizzard extends Blob {
 					if (inf != null && inf.volume > 0 && inf.cur[cell] > 0){
 						inf.clear(cell);
 						off[cell] = cur[cell] = 0;
+						continue;
+					}
+
+					if (steam != null && steam.volume > 0 && steam.cur[cell] > 0) {
+						steam.clear(cell);
+						off[cell] = cur[cell] = 0;
+						Dungeon.level.setCellToWater(true, cell);
 						continue;
 					}
 					
