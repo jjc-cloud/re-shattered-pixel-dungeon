@@ -8,7 +8,10 @@ import com.watabou.noosa.TextureFilm;
 import java.util.Arrays;
 
 public class PetrifiedStatueSprite extends MobSprite {
+	private final boolean livingOrigin;
+
 	public PetrifiedStatueSprite(PetrifiedStatue statue) {
+		livingOrigin = statue.hasLivingOrigin();
 		SmartTexture stone = TextureCache.createPixels("statue-" + statue.imageWidth + "-" + Arrays.toString(statue.pixels),
 				statue.imageWidth, statue.imageHeight, statue.pixels);
 		texture(stone);
@@ -23,6 +26,7 @@ public class PetrifiedStatueSprite extends MobSprite {
 	@Override public void showAlert() { }
 	@Override public void showLost() { }
 	@Override public void showSleep() { }
+	@Override public int blood() { return livingOrigin ? super.blood() : 0xFF888888; }
 	@Override public void die() {
 		if (visible && parent != null) Splash.at(center(), 0xFF888888, 8);
 		killAndErase();

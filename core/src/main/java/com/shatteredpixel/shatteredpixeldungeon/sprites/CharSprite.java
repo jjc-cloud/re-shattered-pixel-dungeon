@@ -294,6 +294,7 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 	}
 	
 	public void turnTo( int from, int to ) {
+		if (Dungeon.level == null) return;
 		int fx = from % Dungeon.level.width();
 		int tx = to % Dungeon.level.width();
 		if (tx > fx) {

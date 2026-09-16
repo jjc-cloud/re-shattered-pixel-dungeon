@@ -10,6 +10,8 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.PetrifiedStatueSprite;
+import com.watabou.gltextures.SmartTexture;
+import com.watabou.gltextures.TextureCache;
 import com.watabou.utils.Bundle;
 
 /** An inert, breakable occupant, with a saved snapshot rather than a living victim. */
@@ -18,6 +20,7 @@ public class PetrifiedStatue extends Mob {
 	public int imageWidth = 1, imageHeight = 1;
 	public int[] pixels = {0x888888FF};
 	public boolean flipped;
+	private boolean livingOrigin = true;
 	{
 		HP = HT = 1;
 		EXP = 0;
@@ -33,28 +36,74 @@ public class PetrifiedStatue extends Mob {
 			if (victim.sprite != null) victim.sprite.petrifiedFall();
 			return null;
 		}
-		PetrifiedStatue statue = new PetrifiedStatue();
+		PetrifiedStatue statue = from(victim);
 		statue.pos = victim.pos;
-		statue.victimName = victim.name();
-		CharSprite source = victim.sprite;
-		if (source != null && source.texture != null) {
-			source.idle();
-			statue.imageWidth = Math.round(source.frame().width() * source.texture.width);
-			statue.imageHeight = Math.round(source.frame().height() * source.texture.height);
-			int left = Math.round(source.frame().left * source.texture.width);
-			int top = Math.round(source.frame().top * source.texture.height);
-			statue.pixels = new int[statue.imageWidth * statue.imageHeight];
-			statue.flipped = source.flipHorizontal;
-			for (int y = 0; y < statue.imageHeight; y++) for (int x = 0; x < statue.imageWidth; x++) {
-				int pixel = source.texture.bitmap.getPixel(left + x, top + y);
-				int gray = ((pixel >>> 24) * 30 + ((pixel >>> 16) & 255) * 59 + ((pixel >>> 8) & 255) * 11) / 100;
-				statue.pixels[y * statue.imageWidth + x] = (gray << 24) | (gray << 16) | (gray << 8) | (pixel & 255);
-			}
-			source.killAndErase();
-		}
+		if (victim.sprite != null) victim.sprite.killAndErase();
 		GameScene.add(statue);
 		statue.throwAllItems();
 		return statue;
+	}
+
+	/** Creates an inert statue snapshot without adding either object to the current scene. */
+	public static PetrifiedStatue from(Char subject) {
+		return from(subject, false, subject.sprite != null && subject.sprite.flipHorizontal);
+	}
+
+	/** Creates a statue in an idle or attacking pose with an explicit horizontal facing. */
+	public static PetrifiedStatue from(Char subject, boolean attacking, boolean flipped) {
+		PetrifiedStatue statue = new PetrifiedStatue();
+		statue.victimName = subject.name();
+		CharSprite source = subject.sprite;
+		boolean temporarySprite = source == null;
+		if (temporarySprite && subject instanceof Mob) {
+			source = ((Mob)subject).sprite();
+			source.linkVisuals(subject);
+		}
+		if (source != null && source.texture != null) {
+			if (attacking) {
+				source.ch = subject;
+				source.attack(subject.pos + (flipped ? -1 : 1));
+			} else {
+				source.idle();
+			}
+			source.flipHorizontal = flipped;
+			statue.capture(source.texture, Math.round(source.frame().left * source.texture.width),
+					Math.round(source.frame().top * source.texture.height),
+					Math.round(source.frame().width() * source.texture.width),
+					Math.round(source.frame().height() * source.texture.height));
+			statue.flipped = flipped;
+		}
+		if (temporarySprite && source != null) source.destroy();
+		return statue;
+	}
+
+	/** Creates a non-living, breakable statue from a pixel rectangle in an asset texture. */
+	public static PetrifiedStatue fromTexture(Object texture, int left, int top,
+			int width, int height, String name) {
+		PetrifiedStatue statue = new PetrifiedStatue();
+		statue.victimName = name;
+		statue.livingOrigin = false;
+		statue.capture(TextureCache.get(texture), left, top, width, height);
+		return statue;
+	}
+
+	private void capture(SmartTexture texture, int left, int top, int width, int height) {
+		if (width <= 0 || height <= 0 || left < 0 || top < 0
+				|| left + width > texture.width || top + height > texture.height) {
+			throw new IllegalArgumentException("Invalid statue texture rectangle");
+		}
+		imageWidth = width;
+		imageHeight = height;
+		pixels = new int[imageWidth * imageHeight];
+		for (int y = 0; y < imageHeight; y++) for (int x = 0; x < imageWidth; x++) {
+			int pixel = texture.bitmap.getPixel(left + x, top + y);
+			int gray = ((pixel >>> 24) * 30 + ((pixel >>> 16) & 255) * 59 + ((pixel >>> 8) & 255) * 11) / 100;
+			pixels[y * imageWidth + x] = (gray << 24) | (gray << 16) | (gray << 8) | (pixel & 255);
+		}
+	}
+
+	public boolean hasLivingOrigin() {
+		return livingOrigin;
 	}
 
 	private void throwAllItems() {
@@ -111,6 +160,7 @@ public class PetrifiedStatue extends Mob {
 		bundle.put("image_height", imageHeight);
 		bundle.put("pixels", pixels);
 		bundle.put("flipped", flipped);
+		bundle.put("living_origin", livingOrigin);
 	}
 	@Override public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
@@ -119,6 +169,7 @@ public class PetrifiedStatue extends Mob {
 		imageHeight = bundle.getInt("image_height");
 		pixels = bundle.getIntArray("pixels");
 		flipped = bundle.getBoolean("flipped");
+		livingOrigin = !bundle.contains("living_origin") || bundle.getBoolean("living_origin");
 		// Repair saves made before statues ignored alarms and monster AI.
 		alignment = Alignment.NEUTRAL;
 		state = PASSIVE;

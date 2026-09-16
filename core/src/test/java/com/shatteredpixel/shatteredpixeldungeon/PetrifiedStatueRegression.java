@@ -15,8 +15,12 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.Dart
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.PotionOfCleansing;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfSirensSong;
 import com.shatteredpixel.shatteredpixeldungeon.levels.SewerLevel;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretPetrifiedRoom;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTileSheet;
+import com.watabou.gltextures.TextureCache;
 import com.watabou.utils.Bundle;
 import java.util.Arrays;
 
@@ -65,6 +69,16 @@ public class PetrifiedStatueRegression {
 					if (method.getName().equals("log") || method.getName().equals("postRunnable")) return null;
 					throw new UnsupportedOperationException(method.getName());
 				});
+		TestLevel visualLevel = new TestLevel(); visualLevel.setSize(20, 20);
+		Dungeon.level = visualLevel;
+		DungeonTileSheet.setupVariance(visualLevel.length(), 1L);
+		for (int direction : new int[]{Room.LEFT, Room.TOP, Room.RIGHT, Room.BOTTOM}) {
+			SecretPetrifiedRoom.HallsFloor floor = new SecretPetrifiedRoom.HallsFloor();
+			floor.setRect(1, 1, 15, 15);
+			Bundle floorState = new Bundle(); floor.storeInBundle(floorState);
+			floorState.put("direction", direction); floor.restoreFromBundle(floorState);
+			floor.create().destroy();
+		}
 		Dungeon.level = new TestLevel(); Dungeon.level.setSize(9, 9);
 		Dungeon.hero = new Hero(); Dungeon.hero.pos = 60;
 		Dungeon.level.mobs = new java.util.HashSet<>();
@@ -108,6 +122,23 @@ public class PetrifiedStatueRegression {
 		PetrifiedStatue restored = (PetrifiedStatue)saved.get("statue");
 		check(restored.name().equals(statue.name()) && Arrays.equals(restored.pixels, statue.pixels), "name and appearance survive save");
 		check(restored.sprite().paused, "restored statue is frozen");
+		PetrifiedStatue generated = PetrifiedStatue.from(new Rat());
+		check(generated.imageWidth > 1 && generated.imageHeight > 1,
+				"an unspawned mob can be snapshotted during level generation");
+		com.shatteredpixel.shatteredpixeldungeon.levels.Level activeLevel = Dungeon.level;
+		Dungeon.level = null;
+		PetrifiedStatue attacking = PetrifiedStatue.from(new Rat(), true, true);
+		Dungeon.level = activeLevel;
+		check(attacking.flipped && !Arrays.equals(generated.pixels, attacking.pixels),
+				"prebuilt statues preserve action and facing before the level is installed");
+		PetrifiedStatue prop = PetrifiedStatue.fromTexture(
+				TextureCache.createPixels("test-statue-prop", 2, 1,
+						new int[]{0xCC8844FF, 0x4488CCFF}), 0, 0, 2, 1, "石像道具");
+		check(!prop.hasLivingOrigin() && prop.sprite().blood() == 0xFF888888,
+				"texture statues use non-living stone particles");
+		Bundle propSave = new Bundle(); propSave.put("statue", prop);
+		check(!((PetrifiedStatue)propSave.get("statue")).hasLivingOrigin(),
+				"non-living statue origin survives save");
 		// The actual melee target UI must use the snapshot sprite factory, not spriteClass.
 		com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene.defaultZoom = 1;
 		new com.shatteredpixel.shatteredpixeldungeon.ui.TargetHealthIndicator();
