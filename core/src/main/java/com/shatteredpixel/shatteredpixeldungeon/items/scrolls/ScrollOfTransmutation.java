@@ -83,6 +83,10 @@ public class ScrollOfTransmutation extends InventoryScroll {
 
 		//all regular or exotic scrolls, except itself (unless un-ided, in which case it was already consumed)
 		} else if (item instanceof Scroll) {
+			//没有异界对应物的卷轴(如探地卷轴的变种)不参与嬗变
+			if (!(item instanceof ExoticScroll) && !ExoticScroll.regToExo.containsKey(item.getClass())){
+				return false;
+			}
 			return item != this || item.quantity() > 1 || identifiedByUse;
 
 		//all non-unique artifacts (no holy tome or cloak of shadows, basically)
@@ -379,8 +383,11 @@ public class ScrollOfTransmutation extends InventoryScroll {
 	private static Scroll changeScroll( Scroll s ) {
 		if (s instanceof ExoticScroll) {
 			return Reflection.newInstance(ExoticScroll.exoToReg.get(s.getClass()));
-		} else {
+		} else if (ExoticScroll.regToExo.containsKey(s.getClass())){
 			return Reflection.newInstance(ExoticScroll.regToExo.get(s.getClass()));
+		} else {
+			//黑名单内的卷轴(如探地卷轴的变种)原样返回，避免取到null
+			return s;
 		}
 	}
 

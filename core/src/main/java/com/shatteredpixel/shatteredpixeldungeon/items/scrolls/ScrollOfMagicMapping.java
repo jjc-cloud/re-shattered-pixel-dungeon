@@ -69,7 +69,8 @@ public class ScrollOfMagicMapping extends Scroll {
 
 	@Override
 	public Item random() {
-		if (getClass() == ScrollOfMagicMapping.class && Random.Float() < 0.05f) {
+		//10%概率刷出变种，其中20%为地牢蓝图
+		if (getClass() == ScrollOfMagicMapping.class && Random.Float() < 0.10f) {
 			return Random.Float() < 0.20f ? new ScrollOfDungeonBlueprint() : new ScrollOfMagicMap();
 		}
 		return this;
