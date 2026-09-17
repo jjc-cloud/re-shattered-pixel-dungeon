@@ -257,7 +257,9 @@ public enum Document {
 
 	//pages and default states
 	static {
-		boolean debug = DeviceCompat.isDebug();
+		//图鉴页(炼金书页、背景故事等)改为游戏内拾取解锁，不再跟随 INDEV 调试包自动全部解锁。
+		//如确实需要调试用的全解锁，把下面改回 DeviceCompat.isDebug()
+		boolean debug = false;
 		//hero gets these when guidebook is collected
 		ADVENTURERS_GUIDE.pagesStates.put(GUIDE_INTRO,          debug ? READ : NOT_FOUND);
 		ADVENTURERS_GUIDE.pagesStates.put(GUIDE_EXAMINING,      debug ? READ : NOT_FOUND);

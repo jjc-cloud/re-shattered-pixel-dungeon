@@ -51,6 +51,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ItemSlot;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
+import com.shatteredpixel.shatteredpixeldungeon.ui.ScrollPane;
 import com.shatteredpixel.shatteredpixeldungeon.ui.TalentButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.TalentsPane;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
@@ -471,6 +472,17 @@ public class WndRanking extends WndTabbed {
 
 			camera = WndRanking.this.camera;
 
+			//10个挑战共159px，比窗口内容区(144px)更高，改成可滚动列表，否则最后一行会溢到标签栏下面
+			//每行15px、行间距1px
+			Component list = new Component();
+			list.setSize( WIDTH, Challenges.NAME_IDS.length * 16 - 1 );
+
+			//滚动区要在挑战条目之前创建并加入：PointerArea是按"后注册的先响应"派发事件的，
+			//这样条目右边的信息按钮才能先于滚动区收到点击
+			ScrollPane pane = new ScrollPane( list );
+			add( pane );
+			pane.setRect( 0, 0, WIDTH, HEIGHT );
+
 			float pos = 0;
 
 			for (int i=0; i < Challenges.NAME_IDS.length; i++) {
@@ -486,7 +498,7 @@ public class WndRanking extends WndTabbed {
 				}
 				cb.setRect( 0, pos, WIDTH-16, 15 );
 
-				add( cb );
+				list.add( cb );
 
 				IconButton info = new IconButton(Icons.get(Icons.INFO)){
 					@Override
@@ -498,7 +510,7 @@ public class WndRanking extends WndTabbed {
 					}
 				};
 				info.setRect(cb.right(), pos, 16, 15);
-				add(info);
+				list.add(info);
 
 				pos = cb.bottom();
 			}
