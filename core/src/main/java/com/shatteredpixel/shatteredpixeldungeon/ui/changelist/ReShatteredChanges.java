@@ -116,7 +116,7 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V20_DUELIST_CLOTH,"决斗家调整",
 				"\n现在决斗家初始双持独特的刺剑与破损的短剑，转职成勇士后会获得二连击，转职成武僧则会失去所有武器栏，并获得一个额外的饰品栏。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V010_HOLD_FAST,"天赋调整",
-				"\n不动如山与液蕴意志天赋互换位置，现在不动如山会在战士进行原地攻击后触发，而非强制等待；液蕴意志改为液蕴复苏，使战士回血而非获得护盾。"));
+				"\n不动如山与液蕴意志天赋互换位置。现在不动如山会在战士进行攻击后触发，不仅仅是原地等待一回合触发；液蕴意志改为液蕴复苏，使战士回血而非获得护盾。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V081_DISPLAY_VERT,"界面回调",
 				"\n使用早期的像素风标题与boss击杀。"));		
 		changes.addButton(new ChangeButton(ChangeIcons.V075_TENGU,"BOSS调整",
