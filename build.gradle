@@ -11,12 +11,14 @@ buildscript {
 allprojects {
 
     ext {
-        appName = 'Shattered Pixel Dungeon'
-        appPackageName = 'com.shatteredpixel.shatteredpixeldungeon'
+        appName = 'Re-Shattered Pixel Dungeon'
+        appPackageName = 'com.seven.reshatteredpixeldungeon'
 
         //Full releases gets +2 on version code, needed for an F-Droid quirk
-        appVersionCode = 912
-        appVersionName = '4.0.0'
+        //这个版本号同时也是存档格式版本(Level.java 会写入存档并在读取时校验)，
+        //必须 >= ShatteredPixelDungeon.v3_1_1(850)，否则存档会被判定为"old save"而无法读取。
+        appVersionCode = 1000
+        appVersionName = '0.1.1'
 
         appJavaCompatibility = JavaVersion.VERSION_11
 
