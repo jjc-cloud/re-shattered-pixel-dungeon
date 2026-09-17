@@ -54,7 +54,7 @@ public class TargetHealthIndicator extends HealthBar {
 	}
 	
 	public void target( Char ch ) {
-		if (ch != null && ch.isAlive() && ch.isActive()) {
+		if (ch != null && ch.isAlive() && ch.isActive() && !Char.hasProp(ch, Char.Property.OBJECT)) {
 			target = ch;
 		} else {
 			target = null;

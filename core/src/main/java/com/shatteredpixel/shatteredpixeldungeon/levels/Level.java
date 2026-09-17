@@ -1264,9 +1264,6 @@ public abstract class Level implements Bundlable {
 
 		case Terrain.TRAP:
 			trap = traps.get( cell );
-			if (primeOutdatedTrap(trap)) {
-				trap = null;
-			}
 			break;
 			
 		case Terrain.HIGH_GRASS:
@@ -1583,7 +1580,8 @@ public abstract class Level implements Bundlable {
 
 			//set mind vision chars
 			for (Mob mob : mobs) {
-				if (heroMindFov[mob.pos] && !fieldOfView[mob.pos]){
+				if (heroMindFov[mob.pos] && !fieldOfView[mob.pos]
+						&& !Char.hasProp(mob, Char.Property.OBJECT)){
 					Dungeon.hero.mindVisionEnemies.add(mob);
 				}
 			}

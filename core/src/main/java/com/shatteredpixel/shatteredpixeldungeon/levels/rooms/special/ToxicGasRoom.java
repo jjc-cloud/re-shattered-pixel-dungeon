@@ -68,7 +68,7 @@ public class ToxicGasRoom extends SpecialRoom {
 			do {
 				cell = level.pointToCell(random(2));
 			} while (level.map[cell] != Terrain.EMPTY);
-			level.setTrap(new ToxicVent().rollOutdatedRandom(level).reveal(), cell);
+			level.setTrap(new ToxicVent().reveal(), cell);
 			Blob.seed(cell, 12, ToxicGasSeed.class, level);
 			Painter.set(level, cell, Terrain.INACTIVE_TRAP);
 		}

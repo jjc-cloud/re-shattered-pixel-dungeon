@@ -18,8 +18,8 @@ public class PetrifiedStatueSprite extends MobSprite {
 		idle = new Animation(1, true);
 		idle.frames(new TextureFilm(stone, statue.imageWidth, statue.imageHeight), 0);
 		run = attack = zap = die = idle.clone();
-		play(idle);
 		flipHorizontal = statue.flipped;
+		play(idle);
 		paused = true;
 	}
 	@Override public void turnTo(int from, int to) { }

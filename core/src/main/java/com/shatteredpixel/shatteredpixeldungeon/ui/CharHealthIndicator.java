@@ -46,7 +46,8 @@ public class CharHealthIndicator extends HealthBar {
 	public void update() {
 		super.update();
 		
-		if (target != null && target.isAlive() && target.isActive() && target.sprite.visible) {
+		if (target != null && target.isAlive() && target.isActive() && target.sprite.visible
+				&& !Char.hasProp(target, Char.Property.OBJECT)) {
 			CharSprite sprite = target.sprite;
 			width = sprite.width()*(4/6f);
 			x = sprite.x + sprite.width()/6f;

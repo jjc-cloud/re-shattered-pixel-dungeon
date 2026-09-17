@@ -92,13 +92,13 @@ public class BurnedRoom extends PatchRoom {
 						break;
 					case 2:
 						t = Terrain.TRAP;
-						level.setTrap(new BurningTrap().rollOutdatedRandom(level).reveal(), cell);
+						level.setTrap(new BurningTrap().reveal(), cell);
 						break;
 					case 3:
 						revealInc += revealedChance;
 						if (revealInc >= 1){
 							t = Terrain.TRAP;
-							level.setTrap(new BurningTrap().rollOutdatedRandom(level).reveal(), cell);
+							level.setTrap(new BurningTrap().reveal(), cell);
 							revealInc--;
 						} else {
 							t = Terrain.SECRET_TRAP;

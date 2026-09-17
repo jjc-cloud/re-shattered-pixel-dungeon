@@ -82,6 +82,7 @@ public class PetrifiedStatueRegression {
 		Dungeon.level = new TestLevel(); Dungeon.level.setSize(9, 9);
 		Dungeon.hero = new Hero(); Dungeon.hero.pos = 60;
 		Dungeon.level.mobs = new java.util.HashSet<>();
+		Dungeon.level.blobs = new java.util.HashMap<>();
 		Dungeon.level.heaps = new com.watabou.utils.SparseArray<>();
 		Arrays.fill(Dungeon.level.passable, true);
 		Arrays.fill(Dungeon.level.heroFOV, true);
@@ -106,10 +107,24 @@ public class PetrifiedStatueRegression {
 		Arrays.fill(Dungeon.level.passable, true);
 		Victim victim = new Victim();
 		victim.sprite = new RatSprite();
+		victim.sprite.ch = victim;
+		victim.sprite.attack(19);
+		// 使用攻击中途的一帧，确保石化不会重置为待机或攻击起始帧。
+		victim.sprite.frame(3 * 16, 0, 16, 15);
+		int[] expectedPixels = new int[16 * 15];
+		for (int y = 0; y < 15; y++) for (int x = 0; x < 16; x++) {
+			int pixel = victim.sprite.texture.bitmap.getPixel(3 * 16 + x, y);
+			int gray = ((pixel >>> 24) * 30 + ((pixel >>> 16) & 255) * 59 + ((pixel >>> 8) & 255) * 11) / 100;
+			expectedPixels[y * 16 + x] = (gray << 24) | (gray << 16) | (gray << 8) | (pixel & 255);
+		}
+		PetrifiedStatue facingRight = PetrifiedStatue.from(victim, false, false);
+		check(!facingRight.flipped && victim.sprite.flipHorizontal
+				&& Arrays.equals(facingRight.pixels, expectedPixels), "指定雕像朝向不会改变生物原本的动作与朝向");
 		Actor.add(victim);
 		for (int i = 0; i < 5; i++) Petrification.apply(victim);
 		PetrifiedStatue statue = (PetrifiedStatue)Dungeon.level.findMob(20);
 		check(statue != null && !victim.isAlive(), "death leaves an actual statue occupant");
+		check(statue.flipped && Arrays.equals(statue.pixels, expectedPixels), "石化保存当前攻击帧及朝向");
 		Actor.add(statue); // GameScene registers actors when a render scene exists.
 		check(Actor.findChar(20) == statue, "statue owns the collision cell");
 		check(!Dungeon.findPassable(Dungeon.hero, Dungeon.level.passable, Dungeon.level.heroFOV, true)[20], "statue blocks paths");
@@ -122,6 +137,22 @@ public class PetrifiedStatueRegression {
 		PetrifiedStatue restored = (PetrifiedStatue)saved.get("statue");
 		check(restored.name().equals(statue.name()) && Arrays.equals(restored.pixels, statue.pixels), "name and appearance survive save");
 		check(restored.sprite().paused, "restored statue is frozen");
+		check(restored.flipped, "存取保留朝向");
+		com.watabou.noosa.Camera.main = new com.watabou.noosa.Camera(0, 0, 160, 160, 1);
+		try {
+			java.lang.reflect.Field vertices = com.watabou.noosa.Image.class.getDeclaredField("vertices");
+			vertices.setAccessible(true);
+			for (boolean flipped : new boolean[]{false, true}) {
+				restored.flipped = flipped;
+				com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite image = restored.sprite();
+				image.link(restored);
+				image.turnTo(20, 21);
+				float[] uv = (float[])vertices.get(image);
+				check((uv[2] > uv[6]) == flipped && image.flipHorizontal == flipped,
+						"雕像放置后实际渲染坐标保留指定朝向");
+				image.killAndErase();
+			}
+		} catch (ReflectiveOperationException e) { throw new AssertionError(e); }
 		PetrifiedStatue generated = PetrifiedStatue.from(new Rat());
 		check(generated.imageWidth > 1 && generated.imageHeight > 1,
 				"an unspawned mob can be snapshotted during level generation");
@@ -133,12 +164,39 @@ public class PetrifiedStatueRegression {
 				"prebuilt statues preserve action and facing before the level is installed");
 		PetrifiedStatue prop = PetrifiedStatue.fromTexture(
 				TextureCache.createPixels("test-statue-prop", 2, 1,
-						new int[]{0xCC8844FF, 0x4488CCFF}), 0, 0, 2, 1, "石像道具");
+						new int[]{0xCC8844FF, 0x4488CCFF}), 0, 0, 2, 1, "石像道具", true);
 		check(!prop.hasLivingOrigin() && prop.sprite().blood() == 0xFF888888,
 				"texture statues use non-living stone particles");
 		Bundle propSave = new Bundle(); propSave.put("statue", prop);
 		check(!((PetrifiedStatue)propSave.get("statue")).hasLivingOrigin(),
 				"non-living statue origin survives save");
+		prop = (PetrifiedStatue)propSave.get("statue");
+		check(prop.flipped && Char.hasProp(prop, Char.Property.OBJECT), "非生物雕像存取保留朝向及物体属性");
+		prop.pos = 16;
+		prop.sprite = prop.sprite(); prop.sprite.link(prop);
+		try {
+			java.lang.reflect.Field health = com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite.class.getDeclaredField("health");
+			health.setAccessible(true);
+			check(health.get(prop.sprite) == null && health.get(restored.sprite) != null,
+					"只有生物雕像创建地图血条");
+		} catch (ReflectiveOperationException e) { throw new AssertionError(e); }
+		Dungeon.level.mobs.add(prop);
+		Dungeon.level.discoverable = new boolean[81];
+		Arrays.fill(Dungeon.level.discoverable, true);
+		for (int cell = 0; cell < 81; cell++) {
+			Dungeon.level.losBlocking[cell] = cell < 9 || cell >= 72 || cell % 9 == 0 || cell % 9 == 8;
+		}
+		Dungeon.hero.viewDistance = 1;
+		Dungeon.hero.fieldOfView = Dungeon.level.heroFOV;
+		Buff.affect(Dungeon.hero, com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MindVision.class);
+		Dungeon.level.updateFieldOfView(Dungeon.hero, Dungeon.level.heroFOV);
+		check(Dungeon.hero.mindVisionEnemies.contains(statue) && !Dungeon.level.heroFOV[prop.pos],
+				"灵视感知生物雕像，不揭示非生物雕像所在位置");
+		prop.pos = 21;
+		Dungeon.level.updateFieldOfView(Dungeon.hero, Dungeon.level.heroFOV);
+		check(!Dungeon.hero.mindVisionEnemies.contains(prop), "非生物雕像不加入附近生物的灵视目标列表");
+		Dungeon.level.mobs.remove(prop);
+		Arrays.fill(Dungeon.level.heroFOV, true);
 		// The actual melee target UI must use the snapshot sprite factory, not spriteClass.
 		com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene.defaultZoom = 1;
 		new com.shatteredpixel.shatteredpixeldungeon.ui.TargetHealthIndicator();
@@ -146,6 +204,13 @@ public class PetrifiedStatueRegression {
 		com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator.target(statue);
 		check(com.shatteredpixel.shatteredpixeldungeon.ui.TargetHealthIndicator.instance.target() == statue,
 				"melee target UI accepts a statue");
+		com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator.target(prop);
+		check(com.shatteredpixel.shatteredpixeldungeon.ui.TargetHealthIndicator.instance.target() != prop,
+				"选中非生物雕像不会将其设为血条目标");
+		com.shatteredpixel.shatteredpixeldungeon.ui.TargetHealthIndicator.instance.target(prop);
+		check(com.shatteredpixel.shatteredpixeldungeon.ui.TargetHealthIndicator.instance.target() == null,
+				"目标血条拒绝非生物雕像");
+		com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator.target(statue);
 		check(statue.isActive() && restored.isActive(), "living statues pass the examineObject inspection gate, including after loading");
 		TestRat rat = new TestRat(); rat.pos = 40;
 		Dungeon.level.mobs.add(rat); Actor.add(rat);
