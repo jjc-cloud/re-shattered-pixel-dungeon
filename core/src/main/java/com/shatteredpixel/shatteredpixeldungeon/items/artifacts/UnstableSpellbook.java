@@ -149,7 +149,9 @@ public class UnstableSpellbook extends ChargedArtifact {
 				scroll instanceof ScrollOfRemoveCurse ||
 				scroll instanceof ScrollOfMagicMapping) && Random.Int(2) == 0)
 				//cannot roll transmutation
-				|| (scroll instanceof ScrollOfTransmutation));
+				|| (scroll instanceof ScrollOfTransmutation)
+				//探地卷轴的变种没有异界版本，书页无法提供
+				|| !ExoticScroll.regToExo.containsKey(scroll.getClass()));
 
 		scroll.anonymize();
 		scroll.talentChance = 0;  //spellbook does not trigger on-scroll talents

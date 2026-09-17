@@ -235,7 +235,8 @@ public class RingOfWealth extends Ring {
 				}
 			case 2:
 				i = Generator.randomUsingDefaults(Generator.Category.SCROLL);
-				if (!(i instanceof ExoticScroll)){
+				//没有异界对应物的卷轴(探地卷轴变种)直接按原样生成
+				if (!(i instanceof ExoticScroll) && ExoticScroll.regToExo.containsKey(i.getClass())){
 					return Reflection.newInstance(ExoticScroll.regToExo.get(i.getClass()));
 				} else {
 					return Reflection.newInstance(i.getClass());

@@ -70,7 +70,10 @@ public class Recycle extends InventorySpell {
 					result = Reflection.newInstance(ExoticPotion.regToExo.get(result.getClass()));
 				}
 			} else if (item instanceof Scroll) {
-				result = Generator.randomUsingDefaults(Generator.Category.SCROLL);
+				//黑名单内的卷轴(探地卷轴变种)没有异界版本，遇到就重摇
+				do {
+					result = Generator.randomUsingDefaults(Generator.Category.SCROLL);
+				} while (item instanceof ExoticScroll && !ExoticScroll.regToExo.containsKey(result.getClass()));
 				if (item instanceof ExoticScroll){
 					result = Reflection.newInstance(ExoticScroll.regToExo.get(result.getClass()));
 				}
