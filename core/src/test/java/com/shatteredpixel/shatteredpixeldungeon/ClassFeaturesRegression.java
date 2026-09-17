@@ -187,8 +187,11 @@ public class ClassFeaturesRegression {
         int hits;
         KindOfWeapon first, second;
         float secondMultiplier;
+        float lastMultiplier, lastBonus;
         boolean killFirst, missFirst, failSecond;
         @Override public boolean attack(Char enemy, float multiplier, float bonus, float accuracy) {
+            lastMultiplier = multiplier;
+            lastBonus = bonus;
             hits++;
             if (hits == 1) {
                 first = belongings.attackingWeapon();
@@ -276,9 +279,14 @@ public class ClassFeaturesRegression {
 		gladiator.talents.get(2).put(Talent.ENHANCED_COMBO, 2);
 		Buff.affect(gladiator, Combo.ParryTracker.class, Actor.TICK);
 		gladiator.defenseVerb();
+		gladiator.defenseVerb();
 		check(gladiator.buff(Combo.ParryTracker.class) != null,
 				"enhanced parry no longer needs nine combo to block repeatedly");
-		float[] expectedCleaveTimes = {33f, 66f, 100f};
+		gladiator.talents.get(2).put(Talent.ENHANCED_COMBO, 3);
+		for (Combo.ComboMove move : new Combo.ComboMove[]{Combo.ComboMove.SLAM, Combo.ComboMove.CRUSH, Combo.ComboMove.FURY}) {
+			check(move.desc(move.comboReq).contains("跳跃"), "战技在最低解锁连击数时即获得跃进强化");
+		}
+		float[] expectedCleaveTimes = {30f, 45f, 60f};
 		for (int rank = 1; rank <= 3; rank++) {
 			gladiator = hero(HeroClass.WARRIOR, HeroSubClass.GLADIATOR);
 			gladiator.talents.get(2).put(Talent.CLEAVE, rank);
@@ -289,6 +297,91 @@ public class ClassFeaturesRegression {
 			combo.storeInBundle(comboState);
 			close(comboState.getFloat("combotime"), expectedCleaveTimes[rank-1],
 					"cleave duration rank " + rank);
+		}
+		// 复用攻击替身检查真实战技传入普通攻击流程的倍率、护盾加伤及击杀冷却奖励。
+		new com.shatteredpixel.shatteredpixeldungeon.ui.TargetHealthIndicator();
+		com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator indicator = new com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator();
+		java.lang.reflect.Field currentMove = Combo.class.getDeclaredField("moveBeingUsed");
+		currentMove.setAccessible(true);
+		java.lang.reflect.Method comboAttack = Combo.class.getDeclaredMethod("doAttack", Char.class);
+		comboAttack.setAccessible(true);
+		for (int rank = 0; rank <= 3; rank++) {
+			StrikeHero fighter = champion();
+			fighter.heroClass = HeroClass.WARRIOR;
+			fighter.subClass = HeroSubClass.GLADIATOR;
+			Talent.initClassTalents(fighter);
+			Talent.initSubclassTalents(fighter);
+			fighter.talents.get(2).put(Talent.LETHAL_DEFENSE, rank);
+			fighter.missFirst = true;
+			Mob dummy = new com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Rat();
+			dummy.HP = dummy.HT = 100;
+			dummy.pos = 21;
+			combo = Buff.affect(fighter, Combo.class);
+			combo.hit(dummy); combo.hit(dummy);
+			currentMove.set(null, Combo.ComboMove.CLOBBER);
+			comboAttack.invoke(combo, dummy);
+			close(fighter.lastMultiplier, 1f, "冲击使用普通攻击伤害倍率");
+			close(fighter.lastBonus, 0f, "冲击没有额外固定加伤");
+			Buff.affect(fighter, Barrier.class).setShield(25);
+			BrokenSeal.WarriorShield sealShield = Buff.affect(fighter, BrokenSeal.WarriorShield.class);
+			sealShield.setShield(10);
+			combo.hit(dummy); combo.hit(dummy);
+			currentMove.set(null, Combo.ComboMove.SLAM);
+			fighter.hits = 0;
+			comboAttack.invoke(combo, dummy);
+			close(fighter.lastMultiplier, 1f, "撞击保留普通攻击伤害");
+			close(fighter.lastBonus, 28f, "四连击撞击以当前总护盾35点计算80%的额外伤害");
+			close(fighter.shielding(), 35f, "撞击不消耗护盾");
+			Buff.detach(fighter, Barrier.class); sealShield.decShield(10);
+			combo = Buff.affect(fighter, Combo.class);
+			for (int i = 0; i < 4; i++) combo.hit(dummy);
+			Bundle beforeKill = new Bundle(); sealShield.storeInBundle(beforeKill);
+			fighter.hits = 0; fighter.killFirst = true;
+			comboAttack.invoke(combo, dummy);
+			close(fighter.lastBonus, 0f, "没有护盾时撞击没有额外伤害");
+			Bundle afterKill = new Bundle(); sealShield.storeInBundle(afterKill);
+			close(beforeKill.getInt(BrokenSeal.WarriorShield.COOLDOWN) - afterKill.getInt(BrokenSeal.WarriorShield.COOLDOWN),
+					50f * rank, "以战养战按等级减少冷却");
+		}
+		indicator.destroy();
+		// 直接执行选敌回调，验证攻击范围外的跃进，而不是只检查强化说明。
+		java.lang.reflect.Field selection = Combo.class.getDeclaredField("listener");
+		selection.setAccessible(true);
+		java.lang.reflect.Field jump = com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite.class.getDeclaredField("jumpTweener");
+		jump.setAccessible(true);
+		com.watabou.noosa.Camera.main = new com.watabou.noosa.Camera(0, 0, 160, 160, 1);
+		for (Combo.ComboMove move : new Combo.ComboMove[]{Combo.ComboMove.SLAM, Combo.ComboMove.CRUSH, Combo.ComboMove.FURY}) {
+			for (int scenario = 0; scenario < 6; scenario++) {
+				gladiator = hero(HeroClass.WARRIOR, HeroSubClass.GLADIATOR);
+				gladiator.talents.get(2).put(Talent.ENHANCED_COMBO, scenario == 4 ? 2 : 3);
+				gladiator.sprite = new com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite();
+				gladiator.sprite.ch = gladiator;
+				com.watabou.noosa.Group visuals = new com.watabou.noosa.Group();
+				visuals.add(gladiator.sprite);
+				java.util.Arrays.fill(Dungeon.level.passable, true);
+				java.util.Arrays.fill(Dungeon.level.solid, false);
+				java.util.Arrays.fill(Dungeon.level.heroFOV, true);
+				Mob distant = new com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Rat();
+				distant.pos = scenario == 5 ? 25 : 23;
+				Actor.add(distant);
+				Mob obstacle = new com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Rat();
+				obstacle.pos = scenario == 2 ? 22 : 21;
+				if (scenario == 1 || scenario == 2) Actor.add(obstacle);
+				if (scenario == 3) Dungeon.level.solid[21] = true;
+				combo = Buff.affect(gladiator, Combo.class);
+				Bundle leapCombo = new Bundle();
+				combo.storeInBundle(leapCombo);
+				leapCombo.put("count", Math.max(6, move.comboReq));
+				combo.restoreFromBundle(leapCombo);
+				check(!gladiator.canAttack(distant), "测试目标位于普通攻击范围之外");
+				currentMove.set(null, move);
+				((com.shatteredpixel.shatteredpixeldungeon.scenes.CellSelector.Listener)selection.get(combo)).onSelect(distant.pos);
+				check((jump.get(gladiator.sprite) != null) == (scenario <= 1),
+						move + "：空路及跨越敌人可跃进，落点占用、墙体、等级不足及超距拒绝跃进，场景 " + scenario);
+				Actor.remove(distant); Actor.remove(obstacle);
+				combo.detach();
+				visuals.destroy();
+			}
 		}
     }
 

@@ -97,7 +97,7 @@ public class Combo extends Buff implements ActionIndicator.Action {
 
 		if (!enemy.isAlive() || (enemy.buff(Corruption.class) != null && enemy.HP == enemy.HT)){
 			int rank = ((Hero)target).pointsInTalent(Talent.CLEAVE);
-			comboTime = rank == 1 ? 33f : rank == 2 ? 66f : rank == 3 ? 100f : 15f;
+			comboTime = 15f * (rank + 1);
 			initialComboTime = comboTime;
 		}
 
@@ -353,11 +353,8 @@ public class Combo extends Buff implements ActionIndicator.Action {
 
 		//variance in damage dealt
 		switch (moveBeingUsed) {
-			case CLOBBER:
-				dmgMulti = 0;
-				break;
 			case SLAM:
-				dmgBonus = Math.round(target.drRoll() * count / 5f);
+				dmgBonus = Math.round(target.shielding() * count / 5f);
 				break;
 			case CRUSH:
 				dmgMulti = 0.25f * count;
@@ -484,7 +481,7 @@ public class Combo extends Buff implements ActionIndicator.Action {
 
 	private static int lethalDefenseReduction(Hero hero) {
 		int rank = hero.pointsInTalent(Talent.LETHAL_DEFENSE);
-		return rank == 1 ? 33 : rank == 2 ? 66 : rank >= 3 ? 100 : 0;
+		return 50 * rank;
 	}
 
 	private CellSelector.Listener listener = new CellSelector.Listener() {
@@ -504,10 +501,11 @@ public class Combo extends Buff implements ActionIndicator.Action {
 					|| Dungeon.level.distance(target.pos, enemy.pos) > 1 + target.buff(Combo.class).count/3){
 					GLog.w(Messages.get(Combo.class, "bad_target"));
 				} else {
-					Ballistica c = new Ballistica(target.pos, enemy.pos, Ballistica.PROJECTILE);
+					Ballistica c = new Ballistica(target.pos, enemy.pos, Ballistica.STOP_TARGET | Ballistica.STOP_SOLID);
 					if (c.collisionPos == enemy.pos){
 						final int leapPos = c.path.get(c.dist-1);
-						if (!Dungeon.level.passable[leapPos] && !(target.flying && Dungeon.level.avoid[leapPos])){
+						if (Actor.findChar(leapPos) != null
+								|| (!Dungeon.level.passable[leapPos] && !(target.flying && Dungeon.level.avoid[leapPos]))){
 							GLog.w(Messages.get(Combo.class, "bad_target"));
 						} else if (Dungeon.hero.rooted) {
 							PixelScene.shake( 1, 1f );

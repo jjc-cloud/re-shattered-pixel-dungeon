@@ -59,7 +59,7 @@ public class SecretSummoningRoom extends SecretRoom {
 			if (level.map[cell] == Terrain.SECRET_TRAP){
 				revealInc += revealedChance;
 				if (revealInc >= 1) {
-					level.setTrap(new SummoningTrap().rollOutdatedRandom(level).reveal(), cell);
+					level.setTrap(new SummoningTrap().reveal(), cell);
 					Painter.set(level, cell, Terrain.TRAP);
 					revealInc--;
 				} else {

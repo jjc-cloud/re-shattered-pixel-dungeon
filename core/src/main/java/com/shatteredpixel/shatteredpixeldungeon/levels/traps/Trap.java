@@ -77,7 +77,7 @@ public abstract class Trap implements Bundlable {
 	//outdated design challenge: whether an outdated trap has been silently primed by its first trigger
 	public boolean primed = false;
 
-	//outdated design challenge: guarantees every second trap placed on a level needs a second
+	//outdated design challenge: guarantees every second hidden trap placed on a level needs a second
 	//trigger to take effect, instead of rolling pure chance for each trap
 	public Trap rollOutdated( Level level ){
 		outdated = Dungeon.isChallenged(Challenges.OUTDATED_DESIGN) && (level.outdatedTrapCounter++ % 2 == 0);
@@ -98,6 +98,9 @@ public abstract class Trap implements Bundlable {
 
 	public Trap reveal() {
 		visible = true;
+		//outdated design challenge: revealed traps always trigger normally
+		outdated = false;
+		primed = false;
 		GameScene.updateMap(pos);
 		return this;
 	}

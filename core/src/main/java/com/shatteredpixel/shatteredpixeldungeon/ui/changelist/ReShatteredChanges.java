@@ -56,7 +56,10 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V010_VOID_WALKER, "公共天赋",
 				"\n新增公共天赋池，使用蜕变密卷时额外抽取两个属于公共天赋池的天赋。\n-振奋一餐：进食冻结周围时间。\n-多重存在：操纵镜像的行为，并获得它们的视野。\n-逃脱计划：可以与一名敌人互换位置。\n-虚空行者：暂时不掉下悬崖。\n-魔能超载：无视充能限制使用法杖神器。\n-野蛮寄生：种子可以在生物上发芽生效。\n-扭曲现实：唯心的改写现实，交换两种药剂或卷轴的效果。\n-交叉火力：大幅增加友军伤害。\n-隐藏技：处决敌人。\n-火力倾泻：法杖与投掷武器不消耗时间。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V064_CHALLENGES, "新挑战",
-				"\n新增一个陷阱相关挑战，生成更多的陷阱，半数的陷阱只会在第二次触发时触发。"));
+				"\n新增一个陷阱相关挑战，自然生成的陷阱数量翻倍，半数隐藏陷阱只会在第二次触发时触发，探明后则会正常触发。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V050_STAIRS, "隐藏房间",
+				"\n新增一个隐藏房间类型，里面会固定刷新一把高品质法杖，目前为体验石化法杖，只有一半权重为其他法杖，后续逐步取消优先。"));
+
 
 		changes = new ChangeInfo("改动", false, null);
 		changes.hardlight(CharSprite.WARNING);
@@ -81,7 +84,7 @@ public class ReShatteredChanges {
 		changeInfos.add(changes);
 
 		changes.addButton(new ChangeButton(ChangeIcons.V035_WARRIOR_HEROARM, "战士转职",
-				"\n削弱了角斗士纹章的特殊能力，现在和狂战士一样需要损失百分比最大生命值触发；下调了狂战士的攻击倍率。"));	
+				"\n削弱了角斗士纹章的特殊能力，现在和狂战士一样需要损失百分比最大生命值触发；下调了狂战士的攻击倍率。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V010_MEDUSA_EYE, "蛇发邪眼",
 				"\n石化进度从33%下调为25%，现在在玩家视角不会被两回合击杀。"));
 	}

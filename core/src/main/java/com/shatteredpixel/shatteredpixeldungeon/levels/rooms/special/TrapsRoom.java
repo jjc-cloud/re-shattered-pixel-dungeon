@@ -104,7 +104,7 @@ public class TrapsRoom extends SpecialRoom {
 		for(Point p : getPoints()) {
 			int cell = level.pointToCell(p);
 			if (level.map[cell] == Terrain.TRAP){
-				level.setTrap(Reflection.newInstance(trapClass).rollOutdatedRandom(level).reveal(), cell);
+				level.setTrap(Reflection.newInstance(trapClass).reveal(), cell);
 			}
 		}
 		

@@ -20,7 +20,6 @@ public class PetrifiedStatue extends Mob {
 	public int imageWidth = 1, imageHeight = 1;
 	public int[] pixels = {0x888888FF};
 	public boolean flipped;
-	private boolean livingOrigin = true;
 	{
 		HP = HT = 1;
 		EXP = 0;
@@ -49,7 +48,7 @@ public class PetrifiedStatue extends Mob {
 		return from(subject, false, subject.sprite != null && subject.sprite.flipHorizontal);
 	}
 
-	/** Creates a statue in an idle or attacking pose with an explicit horizontal facing. */
+	/** 截取当前动作；未放置的生物先选择待机或攻击动作。朝向由调用方指定。 */
 	public static PetrifiedStatue from(Char subject, boolean attacking, boolean flipped) {
 		PetrifiedStatue statue = new PetrifiedStatue();
 		statue.victimName = subject.name();
@@ -58,15 +57,12 @@ public class PetrifiedStatue extends Mob {
 		if (temporarySprite && subject instanceof Mob) {
 			source = ((Mob)subject).sprite();
 			source.linkVisuals(subject);
-		}
-		if (source != null && source.texture != null) {
 			if (attacking) {
 				source.ch = subject;
 				source.attack(subject.pos + (flipped ? -1 : 1));
-			} else {
-				source.idle();
 			}
-			source.flipHorizontal = flipped;
+		}
+		if (source != null && source.texture != null) {
 			statue.capture(source.texture, Math.round(source.frame().left * source.texture.width),
 					Math.round(source.frame().top * source.texture.height),
 					Math.round(source.frame().width() * source.texture.width),
@@ -79,10 +75,11 @@ public class PetrifiedStatue extends Mob {
 
 	/** Creates a non-living, breakable statue from a pixel rectangle in an asset texture. */
 	public static PetrifiedStatue fromTexture(Object texture, int left, int top,
-			int width, int height, String name) {
+			int width, int height, String name, boolean flipped) {
 		PetrifiedStatue statue = new PetrifiedStatue();
 		statue.victimName = name;
-		statue.livingOrigin = false;
+		statue.properties.add(Property.OBJECT);
+		statue.flipped = flipped;
 		statue.capture(TextureCache.get(texture), left, top, width, height);
 		return statue;
 	}
@@ -103,7 +100,7 @@ public class PetrifiedStatue extends Mob {
 	}
 
 	public boolean hasLivingOrigin() {
-		return livingOrigin;
+		return !properties.contains(Property.OBJECT);
 	}
 
 	private void throwAllItems() {
@@ -119,7 +116,7 @@ public class PetrifiedStatue extends Mob {
 
 	@Override public CharSprite sprite() { return new PetrifiedStatueSprite(this); }
 	@Override public String name() { return Messages.get(this, "name", victimName); }
-	@Override public String description() { return Messages.get(this, "desc"); }
+	@Override public String description() { return Messages.get(this, hasLivingOrigin() ? "desc" : "desc_object"); }
 	@Override public boolean heroShouldInteract() { return false; }
 	@Override public boolean interact(Char other) { return false; }
 	@Override protected boolean act() { throwAllItems(); diactivate(); return true; }
@@ -160,7 +157,7 @@ public class PetrifiedStatue extends Mob {
 		bundle.put("image_height", imageHeight);
 		bundle.put("pixels", pixels);
 		bundle.put("flipped", flipped);
-		bundle.put("living_origin", livingOrigin);
+		bundle.put("living_origin", hasLivingOrigin());
 	}
 	@Override public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
@@ -169,8 +166,7 @@ public class PetrifiedStatue extends Mob {
 		imageHeight = bundle.getInt("image_height");
 		pixels = bundle.getIntArray("pixels");
 		flipped = bundle.getBoolean("flipped");
-		livingOrigin = !bundle.contains("living_origin") || bundle.getBoolean("living_origin");
-		// Repair saves made before statues ignored alarms and monster AI.
+		if (!bundle.getBoolean("living_origin")) properties.add(Property.OBJECT);
 		alignment = Alignment.NEUTRAL;
 		state = PASSIVE;
 		enemy = null;

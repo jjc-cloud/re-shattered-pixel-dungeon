@@ -428,9 +428,9 @@ public abstract class RegularPainter extends Painter {
 	}
 	
 	protected void paintTraps( Level l, ArrayList<Room> rooms ) {
-		//outdated design challenge: 50% more traps are placed
+		//outdated design challenge: 100% more traps are placed
 		if (Dungeon.isChallenged(Challenges.OUTDATED_DESIGN)){
-			nTraps = Math.round(nTraps * 1.5f);
+			nTraps *= 2;
 		}
 
 		ArrayList<Integer> validCells = new ArrayList<>();
@@ -480,8 +480,6 @@ public abstract class RegularPainter extends Painter {
 		for (int i = 0; i < (l.feeling == Level.Feeling.TRAPS ? 5*nTraps : nTraps); i++) {
 
 			Trap trap = Reflection.newInstance(trapClasses[Random.chances( trapChances )]);
-			//outdated design challenge: each trap has a 50% chance to need a second trigger to take effect
-			trap.rollOutdated( l );
 
 			Integer trapPos;
 			if (trap.avoidsHallways && !validNonHallways.isEmpty()){
@@ -500,6 +498,9 @@ public abstract class RegularPainter extends Painter {
 			} else {
 				trap.hide();
 			}
+
+			//outdated design challenge: every second hidden trap needs a second trigger to take effect
+			if (!trap.visible) trap.rollOutdated( l );
 
 			l.setTrap( trap, trapPos );
 			//some traps will not be hidden

@@ -154,7 +154,7 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 		turnTo( ch.pos, Random.Int( Dungeon.level.length() ) );
 		renderShadow = true;
 		
-		if (ch != Dungeon.hero) {
+		if (ch != Dungeon.hero && !Char.hasProp(ch, Char.Property.OBJECT)) {
 			if (health == null) {
 				health = new CharHealthIndicator(ch);
 			} else {
@@ -334,7 +334,6 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 	/** Leave the living pose frozen as a statue, without a death animation or fade. */
 	public void petrify() {
 		sleeping = false;
-		idle();
 		paused = true;
 		hideEmo();
 		if (health != null) health.killAndErase();
@@ -345,7 +344,6 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 	}
 
 	public void petrifiedFall() {
-		idle();
 		paused = true;
 		hideEmo();
 		if (health != null) health.killAndErase();
