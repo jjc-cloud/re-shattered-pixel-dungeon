@@ -21,6 +21,11 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build unsigned IPA
+        env:
+          ORG_GRADLE_PROJECT_RSPD_STORE_FILE: /tmp/dummy.keystore
+          ORG_GRADLE_PROJECT_RSPD_STORE_PASSWORD: dummy
+          ORG_GRADLE_PROJECT_RSPD_KEY_ALIAS: dummy
+          ORG_GRADLE_PROJECT_RSPD_KEY_PASSWORD: dummy
         run: |
           ./gradlew ios:createIPA \
             -Probovm.iosSkipSigning=true \
