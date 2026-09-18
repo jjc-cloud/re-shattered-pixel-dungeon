@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.scenes;
 
+import java.util.Date;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Chrome;
@@ -58,8 +60,6 @@ import com.watabou.utils.ColorMath;
 import com.watabou.utils.DeviceCompat;
 import com.watabou.utils.GameMath;
 import com.watabou.utils.RectF;
-
-import java.util.Date;
 
 public class TitleScene extends PixelScene {
 
@@ -107,9 +107,12 @@ public class TitleScene extends PixelScene {
 		title = BannerSprites.get( landscape() ? BannerSprites.Type.TITLE_LAND : BannerSprites.Type.TITLE_PORT);
 		add( title );
 
-		float topRegion = Math.max(title.height - 6, h*0.45f);
+		float titleScale = landscape() ? 1f : 0.88f;
+		title.scale.set(titleScale);
 
-		title.x = insets.left + (w - title.width()) / 2f;
+		float topRegion = Math.max(title.height() - 6, h*0.45f);
+
+		title.x = insets.left + (w - title.width()) / 2f+1;
 		title.y = insets.top + 2 + (topRegion - title.height()) / 2f;
 
 		align(title);
@@ -119,7 +122,7 @@ public class TitleScene extends PixelScene {
 			rightFB = placeTorch(title.x + title.width - 16, title.y + 70);
 		} else {
 			leftFB = placeTorch(title.x + 16, title.y + 70);
-			rightFB = placeTorch(title.x + title.width - 16, title.y + 70);
+			rightFB = placeTorch(title.x + title.width() - 18, title.y + 70);
 		}
 
 		signs = new Image(BannerSprites.get( landscape() ? BannerSprites.Type.TITLE_GLOW_LAND : BannerSprites.Type.TITLE_GLOW_PORT)){
@@ -138,10 +141,12 @@ public class TitleScene extends PixelScene {
 				Blending.setNormalMode();
 			}
 		};
+
+		signs.scale.set(titleScale);
 		//the glow is the inner fill of the title letters (no outline), so it is smaller and
 		//sits inset within the title frame
-		signs.x = title.x + 5;
-		signs.y = title.y + 5;
+		signs.x = title.x + 5*titleScale;
+		signs.y = title.y + 5*titleScale;
 		add( signs );
 
 		final Chrome.Type GREY_TR = Chrome.Type.GREY_BUTTON_TR;

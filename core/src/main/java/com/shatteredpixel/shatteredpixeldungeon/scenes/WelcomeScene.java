@@ -109,9 +109,12 @@ public class WelcomeScene extends PixelScene {
 		Image title = BannerSprites.get( landscape() ? BannerSprites.Type.TITLE_LAND : BannerSprites.Type.TITLE_PORT);
 		add( title );
 
+		float titleScale = landscape() ? 1f : 0.88f;
+		title.scale.set(titleScale);
+
 		float topRegion = Math.max(title.height - 6, h*0.45f);
 
-		title.x = insets.left + (w - title.width()) / 2f;
+		title.x = insets.left + (w - title.width()) / 2f+1;
 		title.y = insets.top + 2 + (topRegion - title.height()) / 2f;
 
 		align(title);
@@ -121,7 +124,7 @@ public class WelcomeScene extends PixelScene {
 			placeTorch(title.x + title.width - 16, title.y + 70);
 		} else {
 			placeTorch(title.x + 16, title.y + 70);
-			placeTorch(title.x + title.width - 16, title.y + 70);
+			placeTorch(title.x + title.width() - 18, title.y + 70);
 		}
 
 		Image signs = new Image(BannerSprites.get( landscape() ? BannerSprites.Type.TITLE_GLOW_LAND : BannerSprites.Type.TITLE_GLOW_PORT)){
@@ -139,10 +142,12 @@ public class WelcomeScene extends PixelScene {
 				Blending.setNormalMode();
 			}
 		};
+
+		signs.scale.set(titleScale);
 		//the glow is the inner fill of the title letters (no outline), so it is smaller and
 		//sits inset within the title frame
-		signs.x = title.x + 5;
-		signs.y = title.y + 5;
+		signs.x = title.x + 5*titleScale;
+		signs.y = title.y + 5*titleScale;
 		add( signs );
 		
 		StyledButton okay = new StyledButton(Chrome.Type.GREY_BUTTON_TR, Messages.get(this, "continue")){
@@ -171,7 +176,7 @@ public class WelcomeScene extends PixelScene {
 			}
 		};
 
-		float buttonY = insets.top + Math.min(topRegion + (PixelScene.landscape() ? 60 : 120), h - 24);
+		float buttonY = insets.top + Math.min(topRegion + (PixelScene.landscape() ? 60 : 100), h - 24);
 
 		float buttonAreaWidth = landscape() ? PixelScene.MIN_WIDTH_L-6 : PixelScene.MIN_WIDTH_P-2;
 		float btnAreaLeft = insets.left + (w - buttonAreaWidth) / 2f;
