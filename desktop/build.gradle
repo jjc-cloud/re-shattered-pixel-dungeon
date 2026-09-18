@@ -12,6 +12,11 @@ processResources {
     from new File(project(':desktop').projectDir,"/src/main/assets")
 }
 
+//发布命名：desktopExecutableName 是 jpackage 生成的程序名(.exe/文件夹名)，
+//desktopArchiveName 是"解压即用"压缩包及其解压出来的文件夹名(不带空格，避免解压路径出问题)
+def desktopExecutableName = 'Re-Shattered Pixel Dungeon'
+def desktopArchiveName    = 'ReShatteredPD'
+
 def osName = System.getProperty('os.name').toLowerCase(Locale.ROOT)
 
 tasks.register('debug', JavaExec) {
@@ -64,7 +69,7 @@ runtime {
     jpackage {
         mainClass = appMainClass
         appVersion = (appVersionName =~ /\d+\.\d+\.\d+/)[0]
-        imageName = appName
+        imageName = desktopExecutableName
     }
 
     if (osName.contains('windows')) {
@@ -112,11 +117,11 @@ tasks.register('portableZip', Zip) {
     dependsOn jpackageImage
 
     def platform = osName.contains('windows') ? 'Windows' : osName.contains('mac') ? 'macOS' : 'Linux'
-    archiveFileName = "ShatteredPD-v${appVersionName}-${platform}.zip"
+    archiveFileName = "${desktopArchiveName}-v${appVersionName}-${platform}.zip"
     destinationDirectory = file("$buildDir/release")
 
-    from("$buildDir/jpackage/$appName") {
-        into(appName)
+    from("$buildDir/jpackage/$desktopExecutableName") {
+        into(desktopArchiveName)
     }
 }
 
