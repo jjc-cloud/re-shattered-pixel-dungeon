@@ -40,6 +40,9 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 
 	{
 		type = buffType.POSITIVE;
+		//the imp's vault purges non-persisting buffs on entry and exit, which would
+		//cost a berserker its rage until the game is reloaded
+		revivePersists = true;
 	}
 
 	private float power;
@@ -124,10 +127,10 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 	}
 
 	public float damageMultiplier() {
-		if (power < 2f) return 1f + 0.5f * power;
-		if (power < 3f) return 2f - 0.5f * (power - 2f);
-		//狂暴期前快后慢：325%即达2.0倍，400%封顶2.5倍
-		return 1.5f + (float) Math.sqrt(power - 3f);
+		//0~200%怒气：+0%~+75%；200%~300%：+75%~+50%；300%~400%：+50%~+150%
+		if (power < 2f) return 1f + 0.375f * power;
+		if (power < 3f) return 1.75f - 0.25f * (power - 2f);
+		return 1.5f + (power - 3f);
 	}
 
 	public float incomingDamageMultiplier() {
@@ -151,7 +154,8 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 	public float speedMultiplier() {
 		if (power < 2f) return 1f;
 		if (power < 3f) return 1f + 0.25f * (power - 2f);
-		return 1.25f + 0.25f * (power - 3f);
+		//狂暴期移速回落，325%怒气时降至无加成，之后不再变化
+		return power < 3.25f ? 1.25f - (power - 3f) : 1f;
 	}
 
 	public float enchantFactor(float factor) {
@@ -358,6 +362,7 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 	public static class DeathDefianceIndicator extends Buff {
 		{
 			type = buffType.POSITIVE;
+			revivePersists = true;
 		}
 
 		@Override

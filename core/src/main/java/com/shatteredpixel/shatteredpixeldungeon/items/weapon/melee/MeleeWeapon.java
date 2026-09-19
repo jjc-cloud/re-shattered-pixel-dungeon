@@ -206,24 +206,6 @@ public class MeleeWeapon extends Weapon {
 				ScrollOfRecharging.charge(hero);
 			}
 		}
-		if (hero.hasTalent(Talent.COMBINED_LETHALITY)) {
-			Talent.CombinedLethalityAbilityTracker tracker = hero.buff(Talent.CombinedLethalityAbilityTracker.class);
-			if (tracker == null || tracker.weapon == this || tracker.weapon == null){
-				Buff.affect(hero, Talent.CombinedLethalityAbilityTracker.class, hero.cooldown()).weapon = this;
-			} else {
-				//we triggered the talent, so remove the tracker
-				tracker.detach();
-			}
-		}
-		if (hero.hasTalent(Talent.COMBINED_ENERGY)){
-			Talent.CombinedEnergyAbilityTracker tracker = hero.buff(Talent.CombinedEnergyAbilityTracker.class);
-			if (tracker == null || !tracker.monkAbilused){
-				Buff.prolong(hero, Talent.CombinedEnergyAbilityTracker.class, 5f).wepAbilUsed = true;
-			} else {
-				tracker.wepAbilUsed = true;
-				Buff.affect(hero, MonkEnergy.class).processCombinedEnergy(tracker);
-			}
-		}
 		if (hero.buff(Talent.CounterAbilityTacker.class) != null){
 			Charger charger = Buff.affect(hero, Charger.class);
 			charger.gainCharge(hero.pointsInTalent(Talent.COUNTER_ABILITY)*0.375f);
@@ -235,6 +217,10 @@ public class MeleeWeapon extends Weapon {
 		if (killed.alignment == Char.Alignment.ENEMY && hero.hasTalent(Talent.LETHAL_HASTE)){
 			//effectively 3/5 turns of greater haste
 			Buff.affect(hero, GreaterHaste.class).set(2 + 2*hero.pointsInTalent(Talent.LETHAL_HASTE));
+		}
+		if (killed.alignment == Char.Alignment.ENEMY && hero.hasTalent(Talent.WEAPON_RECHARGING)){
+			//0.2 charge at +1, 0.4 at +2
+			Buff.affect(hero, Charger.class).gainCharge(0.2f * hero.pointsInTalent(Talent.WEAPON_RECHARGING));
 		}
 	}
 
@@ -443,12 +429,6 @@ public class MeleeWeapon extends Weapon {
 					}
 
 					partialCharge += chargeToGain;
-				}
-
-				int points = ((Hero)target).pointsInTalent(Talent.WEAPON_RECHARGING);
-				if (points > 0 && target.buff(Recharging.class) != null || target.buff(ArtifactRecharge.class) != null){
-					//1 every 15 turns at +1, 10 turns at +2
-					partialCharge += 1/(20f - 5f*points);
 				}
 
 				if (partialCharge >= 1){

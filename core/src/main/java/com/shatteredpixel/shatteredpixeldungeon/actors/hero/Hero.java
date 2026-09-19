@@ -2498,7 +2498,7 @@ public class Hero extends Char {
 				belongings.abilityWeapon = followup;
 				secondaryAttack = true;
 				try {
-					boolean followupHit = attack(target, 0.5f, 0f, 1f);
+					boolean followupHit = attack(target, 0.4f + 0.2f*pointsInTalent(Talent.COMBINED_LETHALITY), 0f, 1f);
 					if (followupHit && wasEnemy) {
 						Buff.affect(this, Sai.ComboStrikeTracker.class).addHit(target);
 					}

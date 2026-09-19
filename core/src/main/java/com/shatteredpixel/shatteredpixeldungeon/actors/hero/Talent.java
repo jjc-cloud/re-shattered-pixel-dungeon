@@ -36,6 +36,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Haste;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LostInventory;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MonkEnergy;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.PhysicalEmpower;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Recharging;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.RevealedArea;
@@ -415,28 +416,6 @@ public enum Talent {
 			weapon = bundle.getClass(WEAPON);
 		}
 	}
-	public static class CombinedLethalityAbilityTracker extends FlavourBuff{
-		public MeleeWeapon weapon;
-	};
-	public static class CombinedEnergyAbilityTracker extends FlavourBuff{
-		public boolean monkAbilused = false;
-		public boolean wepAbilUsed = false;
-
-		private static final String MONK_ABIL_USED  = "monk_abil_used";
-		private static final String WEP_ABIL_USED   = "wep_abil_used";
-		@Override
-		public void storeInBundle(Bundle bundle) {
-			super.storeInBundle(bundle);
-			bundle.put(MONK_ABIL_USED, monkAbilused);
-			bundle.put(WEP_ABIL_USED, wepAbilUsed);
-		}
-		@Override
-		public void restoreFromBundle(Bundle bundle) {
-			super.restoreFromBundle(bundle);
-			monkAbilused = bundle.getBoolean(MONK_ABIL_USED);
-			wepAbilUsed = bundle.getBoolean(WEP_ABIL_USED);
-		}
-	}
 	public static class CounterAbilityTacker extends FlavourBuff{}
 	public static class SatiatedSpellsTracker extends Buff{
 		@Override
@@ -708,9 +687,10 @@ public enum Talent {
 		}
 		if (hero.hasTalent(FOCUSED_MEAL)){
 			if (hero.heroClass == HeroClass.DUELIST){
-				//0.67/1 charge for the duelist
-				Buff.affect( hero, MeleeWeapon.Charger.class ).gainCharge((hero.pointsInTalent(FOCUSED_MEAL)+1)/3f);
-				ScrollOfRecharging.charge( hero );
+				//75%/100% chance for a moment of focus
+				if (Random.Float() < 0.5f + 0.25f*hero.pointsInTalent(FOCUSED_MEAL)){
+					Buff.affect( hero, MonkEnergy.MonkAbility.Focus.FocusBuff.class );
+				}
 			} else {
 				// lvl/3 / lvl/2 bonus dmg on next hit for other classes
 				Buff.affect( hero, PhysicalEmpower.class).set(Math.round(hero.lvl / (4f - hero.pointsInTalent(FOCUSED_MEAL))), 1);
