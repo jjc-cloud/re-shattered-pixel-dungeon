@@ -161,7 +161,8 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 	public float enchantFactor(float factor) {
 		int rank = ((Hero) target).pointsInTalent(Talent.ENRAGED_CATALYST);
 		if (rank == 0) return factor;
-		float cap = rank == 1 ? 1.5f : rank == 2 ? 2.25f : 3f;
+		//1.33x/1.67x/2x enchant chance at 200% rage
+		float cap = rank == 1 ? 1.33f : rank == 2 ? 1.67f : 2f;
 		return factor * (1f + Math.min(power / 2f, 1f) * (cap - 1f));
 	}
 
