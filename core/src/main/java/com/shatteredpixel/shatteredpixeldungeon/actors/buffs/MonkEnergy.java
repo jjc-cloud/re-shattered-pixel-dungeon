@@ -202,18 +202,14 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 	}
 
 	public void abilityUsed( MonkAbility abil ){
-		energy -= abil.energyCost();
+		float cost = abil.energyCost();
+		energy -= cost;
 		energy = Math.min(energy, energyCap());
 
-		if (target instanceof Hero && ((Hero) target).hasTalent(Talent.COMBINED_ENERGY)
-				&& abil.energyCost() >= 5-((Hero) target).pointsInTalent(Talent.COMBINED_ENERGY)) {
-			Talent.CombinedEnergyAbilityTracker tracker = target.buff(Talent.CombinedEnergyAbilityTracker.class);
-			if (tracker == null || !tracker.wepAbilUsed){
-				Buff.prolong(target, Talent.CombinedEnergyAbilityTracker.class, 5f).monkAbilused = true;
-			} else {
-				tracker.monkAbilused = true;
-				processCombinedEnergy(tracker);
-			}
+		if (target instanceof Hero && ((Hero) target).hasTalent(Talent.COMBINED_ENERGY)) {
+			//refunds 6%/13%/20% of the energy spent
+			int points = ((Hero) target).pointsInTalent(Talent.COMBINED_ENERGY);
+			energy = Math.min(energy + cost * (0.06f + 0.07f * (points - 1)), energyCap());
 		}
 
 		if (cooldown > 0 || energy < 1){
@@ -227,15 +223,6 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 	public boolean abilitiesEmpowered( Hero hero ){
 		//100%/80%/60% energy at +1/+2/+3
 		return energy/energyCap() >= 1.2f - 0.2f*hero.pointsInTalent(Talent.MONASTIC_VIGOR);
-	}
-
-	public void processCombinedEnergy(Talent.CombinedEnergyAbilityTracker tracker){
-		energy = Math.min(energy+1, energyCap());
-		tracker.detach();
-		if (energy >= 1){
-			ActionIndicator.setAction(this);
-		}
-		BuffIndicator.refreshHero();
 	}
 
 	@Override
@@ -307,6 +294,10 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 
 		public static class UnarmedAbilityTracker extends FlavourBuff{};
 
+		//marks the strikes of flurry of blows specifically, so that its fixed damage
+		//does not leak into the other unarmed abilities
+		public static class FlurryStrikeTracker extends FlavourBuff{};
+
 		public static class FlurryEmpowerTracker extends FlavourBuff{};
 
 		public static class FlurryCooldownTracker extends FlavourBuff{};
@@ -326,11 +317,11 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 			@Override
 			public String desc() {
 				if (Buff.affect(Dungeon.hero, MonkEnergy.class).abilitiesEmpowered(Dungeon.hero)){
-					//1.5x hero unarmed damage (rounds the result)
-					return Messages.get(this, "empower_desc", 2, Math.round(1.5f*(Dungeon.hero.STR()-8)));
+					//mean 25 damage in total, ignoring armor and triggering enchantments
+					return Messages.get(this, "empower_desc", 2, 48);
 				} else {
-					//1.5x hero unarmed damage (rounds the result)
-					return Messages.get(this, "desc", 2, Math.round(1.5f*(Dungeon.hero.STR()-8)));
+					//mean 15 damage in total
+					return Messages.get(this, "desc", 2, 28);
 				}
 
 			}
@@ -357,9 +348,11 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 				}
 
 				UnarmedAbilityTracker tracker = Buff.affect(hero, UnarmedAbilityTracker.class);
+				FlurryStrikeTracker strike = Buff.affect(hero, FlurryStrikeTracker.class);
 				if (!hero.canAttack(enemy)){
 					GLog.w(Messages.get(MeleeWeapon.class, "ability_target_range"));
 					tracker.detach();
+					strike.detach();
 					if (hero.buff(FlurryEmpowerTracker.class) != null){
 						hero.buff(FlurryEmpowerTracker.class).detach();
 					}
@@ -370,16 +363,17 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 					@Override
 					public void call() {
 						AttackIndicator.target(enemy);
-						hero.attack(enemy, 1.5f, 0, Char.INFINITE_ACCURACY);
+						hero.attack(enemy, 1f, 0, Char.INFINITE_ACCURACY);
 
 						if (enemy.isAlive()){
 							hero.sprite.attack(enemy.pos, new Callback() {
 								@Override
 								public void call() {
-									hero.attack(enemy, 1.5f, 0, Char.INFINITE_ACCURACY);
+									hero.attack(enemy, 1f, 0, Char.INFINITE_ACCURACY);
 									Invisibility.dispel();
 									hero.next();
 									tracker.detach();
+									strike.detach();
 									Buff.affect(hero, MonkEnergy.class).abilityUsed(Flurry.this);
 									if (hero.buff(FlurryEmpowerTracker.class) != null){
 										hero.buff(FlurryEmpowerTracker.class).detach();
@@ -391,6 +385,7 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 							Invisibility.dispel();
 							hero.next();
 							tracker.detach();
+							strike.detach();
 							Buff.affect(hero, MonkEnergy.class).abilityUsed(Flurry.this);
 							if (hero.buff(FlurryEmpowerTracker.class) != null){
 								hero.buff(FlurryEmpowerTracker.class).detach();

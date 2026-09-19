@@ -422,7 +422,10 @@ public abstract class Char extends Actor {
 					dr = 0;
 				}
 
-				if (h.buff(MonkEnergy.MonkAbility.UnarmedAbilityTracker.class) != null){
+				//unarmed abilities pierce armor, but flurry of blows only does so while empowered
+				if (h.buff(MonkEnergy.MonkAbility.UnarmedAbilityTracker.class) != null
+						&& (h.buff(MonkEnergy.MonkAbility.FlurryStrikeTracker.class) == null
+							|| h.buff(MonkEnergy.MonkAbility.FlurryEmpowerTracker.class) != null)){
 					dr = 0;
 				}
 			}
@@ -554,29 +557,6 @@ public abstract class Char extends Actor {
 				if (enemy.sprite != null) {
 					enemy.sprite.showStatus(CharSprite.NEGATIVE, Messages.get(Preparation.class, "assassinated"));
 				}
-			}
-
-			Talent.CombinedLethalityAbilityTracker combinedLethality = buff(Talent.CombinedLethalityAbilityTracker.class);
-			if (combinedLethality != null && this instanceof Hero && ((Hero) this).belongings.attackingWeapon() instanceof MeleeWeapon && combinedLethality.weapon != ((Hero) this).belongings.attackingWeapon()){
-				if ( enemy.isAlive() && enemy.alignment != alignment && !Char.hasProp(enemy, Property.BOSS)
-						&& !Char.hasProp(enemy, Property.MINIBOSS) &&
-						(enemy.HP/(float)enemy.HT) <= 0.4f*((Hero)this).pointsInTalent(Talent.COMBINED_LETHALITY)/3f) {
-					enemy.HP = 0;
-					for (Buff b : enemy.buffs(Brute.BruteRage.class)){
-						b.detach();
-					}
-					if (!enemy.isAlive()) {
-						enemy.die(this);
-					} else {
-						//helps with triggering any on-damage effects that need to activate
-						enemy.damage(-1, this);
-						DeathMark.processFearTheReaper(enemy);
-					}
-					if (enemy.sprite != null) {
-						enemy.sprite.showStatus(CharSprite.NEGATIVE, Messages.get(Talent.CombinedLethalityAbilityTracker.class, "executed"));
-					}
-				}
-				combinedLethality.detach();
 			}
 
 			if (enemy.sprite != null) {
@@ -1098,7 +1078,9 @@ public abstract class Char extends Actor {
 
 			//special case for monk using unarmed abilities
 			if (src == Dungeon.hero
-					&& Dungeon.hero.buff(MonkEnergy.MonkAbility.UnarmedAbilityTracker.class) != null){
+					&& Dungeon.hero.buff(MonkEnergy.MonkAbility.UnarmedAbilityTracker.class) != null
+					&& (Dungeon.hero.buff(MonkEnergy.MonkAbility.FlurryStrikeTracker.class) == null
+						|| Dungeon.hero.buff(MonkEnergy.MonkAbility.FlurryEmpowerTracker.class) != null)){
 				icon = FloatingText.PHYS_DMG_NO_BLOCK;
 			}
 

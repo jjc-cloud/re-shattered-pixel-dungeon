@@ -80,6 +80,12 @@ public class RingOfForce extends Ring {
 	}
 
 	public static int damageRoll( Hero hero ){
+		//flurry of blows has its own fixed damage, it scales with neither STR nor a ring of force.
+		//mean 7.5/12.5 per hit, so 15/25 in total across its two hits
+		if (hero.buff(MonkEnergy.MonkAbility.FlurryStrikeTracker.class) != null){
+			return Hero.heroDamageIntRange(1,
+					hero.buff(MonkEnergy.MonkAbility.FlurryEmpowerTracker.class) != null ? 24 : 14);
+		}
 		//level can be 0 while still using a ring, so we specifically check for the presence of a ring of force
 		boolean usingForce = hero.buff(Force.class) != null;
 		if (hero.buff(SpiritForm.SpiritFormBuff.class) != null && hero.buff(SpiritForm.SpiritFormBuff.class).ring() instanceof RingOfForce){

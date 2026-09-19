@@ -625,7 +625,14 @@ public class Armor extends EquipableItem {
 		} else if (glyphHardened){
 			info += "\n\n" + Messages.get(Armor.class, "hardened_no_glyph");
 		}
-		
+
+		//the seal carries a second glyph alongside the armor's own one, show it as well
+		if (seal != null && seal.getGlyph() != null && seal.getGlyph() != glyph
+				&& (cursedKnown || !seal.getGlyph().curse())){
+			info += "\n\n" + Messages.capitalize(Messages.get(BrokenSeal.class, "inscribed", seal.getGlyph().name()));
+			info += " " + seal.getGlyph().desc();
+		}
+
 		if (cursed && isEquipped( Dungeon.hero )) {
 			info += "\n\n" + Messages.get(Armor.class, "cursed_worn");
 		} else if (cursedKnown && cursed) {
@@ -749,7 +756,9 @@ public class Armor extends EquipableItem {
 	}
 
 	public Glyph glyphForEffect() {
-		return seal != null ? seal.getGlyph() : glyph;
+		//the seal's glyph only takes effect with runic transference, otherwise the armor's own glyph applies
+		if (seal != null && Dungeon.hero != null && seal.canTransferGlyph()) return seal.getGlyph();
+		return glyph;
 	}
 
 	public boolean hasCurseGlyphForEffect() {
@@ -758,7 +767,8 @@ public class Armor extends EquipableItem {
 	}
 
 	public Armor inscribeFromEffect(Glyph glyph) {
-		if (seal == null) return inscribe(glyph);
+		//without runic transference a glyph on the seal does nothing, so it stays on the armor
+		if (seal == null || !seal.canTransferGlyph(glyph)) return inscribe(glyph);
 		if (glyph == null || !glyph.curse()) curseInfusionBonus = false;
 		seal.setGlyph(glyph);
 		updateQuickslot();

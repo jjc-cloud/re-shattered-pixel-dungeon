@@ -48,7 +48,10 @@ public class PotionOfLiquidFlame extends Potion {
 		}
 
 		for (int offset : PathFinder.NEIGHBOURS9){
-			if (!Dungeon.level.solid[cell+offset]) {
+			//flammable solid tiles are skipped by the solidity check, but fire cannot spread
+			//onto them from a neighbouring water tile, as water turns the fire into steam.
+			//This prevents short-range splashes not igniting barricades or bookshelves.
+			if (!Dungeon.level.solid[cell+offset] || Dungeon.level.flamable[cell+offset]) {
 
 				GameScene.add(Blob.seed(cell + offset, 2, Fire.class));
 

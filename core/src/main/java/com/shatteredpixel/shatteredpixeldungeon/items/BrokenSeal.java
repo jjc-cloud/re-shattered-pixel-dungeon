@@ -84,6 +84,12 @@ public class BrokenSeal extends Item {
 	}
 
 	public boolean canTransferGlyph(){
+		return canTransferGlyph(glyph);
+	}
+
+	//checks whether the seal would transfer a given glyph, so that armor can decide
+	//whether an inscribed glyph belongs to the seal or to the armor itself
+	public boolean canTransferGlyph( Armor.Glyph glyph ){
 		if (glyph == null){
 			return false;
 		}

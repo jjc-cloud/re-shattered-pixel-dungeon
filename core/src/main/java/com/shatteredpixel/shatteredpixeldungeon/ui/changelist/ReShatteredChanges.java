@@ -21,24 +21,24 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.ui.changelist;
 
-import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.scenes.ChangesScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
-import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
-import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
-import com.watabou.utils.DeviceCompat;
-
 import java.util.ArrayList;
+
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 
 public class ReShatteredChanges {
 
 	public static void addAllChanges(ArrayList<ChangeInfo> changeInfos) {
+		add_v0_1_2_Changes(changeInfos);
 		add_v0_1_1_Changes(changeInfos);
 		add_v0_1_0_Changes(changeInfos);
 		add_01_ImportantChanges(changeInfos);
 		addDevelopmentPreview(changeInfos);
+	}
+
+
+	public static void add_v0_1_2_Changes(ArrayList<ChangeInfo> changeInfos) {
+
 	}
 
 	public static void add_v0_1_1_Changes(ArrayList<ChangeInfo> changeInfos) {
@@ -69,6 +69,8 @@ public class ReShatteredChanges {
 				"\n现在虚空锁链由监狱守卫掉落，神偷袖章由疯狂小偷及其变种掉落，这两种神器现在不会出现在普通神器池。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V070_TOOLKIT,"实验性炼金调整",
 				"\n现在在实验性炼金下成功炼制配方后可在炼金中按配方炼制。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V033_PLAYGAMES,"镜像行为",
+				"\n现在镜像会跟随英雄，而不是随机闲逛。"));
 
 		changes = new ChangeInfo("增强", false, null);
 		changes.hardlight(CharSprite.POSITIVE);
