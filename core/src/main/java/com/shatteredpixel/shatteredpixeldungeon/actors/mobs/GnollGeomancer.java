@@ -771,12 +771,24 @@ public class GnollGeomancer extends Mob {
 	public static boolean prepRockFallAttack( Char target, Char source, int range, boolean avoidBarricades ){
 		final int rockCenter = target.pos;
 
+		//collect the cells around the rockfall that are actually safe to stand in, and
+		//pick the refuge from those. only fall back to any adjacent cell if there are none
+		ArrayList<Integer> safeCells = new ArrayList<>();
+		for (int i : PathFinder.NEIGHBOURS8){
+			int cell = rockCenter + i;
+			if (cell != source.pos
+					&& !Dungeon.level.solid[cell]
+					&& !Dungeon.level.traps.containsKey(cell)){
+				safeCells.add(cell);
+			}
+		}
+
 		int safeCell;
-		do {
+		if (safeCells.isEmpty()){
 			safeCell = rockCenter + PathFinder.NEIGHBOURS8[Random.Int(8)];
-		} while (safeCell == source.pos
-				|| (Dungeon.level.solid[safeCell] && Random.Int(5) != 0)
-				|| (Dungeon.level.traps.containsKey(safeCell) && Random.Int(5) != 0));
+		} else {
+			safeCell = Random.element(safeCells);
+		}
 
 		ArrayList<Integer> rockCells = new ArrayList<>();
 
