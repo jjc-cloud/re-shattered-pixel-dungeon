@@ -317,7 +317,7 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 			@Override
 			public String desc() {
 				if (Buff.affect(Dungeon.hero, MonkEnergy.class).abilitiesEmpowered(Dungeon.hero)){
-					//mean 25 damage in total, ignoring armor and triggering enchantments
+					//mean 25 damage in total, ignoring armor
 					return Messages.get(this, "empower_desc", 2, 48);
 				} else {
 					//mean 15 damage in total
