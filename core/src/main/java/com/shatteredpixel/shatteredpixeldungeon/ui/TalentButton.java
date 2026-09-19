@@ -113,8 +113,10 @@ public class TalentButton extends Button {
 	protected void onClick() {
 		super.onClick();
 
-		//扭曲现实：一旦获得将无法被蜕变改变；有待完成的互换选择时，点击直接打开选品窗口
+		//扭曲现实：一旦获得将无法被蜕变改变；仅在游戏内的非说明模式下补选互换，结算页只显示说明
 		if (talent == Talent.REALITY_WARP
+				&& ShatteredPixelDungeon.scene() instanceof GameScene
+				&& mode != Mode.INFO
 				&& Dungeon.hero != null
 				&& Dungeon.hero.isAlive()
 				&& mode != Mode.METAMORPH_REPLACE
