@@ -47,7 +47,7 @@ public class TestStart {
 	 * Set to true to enable the test start point. Remember to set this back
 	 * to false before building a release package.
 	 */
-	public static final boolean ENABLED = true;
+	public static final boolean ENABLED = false;
 	/**
 	 * Starting depth when test start is enabled.
 	 */
