@@ -526,7 +526,9 @@ public enum Talent {
 		String desc;
 		if (metamorphed){
 			String metaDesc = Messages.get(this, name() + ".meta_desc");
-			if (!metaDesc.equals(Messages.NO_TEXT_FOUND)){
+			//an empty value counts as no meta desc. This lets a language keep the key present
+			//but blank, so it does not fall back to the text in the base (english) bundle
+			if (!metaDesc.equals(Messages.NO_TEXT_FOUND) && !metaDesc.trim().isEmpty()){
 				desc = Messages.get(this, name() + ".desc") + "\n\n" + metaDesc;
 			} else {
 				desc = Messages.get(this, name() + ".desc");
