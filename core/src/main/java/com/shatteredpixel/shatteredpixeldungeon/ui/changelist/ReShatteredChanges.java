@@ -56,6 +56,8 @@ public class ReShatteredChanges {
 				"\n-专注一餐改为概率提供凝神。\n-武器充能改为武技击杀敌人时回复一定量的武技充能。\n-复合损伤改为增加追击的伤害，而非处决。\n-调整武僧空振，以适配无武器栏。\n-阴阳调和改为直接返还消耗。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V061_BUGFIX,"bug修复",
 				"\n-液火药剂不能点着在水边的障碍的问题。\n-战士在未启用刻印转移时使用奥数刻笔会丢失附魔的问题。\n-狂战士进入宝库时丢失怒气与转职，需重进加载的问题。\n-天赋扭曲现实在结算页仍调用选择界面导致卡住的问题。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V080_DM300,"落石逻辑修改",
+				"\n现在DM300与矿洞豺狼任务中的落石不会选中不可达格，除非玩家的位置非常糟糕。"));
 
 		changes = new ChangeInfo("削弱", false, null);
 		changes.hardlight(CharSprite.NEGATIVE);

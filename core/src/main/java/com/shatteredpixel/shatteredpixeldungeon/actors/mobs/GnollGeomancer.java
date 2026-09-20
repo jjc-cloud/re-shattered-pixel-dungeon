@@ -772,7 +772,9 @@ public class GnollGeomancer extends Mob {
 		final int rockCenter = target.pos;
 
 		//collect the cells around the rockfall that are actually safe to stand in, and
-		//pick the refuge from those. only fall back to any adjacent cell if there are none
+		//pick the refuge from those. one or zero safe cells means the area around the
+		//target is already hostile, so fall back to any adjacent cell and don't
+		//guarantee a walkable refuge
 		ArrayList<Integer> safeCells = new ArrayList<>();
 		for (int i : PathFinder.NEIGHBOURS8){
 			int cell = rockCenter + i;
@@ -784,10 +786,10 @@ public class GnollGeomancer extends Mob {
 		}
 
 		int safeCell;
-		if (safeCells.isEmpty()){
-			safeCell = rockCenter + PathFinder.NEIGHBOURS8[Random.Int(8)];
-		} else {
+		if (safeCells.size() >= 2){
 			safeCell = Random.element(safeCells);
+		} else {
+			safeCell = rockCenter + PathFinder.NEIGHBOURS8[Random.Int(8)];
 		}
 
 		ArrayList<Integer> rockCells = new ArrayList<>();
