@@ -428,6 +428,16 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 					announced = true;
 				}
 
+				//whether this focus was granted by the focused meal talent rather than by the monk's
+				//ability. Both sources share this one buff (and so can never stack), this only picks
+				//which description is shown. Buffs restored from a save without this field read as false
+				public boolean fromMeal = false;
+
+				@Override
+				public String desc() {
+					return Messages.get(this, fromMeal ? "desc_meal" : "desc");
+				}
+
 				@Override
 				public int icon() {
 					return BuffIndicator.MIND_VISION;
@@ -436,6 +446,20 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 				@Override
 				public void tintIcon(Image icon) {
 					icon.hardlight(0.25f, 1.5f, 1f);
+				}
+
+				private static final String FROM_MEAL = "from_meal";
+
+				@Override
+				public void storeInBundle(Bundle bundle) {
+					super.storeInBundle(bundle);
+					bundle.put(FROM_MEAL, fromMeal);
+				}
+
+				@Override
+				public void restoreFromBundle(Bundle bundle) {
+					super.restoreFromBundle(bundle);
+					fromMeal = bundle.getBoolean(FROM_MEAL);
 				}
 
 			}

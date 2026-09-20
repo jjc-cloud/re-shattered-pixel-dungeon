@@ -21,8 +21,6 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.watabou.noosa.Image;
@@ -46,8 +44,7 @@ public class PhysicalEmpower extends Buff {
 
 	@Override
 	public float iconFadePercent() {
-		float max = 1 + Dungeon.hero.pointsInTalent(Talent.STRENGTHENING_MEAL);
-		return Math.max(0, (max-left) / max);
+		return Math.max(0, (max-left) / (float)max);
 	}
 
 	@Override
@@ -62,12 +59,16 @@ public class PhysicalEmpower extends Buff {
 
 	public int dmgBoost;
 	public int left;
+	//most hits this buff has been granted with, used only to fade the icon. Deliberately not
+	//bundled: a buff restored from a save simply shows no fade until it is granted again
+	public int max = 1;
 
 	public void set(int dmg, int hits){
 		if (dmg*hits > dmgBoost*left) {
 			dmgBoost = dmg;
 			left = hits;
 		}
+		if (hits > max) max = hits;
 	}
 
 	private static final String BOOST = "boost";

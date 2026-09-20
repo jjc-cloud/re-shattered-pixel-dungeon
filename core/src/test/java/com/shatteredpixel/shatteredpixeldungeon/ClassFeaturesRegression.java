@@ -240,7 +240,7 @@ public class ClassFeaturesRegression {
         normalAttack(hero, 21);
         check(hero.hits == 2 && hero.first == hero.belongings.weapon && hero.second == hero.belongings.secondWep,
                 "champion strikes with primary then secondary");
-        close(hero.secondMultiplier, .5f, "secondary strike has half damage");
+        close(hero.secondMultiplier, .4f, "secondary strike uses the base follow-up multiplier");
         close(hero.cooldown() - before, 0, "secondary strike does not independently spend time");
         close(hero.attackDelay(), delay, "primary attack delay unchanged by secondary weapon");
         check(hero.belongings.abilityWeapon == null, "secondary context cleared");
@@ -521,6 +521,70 @@ public class ClassFeaturesRegression {
                 "maxed talent gives only cloth armor");
     }
 
+    //决斗家与其它职业的进食天赋：强健一餐按职业分流，专注一餐对所有职业给予同一个凝神
+    private static void mealTalents() {
+        TestHero hero = hero(HeroClass.DUELIST, HeroSubClass.CHAMPION);
+        hero.talents.get(0).put(Talent.STRENGTHENING_MEAL, 1);
+        Talent.onFoodEaten(hero, 0, null);
+        MeleeWeapon.Charger charger = hero.buff(MeleeWeapon.Charger.class);
+        check(charger != null, "duelist meal must charge the weapon");
+        close(charger.partialCharge, 0.67f, "rank one charge");
+
+        hero = hero(HeroClass.DUELIST, HeroSubClass.CHAMPION);
+        hero.talents.get(0).put(Talent.STRENGTHENING_MEAL, 2);
+        Talent.onFoodEaten(hero, 0, null);
+        charger = hero.buff(MeleeWeapon.Charger.class);
+        check(charger != null && charger.charges == 3 && charger.partialCharge == 0f, "rank two grants a whole charge");
+        check(hero.buff(PhysicalEmpower.class) == null, "duelist meal never grants bonus damage");
+
+        //其它职业：保留专注一餐原本按等级计算的额外伤害
+        hero = hero(HeroClass.WARRIOR, HeroSubClass.BERSERKER);
+        hero.lvl = 9;
+        hero.talents.get(0).put(Talent.STRENGTHENING_MEAL, 1);
+        Talent.onFoodEaten(hero, 0, null);
+        PhysicalEmpower empower = hero.buff(PhysicalEmpower.class);
+        check(empower != null && empower.dmgBoost == 3 && empower.left == 1 && empower.max == 1,
+                "other classes get level/3 damage at rank one");
+        check(hero.buff(MeleeWeapon.Charger.class) == null, "no weapon charge for other classes");
+
+        hero = hero(HeroClass.WARRIOR, HeroSubClass.BERSERKER);
+        hero.lvl = 9;
+        hero.talents.get(0).put(Talent.STRENGTHENING_MEAL, 2);
+        Talent.onFoodEaten(hero, 0, null);
+        empower = hero.buff(PhysicalEmpower.class);
+        check(empower != null && empower.dmgBoost == 5 && empower.left == 1, "other classes get level/2 damage at rank two");
+        //图标淡出按获得时的最大次数计算：吃满两次即为最大值，用掉一次后剩一半
+        check(empower.iconFadePercent() == 0f, "fresh empower shows no fade");
+        empower.left = 0;
+        check(empower.iconFadePercent() == 1f, "spent empower fades out");
+
+        //专注一餐：任何职业都能获得凝神，重复进食不会叠加
+        hero = hero(HeroClass.WARRIOR, HeroSubClass.BERSERKER);
+        hero.talents.get(1).put(Talent.FOCUSED_MEAL, 2);
+        Talent.onFoodEaten(hero, 0, null);
+        MonkEnergy.MonkAbility.Focus.FocusBuff focus = hero.buff(MonkEnergy.MonkAbility.Focus.FocusBuff.class);
+        check(focus != null && focus.fromMeal, "focused meal grants focus with its own description");
+        Talent.onFoodEaten(hero, 0, null);
+        check(hero.buffs(MonkEnergy.MonkAbility.Focus.FocusBuff.class).size() == 1, "eating twice never stacks focus");
+
+        //与武僧技能共用同一个buff：已有凝神时技能不可用，技能给的凝神也不显示专注一餐的说明
+        hero = hero(HeroClass.DUELIST, HeroSubClass.MONK);
+        hero.talents.get(1).put(Talent.FOCUSED_MEAL, 2);
+        Talent.onFoodEaten(hero, 0, null);
+        MonkEnergy energy = Buff.affect(hero, MonkEnergy.class);
+        energy.energy = energy.energyCap();
+        MonkEnergy.MonkAbility focusAbility = null;
+        for (MonkEnergy.MonkAbility ability : MonkEnergy.MonkAbility.abilities){
+            if (ability instanceof MonkEnergy.MonkAbility.Focus) focusAbility = ability;
+        }
+        check(focusAbility != null && !focusAbility.usable(energy), "monk's ability is blocked while focused by the meal");
+        hero.buff(MonkEnergy.MonkAbility.Focus.FocusBuff.class).detach();
+        check(focusAbility.usable(energy), "ability is usable again once the focus is spent");
+        focusAbility.doAbility(hero, null);
+        focus = hero.buff(MonkEnergy.MonkAbility.Focus.FocusBuff.class);
+        check(focus != null && !focus.fromMeal, "the monk's own focus keeps the monk description");
+    }
+
     public static void main(String[] args) throws Exception {
         com.badlogic.gdx.utils.GdxNativesLoader.load();
         new com.watabou.noosa.Game(com.watabou.noosa.Scene.class, null);
@@ -542,9 +606,10 @@ public class ClassFeaturesRegression {
         searching();
         clericDamage();
         championAttacks();
+		mealTalents();
 		experimentalMaskClassItems();
         monkEquipment();
         monkEnergy();
-        System.out.println("PASS: class charging, hunger, stealth, cleric damage, champion strikes, monk slots and energy");
+        System.out.println("PASS: class charging, hunger, stealth, cleric damage, champion strikes, meal talents, monk slots and energy");
     }
 }

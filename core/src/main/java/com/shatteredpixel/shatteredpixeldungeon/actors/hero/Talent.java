@@ -682,18 +682,21 @@ public enum Talent {
 			Buff.prolong( hero, Haste.class, 0.67f+hero.pointsInTalent(INVIGORATING_MEAL));
 		}
 		if (hero.hasTalent(STRENGTHENING_MEAL)){
-			//3 bonus physical damage for next 2/3 attacks
-			Buff.affect( hero, PhysicalEmpower.class).set(3, 1 + hero.pointsInTalent(STRENGTHENING_MEAL));
+			if (hero.heroClass == HeroClass.DUELIST){
+				//0.67 weapon charge at +1, 1 at +2
+				Buff.affect( hero, MeleeWeapon.Charger.class).gainCharge(
+						hero.pointsInTalent(STRENGTHENING_MEAL) == 1 ? 0.67f : 1f);
+			} else {
+				//for other classes this keeps the lvl/3 / lvl/2 bonus dmg that focused meal used to give them
+				Buff.affect( hero, PhysicalEmpower.class).set(Math.round(hero.lvl / (4f - hero.pointsInTalent(STRENGTHENING_MEAL))), 1);
+			}
 		}
 		if (hero.hasTalent(FOCUSED_MEAL)){
-			if (hero.heroClass == HeroClass.DUELIST){
-				//75%/100% chance for a moment of focus
-				if (Random.Float() < 0.5f + 0.25f*hero.pointsInTalent(FOCUSED_MEAL)){
-					Buff.affect( hero, MonkEnergy.MonkAbility.Focus.FocusBuff.class );
-				}
-			} else {
-				// lvl/3 / lvl/2 bonus dmg on next hit for other classes
-				Buff.affect( hero, PhysicalEmpower.class).set(Math.round(hero.lvl / (4f - hero.pointsInTalent(FOCUSED_MEAL))), 1);
+			//75%/100% chance for a moment of focus, for any class
+			if (Random.Float() < 0.5f + 0.25f*hero.pointsInTalent(FOCUSED_MEAL)){
+				//the same buff the monk's ability gives, so the two sources can never be stacked.
+				//The flag only swaps in a description that names this talent as the source
+				Buff.affect( hero, MonkEnergy.MonkAbility.Focus.FocusBuff.class ).fromMeal = true;
 			}
 		}
 		if (hero.hasTalent(SATIATED_SPELLS)){
@@ -1200,12 +1203,12 @@ public enum Talent {
 		tracker.onHeroAttack();
 	}
 
-	//交叉火力：友方单位每次攻击敌方单位（无论是否命中）都会叠加1层
-	public static void onCrossfireAllyAttack(){
+	//交叉火力：除英雄外的任何单位每次攻击敌方单位（无论是否命中）都会叠加1层
+	public static void onCrossfireOtherAttack(){
 		if (Dungeon.hero == null || !Dungeon.hero.hasTalent(CROSSFIRE)) return;
 		CrossfireTracker tracker = Dungeon.hero.buff(CrossfireTracker.class);
 		if (tracker == null) tracker = Buff.affect(Dungeon.hero, CrossfireTracker.class);
-		tracker.onAllyAttack();
+		tracker.onOtherAttack();
 	}
 
 	//处决等同于触发一次死神附魔，可以对boss使用（boss按死神附魔抗性结算）
@@ -1255,8 +1258,8 @@ public enum Talent {
 			}
 		}
 
-		//友方单位攻击敌方单位的动作做出（无论是否命中）：叠1层
-		public void onAllyAttack() {
+		//除英雄外的单位攻击敌方单位的动作做出（无论是否命中）：叠1层
+		public void onOtherAttack() {
 			if (stacks > 0){
 				stacks++;
 				BuffIndicator.refreshHero();

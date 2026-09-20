@@ -2502,6 +2502,10 @@ public class Hero extends Char {
 					if (followupHit && wasEnemy) {
 						Buff.affect(this, Sai.ComboStrikeTracker.class).addHit(target);
 					}
+					//a follow-up kill counts as an ability kill, so weapon recharging and lethal haste can trigger
+					if (followupHit && !target.isAlive()){
+						MeleeWeapon.onAbilityKill(this, target);
+					}
 				} finally {
 					belongings.abilityWeapon = abilityWeapon;
 					secondaryAttack = false;
