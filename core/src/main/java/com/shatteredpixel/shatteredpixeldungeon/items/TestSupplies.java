@@ -13,8 +13,6 @@ import com.watabou.utils.Reflection;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /** Unlimited supplies for explicitly enabled test starts. Never randomly generated. */
 public class TestSupplies extends Item {
@@ -57,11 +55,24 @@ public class TestSupplies extends Item {
 		choose(category.title(), items(category), type -> Messages.get(type, "name"), page,
 				type -> configure(hero, category, type), () -> showCategories(hero));
 	}
-	private <T> void choose(String title, List<T> entries, Function<T, String> label, int page,
-	                       Consumer<T> select, Runnable back) {
+	/**
+	 * Renders one entry of a list. This exists instead of java.util.function.Function
+	 * because the iOS runtime has no java.util.function package, so a Function cannot
+	 * link there and the app dies as soon as a test start is used.
+	 */
+	public interface Label<T> { String label(T entry); }
+
+	/**
+	 * Acts on the entry the player picked. Replaces java.util.function.Consumer for
+	 * the same reason as {@link Label}.
+	 */
+	public interface Select<T> { void select(T entry); }
+
+	private <T> void choose(String title, List<T> entries, Label<T> label, int page,
+	                       Select<T> select, Runnable back) {
 		int start = page * PAGE_SIZE, end = Math.min(start + PAGE_SIZE, entries.size());
 		ArrayList<String> options = new ArrayList<>();
-		for (int i = start; i < end; i++) options.add(label.apply(entries.get(i)));
+		for (int i = start; i < end; i++) options.add(label.label(entries.get(i)));
 		int previous = -1, next = -1;
 		if (page > 0) { previous = options.size(); options.add(Messages.get(this, "previous")); }
 		if (end < entries.size()) { next = options.size(); options.add(Messages.get(this, "next")); }
@@ -74,7 +85,7 @@ public class TestSupplies extends Item {
 				if (index == prevIndex) choose(title, entries, label, page - 1, select, back);
 				else if (index == nextIndex) choose(title, entries, label, page + 1, select, back);
 				else if (index == backIndex) back.run();
-				else select.accept(entries.get(start + index));
+				else select.select(entries.get(start + index));
 			}
 		});
 	}
