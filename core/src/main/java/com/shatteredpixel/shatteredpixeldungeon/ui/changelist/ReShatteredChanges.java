@@ -41,18 +41,12 @@ public class ReShatteredChanges {
 		changes.hardlight(Window.TITLE_COLOR);
 		changeInfos.add(changes);
 
-		changes = new ChangeInfo("新内容", false, null);
-		changes.hardlight(Window.TITLE_COLOR);
-		changeInfos.add(changes);
-
-
-
 		changes = new ChangeInfo("改动", false, null);
 		changes.hardlight(CharSprite.WARNING);
 		changeInfos.add(changes);
 
 		changes.addButton(new ChangeButton(ChangeIcons.V20_DUELIST_CLOTH,"决斗家调整",
-				"\n-专注一餐改为概率提供凝神。\n-武器充能改为武技击杀敌人时回复一定量的武技充能。\n-复合损伤改为增加追击的伤害，而非处决。\n-调整武僧空振，以适配无武器栏。\n-阴阳调和改为直接返还消耗。"));
+				"\n-现在强健一餐会回复武技充能，而非提供武器伤害。\n-专注一餐改为概率提供凝神。\n-武器充能改为武技击杀敌人时回复一定量的武技充能。\n-复合损伤改为增加追击的伤害，而非处决。\n-调整武僧空振，以适配无武器栏。\n-阴阳调和改为直接返还消耗。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V080_DM300,"落石逻辑修改",
 				"\n现在DM300与矿洞豺狼任务中的落石不会选中不可达格，除非玩家的位置非常糟糕。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V061_BUGFIX,"bug修复",
@@ -64,8 +58,6 @@ public class ReShatteredChanges {
 
 		changes.addButton(new ChangeButton(ChangeIcons.V035_WARRIOR_HEROARM, "狂战士",
 				"\n-削弱了狂战士在狂暴状态下的移速加成，降低了愤怒状态下的伤害倍率。\n-下调了怒气导魔的强度倍率。"));
-
-
 
 	}
 
@@ -82,7 +74,7 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V21_SHOPKEEPER, "订购",
 				"\n新增商店订购功能，现在可以在商店处订购额外的物资。订购的物资没有全部购买，或是使用其他方法取得订购物品，在清空订购物品后会触发特殊对话并取消下一次的订购。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V010_VOID_WALKER, "公共天赋",
-				"\n新增公共天赋池，使用蜕变密卷时额外抽取两个属于公共天赋池的天赋。\n-振奋一餐：进食冻结周围时间。\n-多重存在：操纵镜像的行为，并获得它们的视野。\n-逃脱计划：可以与一名敌人互换位置。\n-虚空行者：暂时不掉下悬崖。\n-魔能超载：无视充能限制使用法杖神器。\n-野蛮寄生：种子可以在生物上发芽生效。\n-扭曲现实：唯心的改写现实，交换两种药剂或卷轴的效果。\n-交叉火力：大幅增加友军伤害。\n-隐藏技：处决敌人。\n-火力倾泻：法杖与投掷武器不消耗时间。"));
+				"\n新增公共天赋池，使用蜕变密卷时额外抽取两个属于公共天赋池的天赋。\n-振奋一餐：进食冻结周围时间。\n-多重存在：操纵镜像的行为，并获得它们的视野。\n-逃脱计划：可以与一名敌人互换位置。\n-虚空行者：暂时不掉下悬崖。\n-魔能超载：无视充能限制使用法杖神器。\n-野蛮寄生：种子可以在生物上发芽生效。\n-扭曲现实：唯心的改写现实，交换两种药剂或卷轴的效果。\n-交叉火力：大幅增加其余单位对敌方的伤害。\n-隐藏技：处决敌人。\n-火力倾泻：法杖与投掷武器不消耗时间。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V064_CHALLENGES, "新挑战",
 				"\n新增一个陷阱相关挑战，自然生成的陷阱数量翻倍，半数隐藏陷阱只会在第二次触发时触发，探明后则会正常触发。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V050_STAIRS, "隐藏房间",
