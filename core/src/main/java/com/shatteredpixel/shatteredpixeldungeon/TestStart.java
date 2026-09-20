@@ -28,14 +28,13 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 
-import java.util.function.Supplier;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.TestSupplies;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.MedusaEye;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WornDartTrap;
 
 /**
- * Compile-time test start configuration.
+ * Test start configuration.
  * <p>
  * When {@link #ENABLED} is true, new games use the configured depth and stats
  * and receive a reusable, categorized test-supplies generator.
@@ -44,10 +43,13 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WornDartTrap;
 public class TestStart {
 
 	/**
-	 * Set to true to enable the test start point. Remember to set this back
-	 * to false before building a release package.
+	 * Whether the test start point is enabled. Decided by the build instead of
+	 * being edited by hand: it is false for every packaging task (assemble*,
+	 * createIPA, portableZip, jpackage, ...) and true for local run tasks such
+	 * as desktop:debug and the ios launch* tasks. Pass -PtestStart=true/false to
+	 * force a value. See core/build.gradle.
 	 */
-	public static final boolean ENABLED = false;
+	public static final boolean ENABLED = TestStartConfig.enabled();
 	/**
 	 * Starting depth when test start is enabled.
 	 */
@@ -107,12 +109,23 @@ public class TestStart {
 
 	}
 
+	/**
+	 * Creates a mob or trap for a test spawn. This exists instead of
+	 * java.util.function.Supplier because the iOS runtime has no
+	 * java.util.function package, so a Supplier cannot link there and the app
+	 * dies as soon as a test start is used. Constructor references such as
+	 * MedusaEye::new work with this interface just as they did with Supplier.
+	 */
+	public interface Factory<T> {
+		T create();
+	}
+
 	/** Returns the number placed; stops when no suitable empty floor remains. */
-	public static int spawnMobs(Level level, int depth, Supplier<? extends Mob> factory, int count) {
+	public static int spawnMobs(Level level, int depth, Factory<? extends Mob> factory, int count) {
 		if (!ENABLED || Dungeon.branch != 0 || Dungeon.depth != depth) return 0;
 		int placed = 0;
 		for (; placed < count; placed++) {
-			Mob mob = factory.get();
+			Mob mob = factory.create();
 			int cell = emptyCell(level, Char.hasProp(mob, Char.Property.LARGE));
 			if (cell == -1) break;
 			mob.pos = cell;
@@ -122,14 +135,14 @@ public class TestStart {
 	}
 
 	/** Returns the number placed; traps that cannot be hidden remain visible. */
-	public static int spawnTraps(Level level, int depth, Supplier<? extends Trap> factory,
+	public static int spawnTraps(Level level, int depth, Factory<? extends Trap> factory,
 	                             int count, boolean hidden) {
 		if (!ENABLED || Dungeon.branch != 0 || Dungeon.depth != depth) return 0;
 		int placed = 0;
 		for (; placed < count; placed++) {
 			int cell = emptyCell(level, false);
 			if (cell == -1) break;
-			Trap trap = factory.get();
+			Trap trap = factory.create();
 			trap.visible = !hidden || !trap.canBeHidden;
 			Level.set(cell, trap.visible ? Terrain.TRAP : Terrain.SECRET_TRAP, level);
 			// Generation has no active Dungeon.level or GameScene yet.
