@@ -102,6 +102,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -332,8 +333,15 @@ public class Dungeon {
 
 	public static void clearTemporaryMapKnowledgeOnDeath() {
 		if (branch != 0 || entireDungeonMapped) return;
-		regionMappedLevels.removeIf(mappedDepth -> mappedDepth == depth
-				|| !levelHasBeenGenerated(mappedDepth, 0));
+		//no lambdas or removeIf here, the iOS runtime has no java.util.function package,
+		//so this crashes the app at the exact moment an unblessed ankh is used
+		Iterator<Integer> mapped = regionMappedLevels.iterator();
+		while (mapped.hasNext()){
+			int mappedDepth = mapped.next();
+			if (mappedDepth == depth || !levelHasBeenGenerated(mappedDepth, 0)){
+				mapped.remove();
+			}
+		}
 	}
 
 	public static boolean hasMapKnowledge( int depth ) {
