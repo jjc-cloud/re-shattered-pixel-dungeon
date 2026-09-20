@@ -470,7 +470,7 @@ public class PublicTalentsRegression {
 		target.HP = target.HT = 100;
 		Actor.add(target);
 
-		//+1按 投掷→法杖→符石 顺序叠层，顺序不符不叠层
+		//+1按 投掷→法杖→符石 顺序叠层，顺序不符的行动会清空已有进度
 		Talent.onExecutionStack(hero, Talent.EXEC_COND_WAND);
 		Talent.PerfectExecutionTracker tracker = hero.buff(Talent.PerfectExecutionTracker.class);
 		check(tracker != null && tracker.conds == 0, "out of order condition does not stack");
@@ -478,7 +478,9 @@ public class PublicTalentsRegression {
 		Talent.onExecutionStack(hero, Talent.EXEC_COND_THROWN);
 		check(tracker.conds == Talent.EXEC_COND_THROWN, "thrown condition recorded first");
 		Talent.onExecutionStack(hero, Talent.EXEC_COND_RUNE);
-		check(tracker.conds == Talent.EXEC_COND_THROWN, "rune before wand does not stack at rank one");
+		check(tracker.conds == 0, "rune before wand clears the chain at rank one");
+		Talent.onExecutionStack(hero, Talent.EXEC_COND_THROWN);
+		check(tracker.conds == Talent.EXEC_COND_THROWN, "chain restarts from the first condition");
 		Talent.onExecutionStack(hero, Talent.EXEC_COND_WAND);
 		check(tracker.conds == Talent.EXEC_COND_ALL - Talent.EXEC_COND_RUNE, "two conditions stack in order");
 		Talent.onExecutionStack(hero, Talent.EXEC_COND_RUNE);
@@ -533,11 +535,16 @@ public class PublicTalentsRegression {
 		ally.pos = 314;
 		ally.HP = ally.HT = 100;
 		Actor.add(ally);
+		Char enemy = new Char(){ };
+		enemy.alignment = Char.Alignment.ENEMY;
+		enemy.pos = 315;
+		enemy.HP = enemy.HT = 100;
+		Actor.add(enemy);
 		target.HP = target.HT = 1000;
 
-		//英雄尚未攻击时连段未激活：图标隐藏，友方攻击不叠加、伤害不递增
+		//英雄尚未攻击时连段未激活：图标隐藏，其他单位攻击不叠加、伤害不递增
 		check(cross.icon() == BuffIndicator.NONE, "icon hidden before any attack");
-		cross.onAllyAttack();
+		cross.onOtherAttack();
 		target.damage(10, ally);
 		check(target.HP == 990, "no ramp before hero attacks");
 
@@ -545,28 +552,33 @@ public class PublicTalentsRegression {
 		cross.onHeroAttack();
 		check(cross.stacks == 1 && cross.icon() != BuffIndicator.NONE, "hero attack resets to one visible stack");
 		cross.act(); //英雄行动结束，连段保持
-		//友方攻击动作做出（无论命中）叠加1层，伤害按攻击前已有的层数递增（每层+100%，首次仅吃英雄攻击那1层）
-		cross.onAllyAttack();
+		//其他单位攻击动作做出（无论命中）叠加1层，伤害按攻击前已有的层数递增（每层+100%，首次仅吃英雄攻击那1层）
+		cross.onOtherAttack();
 		check(cross.stacks == 2, "ally attack adds a stack");
 		target.damage(10, ally);
 		check(target.HP == 990 - 20, "first ally hit deals double damage");
-		cross.onAllyAttack();
-		target.damage(10, ally);
-		check(target.HP == 970 - 30, "second ally hit ramps to triple damage");
+		//不限于友军：任何攻击敌方单位的单位都叠加并吃到递增，所以敌人打敌人同样算
+		cross.onOtherAttack();
+		check(cross.stacks == 3, "enemy attacking an enemy adds a stack");
+		target.damage(10, enemy);
+		check(target.HP == 970 - 30, "enemy's own hit on an enemy ramps to triple damage");
+		//英雄自己造成的伤害不吃递增
+		target.damage(10, hero);
+		check(target.HP == 940 - 10, "hero's own damage is never ramped");
 
 		//英雄再次攻击：重置为一层重新开始，不会一直叠加
 		cross.onHeroAttack();
 		cross.act();
 		check(cross.stacks == 1, "hero attack restarts from one stack");
-		cross.onAllyAttack();
+		cross.onOtherAttack();
 		target.damage(10, ally);
-		check(target.HP == 940 - 20, "ramp restarts from double after hero attack");
+		check(target.HP == 930 - 20, "ramp restarts from double after hero attack");
 
-		//英雄执行非攻击操作：连段结束，图标隐藏，友方伤害回到一倍
+		//英雄执行非攻击操作：连段结束，图标隐藏，其他单位伤害回到一倍
 		cross.act();
 		check(cross.stacks == 0 && cross.icon() == BuffIndicator.NONE, "non attack action ends the chain");
 		target.damage(10, ally);
-		check(target.HP == 920 - 10, "ally damage returns to normal after hero acts");
+		check(target.HP == 910 - 10, "other units' damage returns to normal after hero acts");
 	}
 
 	private static void setup(){

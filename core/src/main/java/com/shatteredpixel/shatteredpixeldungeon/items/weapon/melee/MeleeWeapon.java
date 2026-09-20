@@ -221,6 +221,7 @@ public class MeleeWeapon extends Weapon {
 		if (killed.alignment == Char.Alignment.ENEMY && hero.hasTalent(Talent.WEAPON_RECHARGING)){
 			//0.2 charge at +1, 0.4 at +2
 			Buff.affect(hero, Charger.class).gainCharge(0.2f * hero.pointsInTalent(Talent.WEAPON_RECHARGING));
+			ScrollOfRecharging.charge(hero);
 		}
 	}
 

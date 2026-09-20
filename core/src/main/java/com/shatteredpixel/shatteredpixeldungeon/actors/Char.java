@@ -389,13 +389,12 @@ public abstract class Char extends Actor {
 		if (enemy == null) return false;
 
 		//交叉火力：英雄的近战/投掷攻击动作做出即触发，无论是否命中（法杖攻击在Wand处触发）；
-		//友方单位每次攻击敌方单位也会叠加1层
+		//除英雄外的任何单位每次攻击敌方单位也会叠加1层
 		if (this == Dungeon.hero) {
 			Talent.onCrossfireHeroAttack();
 		} else if (Dungeon.hero != null
-				&& alignment == Alignment.ALLY
 				&& enemy.alignment == Alignment.ENEMY){
-			Talent.onCrossfireAllyAttack();
+			Talent.onCrossfireOtherAttack();
 		}
 
 		boolean visibleFight = Dungeon.level.heroFOV[pos] || Dungeon.level.heroFOV[enemy.pos];
@@ -1004,13 +1003,12 @@ public abstract class Char extends Actor {
 			Splash.at( sprite.center(), -PointF.PI / 2, PointF.PI / 6, sprite.blood(), 10 );
 			return;
 		}
-		//交叉火力：连段期间，友方单位对敌方造成的伤害按其攻击前已有的层数递增（每层+100%/+200%），
-		//即首次友方攻击获得1层加成（英雄攻击那层），此后每次递增1层
+		//交叉火力：连段期间，除英雄外的任何单位对敌方造成的伤害按其攻击前已有的层数递增（每层+100%/+200%），
+		//即首次该类攻击获得1层加成（英雄攻击那层），此后每次递增1层
 		if (dmg > 0
 				&& this != Dungeon.hero
 				&& alignment == Alignment.ENEMY
 				&& src instanceof Char && src != Dungeon.hero && src != this
-				&& ((Char) src).alignment == Alignment.ALLY
 				&& Dungeon.hero != null){
 			Talent.CrossfireTracker crossfire = Dungeon.hero.buff(Talent.CrossfireTracker.class);
 			if (crossfire != null && crossfire.stacks > 0 && Dungeon.hero.hasTalent(Talent.CROSSFIRE)){
