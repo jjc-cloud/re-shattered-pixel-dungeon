@@ -804,7 +804,8 @@ public class Armor extends EquipableItem {
 	}
 
 	private Glyph carriedGlyph(Char owner) {
-		if (seal != null && seal.canTransferGlyph() && owner instanceof Hero && isEquipped((Hero) owner)) {
+		//Dungeon.hero is still null while the game bundle is being loaded, so hero talents can't be checked then
+		if (seal != null && Dungeon.hero != null && seal.canTransferGlyph() && owner instanceof Hero && isEquipped((Hero) owner)) {
 			return seal.getGlyph();
 		}
 		return null;
