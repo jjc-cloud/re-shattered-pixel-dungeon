@@ -67,10 +67,18 @@ abstract public class KindOfWeapon extends EquipableItem {
 	public void execute(Hero hero, String action) {
 		if (hero.hasSecondWeaponSlot() && action.equals(AC_EQUIP)){
 			usesTargeting = false;
-			String primaryName = Messages.titleCase(hero.belongings.weapon != null ? hero.belongings.weapon.trueName() : Messages.get(KindOfWeapon.class, "empty"));
-			String secondaryName = Messages.titleCase(hero.belongings.secondWep != null ? hero.belongings.secondWep.trueName() : Messages.get(KindOfWeapon.class, "empty"));
-			if (primaryName.length() > 18) primaryName = primaryName.substring(0, 15) + "...";
-			if (secondaryName.length() > 18) secondaryName = secondaryName.substring(0, 15) + "...";
+			KindOfWeapon primary = hero.belongings.weapon;
+			KindOfWeapon secondary = hero.belongings.secondWep;
+			String primaryName = Messages.titleCase(primary != null ? primary.title() : Messages.get(KindOfWeapon.class, "empty"));
+			String secondaryName = Messages.titleCase(secondary != null ? secondary.title() : Messages.get(KindOfWeapon.class, "empty"));
+			if (primaryName.length() > 18) {
+				String levelSuffix = primary != null && primary.visiblyUpgraded() != 0 ? Messages.format(" %+d", primary.visiblyUpgraded()) : "";
+				primaryName = primaryName.substring(0, 15 - levelSuffix.length()) + "..." + levelSuffix;
+			}
+			if (secondaryName.length() > 18) {
+				String levelSuffix = secondary != null && secondary.visiblyUpgraded() != 0 ? Messages.format(" %+d", secondary.visiblyUpgraded()) : "";
+				secondaryName = secondaryName.substring(0, 15 - levelSuffix.length()) + "..." + levelSuffix;
+			}
 			GameScene.show(new WndOptions(
 					new ItemSprite(this),
 					Messages.titleCase(name()),
