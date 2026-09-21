@@ -64,6 +64,7 @@ import com.watabou.utils.PlatformSupport;
 import com.watabou.utils.Random;
 import com.watabou.utils.RectF;
 import com.watabou.utils.Signal;
+import com.badlogic.gdx.Gdx;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -608,7 +609,7 @@ if (error != null) {
 
         errorMsg = msg.toString();
     }
-
+	Gdx.app.getClipboard().setContents(errorMsg);
     add(new WndError(errorMsg) {
         @Override
         public void onBackPressed() {
