@@ -2,6 +2,7 @@ package com.shatteredpixel.shatteredpixeldungeon;
 
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
@@ -9,6 +10,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Warlock;
 import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClothArmor;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs.Brimstone;
 import com.watabou.utils.Bundle;
 
 /** Standalone mechanics checks, run from the repository root. */
@@ -178,6 +180,15 @@ public class WarriorSealRegression {
 		hero.HP = 100;
 		hero.damage(10, enemy);
 		check(hero.HP == 90, "native Warrior does not gain the metamorphosis damage reduction");
+		//loading the game bundle consults glyph effects (via Char.isImmune) before Dungeon.hero is assigned
+		hero = hero(HeroSubClass.GLADIATOR);
+		hero.talents.get(1).put(Talent.RUNIC_TRANSFERENCE, 2);
+		hero.belongings.armor.checkSeal().setGlyph(new Brimstone());
+		check(hero.isImmune(Burning.class), "seal glyph applies once it is transferred");
+		Dungeon.hero = null;
+		check(!hero.isImmune(Burning.class), "loading a hero bundle reads the seal glyph before Dungeon.hero exists");
+		Dungeon.hero = hero;
+		check(hero.isImmune(Burning.class), "seal glyph applies again after the loaded hero is assigned");
 		System.out.println("PASS: seal forms, pre-hit shields, cooldowns, actual HP thresholds and saved guard");
 	}
 
