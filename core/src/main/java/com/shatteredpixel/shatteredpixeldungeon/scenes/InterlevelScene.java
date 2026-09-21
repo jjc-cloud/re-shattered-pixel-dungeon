@@ -108,7 +108,7 @@ public class InterlevelScene extends PixelScene {
 	private IconButton btnHideStory;
 	
 	private static Thread thread;
-	private static Exception error = null;
+	private static Throwable error = null;
 	private float waitingTime;
 
 	public static int lastRegion = -1;
@@ -445,7 +445,7 @@ public class InterlevelScene extends PixelScene {
 								break;
 						}
 						
-					} catch (Exception e) {
+					} catch (Throwable e) {
 						
 						error = e;
 						
@@ -566,8 +566,48 @@ public class InterlevelScene extends PixelScene {
 				else if (error.getMessage() != null &&
 						error.getMessage().equals("old save")) errorMsg = Messages.get(this, "io_error");
 
-				else throw new RuntimeException("fatal error occurred while moving between floors. " +
-							"Seed:" + Dungeon.seed + " depth:" + Dungeon.depth, error);
+				else {
+    Throwable captured = error;
+    error = null;
+
+    StringBuilder msg = new StringBuilder();
+
+    msg.append("Seed: ").append(Dungeon.seed)
+            .append("\nDepth: ").append(Dungeon.depth)
+            .append("\n\n");
+
+    Throwable t = captured;
+    int causeCount = 0;
+
+    while (t != null && causeCount++ < 5) {
+
+        if (causeCount > 1) {
+            msg.append("\n\nCaused by:\n");
+        }
+
+        msg.append(t.getClass().getName());
+
+        if (t.getMessage() != null) {
+            msg.append(": ").append(t.getMessage());
+        }
+
+        StackTraceElement[] trace = t.getStackTrace();
+
+        for (int i = 0; i < trace.length && i < 30; i++) {
+            msg.append("\n    at ").append(trace[i].toString());
+        }
+
+        t = t.getCause();
+    }
+
+    add(new WndError(msg.toString()) {
+        @Override
+        public void onBackPressed() {
+            super.onBackPressed();
+            Game.switchScene(StartScene.class);
+        }
+    });
+}
 
 				add( new WndError( errorMsg ) {
 					public void onBackPressed() {
