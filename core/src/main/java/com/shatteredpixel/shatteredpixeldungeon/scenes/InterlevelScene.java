@@ -559,65 +559,67 @@ public class InterlevelScene extends PixelScene {
 
 			}
 
-			if (error != null) {
-				String errorMsg;
-				if (error instanceof FileNotFoundException)     errorMsg = Messages.get(this, "file_not_found");
-				else if (error instanceof IOException)          errorMsg = Messages.get(this, "io_error");
-				else if (error.getMessage() != null &&
-						error.getMessage().equals("old save")) errorMsg = Messages.get(this, "io_error");
+if (error != null) {
 
-				else {
     Throwable captured = error;
-    error = null;
+    String errorMsg;
 
-    StringBuilder msg = new StringBuilder();
+    if (captured instanceof FileNotFoundException) {
+        errorMsg = Messages.get(this, "file_not_found");
 
-    msg.append("Seed: ").append(Dungeon.seed)
-            .append("\nDepth: ").append(Dungeon.depth)
-            .append("\n\n");
+    } else if (captured instanceof IOException) {
+        errorMsg = Messages.get(this, "io_error");
 
-    Throwable t = captured;
-    int causeCount = 0;
+    } else if (captured.getMessage() != null
+            && captured.getMessage().equals("old save")) {
+        errorMsg = Messages.get(this, "io_error");
 
-    while (t != null && causeCount++ < 5) {
+    } else {
 
-        if (causeCount > 1) {
-            msg.append("\n\nCaused by:\n");
+        StringBuilder msg = new StringBuilder();
+
+        msg.append("Seed: ").append(Dungeon.seed)
+                .append("\nDepth: ").append(Dungeon.depth)
+                .append("\n\n");
+
+        Throwable t = captured;
+        int causeCount = 0;
+
+        while (t != null && causeCount++ < 5) {
+
+            if (causeCount > 1) {
+                msg.append("\n\nCaused by:\n");
+            }
+
+            msg.append(t.getClass().getName());
+
+            if (t.getMessage() != null) {
+                msg.append(": ").append(t.getMessage());
+            }
+
+            StackTraceElement[] trace = t.getStackTrace();
+
+            for (int i = 0; i < trace.length && i < 30; i++) {
+                msg.append("\n    at ").append(trace[i].toString());
+            }
+
+            t = t.getCause();
         }
 
-        msg.append(t.getClass().getName());
-
-        if (t.getMessage() != null) {
-            msg.append(": ").append(t.getMessage());
-        }
-
-        StackTraceElement[] trace = t.getStackTrace();
-
-        for (int i = 0; i < trace.length && i < 30; i++) {
-            msg.append("\n    at ").append(trace[i].toString());
-        }
-
-        t = t.getCause();
+        errorMsg = msg.toString();
     }
 
-    add(new WndError(msg.toString()) {
+    add(new WndError(errorMsg) {
         @Override
         public void onBackPressed() {
             super.onBackPressed();
             Game.switchScene(StartScene.class);
         }
     });
-}
 
-				add( new WndError( errorMsg ) {
-					public void onBackPressed() {
-						super.onBackPressed();
-						Game.switchScene( StartScene.class );
-					}
-				} );
-				thread = null;
-				error = null;
-			} else if (thread != null && (int)waitingTime == 10){
+    thread = null;
+    error = null;
+}else if (thread != null && (int)waitingTime == 10){
 				waitingTime = 11f;
 				String s = "";
 				for (StackTraceElement t : thread.getStackTrace()){
