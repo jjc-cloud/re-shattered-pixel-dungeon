@@ -1,0 +1,18 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "shatteredpd": {
+      "type": "local",
+      "command": [
+        "D:\\desktop\\RSPD\\shatteredpd-mcp\\.venv\\Scripts\\python.exe",
+        "-m",
+        "shatteredpd_mcp.server",
+        "serve"
+      ],
+      "enabled": true,
+      "environment": {
+        "SHATTEREDPD_REPO": "D:\\desktop\\RSPD\\re-shattered-pixel-dungeon"
+      }
+    }
+  }
+}
