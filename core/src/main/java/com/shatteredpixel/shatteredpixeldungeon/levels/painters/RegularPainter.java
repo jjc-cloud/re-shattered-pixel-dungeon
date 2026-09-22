@@ -428,10 +428,6 @@ public abstract class RegularPainter extends Painter {
 	}
 	
 	protected void paintTraps( Level l, ArrayList<Room> rooms ) {
-		//outdated design challenge: 100% more traps are placed
-		if (Dungeon.isChallenged(Challenges.OUTDATED_DESIGN)){
-			nTraps *= 2;
-		}
 
 		ArrayList<Integer> validCells = new ArrayList<>();
 		
@@ -477,7 +473,15 @@ public abstract class RegularPainter extends Painter {
 		float revealInc = 0;
 
 		//5x traps on traps level feeling, but the extra traps are all visible
-		for (int i = 0; i < (l.feeling == Level.Feeling.TRAPS ? 5*nTraps : nTraps); i++) {
+		int baseTraps = (l.feeling == Level.Feeling.TRAPS ? 5*nTraps : nTraps);
+
+		//outdated design challenge: the hidden traps are doubled. That happens here rather than by
+		//inflating nTraps up front, so that the traps which are visible on generation stay untouched,
+		//and revealing effects (e.g. the trap mechanism trinket) remain a way to mitigate the challenge.
+		int hiddenTraps = 0;
+		int outdatedExtras = 0;
+
+		for (int i = 0; i < baseTraps + outdatedExtras; i++) {
 
 			Trap trap = Reflection.newInstance(trapClasses[Random.chances( trapChances )]);
 
@@ -491,11 +495,17 @@ public abstract class RegularPainter extends Painter {
 			validCells.remove(trapPos);
 			validNonHallways.remove(trapPos);
 
-			revealInc += revealedChance;
-			if (i >= nTraps || revealInc >= 1) {
-				trap.reveal();
-				revealInc--;
+			if (i < baseTraps){
+				revealInc += revealedChance;
+				if (i >= nTraps || revealInc >= 1) {
+					trap.reveal();
+					revealInc--;
+				} else {
+					trap.hide();
+					hiddenTraps++;
+				}
 			} else {
+				//outdated design challenge: the extra traps are always hidden
 				trap.hide();
 			}
 
@@ -505,6 +515,12 @@ public abstract class RegularPainter extends Painter {
 			l.setTrap( trap, trapPos );
 			//some traps will not be hidden
 			l.map[trapPos] = trap.visible ? Terrain.TRAP : Terrain.SECRET_TRAP;
+
+			//outdated design challenge: the visible traps are now settled, so the hidden ones can be
+			//doubled. Capped by the remaining cells, as the base traps can already fill the whole level
+			if (i == baseTraps - 1 && Dungeon.isChallenged(Challenges.OUTDATED_DESIGN)){
+				outdatedExtras = Math.min(hiddenTraps, validCells.size());
+			}
 		}
 	}
 	

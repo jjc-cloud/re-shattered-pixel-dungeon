@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.hero;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Bones;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.GamesInProgress;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
@@ -2713,6 +2714,13 @@ public class Hero extends Char {
 							// Preserve the pre-v0.6.2 rogue awareness advantage without weakening modern trap detection.
 							double awarenessLevel = (1 + Math.min(lvl, 9)) * 0.5;
 							chance = Math.max(0f, chance) + (float) (Math.pow(0.90, awarenessLevel) - Math.pow(0.85, awarenessLevel));
+						}
+
+						//outdated design challenge: hidden traps are never noticed passively, only found by
+						//an intentional search. Hidden doors are unaffected, so this stays after the rogue bonus
+						if (!intentional && !foresight && Dungeon.isChallenged(Challenges.OUTDATED_DESIGN)
+								&& Dungeon.level.map[curr] == Terrain.SECRET_TRAP){
+							chance = 0f;
 						}
 
 						//don't want to let the player search though hidden doors in tutorial
