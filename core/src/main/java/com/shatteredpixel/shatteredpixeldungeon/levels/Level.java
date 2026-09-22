@@ -1073,7 +1073,11 @@ public abstract class Level implements Bundlable {
 		}
 
 		//we have to get this far as grass placement has RNG implications in levelgen
-		if (Dungeon.isChallenged(Challenges.NO_HERBALISM)){
+		//barren land challenge: only the plants that have a seed of their own are removed. The seed
+		//pool is the list of seeds which can actually be found in the dungeon, so the special plants
+		//which never drop a seed (blandfruit bush, dewcatcher, seedpod) are still generated
+		if (Dungeon.isChallenged(Challenges.NO_HERBALISM)
+				&& Arrays.asList(Generator.Category.SEED.classes).contains(seed.getClass())){
 			return null;
 		}
 		
