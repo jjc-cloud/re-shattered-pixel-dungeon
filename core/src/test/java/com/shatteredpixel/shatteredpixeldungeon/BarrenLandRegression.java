@@ -1,10 +1,13 @@
 package com.shatteredpixel.shatteredpixeldungeon;
 
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Regrowth;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
+import com.shatteredpixel.shatteredpixeldungeon.items.bombs.RegrowthBomb;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfRegrowth;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.SewerLevel;
@@ -205,6 +208,56 @@ public class BarrenLandRegression {
 				"the cells no longer spent on plants go to the grass: " + Arrays.toString(on) + " " + Arrays.toString(off));
 	}
 
+	private static final long BOMB_SEED = 24681357L;
+
+	/** @return {plants, seedless specials, regrowth volume} after the 再生炸弹 explodes */
+	private static int[] bomb(boolean challenged) {
+		Level previousLevel = Dungeon.level;
+		int previousChallenges = Dungeon.challenges;
+		try {
+			Dungeon.challenges = challenged ? CHALLENGE : 0;
+			Level level = emptyLevel(12);
+			Dungeon.level = level;
+
+			Random.pushGenerator(BOMB_SEED);
+			try {
+				new RegrowthBomb().explode(6 + 6 * 12);
+			} finally {
+				Random.popGenerator();
+			}
+
+			int plants = 0, seedless = 0;
+			for (Plant plant : level.plants.valueList()) {
+				plants++;
+				if (plant instanceof BlandfruitBush
+						|| plant instanceof WandOfRegrowth.Dewcatcher
+						|| plant instanceof WandOfRegrowth.Seedpod) {
+					seedless++;
+				}
+			}
+			Blob regrowth = level.blobs.get(Regrowth.class);
+			int volume = regrowth == null ? 0 : regrowth.volume;
+
+			System.out.println("regrowth bomb " + (challenged ? "on " : "off") + ": plants=" + plants
+					+ " seedless=" + seedless + " regrowth=" + volume);
+			return new int[]{plants, seedless, volume};
+		} finally {
+			Dungeon.level = previousLevel;
+			Dungeon.challenges = previousChallenges;
+		}
+	}
+
+	private static void bombOnlyGrowsGrass() {
+		int[] on = bomb(true);
+		int[] off = bomb(false);
+
+		check(off[0] >= 1, "the bomb grows plants without the challenge: " + Arrays.toString(off));
+		check(off[1] >= 1, "the bomb grows its seedless special without the challenge: " + Arrays.toString(off));
+		check(on[0] == 0, "the bomb grows no plants under the challenge: " + Arrays.toString(on));
+		check(on[2] > 0 && on[2] == off[2], "the bomb still spreads its regrowth under the challenge: "
+				+ Arrays.toString(on) + " " + Arrays.toString(off));
+	}
+
 	public static void main(String[] args) throws Exception {
 		com.badlogic.gdx.utils.GdxNativesLoader.load();
 		new com.watabou.noosa.Game(com.watabou.noosa.Scene.class, null);
@@ -225,6 +278,7 @@ public class BarrenLandRegression {
 		plantRule();
 		withoutChallenge();
 		wandOnlyGrowsGrass();
-		System.out.println("PASS: 荒芜之地 removes seed plants, keeps the seedless specials, and the wand of regrowth only grows grass");
+		bombOnlyGrowsGrass();
+		System.out.println("PASS: 荒芜之地 removes seed plants, keeps the seedless specials, and the wand of regrowth and regrowth bomb only grow grass");
 	}
 }

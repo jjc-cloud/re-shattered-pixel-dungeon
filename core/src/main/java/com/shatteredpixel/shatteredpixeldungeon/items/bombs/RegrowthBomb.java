@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.bombs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -85,6 +86,13 @@ public class RegrowthBomb extends Bomb {
 				}
 				GameScene.add( Blob.seed( i, 10, Regrowth.class ) );
 			}
+		}
+
+		//barren land challenge: the bomb grows nothing but grass, just like the wand of regrowth. Its
+		//plants would only be removed again by the challenge, and the seedless specials are there for
+		//levelgen's hidden rooms, not for player items
+		if (Dungeon.isChallenged(Challenges.NO_HERBALISM)){
+			return;
 		}
 
 		int plants = Random.chances(new float[]{0, 0, 2, 1});
