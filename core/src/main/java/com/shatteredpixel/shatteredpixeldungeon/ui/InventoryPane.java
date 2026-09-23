@@ -90,10 +90,14 @@ public class InventoryPane extends Component {
 	public static final int WIDTH = 187;
 	public static final int HEIGHT = 82;
 
-	//the chest sits in its own frame to the left of the pane.
+	//the chest sits in its own frame to the left of the pane, fully detached from it.
 	//its content is 5 slots + spill button wide (89px), padded 4px on each side
 	private static final int CHEST_BOX_WIDTH = 97;
 	private static final int CHEST_BOX_HEIGHT = 65;
+	//padding between the chest frame's edge and its contents
+	private static final int CHEST_PAD = 4;
+	//visible gap that separates the chest frame from the pane itself
+	private static final int CHEST_GAP = 4;
 
 	private static final int SLOT_WIDTH = 17;
 	private static final int SLOT_HEIGHT = 24;
@@ -278,14 +282,16 @@ public class InventoryPane extends Component {
 		bg.x = x;
 		bg.y = y;
 		bg.size(width, height);
-		chestBg.x = x - 95;
+		//anchor the chest frame off the pane's left edge so the gap stays visible
+		float chestLeft = x - CHEST_BOX_WIDTH - CHEST_GAP;
+		chestBg.x = chestLeft;
 		chestBg.y = y;
 		chestBg.size(CHEST_BOX_WIDTH, CHEST_BOX_HEIGHT);
-		chestTitle.setPos(x - 91, y + 4);
+		chestTitle.setPos(chestLeft + CHEST_PAD, y + 4);
 		for (int i = 0; i < chestItems.size(); i++) {
-			chestItems.get(i).setRect(x - 91 + i * 18, y + 19, SLOT_WIDTH, SLOT_HEIGHT);
+			chestItems.get(i).setRect(chestLeft + CHEST_PAD + i * 18, y + 19, SLOT_WIDTH, SLOT_HEIGHT);
 		}
-		chestSpill.setRect(x - 91, y + 49, 89, 12);
+		chestSpill.setRect(chestLeft + CHEST_PAD, y + 49, 89, 12);
 
 		float left = x+4;
 		for (int slot = 0; slot < equipped.size(); slot++) {
