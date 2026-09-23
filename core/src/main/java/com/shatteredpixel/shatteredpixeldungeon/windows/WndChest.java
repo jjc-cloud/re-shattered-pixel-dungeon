@@ -60,6 +60,9 @@ public class WndChest extends WndTabbed {
 	public WndChest(ChestSession session) {
 		super();
 		this.session = session;
+		//the window draws no backdrop of its own, so the map stays visible
+		//in the gap between the chest frame and the bag frame
+		chrome.visible = false;
 		desktop = SPDSettings.interfaceSize() == 2;
 		currentBag = Dungeon.hero.belongings.backpack;
 		int slotW = desktop ? 17 : 25;
