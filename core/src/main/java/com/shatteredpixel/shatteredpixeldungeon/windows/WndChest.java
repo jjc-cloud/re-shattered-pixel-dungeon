@@ -1,6 +1,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
 import com.badlogic.gdx.Input;
+import com.shatteredpixel.shatteredpixeldungeon.Chrome;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.SPDAction;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
@@ -25,15 +26,25 @@ import com.watabou.input.GameAction;
 import com.watabou.input.KeyBindings;
 import com.watabou.input.KeyEvent;
 import com.watabou.noosa.Image;
+import com.watabou.noosa.NinePatch;
 
 import java.util.ArrayList;
 
 public class WndChest extends WndTabbed {
 
+	//padding between a section frame's edge and its contents
+	private static final int PAD = 4;
+	//gap between the chest frame and the bag frame
+	private static final int GAP = 4;
+	//vertical space reserved for a section's title line
+	private static final int TITLE_H = 11;
+
 	private final ChestSession session;
 	private final boolean desktop;
 	private Bag currentBag;
 	private RenderedTextBlock bagTitle;
+	private NinePatch chestBg;
+	private NinePatch bagBg;
 	private final ArrayList<InventorySlot> chestSlots = new ArrayList<>();
 	private final ArrayList<InventorySlot> bagSlots = new ArrayList<>();
 	private final ArrayList<InventorySlot> equippedSlots = new ArrayList<>();
@@ -53,23 +64,25 @@ public class WndChest extends WndTabbed {
 		currentBag = Dungeon.hero.belongings.backpack;
 		int slotW = desktop ? 17 : 25;
 		int slotH = desktop ? 24 : 25;
-		int bagX = desktop ? 95 : 0;
-		int bagY = desktop ? 39 : 56;
 		int columns = desktop ? 10 : 5;
-		int width = desktop ? 275 : 129;
-		int height = desktop ? 105 : 176;
+		int rows = (20 + columns - 1) / columns;
+		//a full row of bag slots defines the content width shared by both sections
+		int contentW = columns * (slotW + 1) - 1;
+		int width = contentW + PAD * 2;
+
+		//the chest gets its own frame, stacked on top
+		int chestH = PAD + TITLE_H + slotH + 3 + 12 + PAD;
+		chestBg = Chrome.get(Chrome.Type.TOAST_TR_HEAVY);
+		chestBg.x = 0;
+		chestBg.y = 0;
+		chestBg.size(width, chestH);
+		add(chestBg);
 
 		RenderedTextBlock chestTitle = PixelScene.renderTextBlock(Messages.titleCase(session.title()), 8);
 		chestTitle.hardlight(TITLE_COLOR);
-		chestTitle.maxWidth(desktop ? 89 : width);
-		chestTitle.setPos(0, 0);
+		chestTitle.maxWidth(contentW);
+		chestTitle.setPos(PAD, PAD);
 		add(chestTitle);
-
-		bagTitle = PixelScene.renderTextBlock(Messages.titleCase(currentBag.name()), 8);
-		bagTitle.hardlight(TITLE_COLOR);
-		bagTitle.maxWidth(desktop ? 180 : width);
-		bagTitle.setPos(bagX, desktop ? 0 : 42);
-		add(bagTitle);
 
 		for (int i = 0; i < 5; i++) {
 			InventorySlot slot = new InventorySlot(null) {
@@ -83,18 +96,44 @@ public class WndChest extends WndTabbed {
 					if (session.isMimic()) wakeMimic();
 				}
 			};
-			slot.setRect(i * (slotW + 1), 14, slotW, slotH);
+			slot.setRect(PAD + i * (slotW + 1), PAD + TITLE_H, slotW, slotH);
 			chestSlots.add(slot);
 			add(slot);
 		}
 
+		RedButton spill = new RedButton(Messages.get(this, session.isMimic() ? "wake" : "spill"), 6) {
+			@Override protected void onClick() {
+				spillAll();
+			}
+		};
+		spill.setRect(PAD, PAD + TITLE_H + slotH + 3, contentW, 12);
+		add(spill);
+
+		//the bag gets its own frame, below the chest
+		int bagTop = chestH + GAP;
+		int bagH = PAD + TITLE_H + (desktop ? slotH + 1 : 0) + (rows * slotH + (rows - 1)) + PAD;
+		bagBg = Chrome.get(Chrome.Type.TOAST_TR_HEAVY);
+		bagBg.x = 0;
+		bagBg.y = bagTop;
+		bagBg.size(width, bagH);
+		add(bagBg);
+
+		bagTitle = PixelScene.renderTextBlock(Messages.titleCase(currentBag.name()), 8);
+		bagTitle.hardlight(TITLE_COLOR);
+		bagTitle.maxWidth(contentW);
+		bagTitle.setPos(PAD, bagTop + PAD);
+		add(bagTitle);
+
+		int rowsTop = bagTop + PAD + TITLE_H;
+
 		if (desktop) {
 			for (int i = 0; i < 5; i++) {
 				InventorySlot slot = new InventorySlot(null);
-				slot.setRect(bagX + i * (slotW + 1), 14, slotW, slotH);
+				slot.setRect(PAD + i * (slotW + 1), rowsTop, slotW, slotH);
 				equippedSlots.add(slot);
 				add(slot);
 			}
+			rowsTop += slotH + 1;
 		}
 
 		for (int i = 0; i < 20; i++) {
@@ -107,20 +146,12 @@ public class WndChest extends WndTabbed {
 					}
 				}
 			};
-			slot.setRect(bagX + (i % columns) * (slotW + 1), bagY + (i / columns) * (slotH + 1), slotW, slotH);
+			slot.setRect(PAD + (i % columns) * (slotW + 1), rowsTop + (i / columns) * (slotH + 1), slotW, slotH);
 			bagSlots.add(slot);
 			add(slot);
 		}
 
-		RedButton spill = new RedButton(Messages.get(this, session.isMimic() ? "wake" : "spill"), 6) {
-			@Override protected void onClick() {
-				spillAll();
-			}
-		};
-		spill.setRect(0, desktop ? 91 : 162, desktop ? 89 : width, 12);
-		add(spill);
-
-		resize(width, height);
+		resize(width, bagTop + bagH);
 		int index = 1;
 		for (Bag bag : Dungeon.hero.belongings.getBags()) {
 			if (bag != null) {
