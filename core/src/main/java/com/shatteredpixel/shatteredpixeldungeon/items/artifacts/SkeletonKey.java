@@ -50,6 +50,7 @@ import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.CellSelector;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.windows.ChestSession;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
@@ -286,46 +287,38 @@ public class SkeletonKey extends ChargedArtifact {
 						curUser.busy();
 						return;
 
-					} else if (Dungeon.level.heaps.get(target) != null && Dungeon.level.heaps.get(target).type == Heap.Type.LOCKED_CHEST){
+					} else if (Dungeon.level.heaps.get(target) != null
+							&& Dungeon.level.heaps.get(target).type == Heap.Type.LOCKED_CHEST
+							&& !Dungeon.level.heaps.get(target).opened){
 						if (!canSpendCharge(curUser, 2)) {
 							GLog.i(Messages.get(SkeletonKey.class, "gold_charges"));
 							return;
 						}
 						Sample.INSTANCE.play(Assets.Sounds.UNLOCK);
-						curUser.sprite.operate(target, new Callback() {
-							@Override
-							public void call() {
-								Buff.affect(curUser, KeyReplacementTracker.class).processGoldLockOpened();
-								Dungeon.level.heaps.get(target).open(curUser);
-								spendCharge(2);
-								gainExp(2 + 2);
-								Talent.onArtifactUsed(Dungeon.hero);
-								curUser.spendAndNext(Actor.TICK);
-								curUser.sprite.idle();
-							}
-						});
-						curUser.busy();
+						Buff.affect(curUser, KeyReplacementTracker.class).processGoldLockOpened();
+						Heap chest = Dungeon.level.heaps.get(target);
+						chest.open(curUser);
+						spendCharge(2);
+						gainExp(4);
+						Talent.onArtifactUsed(Dungeon.hero);
+						if (curUser.isAlive()) GameScene.openChest(new ChestSession(chest, true));
 						return;
 
-					} else if (Dungeon.level.heaps.get(target) != null && Dungeon.level.heaps.get(target).type == Heap.Type.CRYSTAL_CHEST){
+					} else if (Dungeon.level.heaps.get(target) != null
+							&& Dungeon.level.heaps.get(target).type == Heap.Type.CRYSTAL_CHEST
+							&& !Dungeon.level.heaps.get(target).opened){
 						if (!canSpendCharge(curUser, 5)) {
 							GLog.i(Messages.get(SkeletonKey.class, "crystal_charges"));
 							return;
 						}
 						Sample.INSTANCE.play(Assets.Sounds.UNLOCK);
-						curUser.sprite.operate(target, new Callback() {
-							@Override
-							public void call() {
-								Buff.affect(curUser, KeyReplacementTracker.class).processCrystalLockOpened();
-								Dungeon.level.heaps.get(target).open(curUser);
-								spendCharge(5);
-								gainExp(2 + 5);
-								Talent.onArtifactUsed(Dungeon.hero);
-								curUser.spendAndNext(Actor.TICK);
-								curUser.sprite.idle();
-							}
-						});
-						curUser.busy();
+						Buff.affect(curUser, KeyReplacementTracker.class).processCrystalLockOpened();
+						Heap chest = Dungeon.level.heaps.get(target);
+						chest.open(curUser);
+						spendCharge(5);
+						gainExp(7);
+						Talent.onArtifactUsed(Dungeon.hero);
+						if (curUser.isAlive()) GameScene.openChest(new ChestSession(chest, true));
 						return;
 
 					}
@@ -587,9 +580,9 @@ public class SkeletonKey extends ChargedArtifact {
 			crystalKeysNeeded[Dungeon.depth] = 0;
 
 			for (Heap h : Dungeon.level.heaps.valueList()){
-				if (h.type == Heap.Type.LOCKED_CHEST){
+				if (h.type == Heap.Type.LOCKED_CHEST && !h.opened){
 					goldenKeysNeeded[Dungeon.depth]++;
-				} else if (h.type == Heap.Type.CRYSTAL_CHEST){
+				} else if (h.type == Heap.Type.CRYSTAL_CHEST && !h.opened){
 					crystalKeysNeeded[Dungeon.depth]++;
 				}
 			}

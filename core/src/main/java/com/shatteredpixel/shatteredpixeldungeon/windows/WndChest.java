@@ -1,0 +1,266 @@
+package com.shatteredpixel.shatteredpixeldungeon.windows;
+
+import com.badlogic.gdx.Input;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.SPDAction;
+import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Belongings;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
+import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
+import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.PotionBandolier;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.ScrollHolder;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.VelvetPouch;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
+import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
+import com.shatteredpixel.shatteredpixeldungeon.ui.InventorySlot;
+import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
+import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
+import com.watabou.input.GameAction;
+import com.watabou.input.KeyBindings;
+import com.watabou.input.KeyEvent;
+import com.watabou.noosa.Image;
+
+import java.util.ArrayList;
+
+public class WndChest extends WndTabbed {
+
+	private final ChestSession session;
+	private final boolean desktop;
+	private Bag currentBag;
+	private RenderedTextBlock bagTitle;
+	private final ArrayList<InventorySlot> chestSlots = new ArrayList<>();
+	private final ArrayList<InventorySlot> bagSlots = new ArrayList<>();
+	private final ArrayList<InventorySlot> equippedSlots = new ArrayList<>();
+
+	public WndChest(Heap heap, boolean unlocked) {
+		this(new ChestSession(heap, unlocked));
+	}
+
+	public WndChest(Mimic mimic) {
+		this(new ChestSession(mimic));
+	}
+
+	public WndChest(ChestSession session) {
+		super();
+		this.session = session;
+		desktop = SPDSettings.interfaceSize() == 2;
+		currentBag = Dungeon.hero.belongings.backpack;
+		int slotW = desktop ? 17 : 25;
+		int slotH = desktop ? 24 : 25;
+		int bagX = desktop ? 95 : 0;
+		int bagY = desktop ? 39 : 56;
+		int columns = desktop ? 10 : 5;
+		int width = desktop ? 275 : 129;
+		int height = desktop ? 105 : 176;
+
+		RenderedTextBlock chestTitle = PixelScene.renderTextBlock(Messages.titleCase(session.title()), 8);
+		chestTitle.hardlight(TITLE_COLOR);
+		chestTitle.maxWidth(desktop ? 89 : width);
+		chestTitle.setPos(0, 0);
+		add(chestTitle);
+
+		bagTitle = PixelScene.renderTextBlock(Messages.titleCase(currentBag.name()), 8);
+		bagTitle.hardlight(TITLE_COLOR);
+		bagTitle.maxWidth(desktop ? 180 : width);
+		bagTitle.setPos(bagX, desktop ? 0 : 42);
+		add(bagTitle);
+
+		for (int i = 0; i < 5; i++) {
+			InventorySlot slot = new InventorySlot(null) {
+				@Override protected void onClick() {
+					if (session.take(item())) refresh();
+				}
+				@Override protected void onRightClick() {
+					if (session.isMimic()) wakeMimic();
+				}
+				@Override protected void onMiddleClick() {
+					if (session.isMimic()) wakeMimic();
+				}
+			};
+			slot.setRect(i * (slotW + 1), 14, slotW, slotH);
+			chestSlots.add(slot);
+			add(slot);
+		}
+
+		if (desktop) {
+			for (int i = 0; i < 5; i++) {
+				InventorySlot slot = new InventorySlot(null);
+				slot.setRect(bagX + i * (slotW + 1), 14, slotW, slotH);
+				equippedSlots.add(slot);
+				add(slot);
+			}
+		}
+
+		for (int i = 0; i < 20; i++) {
+			InventorySlot slot = new InventorySlot(null) {
+				@Override protected void onClick() {
+					if (session.isMimic()) {
+						wakeMimic();
+					} else if (session.put(item(), currentBag)) {
+						refresh();
+					}
+				}
+			};
+			slot.setRect(bagX + (i % columns) * (slotW + 1), bagY + (i / columns) * (slotH + 1), slotW, slotH);
+			bagSlots.add(slot);
+			add(slot);
+		}
+
+		RedButton spill = new RedButton(Messages.get(this, session.isMimic() ? "wake" : "spill"), 6) {
+			@Override protected void onClick() {
+				spillAll();
+			}
+		};
+		spill.setRect(0, desktop ? 91 : 162, desktop ? 89 : width, 12);
+		add(spill);
+
+		resize(width, height);
+		int index = 1;
+		for (Bag bag : Dungeon.hero.belongings.getBags()) {
+			if (bag != null) {
+				BagTab tab = new BagTab(bag, index++);
+				add(tab);
+				if (bag == currentBag) select(tab);
+			}
+		}
+		layoutTabs();
+		refresh();
+		if (desktop) GameScene.setChestInventoryHidden(true);
+	}
+
+	private void refresh() {
+		ArrayList<Item> chestItems = new ArrayList<>(session.items());
+		for (int i = 0; i < chestSlots.size(); i++) {
+			Item item = i < chestItems.size() ? chestItems.get(i) : null;
+			chestSlots.get(i).item(item);
+			chestSlots.get(i).enable(item != null);
+		}
+
+		ArrayList<Item> bagItems = new ArrayList<>();
+		for (Item item : currentBag.items) if (!(item instanceof Bag)) bagItems.add(item);
+		for (int i = 0; i < bagSlots.size(); i++) {
+			Item item = i < bagItems.size() ? bagItems.get(i) : null;
+			bagSlots.get(i).item(item);
+			bagSlots.get(i).enable(item != null && (!Dungeon.hero.belongings.lostInventory()
+					|| item.keptThroughLostInventory()));
+		}
+
+		if (desktop) {
+			Belongings stuff = Dungeon.hero.belongings;
+			Item[] equipment = {
+					Dungeon.hero.hasWeaponSlots() ? stuff.weapon : stuff.armor,
+					Dungeon.hero.hasWeaponSlots() ? stuff.armor : stuff.artifact,
+					Dungeon.hero.hasWeaponSlots() ? stuff.artifact : stuff.misc,
+					Dungeon.hero.hasWeaponSlots() ? stuff.misc : stuff.extraMisc,
+					stuff.ring
+			};
+			int[] images = {ItemSpriteSheet.WEAPON_HOLDER, ItemSpriteSheet.ARMOR_HOLDER,
+					ItemSpriteSheet.ARTIFACT_HOLDER, ItemSpriteSheet.SOMETHING, ItemSpriteSheet.RING_HOLDER};
+			for (int i = 0; i < equippedSlots.size(); i++) {
+				equippedSlots.get(i).item(equipment[i] == null ? new WndBag.Placeholder(images[i]) : equipment[i]);
+				equippedSlots.get(i).enable(false);
+			}
+		}
+		bagTitle.text(Messages.titleCase(currentBag.name()));
+	}
+
+	private void spillAll() {
+		if (session.isMimic()) {
+			wakeMimic();
+		} else {
+			session.spill();
+			hide();
+		}
+	}
+
+	private void wakeMimic() {
+		Mimic mimic = session.mimic();
+		session.wakeMimic();
+		hide();
+		mimic.interruptLooting();
+	}
+
+	@Override
+	public boolean onSignal(KeyEvent event) {
+		if (event.pressed && desktop && event.code == Input.Keys.SPACE) {
+			spillAll();
+			return true;
+		}
+		if (event.pressed && KeyBindings.getActionForKey(event) == SPDAction.INVENTORY) {
+			onBackPressed();
+			return true;
+		}
+		if (event.pressed && session.isMimic()
+				&& KeyBindings.getActionForKey(event) != SPDAction.BACK
+				&& KeyBindings.getActionForKey(event) != SPDAction.WAIT
+				&& KeyBindings.getActionForKey(event) != SPDAction.BAG_1
+				&& KeyBindings.getActionForKey(event) != SPDAction.BAG_2
+				&& KeyBindings.getActionForKey(event) != SPDAction.BAG_3
+				&& KeyBindings.getActionForKey(event) != SPDAction.BAG_4
+				&& KeyBindings.getActionForKey(event) != SPDAction.BAG_5) {
+			wakeMimic();
+			return true;
+		}
+		return super.onSignal(event);
+	}
+
+	@Override
+	protected void onClick(Tab tab) {
+		select(tab);
+		currentBag = ((BagTab) tab).bag;
+		refresh();
+	}
+
+	@Override
+	protected int tabHeight() {
+		return 20;
+	}
+
+	@Override
+	public void hide() {
+		super.hide();
+		if (desktop) GameScene.setChestInventoryHidden(false);
+		session.close();
+	}
+
+	private Image icon(Bag bag) {
+		if (bag instanceof VelvetPouch) return Icons.get(Icons.SEED_POUCH);
+		if (bag instanceof ScrollHolder) return Icons.get(Icons.SCROLL_HOLDER);
+		if (bag instanceof MagicalHolster) return Icons.get(Icons.WAND_HOLSTER);
+		if (bag instanceof PotionBandolier) return Icons.get(Icons.POTION_BANDOLIER);
+		return Icons.get(Icons.BACKPACK);
+	}
+
+	private class BagTab extends IconTab {
+		private final Bag bag;
+		private final int index;
+
+		private BagTab(Bag bag, int index) {
+			super(icon(bag));
+			this.bag = bag;
+			this.index = index;
+		}
+
+		@Override
+		public GameAction keyAction() {
+			switch (index) {
+				case 2: return SPDAction.BAG_2;
+				case 3: return SPDAction.BAG_3;
+				case 4: return SPDAction.BAG_4;
+				case 5: return SPDAction.BAG_5;
+				default: return SPDAction.BAG_1;
+			}
+		}
+
+		@Override
+		protected String hoverText() {
+			return Messages.titleCase(bag.name());
+		}
+	}
+}

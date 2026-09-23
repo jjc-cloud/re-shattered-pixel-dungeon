@@ -73,6 +73,7 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SacrificialPar
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.WindParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
+import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.Stylus;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TalismanOfForesight;
@@ -329,6 +330,12 @@ public abstract class Level implements Bundlable {
 		
 		createMobs();
 		createItems();
+		for (Heap heap : heaps.valueList()) {
+			if (heap.type == Heap.Type.CHEST || heap.type == Heap.Type.LOCKED_CHEST
+					|| heap.type == Heap.Type.CRYSTAL_CHEST) {
+				heap.items.add(new Gold().random());
+			}
+		}
 
 		Random.popGenerator();
 	}

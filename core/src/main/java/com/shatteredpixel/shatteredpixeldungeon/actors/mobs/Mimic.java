@@ -39,6 +39,8 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Swiftthistle;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MimicSprite;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.windows.ChestSession;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
@@ -156,6 +158,11 @@ public class Mimic extends Mob {
 		if (alignment != Alignment.NEUTRAL || c != Dungeon.hero){
 			return super.interact(c);
 		}
+		if (Dungeon.hero.invisible > 0) {
+			Sample.INSTANCE.play(Assets.Sounds.UNLOCK);
+			GameScene.openChest(new ChestSession(this));
+			return false;
+		}
 		stopHiding();
 
 		Dungeon.hero.busy();
@@ -170,6 +177,13 @@ public class Mimic extends Mob {
 			Dungeon.hero.spendAndNext(1f);
 			return true;
 		}
+	}
+
+	public void interruptLooting() {
+		stopHiding();
+		Dungeon.hero.busy();
+		Dungeon.hero.sprite.operate(pos);
+		doAttack(Dungeon.hero);
 	}
 
 	@Override
@@ -321,6 +335,7 @@ public class Mimic extends Mob {
 
 		//generate an extra reward for killing the mimic
 		m.generatePrize(useDecks);
+		m.items.add(new Gold().random());
 
 		if (MimicTooth.stealthyMimics()){
 			m.stealthy = true;

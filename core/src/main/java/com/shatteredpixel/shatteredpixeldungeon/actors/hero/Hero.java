@@ -178,6 +178,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.StatusPane;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndHero;
+import com.shatteredpixel.shatteredpixeldungeon.windows.ChestSession;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndResurrect;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndTradeItem;
@@ -886,19 +887,33 @@ public class Hero extends Char {
 
 	@Override
 	public void spendConstant(float time) {
+		if (chestPickup) return;
 		super.spendConstant(time);
 	}
 
 	public void spendAndNextConstant(float time ) {
+		if (chestPickup) return;
 		busy();
 		spendConstant( time );
 		next();
 	}
 
 	public void spendAndNext( float time ) {
+		if (chestPickup) return;
 		busy();
 		spend( time );
 		next();
+	}
+
+	private boolean chestPickup;
+
+	public boolean pickUpFromChest(Item item, int chestPos) {
+		chestPickup = true;
+		try {
+			return item.doPickUp(this, chestPos);
+		} finally {
+			chestPickup = false;
+		}
 	}
 	
 	@Override
@@ -1270,9 +1285,9 @@ public class Hero extends Char {
 			if (heap != null && (heap.type != Type.HEAP && heap.type != Type.FOR_SALE)) {
 
 				boolean noKey = false;
-				if (heap.type == Type.LOCKED_CHEST){
+				if (!heap.opened && heap.type == Type.LOCKED_CHEST){
 					noKey = Dungeon.branch != 0 || Notes.keyCount(new GoldenKey(Dungeon.depth)) < 1;
-				} else if (heap.type == Type.CRYSTAL_CHEST){
+				} else if (!heap.opened && heap.type == Type.CRYSTAL_CHEST){
 					noKey = Dungeon.branch != 0 || Notes.keyCount(new CrystalKey(Dungeon.depth)) < 1;
 				}
 
@@ -1282,6 +1297,38 @@ public class Hero extends Char {
 						ready();
 						return false;
 
+				}
+
+				if (heap.type == Type.CHEST || heap.type == Type.LOCKED_CHEST
+						|| heap.type == Type.CRYSTAL_CHEST) {
+					boolean needsKey = !heap.opened && heap.type != Type.CHEST;
+					SkeletonKey.keyRecharge skele = buff(SkeletonKey.keyRecharge.class);
+					if (needsKey && skele != null && skele.isCursed() && Random.Int(6) != 0) {
+						GLog.n(Messages.get(this, "key_distracted"));
+						spendAndNext(2 * Key.TIME_TO_UNLOCK);
+						Buff.affect(this, Hunger.class).affectHunger(-4);
+						return false;
+					}
+					if (needsKey) {
+						boolean used = heap.type == Type.LOCKED_CHEST
+								? Notes.remove(new GoldenKey(Dungeon.depth))
+								: Notes.remove(new CrystalKey(Dungeon.depth));
+						if (!used) {
+							ready();
+							return false;
+						}
+						SkeletonKey.KeyReplacementTracker tracker = buff(SkeletonKey.KeyReplacementTracker.class);
+						if (tracker != null) {
+							if (heap.type == Type.LOCKED_CHEST) tracker.processGoldLockOpened();
+							else tracker.processCrystalLockOpened();
+						}
+						GameScene.updateKeyDisplay();
+					}
+					Sample.INSTANCE.play(Assets.Sounds.UNLOCK);
+					heap.open(this);
+					ready();
+					if (isAlive()) GameScene.openChest(new ChestSession(heap, needsKey));
+					return false;
 				}
 				
 				switch (heap.type) {
