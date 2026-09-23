@@ -67,12 +67,17 @@ public class ChestSession {
 		return true;
 	}
 
+	//empties the chest: whatever fits goes into the bag, the rest drops to the floor.
+	//pickUpFromChest is the same path a single pickup takes, so stacking and automatic
+	//sorting into specialized bags (seeds, scrolls, potions...) still apply
 	public void spill() {
 		if (closed || heap == null) return;
-		ArrayList<Item> dropped = new ArrayList<>(heap.items);
+		ArrayList<Item> remaining = new ArrayList<>(heap.items);
 		int pos = heap.pos;
 		heap.destroy();
-		for (Item item : dropped) {
+		Hero hero = Dungeon.hero;
+		for (Item item : remaining) {
+			if (hero != null && hero.isAlive() && hero.pickUpFromChest(item, pos)) continue;
 			Dungeon.level.drop(item, pos).sprite.drop(pos);
 		}
 		moved = true;
