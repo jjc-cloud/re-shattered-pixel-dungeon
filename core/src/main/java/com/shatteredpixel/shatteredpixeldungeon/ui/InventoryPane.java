@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.ui;
 
+import com.badlogic.gdx.Input;
 import com.shatteredpixel.shatteredpixeldungeon.Chrome;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.SPDAction;
@@ -39,6 +40,7 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndBag;
+import com.shatteredpixel.shatteredpixeldungeon.windows.ChestSession;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoItem;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndUseItem;
 import com.watabou.gltextures.TextureCache;
@@ -71,6 +73,11 @@ public class InventoryPane extends Component {
 
 	private ArrayList<InventorySlot> equipped;
 	private ArrayList<InventorySlot> bagItems;
+	private ChestSession chestSession;
+	private NinePatch chestBg;
+	private RenderedTextBlock chestTitle;
+	private ArrayList<InventorySlot> chestItems;
+	private RedButton chestSpill;
 
 	private Image gold;
 	private BitmapText goldTxt;
@@ -120,6 +127,11 @@ public class InventoryPane extends Component {
 		blocker = new PointerArea(0, 0, PixelScene.uiCamera.width, PixelScene.uiCamera.height){
 			@Override
 			protected void onClick(PointerEvent event) {
+				if (chestSession != null && !bg.overlapsScreenPoint((int)event.current.x, (int)event.current.y)
+						&& !chestBg.overlapsScreenPoint((int)event.current.x, (int)event.current.y)) {
+					closeChest();
+					return;
+				}
 				if (selector != null && !bg.overlapsScreenPoint((int)event.current.x, (int)event.current.y)){
 					//any windows opened as a consequence of this should be centered on the inventory
 					GameScene.centerNextWndOnInvPane();
@@ -135,6 +147,23 @@ public class InventoryPane extends Component {
 		keyBlocker = new Signal.Listener<KeyEvent>(){
 			@Override
 			public boolean onSignal(KeyEvent keyEvent) {
+				if (keyEvent.pressed && chestSession != null) {
+					if (keyEvent.code == Input.Keys.SPACE) {
+						spillChest();
+					} else if (KeyBindings.getActionForKey(keyEvent) == SPDAction.BACK
+							|| KeyBindings.getActionForKey(keyEvent) == SPDAction.INVENTORY
+							|| KeyBindings.getActionForKey(keyEvent) == SPDAction.WAIT) {
+						closeChest();
+					} else {
+						GameAction action = KeyBindings.getActionForKey(keyEvent);
+						boolean bagTab = action == SPDAction.BAG_1 || action == SPDAction.BAG_2
+								|| action == SPDAction.BAG_3 || action == SPDAction.BAG_4
+								|| action == SPDAction.BAG_5;
+						if (!bagTab && chestSession.isMimic()) spillChest();
+						return !bagTab;
+					}
+					return true;
+				}
 				if (keyEvent.pressed && isSelecting() && InventoryPane.this.visible
 						&& KeyBindings.getActionForKey(keyEvent) != SPDAction.BAG_1
 						&& KeyBindings.getActionForKey(keyEvent) != SPDAction.BAG_2
@@ -182,6 +211,39 @@ public class InventoryPane extends Component {
 			add(btn);
 		}
 
+		chestBg = Chrome.get(Chrome.Type.TOAST_TR_HEAVY);
+		chestBg.visible = false;
+		add(chestBg);
+		chestTitle = PixelScene.renderTextBlock(8);
+		chestTitle.hardlight(Window.TITLE_COLOR);
+		chestTitle.maxWidth(85);
+		chestTitle.visible = false;
+		add(chestTitle);
+		chestItems = new ArrayList<>();
+		for (int i = 0; i < 5; i++) {
+			InventorySlot slot = new InventorySlot(null) {
+				@Override protected void onClick() {
+					if (chestSession != null && chestSession.take(item())) updateInventory();
+				}
+				@Override protected void onRightClick() {
+					if (chestSession != null && chestSession.isMimic()) spillChest();
+				}
+				@Override protected void onMiddleClick() {
+					if (chestSession != null && chestSession.isMimic()) spillChest();
+				}
+			};
+			slot.visible = false;
+			chestItems.add(slot);
+			add(slot);
+		}
+		chestSpill = new RedButton(Messages.get("windows.wndchest.spill"), 6) {
+			@Override protected void onClick() {
+				spillChest();
+			}
+		};
+		chestSpill.visible = false;
+		add(chestSpill);
+
 		bags = new ArrayList<>();
 		for (int i = 0; i < 5; i++){
 			BagButton btn = new BagButton(null, i+1);
@@ -211,6 +273,14 @@ public class InventoryPane extends Component {
 		bg.x = x;
 		bg.y = y;
 		bg.size(width, height);
+		chestBg.x = x - 95;
+		chestBg.y = y;
+		chestBg.size(91, height);
+		chestTitle.setPos(x - 91, y + 4);
+		for (int i = 0; i < chestItems.size(); i++) {
+			chestItems.get(i).setRect(x - 91 + i * 18, y + 19, SLOT_WIDTH, SLOT_HEIGHT);
+		}
+		chestSpill.setRect(x - 91, y + 49, 89, 12);
 
 		float left = x+4;
 		for (int slot = 0; slot < equipped.size(); slot++) {
@@ -284,7 +354,14 @@ public class InventoryPane extends Component {
 	}
 
 	public void updateInventory(){
-		if (selector == null){
+		boolean showingChest = chestSession != null;
+		chestBg.visible = chestTitle.visible = chestSpill.visible = showingChest;
+		for (InventorySlot slot : chestItems) slot.visible = showingChest;
+		if (showingChest) {
+			chestSpill.text(Messages.get(chestSession.isMimic()
+					? "windows.wndchest.wake" : "windows.wndchest.spill"));
+		}
+		if (selector == null && chestSession == null){
 			blocker.target = bg;
 			KeyEvent.removeKeyListener(keyBlocker);
 		} else {
@@ -374,6 +451,15 @@ public class InventoryPane extends Component {
 					&& (selector == null || selector.itemSelectable(b.item()))
 					&& (!lostInvent || b.item().keptThroughLostInventory()));
 		}
+		if (chestSession != null) {
+			ArrayList<Item> visibleChestItems = new ArrayList<>(chestSession.items());
+			chestTitle.text(Messages.titleCase(chestSession.title()));
+			for (int i = 0; i < chestItems.size(); i++) {
+				Item item = i < visibleChestItems.size() ? visibleChestItems.get(i) : null;
+				chestItems.get(i).item(item);
+				chestItems.get(i).enable(lastEnabled && item != null);
+			}
+		}
 		for (BagButton b : bags){
 			b.enable(lastEnabled);
 		}
@@ -404,7 +490,36 @@ public class InventoryPane extends Component {
 	}
 
 	public boolean isSelecting(){
-		return selector != null;
+		return selector != null || chestSession != null;
+	}
+
+	public void openChest(ChestSession session) {
+		selector = null;
+		cancelTargeting();
+		chestSession = session;
+		updateInventory();
+	}
+
+	public void closeChest() {
+		if (chestSession == null) return;
+		ChestSession closing = chestSession;
+		chestSession = null;
+		updateInventory();
+		closing.close();
+	}
+
+	private void spillChest() {
+		if (chestSession == null) return;
+		if (chestSession.isMimic()) {
+			com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic mimic = chestSession.mimic();
+			chestSession.wakeMimic();
+			chestSession = null;
+			updateInventory();
+			mimic.interruptLooting();
+		} else {
+			chestSession.spill();
+			closeChest();
+		}
 	}
 
 	public static void clearTargetingSlot(){
@@ -507,6 +622,14 @@ public class InventoryPane extends Component {
 				updateInventory();
 				return;
 			}
+			if (chestSession != null) {
+				if (chestSession.isMimic()) {
+					spillChest();
+				} else if (chestSession.put(item, lastBag)) {
+					updateInventory();
+				}
+				return;
+			}
 
 			if (targeting){
 				if (targetingSlot == this){
@@ -539,6 +662,10 @@ public class InventoryPane extends Component {
 
 		@Override
 		protected boolean onLongClick() {
+			if (chestSession != null) {
+				onClick();
+				return true;
+			}
 			if (selector == null && item.defaultAction() != null) {
 				QuickSlotButton.set( item );
 				return true;
@@ -553,6 +680,10 @@ public class InventoryPane extends Component {
 
 		@Override
 		protected void onMiddleClick() {
+			if (chestSession != null) {
+				onClick();
+				return;
+			}
 			if (lastBag != item && !lastBag.contains(item) && !item.isEquipped(Dungeon.hero)){
 				updateInventory();
 				return;
@@ -583,6 +714,10 @@ public class InventoryPane extends Component {
 
 		@Override
 		protected void onRightClick() {
+			if (chestSession != null) {
+				onClick();
+				return;
+			}
 			if (lastBag != item && !lastBag.contains(item) && !item.isEquipped(Dungeon.hero)){
 				updateInventory();
 				return;

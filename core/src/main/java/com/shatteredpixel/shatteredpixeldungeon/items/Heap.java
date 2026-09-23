@@ -78,10 +78,13 @@ public class Heap implements Bundlable {
 	public boolean haunted = false;
 	public boolean autoExplored = false; //used to determine if this heap should count for exploration bonus
 	public boolean hidden = false; //sets alpha to 15%
+	public boolean opened = false;
 	
 	public LinkedList<Item> items = new LinkedList<>();
 	
 	public void open( Hero hero ) {
+		boolean chest = type == Type.CHEST || type == Type.LOCKED_CHEST || type == Type.CRYSTAL_CHEST;
+		if (chest && opened) return;
 		switch (type) {
 		case TOMB:
 			Wraith.spawnAround( hero.pos );
@@ -105,7 +108,8 @@ public class Heap implements Bundlable {
 			Sample.INSTANCE.play( Assets.Sounds.CURSED );
 		}
 
-		type = Type.HEAP;
+		if (chest) opened = true;
+		else type = Type.HEAP;
 		ArrayList<Item> bonus = RingOfWealth.tryForBonusDrop(hero, 1);
 		if (bonus != null && !bonus.isEmpty()) {
 			items.addAll(0, bonus);
@@ -395,6 +399,9 @@ public class Heap implements Bundlable {
 	}
 
 	public String info(){
+		if (opened && (type == Type.CHEST || type == Type.LOCKED_CHEST || type == Type.CRYSTAL_CHEST)) {
+			return Messages.get(this, "opened_chest_desc");
+		}
 		switch(type){
 			case CHEST:
 				return Messages.get(this, "chest_desc");
@@ -425,6 +432,7 @@ public class Heap implements Bundlable {
 	private static final String HAUNTED	= "haunted";
 	private static final String AUTO_EXPLORED	= "auto_explored";
 	private static final String HIDDEN	= "hidden";
+	private static final String OPENED	= "opened";
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -451,6 +459,7 @@ public class Heap implements Bundlable {
 		haunted = bundle.getBoolean( HAUNTED );
 		autoExplored = bundle.getBoolean( AUTO_EXPLORED );
 		hidden = bundle.getBoolean( HIDDEN );
+		opened = bundle.getBoolean( OPENED );
 	}
 
 	@Override
@@ -462,6 +471,7 @@ public class Heap implements Bundlable {
 		bundle.put( HAUNTED, haunted );
 		bundle.put( AUTO_EXPLORED, autoExplored );
 		bundle.put( HIDDEN, hidden );
+		bundle.put( OPENED, opened );
 	}
 	
 }

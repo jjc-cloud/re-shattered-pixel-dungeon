@@ -51,6 +51,8 @@ public class ReShatteredChanges {
 				"\n现在DM300与矿洞豺狼任务中的落石不会选中不可达格，除非玩家的位置非常糟糕。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V061_BUGFIX,"bug修复",
 				"\n-液火药剂不能点着在水边的障碍的问题。\n-战士在未启用刻印转移时使用奥数刻笔会丢失附魔的问题。\n-狂战士进入宝库时丢失怒气与转职，需重进加载的问题。\n-天赋扭曲现实在结算页仍调用选择界面导致卡住的问题。\n-ios端使用重生十字架复活时闪退回到死亡前的问题。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V064_CHALLENGES, "隐蔽设计",
+				"\n挑战老旧设计更改为隐蔽设计，英雄不再被动发现隐藏陷阱，总可见陷阱数不再增加"));
 
 		changes = new ChangeInfo("削弱", false, null);
 		changes.hardlight(CharSprite.NEGATIVE);
@@ -58,7 +60,8 @@ public class ReShatteredChanges {
 
 		changes.addButton(new ChangeButton(ChangeIcons.V035_WARRIOR_HEROARM, "狂战士",
 				"\n-削弱了狂战士在狂暴状态下的移速加成，降低了愤怒状态下的伤害倍率。\n-下调了怒气导魔的强度倍率。"));
-
+		changes.addButton(new ChangeButton(ChangeIcons.V064_CHALLENGES, "荒芜之地",
+				"\n现在荒芜之地不会移除自然生成的无种子植物，且开启荒芜之地后再生法杖不会再生成黄金莲以外的植物。"));
 	}
 
 	public static void add_v0_1_1_Changes(ArrayList<ChangeInfo> changeInfos) {

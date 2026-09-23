@@ -115,6 +115,8 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.Toolbar;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndBag;
+import com.shatteredpixel.shatteredpixeldungeon.windows.ChestSession;
+import com.shatteredpixel.shatteredpixeldungeon.windows.WndChest;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndGame;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndHero;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoCell;
@@ -796,6 +798,12 @@ public class GameScene extends PixelScene {
 	}
 	
 	public void destroy() {
+		if (inventory != null) inventory.closeChest();
+		if (members != null) {
+			for (Gizmo member : members.toArray(new Gizmo[0])) {
+				if (member instanceof WndChest) ((WndChest) member).hide();
+			}
+		}
 		
 		//tell the actor thread to finish, then wait for it to complete any actions it may be doing.
 		if (!waitForActorThread( 4500, true )){
@@ -1474,6 +1482,20 @@ public class GameScene extends PixelScene {
 				scene.toolbar.setPos(scene.toolbar.left(), scene.inventory.top()-scene.toolbar.height());
 			}
 			layoutTags();
+		}
+	}
+
+	public static void openChest(ChestSession session) {
+		if (scene != null && scene.inventory != null && scene.inventory.visible && !showingWindow()) {
+			scene.inventory.openChest(session);
+		} else {
+			show(new WndChest(session));
+		}
+	}
+
+	public static void setChestInventoryHidden(boolean hidden) {
+		if (scene != null && scene.inventory != null) {
+			scene.inventory.visible = scene.inventory.active = !hidden && invVisible;
 		}
 	}
 
