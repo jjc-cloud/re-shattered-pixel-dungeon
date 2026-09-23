@@ -1486,11 +1486,17 @@ public class GameScene extends PixelScene {
 	}
 
 	public static void openChest(ChestSession session) {
-		if (scene != null && scene.inventory != null && scene.inventory.visible && !showingWindow()) {
-			scene.inventory.openChest(session);
-		} else {
-			show(new WndChest(session));
-		}
+		Game.runOnRenderThread(new Callback() {
+			@Override
+			public void call() {
+				if (scene == null) return;
+				if (scene.inventory != null && scene.inventory.visible && !showingWindow()) {
+					scene.inventory.openChest(session);
+				} else {
+					show(new WndChest(session));
+				}
+			}
+		});
 	}
 
 	public static void setChestInventoryHidden(boolean hidden) {
