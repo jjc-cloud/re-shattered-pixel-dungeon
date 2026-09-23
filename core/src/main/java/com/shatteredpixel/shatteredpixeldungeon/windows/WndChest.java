@@ -36,6 +36,17 @@ public class WndChest extends WndTabbed {
 	private static final int GAP = 4;
 	//vertical space reserved for a section's title line
 	private static final int TITLE_H = 11;
+	//height of the header line on the mobile interface, where the chest's title and button share a row
+	private static final int CHEST_HEADER_H = 12;
+	//the chest's button takes whatever width the title doesn't use, but never less than this
+	private static final int CHEST_BTN_MIN_W = 60;
+	//on the mobile interface the status pane is anchored to the top of the screen and the toolbar to
+	//the bottom, so a window has to fit in the room between them. Sizes taken from StatusPane's own
+	//layout and from Toolbar's inventory button (GameScene sets both up)
+	private static final int STATUS_PANE_H = 38;
+	private static final int TOOLBAR_H = 26;
+	//slot height stops shrinking here, so the slots stay usable on very short screens
+	private static final int MIN_SLOT_H = 20;
 
 	private final ChestSession session;
 	private final boolean desktop;
@@ -79,8 +90,33 @@ public class WndChest extends WndTabbed {
 		int frameY = -(int)chrome.marginTop();
 		int frameW = width + (int)chrome.marginHor();
 
-		//the chest gets its own frame, stacked on top
-		int chestH = TITLE_H + slotH + 3 + 12;
+		//the status pane and the toolbar leave only a limited band in the middle of the screen, and
+		//the window is centred on the whole screen, so it has to fit in that band. If it doesn't, the
+		//slots shrink until it does, the same way WndBag shrinks its slots to fit the screen.
+		if (!desktop) {
+			int room = (int)PixelScene.uiCamera.height - STATUS_PANE_H - TOOLBAR_H;
+			while (slotH > MIN_SLOT_H) {
+				int total = (int)chrome.marginTop()                                    //above the chest frame
+						+ CHEST_HEADER_H + slotH                                       //chest frame
+						+ (int)chrome.marginBottom() + GAP + (int)chrome.marginTop()   //its margin and the gap
+						+ TITLE_H + (rows * slotH + (rows - 1))                        //bag frame
+						+ tabHeight();                                                //bag tabs
+				if (total <= room) break;
+				slotH--;
+			}
+		}
+
+		//on the mobile interface the chest's title and button share a single line, and the larger
+		//interface keeps the roomier title / slots / button layout it had before
+		int chestH;
+		int chestSlotsY;
+		if (desktop) {
+			chestH = TITLE_H + slotH + 3 + 12;
+			chestSlotsY = TITLE_H;
+		} else {
+			chestH = CHEST_HEADER_H + slotH;
+			chestSlotsY = CHEST_HEADER_H;
+		}
 		chestBg = Chrome.get(Chrome.Type.TOAST_TR_HEAVY);
 		chestBg.x = frameX;
 		chestBg.y = frameY;
@@ -89,8 +125,14 @@ public class WndChest extends WndTabbed {
 
 		RenderedTextBlock chestTitle = PixelScene.renderTextBlock(Messages.titleCase(session.title()), 8);
 		chestTitle.hardlight(TITLE_COLOR);
-		chestTitle.maxWidth(contentW);
-		chestTitle.setPos(0, 0);
+		if (desktop) {
+			chestTitle.maxWidth(contentW);
+			chestTitle.setPos(0, 0);
+		} else {
+			//the button needs the rest of the line, so the title only gets what it doesn't need
+			chestTitle.maxWidth(contentW - CHEST_BTN_MIN_W - 4);
+			chestTitle.setPos(0, Math.max(0, (CHEST_HEADER_H - chestTitle.height()) / 2f));
+		}
 		add(chestTitle);
 
 		for (int i = 0; i < 5; i++) {
@@ -105,7 +147,7 @@ public class WndChest extends WndTabbed {
 					if (session.isMimic()) wakeMimic();
 				}
 			};
-			slot.setRect(i * (slotW + 1), TITLE_H, slotW, slotH);
+			slot.setRect(i * (slotW + 1), chestSlotsY, slotW, slotH);
 			chestSlots.add(slot);
 			add(slot);
 		}
@@ -115,7 +157,12 @@ public class WndChest extends WndTabbed {
 				spillAll();
 			}
 		};
-		spill.setRect(0, TITLE_H + slotH + 3, contentW, 12);
+		if (desktop) {
+			spill.setRect(0, TITLE_H + slotH + 3, contentW, 12);
+		} else {
+			float btnX = chestTitle.width() + 4;
+			spill.setRect(btnX, (CHEST_HEADER_H - 12) / 2f, Math.max(contentW - btnX, CHEST_BTN_MIN_W), 12);
+		}
 		add(spill);
 
 		//the bag gets a frame below the chest, framed as a normal tabbed window: the bag tabs land on
@@ -162,6 +209,17 @@ public class WndChest extends WndTabbed {
 		}
 
 		resize(width, bagTop + bagH);
+
+		//WndTabbed centres the window on the whole screen, which on the mobile interface puts its top
+		//under the status pane. Nudge it down so its top clears the pane, which is what the slots
+		//above were shrunk to make room for
+		if (!desktop) {
+			int top = (int)(((int)PixelScene.uiCamera.height - camera.height) / 2);
+			if (top < STATUS_PANE_H) {
+				offset(0, STATUS_PANE_H - top);
+			}
+		}
+
 		int index = 1;
 		for (Bag bag : Dungeon.hero.belongings.getBags()) {
 			if (bag != null) {
