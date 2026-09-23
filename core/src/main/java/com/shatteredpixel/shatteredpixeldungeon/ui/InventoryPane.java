@@ -90,6 +90,11 @@ public class InventoryPane extends Component {
 	public static final int WIDTH = 187;
 	public static final int HEIGHT = 82;
 
+	//the chest sits in its own frame to the left of the pane.
+	//its content is 5 slots + spill button wide (89px), padded 4px on each side
+	private static final int CHEST_BOX_WIDTH = 97;
+	private static final int CHEST_BOX_HEIGHT = 65;
+
 	private static final int SLOT_WIDTH = 17;
 	private static final int SLOT_HEIGHT = 24;
 
@@ -216,7 +221,7 @@ public class InventoryPane extends Component {
 		add(chestBg);
 		chestTitle = PixelScene.renderTextBlock(8);
 		chestTitle.hardlight(Window.TITLE_COLOR);
-		chestTitle.maxWidth(85);
+		chestTitle.maxWidth(89);
 		chestTitle.visible = false;
 		add(chestTitle);
 		chestItems = new ArrayList<>();
@@ -275,7 +280,7 @@ public class InventoryPane extends Component {
 		bg.size(width, height);
 		chestBg.x = x - 95;
 		chestBg.y = y;
-		chestBg.size(91, height);
+		chestBg.size(CHEST_BOX_WIDTH, CHEST_BOX_HEIGHT);
 		chestTitle.setPos(x - 91, y + 4);
 		for (int i = 0; i < chestItems.size(); i++) {
 			chestItems.get(i).setRect(x - 91 + i * 18, y + 19, SLOT_WIDTH, SLOT_HEIGHT);
