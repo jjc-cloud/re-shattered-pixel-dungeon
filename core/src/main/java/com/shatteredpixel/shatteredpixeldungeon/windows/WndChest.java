@@ -32,9 +32,7 @@ import java.util.ArrayList;
 
 public class WndChest extends WndTabbed {
 
-	//padding between a section frame's edge and its contents
-	private static final int PAD = 4;
-	//gap between the chest frame and the bag frame
+	//visible gap between the chest frame and the bag frame, on top of the frames' own margins
 	private static final int GAP = 4;
 	//vertical space reserved for a section's title line
 	private static final int TITLE_H = 11;
@@ -60,9 +58,11 @@ public class WndChest extends WndTabbed {
 	public WndChest(ChestSession session) {
 		super();
 		this.session = session;
-		//the window draws no backdrop of its own, so the map stays visible
-		//in the gap between the chest frame and the bag frame
+		//the window draws no backdrop or shadow of its own, each section brings its own frame instead,
+		//so the map stays visible in the gap between the chest frame and the bag frame. The window's
+		//shadow is a 16px halo, which would always fill that gap, so it stays off as well
 		chrome.visible = false;
+		shadow.visible = false;
 		desktop = SPDSettings.interfaceSize() == 2;
 		currentBag = Dungeon.hero.belongings.backpack;
 		int slotW = desktop ? 17 : 25;
@@ -71,20 +71,26 @@ public class WndChest extends WndTabbed {
 		int rows = (20 + columns - 1) / columns;
 		//a full row of bag slots defines the content width shared by both sections
 		int contentW = columns * (slotW + 1) - 1;
-		int width = contentW + PAD * 2;
+		int width = contentW;
+
+		//each frame carries the window's own margins, so its content is padded exactly like a normal
+		//window and the bag frame ends up flush with the bag tabs instead of leaving them floating
+		int frameX = -(int)chrome.marginLeft();
+		int frameY = -(int)chrome.marginTop();
+		int frameW = width + (int)chrome.marginHor();
 
 		//the chest gets its own frame, stacked on top
-		int chestH = PAD + TITLE_H + slotH + 3 + 12 + PAD;
+		int chestH = TITLE_H + slotH + 3 + 12;
 		chestBg = Chrome.get(Chrome.Type.TOAST_TR_HEAVY);
-		chestBg.x = 0;
-		chestBg.y = 0;
-		chestBg.size(width, chestH);
+		chestBg.x = frameX;
+		chestBg.y = frameY;
+		chestBg.size(frameW, chestH + (int)chrome.marginVer());
 		add(chestBg);
 
 		RenderedTextBlock chestTitle = PixelScene.renderTextBlock(Messages.titleCase(session.title()), 8);
 		chestTitle.hardlight(TITLE_COLOR);
 		chestTitle.maxWidth(contentW);
-		chestTitle.setPos(PAD, PAD);
+		chestTitle.setPos(0, 0);
 		add(chestTitle);
 
 		for (int i = 0; i < 5; i++) {
@@ -99,7 +105,7 @@ public class WndChest extends WndTabbed {
 					if (session.isMimic()) wakeMimic();
 				}
 			};
-			slot.setRect(PAD + i * (slotW + 1), PAD + TITLE_H, slotW, slotH);
+			slot.setRect(i * (slotW + 1), TITLE_H, slotW, slotH);
 			chestSlots.add(slot);
 			add(slot);
 		}
@@ -109,30 +115,31 @@ public class WndChest extends WndTabbed {
 				spillAll();
 			}
 		};
-		spill.setRect(PAD, PAD + TITLE_H + slotH + 3, contentW, 12);
+		spill.setRect(0, TITLE_H + slotH + 3, contentW, 12);
 		add(spill);
 
-		//the bag gets its own frame, below the chest
-		int bagTop = chestH + GAP;
-		int bagH = PAD + TITLE_H + (desktop ? slotH + 1 : 0) + (rows * slotH + (rows - 1)) + PAD;
-		bagBg = Chrome.get(Chrome.Type.TOAST_TR_HEAVY);
-		bagBg.x = 0;
-		bagBg.y = bagTop;
-		bagBg.size(width, bagH);
+		//the bag gets a frame below the chest, framed as a normal tabbed window: the bag tabs land on
+		//the frame's bottom margin, exactly where they sit in the normal bag window
+		int bagTop = chestH + (int)chrome.marginBottom() + GAP + (int)chrome.marginTop();
+		int bagH = TITLE_H + (desktop ? slotH + 1 : 0) + (rows * slotH + (rows - 1));
+		bagBg = Chrome.get(Chrome.Type.TAB_SET);
+		bagBg.x = frameX;
+		bagBg.y = bagTop - (int)chrome.marginTop();
+		bagBg.size(frameW, bagH + (int)chrome.marginVer());
 		add(bagBg);
 
 		bagTitle = PixelScene.renderTextBlock(Messages.titleCase(currentBag.name()), 8);
 		bagTitle.hardlight(TITLE_COLOR);
 		bagTitle.maxWidth(contentW);
-		bagTitle.setPos(PAD, bagTop + PAD);
+		bagTitle.setPos(0, bagTop);
 		add(bagTitle);
 
-		int rowsTop = bagTop + PAD + TITLE_H;
+		int rowsTop = bagTop + TITLE_H;
 
 		if (desktop) {
 			for (int i = 0; i < 5; i++) {
 				InventorySlot slot = new InventorySlot(null);
-				slot.setRect(PAD + i * (slotW + 1), rowsTop, slotW, slotH);
+				slot.setRect(i * (slotW + 1), rowsTop, slotW, slotH);
 				equippedSlots.add(slot);
 				add(slot);
 			}
@@ -149,7 +156,7 @@ public class WndChest extends WndTabbed {
 					}
 				}
 			};
-			slot.setRect(PAD + (i % columns) * (slotW + 1), rowsTop + (i / columns) * (slotH + 1), slotW, slotH);
+			slot.setRect((i % columns) * (slotW + 1), rowsTop + (i / columns) * (slotH + 1), slotW, slotH);
 			bagSlots.add(slot);
 			add(slot);
 		}
