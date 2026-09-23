@@ -46,7 +46,7 @@ public class ReShatteredChanges {
 		changeInfos.add(changes);
 
 		changes.addButton(new ChangeButton(ChangeIcons.V062_GOLD_CHEST, "独立宝箱页面",
-				"\n-现在开启宝箱后不会立刻将物品生成在地上，宝箱将作为一个独立的容器盛放物品，可以迅速放入与取出。\n-隐身状态下可以直接打开宝箱怪而不惊醒，但如果此时惊动了宝箱怪，依旧会被偷袭。"));
+				"\n-现在开启宝箱后不会立刻将物品生成在地上，宝箱将作为一个独立的容器盛放物品，可以迅速放入与取出。\n-隐身状态下可以直接打开宝箱怪而不惊醒它，但如果打开过程中惊动了宝箱怪，依旧会被偷袭。"));
 
 
 		changes = new ChangeInfo("改动", false, null);
