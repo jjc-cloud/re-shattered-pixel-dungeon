@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "mcp__shatteredpd__project_overview",
-      "mcp__shatteredpd__get_feature_context"
-    ]
-  }
-}

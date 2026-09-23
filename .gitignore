@@ -21,6 +21,8 @@ local.properties
 
 #agent files
 /AGENTS.md
+.claude/
+.workbuddy/
 
 
 #vs files
