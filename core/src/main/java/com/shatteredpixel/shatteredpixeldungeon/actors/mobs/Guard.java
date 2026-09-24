@@ -90,6 +90,11 @@ public class Guard extends Mob {
 		return Dungeon.level.distance( pos, cell ) < 5;
 	}
 
+	//which chain graphic the pull is drawn with. ordinary guards use plain iron chains.
+	protected Effects.Type chainEffect(){
+		return Effects.Type.CHAIN;
+	}
+
 	//whether targets pulled in by the chains are also crippled
 	protected boolean cripplesTarget(){
 		return true;
@@ -133,7 +138,7 @@ public class Guard extends Mob {
 					Sample.INSTANCE.play(Assets.Sounds.CHAINS);
 					sprite.parent.add(new Chains(sprite.center(),
 							enemy.sprite.destinationCenter(),
-							Effects.Type.CHAIN,
+							chainEffect(),
 							new Callback() {
 						public void call() {
 							Actor.add(new Pushing(enemy, enemy.pos, newPosFinal, new Callback() {

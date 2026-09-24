@@ -51,17 +51,19 @@ public class MedusaEyeRegression {
 						return new com.badlogic.gdx.files.FileHandle("core/src/main/assets/" + values[0]);
 					throw new UnsupportedOperationException(method.getName());
 				});
+		//a single gaze channel applies 25% petrification, so four channels are lethal
+		final float gaze = 0.25f;
+
 		Victim victim = new Victim();
 		Petrification.apply(victim);
-		near(victim.actionTime(), 1.25f, "twenty percent slows all ordinary actions");
+		near(victim.actionTime(), 1f / (1f - gaze), "one gaze slows ordinary actions by its progress");
 		Petrification.apply(victim);
 		check(victim.isAlive(), "two applications do not kill");
-		near(victim.actionTime(), (1f / 0.6f), "forty percent slows all ordinary actions");
+		near(victim.actionTime(), 1f / (1f - 2 * gaze), "two gazes slow ordinary actions by their progress");
 		Petrification.apply(victim);
+		check(victim.isAlive(), "three applications do not kill");
 		Petrification.apply(victim);
-		check(victim.isAlive(), "four applications do not kill");
-		Petrification.apply(victim);
-		check(!victim.isAlive() && victim.deathCause instanceof Petrification, "fifth application kills with stone cause");
+		check(!victim.isAlive() && victim.deathCause instanceof Petrification, "fourth application kills with stone cause");
 
 		Victim wandTarget = new Victim();
 		Petrification.apply(wandTarget, 0.5f);
@@ -77,14 +79,14 @@ public class MedusaEyeRegression {
 		Victim resistant = new Victim();
 		resistant.resistStone();
 		for (int i = 0; i < 3; i++) Petrification.apply(resistant);
-		near(resistant.buff(Petrification.class).progress(), 0.3f, "generic resistance halves buildup");
+		near(resistant.buff(Petrification.class).progress(), 3 * gaze * 0.5f, "generic resistance halves buildup");
 
 		Victim ringBearer = new Victim();
 		Dungeon.hero = new com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero();
 		RingOfElements ring = new RingOfElements();
 		ring.new Resistance().attachTo(ringBearer);
 		Petrification.apply(ringBearer);
-		near(ringBearer.buff(Petrification.class).progress(), 0.825f * 0.2f, "elements ring reduces buildup");
+		near(ringBearer.buff(Petrification.class).progress(), 0.825f * gaze, "elements ring reduces buildup");
 		Buff.affect(ringBearer, MagicImmune.class);
 		check(ringBearer.buff(Petrification.class) == null, "magic immunity cleanses existing progress");
 		Petrification.apply(ringBearer);
@@ -110,10 +112,10 @@ public class MedusaEyeRegression {
 		resistant.buff(Petrification.class).storeInBundle(saved);
 		Petrification restored = new Petrification();
 		restored.restoreFromBundle(saved);
-		near(restored.progress(), 0.3f, "progress survives save and restore");
+		near(restored.progress(), 3 * gaze * 0.5f, "progress survives save and restore");
 		restored.attachTo(new Victim());
 		restored.act();
-		near(restored.progress(), 0.3f, "progress does not accumulate without an eye");
+		near(restored.progress(), 3 * gaze * 0.5f, "progress does not accumulate without an eye");
 
 		TestEye eye = new TestEye();
 		Victim target = new Victim();
@@ -122,7 +124,7 @@ public class MedusaEyeRegression {
 		eye.attackTarget(target);
 		check(eye.beamCharged && target.buff(Petrification.class) == null, "first action charges");
 		eye.attackTarget(target);
-		near(target.buff(Petrification.class).progress(), 0.2f, "charged eye adds twenty percent");
+		near(target.buff(Petrification.class).progress(), gaze, "charged eye adds one gaze worth of progress");
 		eye.see(target, false);
 		check(!eye.sees(target), "out of sight cannot be attacked");
 		eye.see(target, true);
@@ -135,7 +137,7 @@ public class MedusaEyeRegression {
 		TestEye restoredEye = new TestEye();
 		restoredEye.restoreFromBundle(eyeSave);
 		restoredEye.attackTarget(target);
-		near(target.buff(Petrification.class).progress(), 0.4f, "saved channel resumes against same target");
+		near(target.buff(Petrification.class).progress(), 2 * gaze, "saved channel resumes against same target");
 		Victim differentTarget = new Victim();
 		restoredEye.attackTarget(differentTarget);
 		check(differentTarget.buff(Petrification.class) == null, "changing targets requires a fresh charge");
@@ -157,7 +159,8 @@ public class MedusaEyeRegression {
 		berserker.belongings.armor.affixSeal(new com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal());
 		com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Berserk rage = Buff.affect(berserker,
 				com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Berserk.class);
-		for (int i = 0; i < 5; i++) Petrification.apply(berserker);
+		//exactly as many gazes as it takes to petrify, no more
+		for (int i = 0; i < Math.round(1f / gaze); i++) Petrification.apply(berserker);
 		check(berserker.isAlive() && berserker.HP == 50, "stone death triggers death defiance");
 		near(rage.power(), 4f, "stone death forces berserk rage");
 		check(!rage.deathDefianceAvailable(), "stone death consumes defiance");

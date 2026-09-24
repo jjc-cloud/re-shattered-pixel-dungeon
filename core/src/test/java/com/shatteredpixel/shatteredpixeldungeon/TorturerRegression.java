@@ -6,7 +6,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Guard;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.MobSpawner;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Torturer;
-import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Effects;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
-/** Headless checks for the torturer: it reuses the guard's stats, chains endlessly on sight, and guarantees the chains. */
+/** Headless checks for the torturer: guard stats, endless sight-based chains, a pull-then-strike turn, and the guaranteed chains drop. */
 public class TorturerRegression {
 
 	//the test level is a bare room; every cell below is interior, as buildFlagMaps() forces the border solid
@@ -47,10 +47,17 @@ public class TorturerRegression {
 		@Override public void die(Object cause) { HP = 0; }
 	}
 
-	/** Pulling only needs a sprite to exist, it never needs to be placed on screen. */
+	/** Pulling and striking only need a sprite to exist, it never needs to be drawn. */
 	public static class StubSprite extends MobSprite {
 		StubSprite() { visible = false; }
 		@Override public void place(int cell) { }
+		//there is no parent scene to hang emotion icons off of when running headless
+		@Override public void showAlert() { }
+		@Override public void hideAlert() { }
+		@Override public void showLost() { }
+		@Override public void hideLost() { }
+		@Override public void showInvestigate() { }
+		@Override public void hideInvestigate() { }
 	}
 
 	public static class TestGuard extends Guard {
@@ -63,6 +70,7 @@ public class TorturerRegression {
 		boolean inRange(int cell) { return chainInRange(cell); }
 		boolean reaches(Ballistica chain, int target) { return chainsReachTarget(chain, target); }
 		Ballistica aim(int target) { return chainsBallistica(target); }
+		Effects.Type effect() { return chainEffect(); }
 		float chainCost() { float before = cooldown(); onChainUsed(); return cooldown() - before; }
 		boolean tryChain(int target) { return chain(target); }
 		void target(Char ch) { enemy = ch; }
@@ -72,6 +80,10 @@ public class TorturerRegression {
 
 	public static class TestTorturer extends Torturer {
 		boolean chainsDropped = false;
+		int chainsThrown = 0;
+		int strikes = 0;
+		private Char forcedEnemy = null;
+
 		TestTorturer() {
 			fieldOfView = new boolean[Dungeon.level.length()];
 			sprite = new StubSprite();
@@ -81,10 +93,23 @@ public class TorturerRegression {
 		boolean cripples() { return cripplesTarget(); }
 		boolean reaches(Ballistica chain, int target) { return chainsReachTarget(chain, target); }
 		Ballistica aim(int target) { return chainsBallistica(target); }
+		Effects.Type effect() { return chainEffect(); }
 		boolean tryChain(int target) { return chain(target); }
 		void target(Char ch) { enemy = ch; }
 		float chainCost() { float before = cooldown(); onChainUsed(); return cooldown() - before; }
+		/**pretends enough time has gone by for the torturer to have taken another turn*/
+		void startNextTurn() { spend(1f); }
+		boolean actOnce() { return act(); }
+		void forceEnemy(Char ch) { forcedEnemy = ch; }
 		void roll() { rollForChainsDrop(); }
+
+		@Override protected Char chooseEnemy() { return forcedEnemy != null ? forcedEnemy : super.chooseEnemy(); }
+		@Override protected void onChainUsed() { chainsThrown++; super.onChainUsed(); }
+		/**the damage roll is not what is under test here, only whether the torturer gets to strike at all*/
+		@Override public boolean attack(Char enemy, float dmgMulti, float dmgBonus, float accMulti) {
+			strikes++;
+			return true;
+		}
 		@Override protected void dropChains() { chainsDropped = true; }
 	}
 
@@ -157,6 +182,8 @@ public class TorturerRegression {
 		check(torturer.inRange(NEAR) && torturer.inRange(FAR), "torturers reach any target in their field of view");
 		check(!torturer.inRange(FINAL), "torturers cannot reach targets they cannot see");
 		check(!torturer.cripples(), "torturers do not cripple pulled targets");
+		check(guard.effect() == Effects.Type.CHAIN, "guards draw their pull with the plain iron chain");
+		check(torturer.effect() == Effects.Type.ETHEREAL_CHAIN, "torturers draw their pull with the ethereal chains");
 
 		Ballistica guardAim = guard.aim(NEAR);
 		Ballistica torturerAim = torturer.aim(NEAR);
@@ -172,19 +199,26 @@ public class TorturerRegression {
 		check(torturer.tryChain(NEAR), "torturers pull targets in from a distance");
 		check(victim.pos == FIRST, "torturers pull their target to the first open tile in the direction of the target");
 		check(victim.buff(Cripple.class) == null, "torturers leave pulled targets able to move");
-		check(torturer.available(), "torturers never run out of chains");
-		near(torturer.chainCost(), 1f, "torturers spend a turn every time they use their chains");
+		check(!torturer.available(), "a torturer throws at most one chain per turn");
+		check(!torturer.tryChain(NEAR), "a second pull in the same turn is refused");
+		torturer.startNextTurn();
+		check(torturer.available(), "torturers have their chains back once their turn is over");
+
+		near(torturer.chainCost(), 0f, "pulling costs the torturer no time, so it can strike right afterwards");
+		torturer.startNextTurn();
 
 		victim.pos = NEAR;
 		Dungeon.level.map[FIRST] = Terrain.CHASM;
 		Dungeon.level.buildFlagMaps();
 		check(!torturer.tryChain(NEAR), "torturers refuse to pull targets onto a chasm");
 		check(victim.pos == NEAR, "a refused pull leaves the target where it was");
+		check(torturer.available(), "a refused pull does not use up the turn's chain");
 
 		Dungeon.level.map[FIRST] = Terrain.WALL;
 		Dungeon.level.buildFlagMaps();
 		check(torturer.tryChain(NEAR), "torturers pull past solid tiles");
 		check(victim.pos == SECOND, "torturers skip solid tiles and use the first open tile instead");
+		torturer.startNextTurn();
 
 		Dungeon.level.map[FIRST] = Terrain.EMPTY;
 		Dungeon.level.buildFlagMaps();
@@ -196,6 +230,23 @@ public class TorturerRegression {
 		check(guardVictim.buff(Cripple.class) != null, "guards still cripple pulled targets");
 		check(!guard.available(), "ordinary guards still run out of chains");
 		near(guard.chainCost(), 0f, "guards spend no extra time on their single chain");
+
+		//the behaviour that matters: drag the target in and then strike it, all within the guard's one turn
+		TestTorturer puller = new TestTorturer();
+		puller.pos = MOB;
+		puller.state = puller.HUNTING;
+		Victim prey = new Victim(NEAR);
+		puller.forceEnemy(prey);
+
+		check(puller.actOnce(), "a torturer keeps acting after dragging a target in, so it can strike the same turn");
+		check(prey.pos == FIRST, "the pull lands the target right in front of the torturer");
+		near(puller.cooldown(), 0f, "dragging a target in does not end the torturer's turn");
+		check(puller.chainsThrown == 1, "the torturer throws its chain");
+		check(puller.strikes == 0, "the torturer does not strike before its chain has landed");
+
+		check(puller.actOnce(), "the follow up act resolves the strike");
+		check(puller.strikes == 1, "the torturer strikes the target it just pulled in, on the same turn");
+		check(puller.chainsThrown == 1, "the torturer throws only one chain per turn");
 
 		Dungeon.LimitedDrops.GUARD_CHAINS.count = 0;
 		TestTorturer firstTorturer = new TestTorturer();
