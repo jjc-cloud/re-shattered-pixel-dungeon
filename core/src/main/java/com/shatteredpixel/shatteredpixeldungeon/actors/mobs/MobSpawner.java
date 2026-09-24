@@ -263,6 +263,7 @@ public class MobSpawner extends Actor {
 
 		RARE_ALTS.put(Thief.class,          Bandit.class);
 		RARE_ALTS.put(Necromancer.class,    SpectralNecromancer.class);
+		RARE_ALTS.put(Guard.class,          Torturer.class);
 
 		RARE_ALTS.put(Brute.class,          ArmoredBrute.class);
 		RARE_ALTS.put(DM200.class,          DM201.class);

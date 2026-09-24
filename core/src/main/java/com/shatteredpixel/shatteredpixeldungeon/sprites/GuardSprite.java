@@ -29,23 +29,29 @@ import com.watabou.noosa.TextureFilm;
 public class GuardSprite extends MobSprite {
 
 	public GuardSprite() {
+		this(0);
+	}
+
+	/** Rare variants of the guard use further rows of the same sprite sheet. */
+	protected GuardSprite(int row) {
 		super();
 
 		texture( Assets.Sprites.GUARD );
 
 		TextureFilm frames = new TextureFilm( texture, 12, 16 );
+		int offset = row * (texture.width / 12);
 
 		idle = new Animation( 2, true );
-		idle.frames( frames, 0, 0, 0, 1, 0, 0, 1, 1 );
+		idle.frames( frames, offset, offset, offset, offset+1, offset, offset, offset+1, offset+1 );
 
 		run = new MovieClip.Animation( 15, true );
-		run.frames( frames, 2, 3, 4, 5, 6, 7 );
+		run.frames( frames, offset+2, offset+3, offset+4, offset+5, offset+6, offset+7 );
 
 		attack = new MovieClip.Animation( 12, false );
-		attack.frames( frames, 8, 9, 10 );
+		attack.frames( frames, offset+8, offset+9, offset+10 );
 
 		die = new MovieClip.Animation( 8, false );
-		die.frames( frames, 11, 12, 13, 14 );
+		die.frames( frames, offset+11, offset+12, offset+13, offset+14 );
 
 		play( idle );
 	}
