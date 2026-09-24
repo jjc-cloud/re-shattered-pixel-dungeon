@@ -31,6 +31,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.TestSupplies;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.MedusaEye;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Torturer;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WornDartTrap;
 
 /**
@@ -105,6 +106,7 @@ public class TestStart {
 
 		// Add spawnMobs(...) and spawnTraps(...) calls here.
 		spawnMobs(level, START_DEPTH, MedusaEye::new, 0);
+		spawnMobs(level, START_DEPTH, Torturer::new, 1);
 		spawnTraps(level, START_DEPTH, WornDartTrap::new, 2, false);
 
 	}

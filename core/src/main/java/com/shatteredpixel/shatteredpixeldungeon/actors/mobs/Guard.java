@@ -69,13 +69,44 @@ public class Guard extends Mob {
 		return Random.NormalIntRange(4, 12);
 	}
 
-	private boolean chain(int target){
-		if (chainsUsed || enemy.properties().contains(Property.IMMOVABLE))
+	//whether this guard still has chains left to throw
+	protected boolean chainsAvailable(){
+		return !chainsUsed;
+	}
+
+	//how the chains travel toward their target. ordinary guards need a clear line of fire,
+	//the rare variant ignores terrain on the way and only needs to see its target.
+	protected Ballistica chainsBallistica( int target ){
+		return new Ballistica(pos, target, Ballistica.PROJECTILE);
+	}
+
+	//whether the thrown chains actually land on their target
+	protected boolean chainsReachTarget( Ballistica chain, int target ){
+		return chain.collisionPos == target;
+	}
+
+	//how close a target has to be for the chains to reach it
+	protected boolean chainInRange( int cell ){
+		return Dungeon.level.distance( pos, cell ) < 5;
+	}
+
+	//whether targets pulled in by the chains are also crippled
+	protected boolean cripplesTarget(){
+		return true;
+	}
+
+	//called once the guard commits to pulling a target in with its chains
+	protected void onChainUsed(){
+		//ordinary guards can only use their chains once, so no extra time is spent here
+	}
+
+	protected boolean chain(int target){
+		if (!chainsAvailable() || enemy.properties().contains(Property.IMMOVABLE))
 			return false;
 
-		Ballistica chain = new Ballistica(pos, target, Ballistica.PROJECTILE);
+		Ballistica chain = chainsBallistica(target);
 
-		if (chain.collisionPos != enemy.pos
+		if (!chainsReachTarget(chain, target)
 				|| chain.path.size() < 2
 				|| Dungeon.level.pit[chain.path.get(1)])
 			return false;
@@ -118,15 +149,18 @@ public class Guard extends Mob {
 				}
 			}
 		}
+		onChainUsed();
 		chainsUsed = true;
 		return true;
 	}
 
-	private void pullEnemy( Char enemy, int pullPos ){
+	protected void pullEnemy( Char enemy, int pullPos ){
 		enemy.pos = pullPos;
 		enemy.sprite.place(pullPos);
 		Dungeon.level.occupyCell(enemy);
-		Cripple.prolong(enemy, Cripple.class, 4f);
+		if (cripplesTarget()) {
+			Cripple.prolong(enemy, Cripple.class, 4f);
+		}
 		if (enemy == Dungeon.hero) {
 			Dungeon.hero.interrupt();
 			Dungeon.observe();
@@ -155,6 +189,13 @@ public class Guard extends Mob {
 
 	@Override
 	public void rollToDropLoot() {
+		rollForChainsDrop();
+
+		super.rollToDropLoot();
+	}
+
+	//chance for the one-time ethereal chains drop, this replaces the armor drop for that kill
+	protected void rollForChainsDrop(){
 		MasterThievesArmband.StolenTracker stolen = buff(MasterThievesArmband.StolenTracker.class);
 		if (Dungeon.hero.lvl <= maxLvl + 2
 				&& !Dungeon.LimitedDrops.GUARD_CHAINS.dropped()
@@ -163,12 +204,15 @@ public class Guard extends Mob {
 			lootChance = 0.03f;
 			if (Random.Float() < super.lootChance()) {
 				Dungeon.LimitedDrops.GUARD_CHAINS.drop();
-				Dungeon.level.drop(Generator.random(EtherealChains.class), pos).sprite.drop();
+				dropChains();
 			}
 			lootChance = armorChance;
 		}
+	}
 
-		super.rollToDropLoot();
+	//places the dropped chains on the floor
+	protected void dropChains(){
+		Dungeon.level.drop(Generator.random(EtherealChains.class), pos).sprite.drop();
 	}
 
 	@Override
@@ -191,16 +235,16 @@ public class Guard extends Mob {
 		chainsUsed = bundle.getBoolean(CHAINSUSED);
 	}
 	
-	private class Hunting extends Mob.Hunting{
+	protected class Hunting extends Mob.Hunting{
 		@Override
 		public boolean act( boolean enemyInFOV, boolean justAlerted ) {
 			enemySeen = enemyInFOV;
 			
-			if (!chainsUsed
+			if (chainsAvailable()
 					&& enemyInFOV
 					&& !isCharmedBy( enemy )
 					&& !canAttack( enemy )
-					&& Dungeon.level.distance( pos, enemy.pos ) < 5
+					&& chainInRange( enemy.pos )
 					&& chain(enemy.pos)){
 				return !(sprite.visible || enemy.sprite.visible);
 			} else {
