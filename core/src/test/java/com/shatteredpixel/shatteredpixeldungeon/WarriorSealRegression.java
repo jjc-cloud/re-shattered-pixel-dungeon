@@ -91,6 +91,18 @@ public class WarriorSealRegression {
 		check(state(shield).getInt("cooldown") == -400,
 				"large health loss applies every completed 30 percent threshold");
 
+		//护盾脱战消散：角斗士按 护盾量÷纹章护盾值 的比例全额折算回冷却
+		int beforeDecay = state(shield).getInt("cooldown");
+		shield.activate();
+		check(state(shield).getInt("cooldown") == beforeDecay + 100 && shield.shielding() == 5,
+				"activation grants one shield and spends one cooldown duration");
+		shield.decShield(2);
+		for (int i = 0; i < 5; i++) shield.act();
+		check(shield.shielding() == 0, "dissipated shield is cleared");
+		check(state(shield).getInt("cooldown") == beforeDecay + 100 - 60,
+				"gladiator dissipation refunds cooldown by shield ratio, actual="
+						+ state(shield).getInt("cooldown"));
+
 		hero = hero(HeroSubClass.BERSERKER);
 		shield = hero.buff(BrokenSeal.WarriorShield.class);
 		hero.damage(1, enemy);
@@ -130,6 +142,15 @@ public class WarriorSealRegression {
 		shield.act();
 		check(!shield.coolingDown(), "100-turn cooldown expires");
 		check(seal.desc().contains("最大生命值70%"), "current guard threshold description");
+
+		//狂战士的消散返还仍保留 50% 上限
+		hero = hero(HeroSubClass.BERSERKER);
+		shield = hero.buff(BrokenSeal.WarriorShield.class);
+		shield.activate();
+		for (int i = 0; i < 5; i++) shield.act();
+		check(state(shield).getInt("cooldown") == 45,
+				"berserker keeps the 50 percent dissipation cap, actual="
+						+ state(shield).getInt("cooldown"));
 		hero = hero(HeroSubClass.NONE);
 		com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor startingArmor = hero.belongings.armor;
 		seal = startingArmor.checkSeal();
