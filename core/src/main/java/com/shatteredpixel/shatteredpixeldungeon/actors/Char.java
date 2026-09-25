@@ -94,6 +94,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.CrystalSpire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.DwarfKing;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Elemental;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.GnollGeomancer;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Necromancer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Tengu;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.MirrorImage;
@@ -152,6 +153,7 @@ import com.shatteredpixel.shatteredpixeldungeon.plants.Swiftthistle;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MobSprite;
+import com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.TargetHealthIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
@@ -291,6 +293,12 @@ public abstract class Char extends Actor {
 			c.pos = oldPos;
 			ScrollOfTeleportation.appear(this, newPos);
 			ScrollOfTeleportation.appear(c, oldPos);
+			//the enemy we used escape plan on becomes the hero's current target,
+			//so that UI such as the attack indicator, target health, and item
+			//auto-aim follow the enemy we just swapped with
+			if (escapeSwap && this instanceof Mob){
+				AttackIndicator.target(this);
+			}
 			Dungeon.observe();
 			GameScene.updateFog();
 			return true;

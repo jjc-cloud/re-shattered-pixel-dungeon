@@ -480,8 +480,15 @@ public class Combo extends Buff implements ActionIndicator.Action {
 	}
 
 	private static int lethalDefenseReduction(Hero hero) {
-		int rank = hero.pointsInTalent(Talent.LETHAL_DEFENSE);
-		return 50 * rank;
+		switch (hero.pointsInTalent(Talent.LETHAL_DEFENSE)){
+			case 1:
+				return 33;
+			case 2:
+				return 67;
+			case 3:
+				return 100;
+		}
+		return 0;
 	}
 
 	private CellSelector.Listener listener = new CellSelector.Listener() {

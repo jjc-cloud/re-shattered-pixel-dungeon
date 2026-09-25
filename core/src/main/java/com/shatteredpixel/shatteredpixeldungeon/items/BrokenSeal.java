@@ -332,7 +332,7 @@ public class BrokenSeal extends Item {
 			if (loss <= 0 || !completeSealEquipped()) return;
 			if (((Hero)target).subClass == HeroSubClass.GLADIATOR) {
 				gladiatorDamage += loss;
-				int threshold = Math.max(1, (target.HT * 3 + 9) / 10);
+				int threshold = Math.max(1, (target.HT * 4 + 9) / 10);
 				while (gladiatorDamage >= threshold) {
 					gladiatorDamage -= threshold;
 					cooldown -= 100;
@@ -404,7 +404,7 @@ public class BrokenSeal extends Item {
 			}
 			if (completeSealEquipped()) {
 				if (((Hero)target).subClass == HeroSubClass.GLADIATOR) {
-					int threshold = Math.max(1, (target.HT * 3 + 9) / 10);
+					int threshold = Math.max(1, (target.HT * 4 + 9) / 10);
 					description += "\n\n" + Messages.get(this, "gladiator_progress",
 							Math.round(gladiatorDamage * 100f / threshold));
 				} else {
