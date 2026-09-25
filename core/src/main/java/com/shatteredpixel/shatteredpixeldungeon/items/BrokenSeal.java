@@ -427,7 +427,14 @@ public class BrokenSeal extends Item {
 				if (Dungeon.hero.visibleEnemies() == 0 && Dungeon.hero.buff(Combo.class) == null){
 					turnsSinceEnemies += HoldFast.buffDecayFactor(target);
 					if (turnsSinceEnemies >= 5){
-						if (cooldown > 0) {
+						if (target instanceof Hero && ((Hero)target).subClass == HeroSubClass.GLADIATOR) {
+							//角斗士：未使用的护盾按 护盾量÷纹章可提供的护盾值 的比例全额折算回冷却
+							int sealShield = maxShield();
+							if (sealShield <= 0) sealShield = initialShield;
+							if (sealShield > 0) {
+								cooldown -= Math.round(cooldownDuration() * (shielding() / (float)sealShield));
+							}
+						} else if (cooldown > 0) {
 							float percentLeft = shielding() / (float)initialShield;
 							//max of 50% cooldown refund
 							cooldown = Math.max(0, (int)(cooldown - cooldownDuration() * (percentLeft / 2f)));
