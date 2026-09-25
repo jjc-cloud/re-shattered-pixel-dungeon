@@ -48,7 +48,6 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V062_GOLD_CHEST, "打开你的宝箱！",
 				"\n-现在开启宝箱后不会立刻将物品生成在地上，宝箱将作为一个独立的容器盛放物品，可以迅速放入与取出。\n-隐身状态下可以直接打开宝箱怪而不惊醒它，但如果打开过程中惊动了宝箱怪，依旧会被偷袭。"));
 
-
 		changes = new ChangeInfo("改动", false, null);
 		changes.hardlight(CharSprite.WARNING);
 		changeInfos.add(changes);
@@ -58,12 +57,14 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V080_DM300,"落石逻辑修改",
 				"\n现在DM300与矿洞豺狼任务中的落石不会选中不可达格，除非玩家的位置非常糟糕。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V061_BUGFIX,"bug修复",
-				"\n-液火药剂不能点着在水边的障碍的问题。\n-战士在未启用刻印转移时使用奥数刻笔会丢失附魔的问题。\n-狂战士进入宝库时丢失怒气与转职，需重进加载的问题。\n-天赋扭曲现实在结算页仍调用选择界面导致卡住的问题。\n-ios端使用重生十字架复活时闪退回到死亡前的问题。"));
+				"\n-液火药剂不能点着在水边的障碍的问题。\n-战士在未启用刻印转移时使用奥数刻笔会丢失附魔的问题。\n-狂战士进入宝库时丢失怒气与转职，需重进加载的问题。\n-天赋扭曲现实在结算页仍调用选择界面导致卡住的问题。\n-ios端使用重生十字架复活时闪退回到死亡前的问题。\n-商店可以订购升级卷轴与力量药剂的问题。"));
 
 		changes = new ChangeInfo("增强", false, null);
 		changes.hardlight(CharSprite.POSITIVE);
 		changeInfos.add(changes);
 		
+		changes.addButton(new ChangeButton(ChangeIcons.V030_MAGE_CLOTH, "法杖回收",
+				"\n现在在满级下可以无限次数回收。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V064_CHALLENGES, "隐蔽设计",
 				"\n挑战老旧设计更改为隐蔽设计，英雄不再被动发现隐藏陷阱，总可见陷阱数不再增加"));
 
