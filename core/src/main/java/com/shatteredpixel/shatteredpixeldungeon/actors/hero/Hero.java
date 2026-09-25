@@ -2192,11 +2192,6 @@ public class Hero extends Char {
 		while (this.exp >= maxExp()) {
 			this.exp -= maxExp();
 
-			if (buff(Talent.WandPreservationCounter.class) != null
-				&& pointsInTalent(Talent.WAND_PRESERVATION) == 2){
-				buff(Talent.WandPreservationCounter.class).detach();
-			}
-
 			if (lvl < MAX_LEVEL) {
 				lvl++;
 				if (berserk != null) berserk.onHeroLevelUp();

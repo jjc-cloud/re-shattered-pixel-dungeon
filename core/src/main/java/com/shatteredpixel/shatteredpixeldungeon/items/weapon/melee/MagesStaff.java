@@ -224,9 +224,16 @@ public class MagesStaff extends MeleeWeapon {
 		int oldStaffcharges = this.wand != null ? this.wand.curCharges : 0;
 
 		if (owner == Dungeon.hero && this.wand != null && Dungeon.hero.hasTalent(Talent.WAND_PRESERVATION)){
-			Talent.WandPreservationCounter counter = Buff.affect(Dungeon.hero, Talent.WandPreservationCounter.class);
-			if (counter.count() == 0){
-				counter.countUp(1);
+			//+1 allows a total of 5 recoveries, +2 allows unlimited recoveries
+			boolean canPreserve;
+			if (Dungeon.hero.pointsInTalent(Talent.WAND_PRESERVATION) >= 2){
+				canPreserve = true;
+			} else {
+				Talent.WandPreservationCounter counter = Buff.affect(Dungeon.hero, Talent.WandPreservationCounter.class);
+				canPreserve = counter.count() < 5;
+				if (canPreserve) counter.countUp(1);
+			}
+			if (canPreserve){
 				this.wand.level(0);
 				if (!this.wand.collect()) {
 					Dungeon.level.drop(this.wand, owner.pos);
@@ -432,6 +439,19 @@ public class MagesStaff extends MeleeWeapon {
 					newLevel = trueLevel();
 				}
 
+				//with wand preservation at +2, imbuing is completely free if the wand has no
+				//upgrades and the staff's level won't change: the old wand is recovered and can
+				//be imbued right back with nothing lost, so there is no point in confirming.
+				//a wand whose curse state isn't known, or which is cursed, still gets the prompt
+				//so that the curse warning is never skipped.
+				if (Dungeon.hero.pointsInTalent(Talent.WAND_PRESERVATION) >= 2
+						&& newLevel == trueLevel()
+						&& item.trueLevel() == 0
+						&& item.cursedKnown && !item.cursed){
+					applyWand((Wand)item);
+					return;
+				}
+
 				String bodyText = Messages.get(MagesStaff.class, "imbue_desc");
 				if (item.isIdentified()){
 					bodyText += "\n\n" + Messages.get(MagesStaff.class, "imbue_level", newLevel);
@@ -444,8 +464,11 @@ public class MagesStaff extends MeleeWeapon {
 				}
 
 				if (wand != null) {
-					if (Dungeon.hero.hasTalent(Talent.WAND_PRESERVATION)
-							&& Dungeon.hero.buff(Talent.WandPreservationCounter.class) == null) {
+					boolean willPreserve = Dungeon.hero.hasTalent(Talent.WAND_PRESERVATION)
+							&& (Dungeon.hero.pointsInTalent(Talent.WAND_PRESERVATION) >= 2
+								|| Dungeon.hero.buff(Talent.WandPreservationCounter.class) == null
+								|| Dungeon.hero.buff(Talent.WandPreservationCounter.class).count() < 5);
+					if (willPreserve) {
 						bodyText += "\n\n" + Messages.get(MagesStaff.class, "imbue_talent");
 					} else {
 						bodyText += "\n\n" + Messages.get(MagesStaff.class, "imbue_lost");
