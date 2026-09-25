@@ -34,6 +34,7 @@ import com.watabou.noosa.Game;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.NinePatch;
 import com.watabou.noosa.audio.Sample;
+import com.watabou.utils.PlatformSupport;
 import com.watabou.utils.RectF;
 import com.watabou.utils.Signal;
 
@@ -114,9 +115,22 @@ public class WndTabbed extends Window {
 			width + chrome.marginHor(),
 			height + chrome.marginVer() );
 		
+		//the camera is taller than the chrome by the tabs, which stick out below it, so this can't just
+		//defer to Window.resize. The safe insets still have to be honoured though, the same way
+		//Window.resize does it, or the whole window sits off-centre on devices with a nav bar or a
+		//display cutout (the insets are physical pixels, so they are subtracted before the divide)
 		camera.resize( (int)chrome.width, chrome.marginTop() + height + tabHeight() );
-		camera.x = (int)(Game.width - camera.screenWidth()) / 2;
-		camera.y = (int)(Game.height - camera.screenHeight()) / 2;
+
+		RectF insets = Game.platform.getSafeInsets(PlatformSupport.INSET_BLK);
+		int screenW = (int)(Game.width - insets.left - insets.right);
+		int screenH = (int)(Game.height - insets.top - insets.bottom);
+
+		camera.x = (int)(screenW - camera.screenWidth()) / 2;
+		camera.x += insets.left;
+		camera.x += xOffset * camera.zoom;
+
+		camera.y = (int)(screenH - camera.screenHeight()) / 2;
+		camera.y += insets.top;
 		camera.y += yOffset * camera.zoom;
 
 		shadow.boxRect(
