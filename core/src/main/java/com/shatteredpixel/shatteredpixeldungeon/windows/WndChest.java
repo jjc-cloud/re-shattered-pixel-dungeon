@@ -45,6 +45,8 @@ public class WndChest extends WndTabbed {
 	private static final int STATUS_PANE_H = 38;
 	private static final int STATUS_PANE_H_LARGE = 39;
 	private static final int TOOLBAR_H = 26;
+	//slots stop shrinking here, so they stay usable on a really short screen
+	private static final int MIN_SLOT_H = 20;
 
 	private final ChestSession session;
 	private final boolean desktop;
@@ -87,6 +89,23 @@ public class WndChest extends WndTabbed {
 		int frameX = -(int)chrome.marginLeft();
 		int frameY = -(int)chrome.marginTop();
 		int frameW = width + (int)chrome.marginHor();
+
+		//uiCamera is the real on-screen size at runtime, so measuring the window against it adapts to
+		//any device without knowing anything about it. The slots shrink until the whole window, tabs
+		//included, fits between the HUD bands. WndBag keeps its bag on screen exactly this way
+		int uiSize = SPDSettings.interfaceSize();
+		int hudTop = uiSize == 0 ? STATUS_PANE_H : 0;
+		int hudBottom = uiSize == 0 ? TOOLBAR_H : STATUS_PANE_H_LARGE;
+		int room = (int)PixelScene.uiCamera.height - hudTop - hudBottom;
+		while (slotH > MIN_SLOT_H) {
+			int total = (int)chrome.marginTop()                                     //above the chest frame
+					+ TITLE_H + slotH + 3 + 12                                      //chest frame
+					+ (int)chrome.marginBottom() + GAP + (int)chrome.marginTop()    //its margin, then the gap
+					+ TITLE_H + (desktop ? slotH + 1 : 0) + (rows * slotH + (rows - 1)) //bag frame
+					+ tabHeight();                                                  //bag tabs
+			if (total <= room) break;
+			slotH--;
+		}
 
 		//the chest gets its own frame, stacked on top
 		int chestH = TITLE_H + slotH + 3 + 12;
@@ -173,20 +192,24 @@ public class WndChest extends WndTabbed {
 		resize(width, bagTop + bagH);
 
 		//WndTabbed centres the window on the raw game size, skipping the safe insets that
-		//Window.resize accounts for, and it ignores the HUD completely. A window this tall then
-		//hangs below centre, with its tabs past the bottom edge, so put it back in the band the
-		//HUD actually leaves free
+		//Window.resize accounts for, and it ignores the HUD completely. Correct the insets first, then
+		//move the window into the band the HUD leaves free. If it is too tall to fit in there, it at
+		//least gets clamped so that it never leaves the screen
 		if (!desktop) {
 			RectF insets = Game.platform.getSafeInsets(PlatformSupport.INSET_BLK);
-			int uiSize = SPDSettings.interfaceSize();
-
-			//undo the inset centring WndTabbed skips, then centre between the HUD bands
 			float delta = (insets.top - insets.bottom) / (2f * camera.zoom);
-			int hudTop = uiSize == 0 ? STATUS_PANE_H : 0;
-			int hudBottom = uiSize == 0 ? TOOLBAR_H : STATUS_PANE_H_LARGE;
-			delta += (hudTop - hudBottom) / 2f;
 
-			offset(0, Math.round(delta));
+			int screenH = (int)PixelScene.uiCamera.height;
+			int camH = (int)camera.height;
+			int bandTop = hudTop;
+			int bandBottom = screenH - hudBottom;
+			int centred = (screenH - camH) / 2;
+
+			int target = bandTop + (bandBottom - bandTop - camH) / 2;
+			target = Math.max(bandTop, Math.min(target, bandBottom - camH));
+			target = Math.max(0, Math.min(target, screenH - camH));
+
+			offset(0, Math.round(delta + target - centred));
 		}
 
 		int index = 1;
