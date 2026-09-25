@@ -3,6 +3,8 @@ package com.shatteredpixel.shatteredpixeldungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.VaultFlameTraps;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
@@ -102,6 +104,46 @@ public class EnvironmentalAwarenessRegression {
 		check(level.visited[cell(11, 6)], "expanded environmental vision updates explored tiles");
 		check(!level.heroFOV[cell(12, 7)], "prison torch does not reveal behind its wall");
 		check(!level.heroFOV[cell(10, 5)], "prison torch does not light beyond 3x3");
+	}
+
+	/** A light source lights its surroundings even when the viewer cannot see the source itself. */
+	private static void hiddenLightSource() {
+		PrisonLevel level = new PrisonLevel();
+		Hero hero = prepare(level);
+		hero.viewDistance = 2;
+		level.map[cell(6, 7)] = Terrain.WALL;        // hides the torch from the hero
+		level.map[cell(7, 7)] = Terrain.WALL_DECO;   // the torch itself
+		level.buildFlagMaps();
+		Dungeon.observe(3);
+
+		check(!level.heroFOV[cell(7, 7)], "the torch behind the wall is not visible");
+		check(level.heroFOV[cell(7, 6)], "a hidden torch still lights the floor next to it");
+		check(!level.heroFOV[cell(8, 7)], "a hidden torch does not light through itself");
+	}
+
+	/** Any sighted creature gets environmental light, not just the hero. */
+	private static void enemyEnvironmentalLight() {
+		PrisonLevel level = new PrisonLevel();
+		prepare(level);
+		level.map[cell(11, 7)] = Terrain.WALL_DECO;
+		level.buildFlagMaps();
+		level.cleanWalls();
+
+		TestRat rat = new TestRat();
+		rat.pos = cell(2, 7);
+		rat.viewDistance = 2;
+		rat.HP = rat.HT = 20;
+		rat.fieldOfView = new boolean[level.length()];
+		level.updateFieldOfView(rat, rat.fieldOfView);
+
+		check(rat.fieldOfView[cell(11, 6)], "an enemy gets the same environmental light as the hero");
+		check(!rat.fieldOfView[cell(12, 7)], "environmental light does not reveal behind the torch's wall");
+		check(level.environmentalViewDistance() == 0,
+				"an enemy's own view distance does not feed the hero's camera range");
+
+		Buff.affect(rat, Blindness.class);
+		level.updateFieldOfView(rat, rat.fieldOfView);
+		check(!rat.fieldOfView[cell(11, 6)], "a blind enemy gets no environmental light");
 	}
 
 	private static void prisonTorchDirections() {
@@ -205,6 +247,8 @@ public class EnvironmentalAwarenessRegression {
 		com.watabou.noosa.Game.version = "regression-test";
 		prisonTorchDirections();
 		prisonLight();
+		hiddenLightSource();
+		enemyEnvironmentalLight();
 		cityLight();
 		activeGroundLights();
 		caveLights();

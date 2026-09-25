@@ -1431,14 +1431,13 @@ public abstract class Level implements Bundlable {
 			
 			ShadowCaster.castShadow( cx, cy, width(), fieldOfView, blocking, Math.round(viewDist) );
 
-			if (c == Dungeon.hero) {
-				if (environmentalFOV == null || environmentalFOV.length != length()) {
-					environmentalFOV = new boolean[length()];
-				}
-				int mapDiagonal = (int)Math.ceil(Math.hypot(width(), height()));
-				ShadowCaster.castShadow(cx, cy, width(), environmentalFOV, blocking, mapDiagonal);
-				addEnvironmentalLighting(c, fieldOfView, environmentalFOV);
+			//environmental light is seen by every sighted creature, not just the hero
+			if (environmentalFOV == null || environmentalFOV.length != length()) {
+				environmentalFOV = new boolean[length()];
 			}
+			int mapDiagonal = (int)Math.ceil(Math.hypot(width(), height()));
+			ShadowCaster.castShadow(cx, cy, width(), environmentalFOV, blocking, mapDiagonal);
+			addEnvironmentalLighting(c, fieldOfView, environmentalFOV);
 		} else {
 			BArray.setFalse(fieldOfView);
 		}
@@ -1623,9 +1622,10 @@ public abstract class Level implements Bundlable {
 		return blob != null && blob.volume > 0 && blob.cur != null && blob.cur[cell] > 0;
 	}
 
+	//an environmental light source lights up the area around itself. The viewer does not need
+	//to be able to see the source itself, only the lit cell has to be in their line of sight.
 	private void addEnvironmentalLighting( Char viewer, boolean[] fieldOfView, boolean[] lineOfSight ) {
 		for (int source = 0; source < length(); source++) {
-			if (!lineOfSight[source]) continue;
 			int radius = environmentalLightRadius(source, viewer);
 			if (radius < 0) continue;
 
@@ -1636,7 +1636,10 @@ public abstract class Level implements Bundlable {
 					int cell = x + y * width();
 					if (lineOfSight[cell]) {
 						fieldOfView[cell] = true;
-						environmentalViewDistance = Math.max(environmentalViewDistance, distance(viewer.pos, cell));
+						//only the hero's own view distance feeds the camera/fog range
+						if (viewer == Dungeon.hero) {
+							environmentalViewDistance = Math.max(environmentalViewDistance, distance(viewer.pos, cell));
+						}
 					}
 				}
 			}
