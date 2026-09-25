@@ -73,6 +73,19 @@ public class StatuesExitRoom extends StatuesRoom {
 				}
 			}
 			carpet.setRect(carpetRect.left, carpetRect.top, carpetRect.width()+1, carpetRect.height()+1);
+
+			//rooms with an even width or height get a carpet one row/column larger than the
+			//EMPTY_DECO ring painted above. Plain floor there is still eligible for trap placement
+			//and the carpet would then hide the trap completely, so nothing the carpet covers may
+			//remain plain floor. Only Terrain.EMPTY is changed, as EMPTY_DECO has the same flags.
+			for (int y = carpetRect.top; y <= carpetRect.bottom; y++){
+				for (int x = carpetRect.left; x <= carpetRect.right; x++){
+					if (level.map[x + y*level.width()] == Terrain.EMPTY){
+						Painter.set( level, x, y, Terrain.EMPTY_DECO );
+					}
+				}
+			}
+
 			carpet.overrideTile(exit, level, Carpet.SKIP);
 			level.customTiles.add(0, carpet); //so other carpets are on top of it
 		} else {
