@@ -25,11 +25,8 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.watabou.input.GameAction;
 import com.watabou.input.KeyBindings;
 import com.watabou.input.KeyEvent;
-import com.watabou.noosa.Game;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.NinePatch;
-import com.watabou.utils.PlatformSupport;
-import com.watabou.utils.RectF;
 
 import java.util.ArrayList;
 
@@ -191,25 +188,25 @@ public class WndChest extends WndTabbed {
 
 		resize(width, bagTop + bagH);
 
-		//WndTabbed centres the window on the raw game size, skipping the safe insets that
-		//Window.resize accounts for, and it ignores the HUD completely. Correct the insets first, then
-		//move the window into the band the HUD leaves free. If it is too tall to fit in there, it at
-		//least gets clamped so that it never leaves the screen
+		//WndTabbed centres the window in the area the safe insets leave free, but it knows nothing about
+		//the HUD, which covers a band at the top and/or the bottom of that area. Read where the window
+		//actually landed and move it into the band the HUD leaves free, instead of re-deriving the
+		//centring here. If it is too tall for that band it simply gets clamped, so it never leaves the
+		//screen. Everything measured here is runtime state, so no device data is involved
 		if (!desktop) {
-			RectF insets = Game.platform.getSafeInsets(PlatformSupport.INSET_BLK);
-			float delta = (insets.top - insets.bottom) / (2f * camera.zoom);
-
 			int screenH = (int)PixelScene.uiCamera.height;
 			int camH = (int)camera.height;
 			int bandTop = hudTop;
 			int bandBottom = screenH - hudBottom;
-			int centred = (screenH - camH) / 2;
+
+			//camera.y is in screen pixels and already carries yOffset, which is still 0 at this point
+			int landedY = Math.round(camera.y / camera.zoom);
 
 			int target = bandTop + (bandBottom - bandTop - camH) / 2;
 			target = Math.max(bandTop, Math.min(target, bandBottom - camH));
 			target = Math.max(0, Math.min(target, screenH - camH));
 
-			offset(0, Math.round(delta + target - centred));
+			offset(0, target - landedY);
 		}
 
 		int index = 1;
