@@ -872,7 +872,10 @@ public abstract class Level implements Bundlable {
 	}
 
 	public void buildFlagMaps() {
-		
+
+		//terrain may have changed without going through Level.set(), so rebuild the light cache
+		environmentalLightCacheDirty = true;
+
 		for (int i=0; i < length(); i++) {
 			int flags = Terrain.flags[map[i]];
 			passable[i]     = (flags & Terrain.PASSABLE) != 0;
@@ -1014,6 +1017,8 @@ public abstract class Level implements Bundlable {
 		}
 
 		updateOpenSpace(cell);
+
+		refreshStaticEnvironmentalLight(cell);
 	}
 	
 	public Heap drop( Item item, int cell ) {
@@ -1357,6 +1362,19 @@ public abstract class Level implements Bundlable {
 	private static boolean[] environmentalFOV;
 	private int environmentalViewDistance;
 
+	//environmental light baked into the terrain (torches, deco, glowing grass, ...) is cached:
+	//it only changes when a cell's terrain does, so it must not be re-derived per cell for every
+	//field of view update of every creature. See updateCellFlags()/buildFlagMaps() for upkeep.
+	private int[] cachedEnvironmentalLightRadius;      //per cell, -1 if the cell isn't a light source
+	private int[] cachedEnvironmentalLightCells;       //packed list of static light source cells
+	private int[] cachedEnvironmentalLightCellIndex;   //cell -> index into that list, -1 if absent
+	private int cachedEnvironmentalLightCount = 0;
+	private boolean environmentalLightCacheDirty = true;
+
+	//dynamic light sources are blobs, which are queried directly so that they never have to be
+	//looked for by scanning the map. Levels may register additional blob types.
+	private ArrayList<Class<? extends Blob>> environmentalLightBlobs;
+
 	public void updateFieldOfView( Char c, boolean[] fieldOfView ) {
 
 		int cx = c.pos % width();
@@ -1432,12 +1450,14 @@ public abstract class Level implements Bundlable {
 			ShadowCaster.castShadow( cx, cy, width(), fieldOfView, blocking, Math.round(viewDist) );
 
 			//environmental light is seen by every sighted creature, not just the hero
-			if (environmentalFOV == null || environmentalFOV.length != length()) {
-				environmentalFOV = new boolean[length()];
+			if (hasEnvironmentalLights()) {
+				if (environmentalFOV == null || environmentalFOV.length != length()) {
+					environmentalFOV = new boolean[length()];
+				}
+				int mapDiagonal = (int)Math.ceil(Math.hypot(width(), height()));
+				ShadowCaster.castShadow(cx, cy, width(), environmentalFOV, blocking, mapDiagonal);
+				addEnvironmentalLighting(c, fieldOfView, environmentalFOV);
 			}
-			int mapDiagonal = (int)Math.ceil(Math.hypot(width(), height()));
-			ShadowCaster.castShadow(cx, cy, width(), environmentalFOV, blocking, mapDiagonal);
-			addEnvironmentalLighting(c, fieldOfView, environmentalFOV);
 		} else {
 			BArray.setFalse(fieldOfView);
 		}
@@ -1608,38 +1628,152 @@ public abstract class Level implements Bundlable {
 
 	}
 
-	protected int environmentalLightRadius( int cell, Char viewer ) {
-		if (isActiveEnvironmentalBlob(cell, Fire.class)
-				|| isActiveEnvironmentalBlob(cell, MagicalFireRoom.EternalFire.class)
-				|| isActiveEnvironmentalBlob(cell, VaultFlameTraps.class)) {
-			return 0;
-		}
+	//Static environmental light is baked into the terrain (prison torches, city deco, glowing
+	//grass in the caves, ...). It returns the radius the cell lights up, or -1 if it emits no
+	//light. Because it only depends on the terrain it is cached and refreshed per cell, see
+	//updateCellFlags(). Levels with their own light decor override this.
+	protected int staticEnvironmentalLightRadius( int cell ) {
 		return -1;
 	}
 
-	protected boolean isActiveEnvironmentalBlob( int cell, Class<? extends Blob> type ) {
-		Blob blob = blobs.get(type);
-		return blob != null && blob.volume > 0 && blob.cur != null && blob.cur[cell] > 0;
+	//Dynamic environmental light lives in blobs, which change from turn to turn and so are never
+	//cached. Registering the blob types (rather than looking for lit cells all over the map) is
+	//what keeps this off the per-cell hot path. Levels with their own light blobs register them.
+	protected void registerEnvironmentalLightBlobs( ArrayList<Class<? extends Blob>> types ) {
+		types.add(Fire.class);
+		types.add(MagicalFireRoom.EternalFire.class);
+		types.add(VaultFlameTraps.class);
+	}
+
+	private ArrayList<Class<? extends Blob>> environmentalLightBlobs() {
+		if (environmentalLightBlobs == null) {
+			environmentalLightBlobs = new ArrayList<>();
+			registerEnvironmentalLightBlobs(environmentalLightBlobs);
+		}
+		return environmentalLightBlobs;
+	}
+
+	//whether anything on this level could currently light up a cell. When nothing can, the whole
+	//environmental lighting pass (including its shadow cast) is skipped.
+	private boolean hasEnvironmentalLights() {
+		updateEnvironmentalLightCache();
+		if (cachedEnvironmentalLightCount > 0) return true;
+		for (Class<? extends Blob> type : environmentalLightBlobs()) {
+			Blob blob = blobs.get(type);
+			if (blob != null && blob.volume > 0 && blob.cur != null) return true;
+		}
+		return false;
+	}
+
+	private void updateEnvironmentalLightCache() {
+		if (cachedEnvironmentalLightRadius == null || cachedEnvironmentalLightRadius.length != length()) {
+			cachedEnvironmentalLightRadius = new int[length()];
+			cachedEnvironmentalLightCells = new int[length()];
+			cachedEnvironmentalLightCellIndex = new int[length()];
+			environmentalLightCacheDirty = true;
+		}
+		if (!environmentalLightCacheDirty) return;
+
+		Arrays.fill(cachedEnvironmentalLightRadius, -1);
+		Arrays.fill(cachedEnvironmentalLightCellIndex, -1);
+		cachedEnvironmentalLightCount = 0;
+		for (int cell = 0; cell < length(); cell++) {
+			int radius = staticEnvironmentalLightRadius(cell);
+			if (radius >= 0) addStaticEnvironmentalLight(cell, radius);
+		}
+		environmentalLightCacheDirty = false;
+	}
+
+	private void addStaticEnvironmentalLight( int cell, int radius ) {
+		cachedEnvironmentalLightRadius[cell] = radius;
+		cachedEnvironmentalLightCellIndex[cell] = cachedEnvironmentalLightCount;
+		cachedEnvironmentalLightCells[cachedEnvironmentalLightCount++] = cell;
+	}
+
+	private void removeStaticEnvironmentalLight( int cell ) {
+		int index = cachedEnvironmentalLightCellIndex[cell];
+		if (index < 0) return;
+		int last = cachedEnvironmentalLightCells[--cachedEnvironmentalLightCount];
+		cachedEnvironmentalLightCells[index] = last;
+		cachedEnvironmentalLightCellIndex[last] = index;
+		cachedEnvironmentalLightCellIndex[cell] = -1;
+		cachedEnvironmentalLightRadius[cell] = -1;
+	}
+
+	//keeps the cached light sources in sync when a single cell's terrain changes
+	private void refreshStaticEnvironmentalLight( int cell ) {
+		//a pending full rebuild picks up this change anyway
+		if (environmentalLightCacheDirty) return;
+		if (cachedEnvironmentalLightRadius == null || cachedEnvironmentalLightRadius.length != length()) return;
+
+		int radius = staticEnvironmentalLightRadius(cell);
+		if (radius == cachedEnvironmentalLightRadius[cell]) return;
+
+		removeStaticEnvironmentalLight(cell);
+		if (radius >= 0) addStaticEnvironmentalLight(cell, radius);
 	}
 
 	//an environmental light source lights up the area around itself. The viewer does not need
 	//to be able to see the source itself, only the lit cell has to be in their line of sight.
 	private void addEnvironmentalLighting( Char viewer, boolean[] fieldOfView, boolean[] lineOfSight ) {
-		for (int source = 0; source < length(); source++) {
-			int radius = environmentalLightRadius(source, viewer);
-			if (radius < 0) continue;
+		updateEnvironmentalLightCache();
 
-			int sourceX = source % width();
-			int sourceY = source / width();
-			for (int y = Math.max(0, sourceY - radius); y <= Math.min(height() - 1, sourceY + radius); y++) {
-				for (int x = Math.max(0, sourceX - radius); x <= Math.min(width() - 1, sourceX + radius); x++) {
+		boolean anyBlobLight = false;
+		for (Class<? extends Blob> type : environmentalLightBlobs()) {
+			Blob blob = blobs.get(type);
+			if (blob != null && blob.volume > 0 && blob.cur != null) {
+				anyBlobLight = true;
+				break;
+			}
+		}
+
+		for (int i = 0; i < cachedEnvironmentalLightCount; i++) {
+			int source = cachedEnvironmentalLightCells[i];
+			//a blob lighting the same cell takes precedence over the terrain under it
+			if (anyBlobLight && isBlobEnvironmentalLight(source)) continue;
+			lightEnvironmentalArea(source, cachedEnvironmentalLightRadius[source], viewer, fieldOfView, lineOfSight);
+		}
+
+		if (!anyBlobLight) return;
+
+		//blobs are only checked within the bounding box of the cells they occupy, so this never
+		//scans the whole map. They are read live, so lit cells appear and disappear immediately.
+		for (Class<? extends Blob> type : environmentalLightBlobs()) {
+			Blob blob = blobs.get(type);
+			if (blob == null || blob.volume <= 0 || blob.cur == null) continue;
+			//a blob loaded from a save has no bounding box until it next acts
+			if (blob.area.isEmpty()) blob.setupArea();
+			for (int y = Math.max(0, blob.area.top); y <= Math.min(height()-1, blob.area.bottom); y++) {
+				for (int x = Math.max(0, blob.area.left); x <= Math.min(width()-1, blob.area.right); x++) {
 					int cell = x + y * width();
-					if (lineOfSight[cell]) {
-						fieldOfView[cell] = true;
-						//only the hero's own view distance feeds the camera/fog range
-						if (viewer == Dungeon.hero) {
-							environmentalViewDistance = Math.max(environmentalViewDistance, distance(viewer.pos, cell));
-						}
+					if (blob.cur[cell] > 0) {
+						lightEnvironmentalArea(cell, 0, viewer, fieldOfView, lineOfSight);
+					}
+				}
+			}
+		}
+	}
+
+	private boolean isBlobEnvironmentalLight( int cell ) {
+		for (Class<? extends Blob> type : environmentalLightBlobs()) {
+			Blob blob = blobs.get(type);
+			if (blob != null && blob.volume > 0 && blob.cur != null && blob.cur[cell] > 0) return true;
+		}
+		return false;
+	}
+
+	private void lightEnvironmentalArea( int source, int radius, Char viewer, boolean[] fieldOfView, boolean[] lineOfSight ) {
+		boolean heroViewer = viewer == Dungeon.hero;
+		int sourceX = source % width();
+		int sourceY = source / width();
+		for (int y = Math.max(0, sourceY - radius); y <= Math.min(height() - 1, sourceY + radius); y++) {
+			for (int x = Math.max(0, sourceX - radius); x <= Math.min(width() - 1, sourceX + radius); x++) {
+				int cell = x + y * width();
+				if (lineOfSight[cell]) {
+					fieldOfView[cell] = true;
+					//only the hero's own view distance feeds the camera/fog range
+					if (heroViewer) {
+						environmentalViewDistance = Math.max(environmentalViewDistance, distance(viewer.pos, cell));
 					}
 				}
 			}

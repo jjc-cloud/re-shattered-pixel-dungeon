@@ -73,14 +73,17 @@ import java.util.ArrayList;
 public class CavesBossLevel extends Level {
 
 	@Override
-	protected int environmentalLightRadius( int cell, Char viewer ) {
-		int radius = super.environmentalLightRadius(cell, viewer);
-		if (radius >= 0) return radius;
-		if (isActiveEnvironmentalBlob(cell, PylonEnergy.class)
-				|| map[cell] == Terrain.GRASS
+	protected int staticEnvironmentalLightRadius( int cell ) {
+		if (map[cell] == Terrain.GRASS
 				|| map[cell] == Terrain.HIGH_GRASS
 				|| map[cell] == Terrain.FURROWED_GRASS) return 0;
 		return -1;
+	}
+
+	@Override
+	protected void registerEnvironmentalLightBlobs( ArrayList<Class<? extends Blob>> types ) {
+		super.registerEnvironmentalLightBlobs( types );
+		types.add( PylonEnergy.class );
 	}
 
 	{

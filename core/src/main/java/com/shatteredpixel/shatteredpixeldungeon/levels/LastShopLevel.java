@@ -46,9 +46,7 @@ import java.util.ArrayList;
 public class LastShopLevel extends RegularLevel {
 
 	@Override
-	protected int environmentalLightRadius( int cell, Char viewer ) {
-		int radius = super.environmentalLightRadius(cell, viewer);
-		if (radius >= 0) return radius;
+	protected int staticEnvironmentalLightRadius( int cell ) {
 		return (map[cell] == Terrain.REGION_DECO || map[cell] == Terrain.REGION_DECO_ALT) ? 2 : -1;
 	}
 	

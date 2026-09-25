@@ -71,9 +71,8 @@ import java.util.ArrayList;
 public class PrisonBossLevel extends Level {
 
 	@Override
-	protected int environmentalLightRadius( int cell, Char viewer ) {
-		int radius = super.environmentalLightRadius(cell, viewer);
-		return radius >= 0 ? radius : map[cell] == Terrain.WALL_DECO ? 1 : -1;
+	protected int staticEnvironmentalLightRadius( int cell ) {
+		return map[cell] == Terrain.WALL_DECO ? 1 : -1;
 	}
 	
 	{
