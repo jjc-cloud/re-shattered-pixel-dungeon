@@ -27,8 +27,10 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Stylus;
 import com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfIdentify;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
 import com.shatteredpixel.shatteredpixeldungeon.items.stones.StoneOfAugmentation;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WornShortsword;
@@ -170,6 +172,9 @@ public class WndShopOrder extends Window {
 		if (classes != null) {
 			for (Class<?> cls : classes) {
 				if (availableClasses != null && !availableClasses.contains(cls)) continue;
+				//力量药水与升级卷轴是每章保底发放的成长资源：它们挂在 Generator 类别数组的第 0 位，
+				//但 defaultProbs 为 0，从不作为随机掉落出现，只能靠探索获得，因此不列入订购。
+				if (cls == PotionOfStrength.class || cls == ScrollOfUpgrade.class) continue;
 				Item item = Reflection.newInstance((Class<Item>) cls);
 				if (prepareEquipment) {
 					//与商店货架上的武器保持同等待遇
