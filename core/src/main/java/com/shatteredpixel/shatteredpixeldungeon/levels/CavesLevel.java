@@ -68,9 +68,7 @@ import java.util.ArrayList;
 public class CavesLevel extends RegularLevel {
 
 	@Override
-	protected int environmentalLightRadius( int cell, Char viewer ) {
-		int radius = super.environmentalLightRadius(cell, viewer);
-		if (radius >= 0) return radius;
+	protected int staticEnvironmentalLightRadius( int cell ) {
 		if (map[cell] == Terrain.GRASS
 				|| map[cell] == Terrain.HIGH_GRASS
 				|| map[cell] == Terrain.FURROWED_GRASS) return 0;

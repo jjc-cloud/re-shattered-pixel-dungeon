@@ -219,28 +219,61 @@ public class MagesStaff extends MeleeWeapon {
 		if (wand != null) wand.stopCharging();
 	}
 
+	//+1 point in wand preservation allows a total of 5 recoveries, +2 makes them unlimited
+	private static final int WAND_PRESERVATION_LIMIT = 5;
+
+	//whether the wand currently imbued in the staff will be returned to the hero when a new wand
+	//is imbued. This is a pure query and never modifies any state, the recovery itself is spent by
+	//consumeWandPreservation().
+	private boolean canPreserveWand( Char owner ){
+		if (wand == null || owner != Dungeon.hero || !Dungeon.hero.hasTalent(Talent.WAND_PRESERVATION)){
+			return false;
+		}
+		if (unlimitedWandPreservation()) return true;
+		Talent.WandPreservationCounter counter = Dungeon.hero.buff(Talent.WandPreservationCounter.class);
+		return counter == null || counter.count() < WAND_PRESERVATION_LIMIT;
+	}
+
+	//at +2 points in wand preservation, recovering a wand is no longer limited
+	private boolean unlimitedWandPreservation(){
+		return Dungeon.hero.pointsInTalent(Talent.WAND_PRESERVATION) >= 2;
+	}
+
+	//spends one of the limited recoveries. Must only be called right before a wand is actually
+	//recovered, never from a pure query such as canPreserveWand().
+	private void consumeWandPreservation(){
+		if (!unlimitedWandPreservation()){
+			Buff.affect(Dungeon.hero, Talent.WandPreservationCounter.class).countUp(1);
+		}
+	}
+
+	//the effective level the staff ends up at once the given wand is imbued into it.
+	//the confirmation window and the actual imbue must both go through this.
+	private int resultingImbueLevel( Wand wand ){
+		int staffLevel = trueLevel();
+		int wandLevel = wand.trueLevel();
+		//if the staff's level is being overridden by the wand, preserve 1 upgrade
+		if (wandLevel >= staffLevel && staffLevel > 0) return wandLevel + 1;
+		return Math.max(staffLevel, wandLevel);
+	}
+
 	public Item imbueWand(Wand wand, Char owner){
 
-		int oldStaffcharges = this.wand != null ? this.wand.curCharges : 0;
+		Wand oldWand = this.wand;
+		int oldStaffcharges = oldWand != null ? oldWand.curCharges : 0;
 
-		if (owner == Dungeon.hero && this.wand != null && Dungeon.hero.hasTalent(Talent.WAND_PRESERVATION)){
-			//+1 allows a total of 5 recoveries, +2 allows unlimited recoveries
-			boolean canPreserve;
-			if (Dungeon.hero.pointsInTalent(Talent.WAND_PRESERVATION) >= 2){
-				canPreserve = true;
-			} else {
-				Talent.WandPreservationCounter counter = Buff.affect(Dungeon.hero, Talent.WandPreservationCounter.class);
-				canPreserve = counter.count() < 5;
-				if (canPreserve) counter.countUp(1);
+		if (canPreserveWand(owner)){
+			consumeWandPreservation();
+			oldWand.level(0);
+			//the charges of the old wand were all carried over to the new wand below, so they must
+			//not be kept on the recovered wand as well. Whatever doesn't fit in the new wand is
+			//simply lost, the total charge never increases.
+			oldWand.curCharges = 0;
+			if (!oldWand.collect()) {
+				Dungeon.level.drop(oldWand, owner.pos);
 			}
-			if (canPreserve){
-				this.wand.level(0);
-				if (!this.wand.collect()) {
-					Dungeon.level.drop(this.wand, owner.pos);
-				}
-				GLog.newLine();
-				GLog.p(Messages.get(this, "preserved"));
-			}
+			GLog.newLine();
+			GLog.p(Messages.get(this, "preserved"));
 		}
 
 		this.wand = null;
@@ -249,12 +282,7 @@ public class MagesStaff extends MeleeWeapon {
 		wand.updateLevel();
 
 		//syncs the level of the two items.
-		int targetLevel = Math.max(this.trueLevel(), wand.trueLevel());
-
-		//if the staff's level is being overridden by the wand, preserve 1 upgrade
-		if (wand.trueLevel() >= this.trueLevel() && this.trueLevel() > 0) targetLevel++;
-		
-		level(targetLevel);
+		level(resultingImbueLevel(wand));
 		this.wand = wand;
 		wand.levelKnown = wand.curChargeKnown = true;
 		updateWand(false);
@@ -430,21 +458,14 @@ public class MagesStaff extends MeleeWeapon {
 		public void onSelect( final Item item ) {
 			if (item != null) {
 
-				int newLevel;
-				int itemLevel = item.trueLevel();
-				if (itemLevel >= trueLevel()){
-					if (trueLevel() > 0)    newLevel = itemLevel + 1;
-					else                    newLevel = itemLevel;
-				} else {
-					newLevel = trueLevel();
-				}
+				int newLevel = resultingImbueLevel((Wand)item);
 
 				//with wand preservation at +2, imbuing is completely free if the wand has no
 				//upgrades and the staff's level won't change: the old wand is recovered and can
 				//be imbued right back with nothing lost, so there is no point in confirming.
 				//a wand whose curse state isn't known, or which is cursed, still gets the prompt
 				//so that the curse warning is never skipped.
-				if (Dungeon.hero.pointsInTalent(Talent.WAND_PRESERVATION) >= 2
+				if (unlimitedWandPreservation()
 						&& newLevel == trueLevel()
 						&& item.trueLevel() == 0
 						&& item.cursedKnown && !item.cursed){
@@ -464,11 +485,7 @@ public class MagesStaff extends MeleeWeapon {
 				}
 
 				if (wand != null) {
-					boolean willPreserve = Dungeon.hero.hasTalent(Talent.WAND_PRESERVATION)
-							&& (Dungeon.hero.pointsInTalent(Talent.WAND_PRESERVATION) >= 2
-								|| Dungeon.hero.buff(Talent.WandPreservationCounter.class) == null
-								|| Dungeon.hero.buff(Talent.WandPreservationCounter.class).count() < 5);
-					if (willPreserve) {
+					if (canPreserveWand(curUser)) {
 						bodyText += "\n\n" + Messages.get(MagesStaff.class, "imbue_talent");
 					} else {
 						bodyText += "\n\n" + Messages.get(MagesStaff.class, "imbue_lost");

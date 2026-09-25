@@ -327,12 +327,18 @@ public class BrokenSeal extends Item {
 			return false;
 		}
 
+		// The gladiator works toward a cumulative 40% of max HP in health loss.
+		// Actual triggering and UI display must both go through this.
+		private int gladiatorDamageThreshold() {
+			return Math.max(1, (target.HT * 4 + 9) / 10);
+		}
+
 		// Only actual HP loss counts, never damage absorbed by any shield.
 		public void onHealthLost(int loss) {
 			if (loss <= 0 || !completeSealEquipped()) return;
 			if (((Hero)target).subClass == HeroSubClass.GLADIATOR) {
 				gladiatorDamage += loss;
-				int threshold = Math.max(1, (target.HT * 4 + 9) / 10);
+				int threshold = gladiatorDamageThreshold();
 				while (gladiatorDamage >= threshold) {
 					gladiatorDamage -= threshold;
 					cooldown -= 100;
@@ -404,7 +410,7 @@ public class BrokenSeal extends Item {
 			}
 			if (completeSealEquipped()) {
 				if (((Hero)target).subClass == HeroSubClass.GLADIATOR) {
-					int threshold = Math.max(1, (target.HT * 4 + 9) / 10);
+					int threshold = gladiatorDamageThreshold();
 					description += "\n\n" + Messages.get(this, "gladiator_progress",
 							Math.round(gladiatorDamage * 100f / threshold));
 				} else {
@@ -428,11 +434,11 @@ public class BrokenSeal extends Item {
 					turnsSinceEnemies += HoldFast.buffDecayFactor(target);
 					if (turnsSinceEnemies >= 5){
 						if (target instanceof Hero && ((Hero)target).subClass == HeroSubClass.GLADIATOR) {
-							//角斗士：未使用的护盾按 护盾量÷纹章可提供的护盾值 的比例全额折算回冷却
-							int sealShield = maxShield();
-							if (sealShield <= 0) sealShield = initialShield;
-							if (sealShield > 0) {
-								cooldown -= Math.round(cooldownDuration() * (shielding() / (float)sealShield));
+							//角斗士：未使用的护盾按 护盾剩余量÷本轮护盾生成时记录的护盾量 的比例全额折算回冷却。
+							//分母必须用 initialShield：护盾存在期间装备/等级/纹章状态变化会改变 maxShield()，
+							//用实时值会让"剩余比例"跟着漂。
+							if (initialShield > 0) {
+								cooldown -= Math.round(cooldownDuration() * (shielding() / (float)initialShield));
 							}
 						} else if (cooldown > 0) {
 							float percentLeft = shielding() / (float)initialShield;
