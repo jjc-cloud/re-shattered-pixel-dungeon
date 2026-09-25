@@ -25,8 +25,11 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.watabou.input.GameAction;
 import com.watabou.input.KeyBindings;
 import com.watabou.input.KeyEvent;
+import com.watabou.noosa.Game;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.NinePatch;
+import com.watabou.utils.PlatformSupport;
+import com.watabou.utils.RectF;
 
 import java.util.ArrayList;
 
@@ -36,6 +39,12 @@ public class WndChest extends WndTabbed {
 	private static final int GAP = 4;
 	//vertical space reserved for a section's title line
 	private static final int TITLE_H = 11;
+	//the HUD bands the window has to stay clear of. The status pane pins itself to the top on the
+	//mobile interface and to the bottom on the larger one, the toolbar is always at the bottom.
+	//Heights come from StatusPane.layout (38 / 39) and from Toolbar's 24x26 inventory button
+	private static final int STATUS_PANE_H = 38;
+	private static final int STATUS_PANE_H_LARGE = 39;
+	private static final int TOOLBAR_H = 26;
 
 	private final ChestSession session;
 	private final boolean desktop;
@@ -162,6 +171,24 @@ public class WndChest extends WndTabbed {
 		}
 
 		resize(width, bagTop + bagH);
+
+		//WndTabbed centres the window on the raw game size, skipping the safe insets that
+		//Window.resize accounts for, and it ignores the HUD completely. A window this tall then
+		//hangs below centre, with its tabs past the bottom edge, so put it back in the band the
+		//HUD actually leaves free
+		if (!desktop) {
+			RectF insets = Game.platform.getSafeInsets(PlatformSupport.INSET_BLK);
+			int uiSize = SPDSettings.interfaceSize();
+
+			//undo the inset centring WndTabbed skips, then centre between the HUD bands
+			float delta = (insets.top - insets.bottom) / (2f * camera.zoom);
+			int hudTop = uiSize == 0 ? STATUS_PANE_H : 0;
+			int hudBottom = uiSize == 0 ? TOOLBAR_H : STATUS_PANE_H_LARGE;
+			delta += (hudTop - hudBottom) / 2f;
+
+			offset(0, Math.round(delta));
+		}
+
 		int index = 1;
 		for (Bag bag : Dungeon.hero.belongings.getBags()) {
 			if (bag != null) {
