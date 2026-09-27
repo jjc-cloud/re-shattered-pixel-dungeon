@@ -295,6 +295,13 @@ public class BrokenSeal extends Item {
 			return target instanceof Hero && isComplete((Hero)target) ? 100 : 150;
 		}
 
+		//角斗士：护盾满值时折算回冷却的上限。默认等于一次激活消耗的自然冷却，
+		//连战热忱每级再提升 200/3 回合（满级共 +200）。
+		private int fullRefundCap() {
+			int rank = target instanceof Hero ? ((Hero)target).pointsInTalent(Talent.CLEAVE) : 0;
+			return cooldownDuration() + 200 * rank / 3;
+		}
+
 		public void updateForm() {
 			cooldown = Math.min(cooldown, cooldownDuration());
 			if (!(target instanceof Hero) || ((Hero)target).subClass != HeroSubClass.GLADIATOR) {
@@ -434,11 +441,19 @@ public class BrokenSeal extends Item {
 					turnsSinceEnemies += HoldFast.buffDecayFactor(target);
 					if (turnsSinceEnemies >= 5){
 						if (target instanceof Hero && ((Hero)target).subClass == HeroSubClass.GLADIATOR) {
-							//角斗士：未使用的护盾按 护盾剩余量÷本轮护盾生成时记录的护盾量 的比例全额折算回冷却。
+							//角斗士：未使用的护盾分两段折算回冷却。
 							//分母必须用 initialShield：护盾存在期间装备/等级/纹章状态变化会改变 maxShield()，
 							//用实时值会让"剩余比例"跟着漂。
-							if (initialShield > 0) {
-								cooldown -= Math.round(cooldownDuration() * (shielding() / (float)initialShield));
+							int produced = initialShield > 0 ? initialShield : maxShield();
+							if (produced > 0) {
+								float ratio = shielding() / (float)produced;
+								//第一段：护盾量在一次能产生的量以内时按比例全额折算，满值即拿满上限。
+								float refund = fullRefundCap() * Math.min(1f, ratio);
+								//第二段：超出部分线性折算，每多出一次能产生的护盾量追加 50 回合，至多 50。
+								if (ratio > 1f) {
+									refund += 50f * Math.min(1f, ratio - 1f);
+								}
+								cooldown -= Math.round(refund);
 							}
 						} else if (cooldown > 0) {
 							float percentLeft = shielding() / (float)initialShield;
