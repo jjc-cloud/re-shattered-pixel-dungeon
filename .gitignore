@@ -1,0 +1,30 @@
+# Built application files
+*.apk
+
+# Files for the Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Gradle build files
+.gradle/
+build/
+release/
+test/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+#intellij project files
+*.iml
+*.idea
+
+#agent files
+/AGENTS.md
+.claude/
+.workbuddy/
+
+
+#vs files
+.vs/
