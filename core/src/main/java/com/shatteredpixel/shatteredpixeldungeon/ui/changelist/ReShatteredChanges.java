@@ -28,6 +28,7 @@ import java.util.ArrayList;
 public class ReShatteredChanges {
 
 	public static void addAllChanges(ArrayList<ChangeInfo> changeInfos) {
+		add_v0_1_3_Changes(changeInfos);
 		add_v0_1_2_Changes(changeInfos);
 		add_v0_1_1_Changes(changeInfos);
 		add_v0_1_0_Changes(changeInfos);
@@ -35,6 +36,28 @@ public class ReShatteredChanges {
 		addDevelopmentPreview(changeInfos);
 	}
 
+	public static void add_v0_1_3_Changes(ArrayList<ChangeInfo> changeInfos) {
+		ChangeInfo changes = new ChangeInfo("v0.1.3", true, "");
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+
+		changes = new ChangeInfo("改动", false, null);
+		changes.hardlight(CharSprite.WARNING);
+		changeInfos.add(changes);
+		changes.addButton(new ChangeButton(ChangeIcons.V035_WARRIOR_HEROARM, "肉弹冲击",
+				"\n肉弹冲击调整为造成护盾伤害，而非护甲。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V061_BUGFIX,"bug修复",
+				"\n-修复了老魔杖反复灌注复制充能的问题。"));
+
+		changes = new ChangeInfo("削弱", false, null);
+		changes.hardlight(CharSprite.NEGATIVE);
+		changeInfos.add(changes);
+
+		changes.addButton(new ChangeButton(ChangeIcons.V035_WARRIOR_HEROARM, "角斗士",
+				"\n-现在角斗士的护盾存储存在上限。\n-连战热忱改为养精蓄锐，用以提升护盾存储的上限。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V073_DART, "投掷武器削弱",
+				"\n现在投掷武器不在提供额外的精准。"));
+		}
 
 	public static void add_v0_1_2_Changes(ArrayList<ChangeInfo> changeInfos) {
 		ChangeInfo changes = new ChangeInfo("v0.1.2", true, "");
@@ -47,11 +70,14 @@ public class ReShatteredChanges {
 
 		changes.addButton(new ChangeButton(ChangeIcons.V062_GOLD_CHEST, "打开你的宝箱！",
 				"\n-现在开启宝箱后不会立刻将物品生成在地上，宝箱将作为一个独立的容器盛放物品，可以迅速放入与取出。\n-隐身状态下可以直接打开宝箱怪而不惊醒它，但如果打开过程中惊动了宝箱怪，依旧会被偷袭。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V010_TORTURE, "拷问官",
+				"\n新增监狱守卫稀有变种拷问官，他会强制拉扯视野内的敌人，一旦被它缠上就难以逃脱。"));
 
 		changes = new ChangeInfo("改动", false, null);
 		changes.hardlight(CharSprite.WARNING);
 		changeInfos.add(changes);
-
+		changes.addButton(new ChangeButton(ChangeIcons.V035_WARRIOR_HEROARM, "角斗士",
+				"\n角斗士的战士护盾消失时可以无损存储。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V20_DUELIST_CLOTH,"决斗家调整",
 				"\n-现在强健一餐会回复武技充能，而非提供武器伤害。\n-专注一餐改为概率提供凝神。\n-武器充能改为武技击杀敌人时回复一定量的武技充能。\n-复合损伤改为增加追击的伤害，而非处决。\n-调整武僧空振，以适配无武器栏。\n-阴阳调和改为直接返还消耗。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V080_DM300,"落石逻辑修改",
