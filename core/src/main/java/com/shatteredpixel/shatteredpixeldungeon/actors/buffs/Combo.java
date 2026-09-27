@@ -95,9 +95,10 @@ public class Combo extends Buff implements ActionIndicator.Action {
 			initialComboTime = 5f;
 		}
 
+		//击杀敌人固定保持 15 回合连击。连战热忱已改为提升纹章护盾的全额返还上限，
+		//不再延长这里的保持时间。
 		if (!enemy.isAlive() || (enemy.buff(Corruption.class) != null && enemy.HP == enemy.HT)){
-			int rank = ((Hero)target).pointsInTalent(Talent.CLEAVE);
-			comboTime = 15f * (rank + 1);
+			comboTime = 15f;
 			initialComboTime = comboTime;
 		}
 
