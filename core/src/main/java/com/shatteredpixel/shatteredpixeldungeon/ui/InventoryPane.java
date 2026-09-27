@@ -232,7 +232,11 @@ public class InventoryPane extends Component {
 		for (int i = 0; i < 5; i++) {
 			InventorySlot slot = new InventorySlot(null) {
 				@Override protected void onClick() {
-					if (chestSession != null && chestSession.take(item())) updateInventory();
+					if (chestSession != null) {
+						chestSession.take(item());
+						if (!Dungeon.hero.isAlive()) closeChest();
+						else updateInventory();
+					}
 				}
 				@Override protected void onRightClick() {
 					if (chestSession != null && chestSession.isMimic()) spillChest();
@@ -636,8 +640,10 @@ public class InventoryPane extends Component {
 			if (chestSession != null) {
 				if (chestSession.isMimic()) {
 					spillChest();
-				} else if (chestSession.put(item, lastBag)) {
-					updateInventory();
+				} else {
+					chestSession.put(item, lastBag);
+					if (!Dungeon.hero.isAlive()) closeChest();
+					else updateInventory();
 				}
 				return;
 			}

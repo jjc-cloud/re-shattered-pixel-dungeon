@@ -1035,6 +1035,63 @@ public abstract class Level implements Bundlable {
 		}
 		
 		Heap heap = heaps.get( cell );
+		if (heap != null && (heap.type == Heap.Type.CHEST
+				|| heap.type == Heap.Type.LOCKED_CHEST || heap.type == Heap.Type.CRYSTAL_CHEST)) {
+			//Search a finite set, rather than bouncing recursively between containers.
+			//Only cross other containers; never jump over a trap or a chasm to find safety.
+			ArrayList<Integer> containers = new ArrayList<>();
+			boolean[] checked = new boolean[length];
+			containers.add(cell);
+			checked[cell] = true;
+			ArrayList<Integer> candidates = new ArrayList<>();
+			int bestRisk = Integer.MAX_VALUE;
+			for (int i = 0; i < containers.size(); i++) {
+				int origin = containers.get(i);
+				for (int offset : PathFinder.NEIGHBOURS8) {
+					int next = origin + offset;
+					if (next < 0 || next >= length || !adjacent(origin, next) || checked[next]) continue;
+					checked[next] = true;
+					//Room painters can drop items before buildFlagMaps has run.
+					boolean canLand = Dungeon.level == this ? passable[next] || avoid[next]
+							: (Terrain.flags[map[next]] & (Terrain.PASSABLE | Terrain.AVOID)) != 0;
+					if (!canLand) continue;
+					Heap other = heaps.get(next);
+					if (other != null && other.type != Heap.Type.HEAP) {
+						containers.add(next);
+						continue;
+					}
+					int risk = pit[next] || map[next] == Terrain.CHASM ? 2
+							: traps.get(next) != null && traps.get(next).active ? 1 : 0;
+					if (risk < bestRisk) {
+						candidates.clear();
+						bestRisk = risk;
+					}
+					if (risk == bestRisk) candidates.add(next);
+				}
+				//Prefer an adjacent landing over crossing another container.
+				if (!candidates.isEmpty()) break;
+			}
+			if (candidates.isEmpty()) {
+				//An entirely walled-in cluster has no physical landing. Keep the item
+				//on the nearest available ground instead of losing it or looping forever.
+				int nearest = Integer.MAX_VALUE;
+				for (int next = 0; next < length; next++) {
+					Heap other = heaps.get(next);
+					boolean canLand = Dungeon.level == this ? passable[next] || avoid[next]
+							: (Terrain.flags[map[next]] & (Terrain.PASSABLE | Terrain.AVOID)) != 0;
+					if (!canLand || pit[next] || map[next] == Terrain.CHASM
+							|| (other != null && other.type != Heap.Type.HEAP)) continue;
+					int distance = distance(cell, next);
+					if (distance < nearest) {
+						candidates.clear();
+						nearest = distance;
+					}
+					if (distance == nearest) candidates.add(next);
+				}
+			}
+			cell = Random.element(candidates);
+			heap = heaps.get(cell);
+		}
 		if (heap == null) {
 			
 			heap = new Heap();
@@ -1048,14 +1105,6 @@ public abstract class Level implements Bundlable {
 				heaps.put( cell, heap );
 				GameScene.add( heap );
 			}
-			
-		} else if (heap.type == Heap.Type.LOCKED_CHEST || heap.type == Heap.Type.CRYSTAL_CHEST) {
-			
-			int n;
-			do {
-				n = cell + PathFinder.NEIGHBOURS8[Random.Int( 8 )];
-			} while (!passable[n] && !avoid[n]);
-			return drop( item, n );
 			
 		} else {
 			heap.drop(item);
