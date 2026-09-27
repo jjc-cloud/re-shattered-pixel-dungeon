@@ -46,7 +46,11 @@ public class ChestSession {
 	public boolean take(Item item) {
 		if (closed || item == null || !items().contains(item)) return false;
 		Hero hero = Dungeon.hero;
-		if (hero == null || !hero.isAlive() || !hero.pickUpFromChest(item, pos())) return false;
+		if (hero == null || !hero.isAlive()) return false;
+		if (heap != null && !heap.opened) {
+			if (!heap.resolveOpeningEffects(hero)) return false;
+		}
+		if (!hero.pickUpFromChest(item, pos())) return false;
 		items().remove(item);
 		moved = true;
 		if (heap != null && !heap.items.isEmpty() && heap.sprite != null) {
@@ -59,6 +63,12 @@ public class ChestSession {
 		if (closed || mimic != null || item == null || bag == null || item instanceof Bag
 				|| item.isEquipped(Dungeon.hero) || !bag.items.contains(item)
 				|| heap.items.size() >= 5) return false;
+		Hero hero = Dungeon.hero;
+		if (hero == null || !hero.isAlive()) return false;
+		if (!heap.opened) {
+			if (!heap.resolveOpeningEffects(hero)) return false;
+			if (heap.items.size() >= 5) return false;
+		}
 		Item detached = item.detachAll(bag);
 		if (detached == null) return false;
 		heap.items.add(detached);
@@ -72,15 +82,17 @@ public class ChestSession {
 	//sorting into specialized bags (seeds, scrolls, potions...) still apply
 	public void spill() {
 		if (closed || heap == null) return;
+		Hero hero = Dungeon.hero;
+		if (hero == null || !hero.isAlive()) return;
+		moved = true;
+		if (!heap.resolveOpeningEffects(hero)) return;
 		ArrayList<Item> remaining = new ArrayList<>(heap.items);
 		int pos = heap.pos;
 		heap.destroy();
-		Hero hero = Dungeon.hero;
 		for (Item item : remaining) {
-			if (hero != null && hero.isAlive() && hero.pickUpFromChest(item, pos)) continue;
+			if (hero.isAlive() && hero.pickUpFromChest(item, pos)) continue;
 			Dungeon.level.drop(item, pos).sprite.drop(pos);
 		}
-		moved = true;
 	}
 
 	public void wakeMimic() {
@@ -95,7 +107,7 @@ public class ChestSession {
 		if (closed) return;
 		closed = true;
 		if (heap != null && heap.items.isEmpty() && Dungeon.level.heaps.get(heap.pos) == heap) heap.destroy();
-		if (moved || unlocked) Dungeon.hero.spendAndNext(Key.TIME_TO_UNLOCK);
+		if ((moved || unlocked) && Dungeon.hero.isAlive()) Dungeon.hero.spendAndNext(Key.TIME_TO_UNLOCK);
 	}
 
 	private int pos() {

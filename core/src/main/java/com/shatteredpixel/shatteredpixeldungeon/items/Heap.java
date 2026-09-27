@@ -83,8 +83,20 @@ public class Heap implements Bundlable {
 	public LinkedList<Item> items = new LinkedList<>();
 	
 	public void open( Hero hero ) {
+		resolveOpeningEffects(hero);
+		if (type == Type.CHEST || type == Type.LOCKED_CHEST || type == Type.CRYSTAL_CHEST) return;
+		type = Type.HEAP;
+		sprite.link();
+		sprite.drop();
+	}
+
+	//Opening effects belong to the container, not to the lifetime of its UI session.
+	//Call when the opening animation completes; subsequent views/transfers are harmless.
+	public boolean resolveOpeningEffects( Hero hero ) {
+		if (hero == null || !hero.isAlive()) return false;
 		boolean chest = type == Type.CHEST || type == Type.LOCKED_CHEST || type == Type.CRYSTAL_CHEST;
-		if (chest && opened) return;
+		if (chest && opened) return true;
+		if (chest) opened = true;
 		switch (type) {
 		case TOMB:
 			Wraith.spawnAround( hero.pos );
@@ -108,15 +120,13 @@ public class Heap implements Bundlable {
 			Sample.INSTANCE.play( Assets.Sounds.CURSED );
 		}
 
-		if (chest) opened = true;
-		else type = Type.HEAP;
+		if (!hero.isAlive()) return false;
 		ArrayList<Item> bonus = RingOfWealth.tryForBonusDrop(hero, 1);
 		if (bonus != null && !bonus.isEmpty()) {
 			items.addAll(0, bonus);
-			RingOfWealth.showFlareForBonusDrop(sprite);
+			if (sprite != null) RingOfWealth.showFlareForBonusDrop(sprite);
 		}
-		sprite.link();
-		sprite.drop();
+		return true;
 	}
 	
 	public Heap setHauntedIfCursed(){

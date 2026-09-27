@@ -121,7 +121,8 @@ public class WndChest extends WndTabbed {
 		for (int i = 0; i < 5; i++) {
 			InventorySlot slot = new InventorySlot(null) {
 				@Override protected void onClick() {
-					if (session.take(item())) refresh();
+					session.take(item());
+					refresh();
 				}
 				@Override protected void onRightClick() {
 					if (session.isMimic()) wakeMimic();
@@ -176,7 +177,8 @@ public class WndChest extends WndTabbed {
 				@Override protected void onClick() {
 					if (session.isMimic()) {
 						wakeMimic();
-					} else if (session.put(item(), currentBag)) {
+					} else {
+						session.put(item(), currentBag);
 						refresh();
 					}
 				}
@@ -223,6 +225,10 @@ public class WndChest extends WndTabbed {
 	}
 
 	private void refresh() {
+		if (!Dungeon.hero.isAlive()) {
+			hide();
+			return;
+		}
 		ArrayList<Item> chestItems = new ArrayList<>(session.items());
 		for (int i = 0; i < chestSlots.size(); i++) {
 			Item item = i < chestItems.size() ? chestItems.get(i) : null;

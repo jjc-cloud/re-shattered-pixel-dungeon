@@ -1299,38 +1299,6 @@ public class Hero extends Char {
 
 				}
 
-				if (heap.type == Type.CHEST || heap.type == Type.LOCKED_CHEST
-						|| heap.type == Type.CRYSTAL_CHEST) {
-					boolean needsKey = !heap.opened && heap.type != Type.CHEST;
-					SkeletonKey.keyRecharge skele = buff(SkeletonKey.keyRecharge.class);
-					if (needsKey && skele != null && skele.isCursed() && Random.Int(6) != 0) {
-						GLog.n(Messages.get(this, "key_distracted"));
-						spendAndNext(2 * Key.TIME_TO_UNLOCK);
-						Buff.affect(this, Hunger.class).affectHunger(-4);
-						return false;
-					}
-					if (needsKey) {
-						boolean used = heap.type == Type.LOCKED_CHEST
-								? Notes.remove(new GoldenKey(Dungeon.depth))
-								: Notes.remove(new CrystalKey(Dungeon.depth));
-						if (!used) {
-							ready();
-							return false;
-						}
-						SkeletonKey.KeyReplacementTracker tracker = buff(SkeletonKey.KeyReplacementTracker.class);
-						if (tracker != null) {
-							if (heap.type == Type.LOCKED_CHEST) tracker.processGoldLockOpened();
-							else tracker.processCrystalLockOpened();
-						}
-						GameScene.updateKeyDisplay();
-					}
-					Sample.INSTANCE.play(Assets.Sounds.UNLOCK);
-					heap.open(this);
-					ready();
-					if (isAlive()) GameScene.openChest(new ChestSession(heap, needsKey));
-					return false;
-				}
-				
 				switch (heap.type) {
 				case TOMB:
 					Sample.INSTANCE.play( Assets.Sounds.TOMB );
@@ -2620,11 +2588,19 @@ public class Hero extends Char {
 		} else if (curAction instanceof HeroAction.OpenChest) {
 			
 			Heap heap = Dungeon.level.heaps.get( ((HeroAction.OpenChest)curAction).dst );
+			if (heap == null || !isAlive() || Dungeon.level.distance(pos, heap.pos) > 1) {
+				ready();
+				return;
+			}
+			boolean chest = heap.type == Type.CHEST || heap.type == Type.LOCKED_CHEST
+					|| heap.type == Type.CRYSTAL_CHEST;
+			boolean needsKey = !heap.opened
+					&& (heap.type == Type.LOCKED_CHEST || heap.type == Type.CRYSTAL_CHEST);
 			SkeletonKey.keyRecharge skele = buff(SkeletonKey.keyRecharge.class);
 			SkeletonKey.KeyReplacementTracker keyUseTrack = buff(SkeletonKey.KeyReplacementTracker.class);
 
 			if (skele != null && skele.isCursed()
-					&& (heap.type == Type.LOCKED_CHEST || heap.type == Type.CRYSTAL_CHEST)
+					&& needsKey
 					&& Random.Int(6) != 0){
 				GLog.n(Messages.get(this, "key_distracted"));
 				spend(2*Key.TIME_TO_UNLOCK);
@@ -2633,13 +2609,13 @@ public class Hero extends Char {
 				boolean hasKey = true;
 				if (heap.type == Type.SKELETON || heap.type == Type.REMAINS) {
 					Sample.INSTANCE.play( Assets.Sounds.BONES );
-				} else if (heap.type == Type.LOCKED_CHEST){
+				} else if (needsKey && heap.type == Type.LOCKED_CHEST){
 					//keys currently do not work in sub-floors
 					hasKey = Dungeon.branch == 0 && Notes.remove(new GoldenKey(Dungeon.depth));
 					if (hasKey && keyUseTrack != null){
 						keyUseTrack.processGoldLockOpened();
 					}
-				} else if (heap.type == Type.CRYSTAL_CHEST){
+				} else if (needsKey && heap.type == Type.CRYSTAL_CHEST){
 					//keys currently do not work in sub-floors
 					hasKey = Dungeon.branch == 0 && Notes.remove(new CrystalKey(Dungeon.depth));
 					if (hasKey && keyUseTrack != null){
@@ -2648,6 +2624,21 @@ public class Hero extends Char {
 				}
 
 				if (hasKey) {
+					if (chest) {
+						if (needsKey) {
+							GameScene.updateKeyDisplay();
+						}
+						//Rewards remain in the chest and their flare is anchored to its sprite.
+						if (!heap.resolveOpeningEffects(this)) {
+							curAction = null;
+							return;
+						}
+						//The operate animation has finished. Keep the actor paused while
+						//browsing; the session charges unlocking or successful transfers on close.
+						ready();
+						GameScene.openChest(new ChestSession(heap, needsKey));
+						return;
+					}
 					GameScene.updateKeyDisplay();
 					heap.open(this);
 					spend(Key.TIME_TO_UNLOCK);
