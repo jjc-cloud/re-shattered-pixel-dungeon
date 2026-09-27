@@ -21,8 +21,10 @@ package com.shatteredpixel.shatteredpixeldungeon.items;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Bundlable;
+import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * 商店订购：玩家在最新的一间普通商店（6/11/16层）预订至多三件商品，
@@ -94,6 +96,30 @@ public class ShopOrder {
 
 	public static int pendingCount() {
 		return pending.size();
+	}
+
+	//订购武器分类的候选：从下一阶段（下一间商店售卖阶数）的全部武器里随机抽三个。
+	//随机源取当前层种子，所以同一层始终得到同一组候选，与何时打开订购界面无关；
+	//种子偏移是为了与关卡生成(seedCurDepth)、盗贼预见(seedCurDepth+1)的随机流错开，
+	//另开一个生成器也确保不会干扰关卡生成的随机流。
+	public static Class<?>[] weaponChoices(int floorSet) {
+		Class<?>[] pool = Generator.wepTiers[floorSet].classes;
+		int[] order = new int[pool.length];
+		for (int i = 0; i < order.length; i++) {
+			order[i] = i;
+		}
+		Random.pushGenerator(Dungeon.seedCurDepth() + 2);
+			Random.shuffle(order);
+		Random.popGenerator();
+
+		int count = Math.min(MAX_ITEMS, order.length);
+		//抽中的三项按阶层原本的顺序排列，界面里看起来更整齐
+		Arrays.sort(order, 0, count);
+		Class<?>[] choices = new Class<?>[count];
+		for (int i = 0; i < count; i++) {
+			choices[i] = pool[order[i]];
+		}
+		return choices;
 	}
 
 	//商店实体化时取走待交付货物；具体摆放继续交给商店房间处理

@@ -156,10 +156,11 @@ public class WndShopOrder extends Window {
 				availableClasses = Scroll.getKnown();
 				break;
 			case 2: //投掷武器：展示下一间商店售卖阶数的全部种类
-			case 3: //武器：展示下一间商店售卖阶数的全部种类
-				int floorSet = (Dungeon.depth + 5) / 5;
-				Generator.Category[] tiers = category == 2 ? Generator.misTiers : Generator.wepTiers;
-				classes = tiers[floorSet].classes;
+				classes = Generator.misTiers[(Dungeon.depth + 5) / 5].classes;
+				prepareEquipment = true;
+				break;
+			case 3: //武器：从下一阶段的全部武器里随机抽三个候选，同一间商店内固定
+				classes = ShopOrder.weaponChoices((Dungeon.depth + 5) / 5);
 				prepareEquipment = true;
 				break;
 			case 4: //杂项
