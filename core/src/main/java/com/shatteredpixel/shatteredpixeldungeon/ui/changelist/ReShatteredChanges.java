@@ -55,8 +55,10 @@ public class ReShatteredChanges {
 
 		changes.addButton(new ChangeButton(ChangeIcons.V035_WARRIOR_HEROARM, "角斗士",
 				"\n-现在角斗士的护盾存储存在上限。\n-连战热忱改为养精蓄锐，用以提升护盾存储的上限。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V21_SHOPKEEPER, "订购",
+				"\n现在商店不再提供所有武器的订购，而是随机选择三种武器。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V073_DART, "投掷武器削弱",
-				"\n现在投掷武器不在提供额外的精准。"));
+				"\n现在投掷武器不再提供额外的精准。"));
 		}
 
 	public static void add_v0_1_2_Changes(ArrayList<ChangeInfo> changeInfos) {
