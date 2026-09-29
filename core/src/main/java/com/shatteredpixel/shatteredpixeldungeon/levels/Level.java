@@ -67,6 +67,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.MirrorImage;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Sheep;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
 import com.shatteredpixel.shatteredpixeldungeon.effects.TargetedCell;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.FlowParticle;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SacrificialParticle;
@@ -194,6 +195,10 @@ public abstract class Level implements Bundlable {
 	public boolean affectTerrain(int cell, TerrainInteractions.Source source, boolean legacyDestroy) {
 		TerrainInteractions.Result result = terrainInteractions == null ? TerrainInteractions.Result.UNHANDLED
 				: terrainInteractions.interact(cell, source);
+		if (cell == hiddenEntranceCell && source == TerrainInteractions.Source.EXPLOSION
+				&& map[cell] == Terrain.EXIT) {
+			revealHiddenEntrance(cell);
+		}
 		if (result == TerrainInteractions.Result.DENIED) return false;
 		boolean changed = result == TerrainInteractions.Result.CHANGED;
 		if (result == TerrainInteractions.Result.UNHANDLED
@@ -239,6 +244,10 @@ public abstract class Level implements Bundlable {
 	public int exit;
 
 	public ArrayList<LevelTransition> transitions;
+	public static final TerrainInteractions.Rule HIDDEN_ENTRANCE_RULE = TerrainInteractions.Rule.LEGACY.on(
+			TerrainInteractions.Source.EXPLOSION, TerrainInteractions.Response.replaceWith(Terrain.EXIT));
+	public int hiddenEntranceCell = -1;
+	public boolean hiddenEntranceGrass;
 
 	//when a boss level has become locked.
 	public boolean locked = false;
@@ -271,6 +280,8 @@ public abstract class Level implements Bundlable {
 	private static final String VISITED		= "visited";
 	private static final String MAPPED		= "mapped";
 	private static final String TRANSITIONS	= "transitions";
+	private static final String HIDDEN_ENTRANCE = "hidden_entrance";
+	private static final String HIDDEN_ENTRANCE_GRASS = "hidden_entrance_grass";
 	private static final String LOCKED      = "locked";
 	private static final String HEAPS		= "heaps";
 	private static final String PLANTS		= "plants";
@@ -381,7 +392,10 @@ public abstract class Level implements Bundlable {
 			customWalls = new ArrayList<>();
 			
 		} while (!build());
-		if (this instanceof SewerLevel) {
+		//区域默认环境：按深度区域而不是具体关卡类配置，同区域的任何楼层
+		//（主线、Boss、任务支线、隐藏楼层等）都自动获得同一套装饰交互行为。
+		int region = Dungeon.depth >= 1 ? (Dungeon.depth - 1) / 5 : -1;
+		if (region == 0) {
 			for (int i = 0; i < length(); i++) {
 				if (map[i] == Terrain.REGION_DECO && Random.Int(10) == 0) {
 					map[i] = Terrain.SEWER_BARREL_MARKED;
@@ -396,7 +410,7 @@ public abstract class Level implements Bundlable {
 				TerrainInteractions.Source.EXPLOSION, TerrainInteractions.Response.replaceWith(Terrain.EMBERS));
 		TerrainInteractions.Rule statueSp = TerrainInteractions.Rule.LEGACY.on(
 				TerrainInteractions.Source.EXPLOSION, TerrainInteractions.Response.replaceWith(
-						this instanceof CityLevel || this instanceof SewerLevel ? Terrain.EMBERS_SP : Terrain.EMBERS));
+						region == 0 || region == 3 ? Terrain.EMBERS_SP : Terrain.EMBERS));
 		interactions().setDefault(Terrain.STATUE, statue);
 		interactions().setDefault(Terrain.STATUE_SP, statueSp);
 		interactions().setDefault(Terrain.STATUE_EMBERS, statue);
@@ -408,20 +422,19 @@ public abstract class Level implements Bundlable {
 					TerrainInteractions.Source.EXPLOSION,
 					TerrainInteractions.Response.replaceWith(Terrain.EMBERS)));
 		}
-		if (this instanceof SewerLevel) {
+		if (region == 0) {
 			TerrainInteractions.Rule barrel = TerrainInteractions.Rule.LEGACY.on(
 					TerrainInteractions.Source.CLICK, TerrainInteractions.Response.DESTROY);
 			interactions().setDefault(Terrain.REGION_DECO, barrel);
 			interactions().setDefault(Terrain.REGION_DECO_ALT, barrel);
 			interactions().setDefault(Terrain.SEWER_BARREL_MARKED, barrel);
 			interactions().setDefault(Terrain.SEWER_BARREL_MARKED_ALT, barrel);
-		} else if (this instanceof PrisonLevel || this instanceof PrisonBossLevel
-				|| this instanceof CavesLevel || this instanceof CavesBossLevel) {
+		} else if (region == 1 || region == 2) {
 			TerrainInteractions.Rule metal = TerrainInteractions.Rule.LEGACY.on(
 					TerrainInteractions.Source.ELECTRIC, TerrainInteractions.Response.CONDUCT);
 			interactions().setDefault(Terrain.REGION_DECO, metal);
 			interactions().setDefault(Terrain.REGION_DECO_ALT, metal);
-		} else if (this instanceof HallsLevel || this instanceof HallsBossLevel) {
+		} else if (region == 4) {
 			//岩石瓦砾：武器攻击、爆炸、解离射线都能摧毁，都还原成普通空地
 			TerrainInteractions.Rule rubble = TerrainInteractions.Rule.LEGACY
 					.on(TerrainInteractions.Source.CLICK, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
@@ -509,6 +522,8 @@ public abstract class Level implements Bundlable {
 		customWalls = new ArrayList<>();
 		
 		map		= bundle.getIntArray( MAP );
+		hiddenEntranceCell = bundle.contains(HIDDEN_ENTRANCE) ? bundle.getInt(HIDDEN_ENTRANCE) : -1;
+		hiddenEntranceGrass = bundle.getBoolean(HIDDEN_ENTRANCE_GRASS);
 		if (bundle.contains("terrain_interactions")) {
 			interactions().restoreFromBundle(bundle.getBundle("terrain_interactions"));
 		}
@@ -611,6 +626,8 @@ public abstract class Level implements Bundlable {
 		bundle.put( WIDTH, width );
 		bundle.put( HEIGHT, height );
 		bundle.put( MAP, map );
+		bundle.put( HIDDEN_ENTRANCE, hiddenEntranceCell );
+		bundle.put( HIDDEN_ENTRANCE_GRASS, hiddenEntranceGrass );
 		if (terrainInteractions != null) {
 			Bundle rules = new Bundle();
 			terrainInteractions.storeInBundle(rules);
@@ -1004,7 +1021,17 @@ public abstract class Level implements Bundlable {
 		for (Blob b : blobs.values()){
 			b.onBuildFlagMaps(this);
 		}
-		
+
+		//区域 0（下水道）默认：木桶与标记桶可被烧毁，任何该区域楼层行为一致
+		if (Dungeon.depth >= 1 && (Dungeon.depth - 1) / 5 == 0) {
+			for (int i = 0; i < length(); i++) {
+				if (map[i] == Terrain.REGION_DECO || map[i] == Terrain.REGION_DECO_ALT
+						|| map[i] == Terrain.SEWER_BARREL_MARKED || map[i] == Terrain.SEWER_BARREL_MARKED_ALT) {
+					flamable[i] = true;
+				}
+			}
+		}
+
 		int lastRow = length() - width();
 		for (int i=0; i < width(); i++) {
 			passable[i] = avoid[i] = false;
@@ -1061,6 +1088,23 @@ public abstract class Level implements Bundlable {
 	public void destroy( int pos ) {
 		//if raw tile type is flammable or empty
 		int terr = map[pos];
+		//区域 0（下水道）默认木桶行为：打烂后原地留水/普通地板，标记桶掉落战利品。
+		//任何该区域楼层（主线、王鼠房、任务支线、隐藏楼层）行为一致。
+		if (Dungeon.depth >= 1 && (Dungeon.depth - 1) / 5 == 0) {
+			if (terr == Terrain.REGION_DECO || terr == Terrain.SEWER_BARREL_MARKED){
+				set(pos, Terrain.WATER, this);
+				Splash.at(pos, 0xFF8A5A2E, 8);
+			} else if (terr == Terrain.REGION_DECO_ALT || terr == Terrain.SEWER_BARREL_MARKED_ALT){
+				set(pos, Terrain.EMPTY_SP, this);
+				Splash.at(pos, 0xFF8A5A2E, 8);
+			}
+			if (terr == Terrain.SEWER_BARREL_MARKED || terr == Terrain.SEWER_BARREL_MARKED_ALT) {
+				Heap heap = drop(Random.Int(4) == 0 ? Generator.random() : new Gold().random(), pos);
+				//砸桶是可选收获，掉出来的东西不计入探索
+				heap.autoExplored = true;
+				if (heap.sprite != null) heap.sprite.drop();
+			}
+		}
 		if (terr == Terrain.EMPTY || terr == Terrain.EMPTY_DECO
 				|| (Terrain.flags[map[pos]] & Terrain.FLAMABLE) != 0) {
 			set(pos, Terrain.EMBERS);
@@ -1097,6 +1141,7 @@ public abstract class Level implements Bundlable {
 	}
 	
 	public static void set( int cell, int terrain, Level level ) {
+		int previous = level.map[cell];
 		if (level.terrainInteractions != null && level.map[cell] != terrain) {
 			level.terrainInteractions.clearOverride(cell);
 		}
@@ -1107,6 +1152,25 @@ public abstract class Level implements Bundlable {
 		}
 
 		level.updateCellFlags(cell);
+		if (cell == level.hiddenEntranceCell && level.hiddenEntranceGrass
+				&& (previous == Terrain.GRASS || previous == Terrain.HIGH_GRASS || previous == Terrain.FURROWED_GRASS)
+				&& terrain != Terrain.GRASS && terrain != Terrain.HIGH_GRASS && terrain != Terrain.FURROWED_GRASS) {
+			level.revealHiddenEntrance(cell);
+		} else if (cell == level.hiddenEntranceCell && !level.hiddenEntranceGrass
+				&& previous != terrain && terrain != Terrain.EXIT) {
+			level.interactions().setOverride(cell, HIDDEN_ENTRANCE_RULE);
+		}
+	}
+
+	public void revealHiddenEntrance(int cell) {
+		if (cell != hiddenEntranceCell) return;
+		hiddenEntranceCell = -1;
+		hiddenEntranceGrass = false;
+		Level.set(cell, Terrain.EXIT, this);
+		transitions.add(new LevelTransition(this, cell, LevelTransition.Type.BRANCH_EXIT,
+				Dungeon.depth, 2, LevelTransition.Type.BRANCH_ENTRANCE));
+		GameScene.updateMap(cell);
+		if (Dungeon.level == this && Dungeon.hero != null) Dungeon.observe();
 	}
 
 	public void updateCellFlags( int cell ){

@@ -119,7 +119,7 @@ public class CityLevel extends RegularLevel {
 	}
 
 	@Override
-	protected Painter painter() {
+	public Painter painter() {
 		return new CityPainter()
 				.setWater(feeling == Feeling.WATER ? 0.90f : 0.30f, 4)
 				.setGrass(feeling == Feeling.GRASS ? 0.80f : 0.20f, 3)
@@ -144,7 +144,7 @@ public class CityLevel extends RegularLevel {
 
 	@Override
 	public boolean activateTransition(Hero hero, LevelTransition transition) {
-		if (transition.type == LevelTransition.Type.BRANCH_EXIT) {
+		if (transition.type == LevelTransition.Type.BRANCH_EXIT && transition.destBranch == 1) {
 
 			if ( Imp.Quest.isOld() || Imp.Quest.isCompleted() || !Imp.Quest.given()
 					|| hero.buff(AscensionChallenge.class) != null

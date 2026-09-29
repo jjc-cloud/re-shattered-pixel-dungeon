@@ -10,6 +10,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WornShortsword;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.levels.HiddenLevel;
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicMapping;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CityBossLevel;
@@ -52,6 +55,8 @@ public class TerrainInteractionRegression {
 		configuration();
 		clickAction();
 		explosions();
+		hiddenEntrances();
+		hiddenLevelGeneration();
 		ratKingStatues();
 		cityBossCarpet();
 		propagation();
@@ -472,6 +477,117 @@ public class TerrainInteractionRegression {
 		}
 	}
 
+	private static void hiddenEntrances() {
+		Dungeon.depth = 7;
+		TestLevel floor = level(11);
+		int cell = 60;
+		floor.hiddenEntranceCell = cell;
+		floor.interactions().setOverride(cell, Level.HIDDEN_ENTRANCE_RULE);
+		ScrollOfMagicMapping.reveal(floor, false);
+		check(floor.hiddenEntranceCell == cell && floor.map[cell] == Terrain.EMPTY
+				&& floor.transitions.isEmpty(), "探地不会揭露隐藏楼梯");
+		check(floor.affectTerrain(cell, Source.EXPLOSION), "爆炸揭露普通地板入口");
+		check(floor.map[cell] == Terrain.EXIT && floor.hiddenEntranceCell == -1,
+				"普通地板揭露后成为楼梯");
+		check(floor.transitions.size() == 1 && floor.transitions.get(0).destDepth == 7
+				&& floor.transitions.get(0).destBranch == 2, "楼梯指向同深度的隐藏分支");
+		floor.revealHiddenEntrance(cell);
+		check(floor.transitions.size() == 1, "重复揭露不会重复创建楼梯");
+
+		TestLevel grass = level(11);
+		Level.set(cell, Terrain.GRASS, grass);
+		grass.hiddenEntranceCell = cell;
+		grass.hiddenEntranceGrass = true;
+		Level.set(cell, Terrain.HIGH_GRASS, grass);
+		Level.set(cell, Terrain.GRASS, grass);
+		check(grass.hiddenEntranceCell == cell && grass.transitions.isEmpty(), "高草踩踏不揭露入口");
+		Level.set(cell, Terrain.EMPTY, grass);
+		check(grass.map[cell] == Terrain.EXIT && grass.transitions.size() == 1,
+				"草地变成非草地时揭露入口");
+	}
+
+	private static void hiddenLevelGeneration() {
+		Dungeon.seed = 12345L;
+		Dungeon.branch = 2;
+		for (int depth : new int[]{1, 7, 11, 16, 21}) {
+			Dungeon.depth = depth;
+			Dungeon.level = null;
+			HiddenLevel hidden = new TestHiddenLevel();
+			hidden.create();
+			check(hidden.getTransition(LevelTransition.Type.BRANCH_ENTRANCE)
+					.destDepth == depth, "隐藏地图返回原深度");
+			check(hidden.transitions.size() == 1 && hidden.transitions.get(0).destBranch == 0,
+					"隐藏地图只保留回主线的楼梯");
+			check(hidden.viewDistance == 1, "隐藏地图视距为一格");
+			int pedestals = 0;
+			int regionTerrain = 0;
+			for (int cell = 0; cell < hidden.length(); cell++) {
+				if (hidden.map[cell] == Terrain.PEDESTAL) pedestals++;
+				if (hidden.map[cell] == Terrain.WATER || hidden.map[cell] == Terrain.GRASS
+						|| hidden.map[cell] == Terrain.HIGH_GRASS || hidden.map[cell] == Terrain.EMPTY_DECO
+						|| hidden.map[cell] == Terrain.WALL_DECO) regionTerrain++;
+			}
+			check(pedestals == 3 && hidden.heaps.valueList().isEmpty(), "单房间地图有三个基座");
+			check(regionTerrain > 0, "单房间仍使用区域地形绘制");
+			Dungeon.level = hidden;
+			for (int cell = 0; cell < hidden.length(); cell++) {
+				if (hidden.map[cell] == Terrain.HIGH_GRASS || hidden.map[cell] == Terrain.FURROWED_GRASS) {
+					Level.set(cell, Terrain.GRASS, hidden);
+				}
+			}
+			Dungeon.hero.pos = hidden.getTransition(LevelTransition.Type.BRANCH_ENTRANCE).cell();
+			hidden.updateFieldOfView(Dungeon.hero, hidden.heroFOV);
+			for (int cell = 0; cell < hidden.length(); cell++) {
+				if (!hidden.heroFOV[cell] || hidden.distance(Dungeon.hero.pos, cell) <= 1) continue;
+				boolean nearLight = false;
+				for (int source = 0; source < hidden.length(); source++) {
+					if ((hidden.map[source] == Terrain.PEDESTAL
+							|| (depth == 7 && hidden.map[source] == Terrain.WALL_DECO))
+							&& hidden.distance(source, cell) <= 1) nearLight = true;
+				}
+				check(nearLight, "环境光之外的视野限于一格");
+			}
+			for (int pedestal = 0; pedestal < hidden.length(); pedestal++) {
+				if (hidden.map[pedestal] != Terrain.PEDESTAL) continue;
+				for (int y = -1; y <= 1; y++) {
+					for (int x = -1; x <= 1; x++) {
+						check(hidden.heroFOV[pedestal + x + y * hidden.width()],
+								"基座周围九格强制照亮");
+					}
+				}
+			}
+			for (int offset : PathFinder.NEIGHBOURS8) {
+				Level.set(Dungeon.hero.pos + offset, Terrain.WALL, hidden);
+			}
+			Arrays.fill(hidden.heroFOV, false);
+			hidden.updateFieldOfView(Dungeon.hero, hidden.heroFOV);
+			for (int pedestal = 0; pedestal < hidden.length(); pedestal++) {
+				if (hidden.map[pedestal] == Terrain.PEDESTAL) {
+					check(!hidden.heroFOV[pedestal], "墙壁遮挡后远处基座不会无条件显示");
+				}
+			}
+			if (depth == 7) {
+				for (int offset : PathFinder.NEIGHBOURS8) {
+					Level.set(Dungeon.hero.pos + offset, Terrain.EMPTY, hidden);
+				}
+				for (int cell = 0; cell < hidden.length(); cell++) {
+					if (hidden.map[cell] == Terrain.PEDESTAL) Level.set(cell, Terrain.EMPTY, hidden);
+				}
+				int wallLight = Dungeon.hero.pos - 2 * hidden.width();
+				int target = wallLight + 1;
+				Level.set(wallLight, Terrain.WALL_DECO, hidden);
+				Level.set(target, Terrain.EMPTY, hidden);
+				Arrays.fill(hidden.heroFOV, false);
+				hidden.updateFieldOfView(Dungeon.hero, hidden.heroFOV);
+				check(hidden.heroFOV[target], "监狱隐藏层灯火墙壁照亮视野外邻格");
+			}
+			Statistics.floorsExplored.clear();
+			Dungeon.updateLevelExplored();
+			check(Statistics.floorsExplored.valueList().isEmpty(), "隐藏楼层不计入探索分");
+		}
+		Dungeon.branch = 0;
+	}
+
 	private static TestLevel level(int width) {
 		Actor.clear();
 		TestLevel level = new TestLevel(); init(level, width);
@@ -506,6 +622,9 @@ public class TerrainInteractionRegression {
 		@Override protected void createMobs() { }
 		@Override protected void createItems() { }
 		@Override public void updateFieldOfView(Char ch, boolean[] fieldOfView) { Arrays.fill(fieldOfView, false); }
+	}
+	private static class TestHiddenLevel extends HiddenLevel {
+		@Override protected void createItems() { }
 	}
 	/** 读原始覆盖值：`overrideTile(cell, level, DESTROYED)` 对 SKIP 和「从未覆盖」都返回 false，区分不开。 */
 	private static class TestCarpet extends Carpet {
