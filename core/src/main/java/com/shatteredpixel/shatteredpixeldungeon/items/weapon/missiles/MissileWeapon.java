@@ -217,20 +217,21 @@ abstract public class MissileWeapon extends Weapon {
 
 		accFactor *= adjacentAccFactor(owner, target);
 
-		//point blank is a pure bonus to thrown accuracy, it applies at every distance
-		if (owner instanceof Hero){
-			accFactor *= 1f + ((Hero) owner).pointsInTalent(Talent.POINT_BLANK)/3f;
-		}
-
 		return accFactor;
 	}
 
 	protected float adjacentAccFactor(Char owner, Char target){
 		if (Dungeon.level.adjacent( owner.pos, target.pos )) {
-			//thrown weapons are always less accurate in melee, no talent softens this
-			return 0.5f;
+			//melee throws are less accurate, the point blank talent softens that
+			if (owner instanceof Hero){
+				return (0.5f + 0.25f*((Hero) owner).pointsInTalent(Talent.POINT_BLANK));
+			} else {
+				return 0.5f;
+			}
+		} else if (owner instanceof Hero && ((Hero) owner).heroClass == HeroClass.HUNTRESS){
+			//throwing at range is a huntress perk, other classes get no accuracy bonus
+			return 1.5f;
 		} else {
-			//no accuracy boost at range for anyone without the talent
 			return 1f;
 		}
 	}
