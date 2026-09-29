@@ -422,8 +422,11 @@ public abstract class Level implements Bundlable {
 			interactions().setDefault(Terrain.REGION_DECO, metal);
 			interactions().setDefault(Terrain.REGION_DECO_ALT, metal);
 		} else if (this instanceof HallsLevel || this instanceof HallsBossLevel) {
-			TerrainInteractions.Rule rubble = TerrainInteractions.Rule.LEGACY.on(
-					TerrainInteractions.Source.CLICK, TerrainInteractions.Response.replaceWith(Terrain.EMPTY));
+			//岩石瓦砾：武器攻击、爆炸、解离射线都能摧毁，都还原成普通空地
+			TerrainInteractions.Rule rubble = TerrainInteractions.Rule.LEGACY
+					.on(TerrainInteractions.Source.CLICK, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
+					.on(TerrainInteractions.Source.EXPLOSION, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
+					.on(TerrainInteractions.Source.DISINTEGRATION, TerrainInteractions.Response.replaceWith(Terrain.EMPTY));
 			interactions().setDefault(Terrain.REGION_DECO, rubble);
 			interactions().setDefault(Terrain.REGION_DECO_ALT, rubble);
 		}
