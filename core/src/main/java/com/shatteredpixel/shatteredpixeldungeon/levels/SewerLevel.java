@@ -210,6 +210,8 @@ public class SewerLevel extends RegularLevel {
 		}
 		if (terr == Terrain.SEWER_BARREL_MARKED || terr == Terrain.SEWER_BARREL_MARKED_ALT) {
 			Heap heap = drop(Random.Int(4) == 0 ? Generator.random() : new Gold().random(), pos);
+			//砸桶是可选收获，掉出来的东西不计入探索
+			heap.autoExplored = true;
 			if (heap.sprite != null) heap.sprite.drop();
 		}
 		super.destroy(pos);

@@ -187,7 +187,23 @@ public abstract class Plant implements Bundlable {
 			if (action.equals( AC_PLANT )) {
 
 				hero.busy();
-				((Seed)detach( hero.belongings.backpack )).onThrow( hero.pos );
+
+				Seed seed = (Seed)detach( hero.belongings.backpack );
+				//荒芜之地：守望者手动种植不会发芽，但种子照常消耗、并催生出草
+				if (Dungeon.isChallenged(Challenges.NO_HERBALISM) && hero.subClass == HeroSubClass.WARDEN){
+					Dungeon.level.plant( seed, hero.pos );
+					for (int i : PathFinder.NEIGHBOURS8) {
+						int c = Dungeon.level.map[hero.pos + i];
+						if ( c == Terrain.EMPTY || c == Terrain.EMPTY_DECO
+								|| c == Terrain.EMBERS || c == Terrain.EMBERS_SP || c == Terrain.GRASS){
+							Level.set(hero.pos + i, Terrain.FURROWED_GRASS);
+							GameScene.updateMap(hero.pos + i);
+							CellEmitter.get( hero.pos + i ).burst( LeafParticle.LEVEL_SPECIFIC, 4 );
+						}
+					}
+				} else {
+					seed.onThrow( hero.pos );
+				}
 				hero.spend( TIME_TO_PLANT );
 
 				hero.sprite.operate( hero.pos );
