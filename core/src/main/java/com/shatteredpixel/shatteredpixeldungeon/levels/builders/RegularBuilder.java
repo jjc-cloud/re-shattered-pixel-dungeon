@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection.ConnectionRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection.MazeConnectionRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretRoom;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SuperSecretRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.ShopRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.StandardRoom;
 import com.watabou.utils.Random;
@@ -164,14 +165,18 @@ public abstract class RegularBuilder extends Builder {
 			
 			do {
 				curr = Random.element(branchable);
-			} while( r instanceof SecretRoom && curr instanceof ConnectionRoom);
+			} while( r instanceof SecretRoom && !(r instanceof SuperSecretRoom) && curr instanceof ConnectionRoom);
 			
-			int connectingRooms = Random.chances(connectionChances);
-			if (connectingRooms == -1){
-				connectionChances = connChances.clone();
+			// 超级隐藏房自带两格直道，直接接在可容纳它的位置。
+			int connectingRooms = 0;
+			if (!(r instanceof SuperSecretRoom)) {
 				connectingRooms = Random.chances(connectionChances);
+				if (connectingRooms == -1){
+					connectionChances = connChances.clone();
+					connectingRooms = Random.chances(connectionChances);
+				}
+				connectionChances[connectingRooms]--;
 			}
-			connectionChances[connectingRooms]--;
 			
 			for (int j = 0; j < connectingRooms; j++){
 				ConnectionRoom t = r instanceof SecretRoom ? new MazeConnectionRoom() : ConnectionRoom.createRoom();

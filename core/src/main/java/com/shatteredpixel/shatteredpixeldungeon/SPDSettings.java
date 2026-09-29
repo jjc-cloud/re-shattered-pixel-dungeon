@@ -34,6 +34,9 @@ import com.watabou.utils.Point;
 import java.util.Locale;
 
 public class SPDSettings extends GameSettings {
+
+	// 玩家全局的一次性提示，不随新开局或读档重置。
+	public static final String KEY_SUPER_SECRET_HINT = "super_secret_hint";
 	
 	//Version info
 	

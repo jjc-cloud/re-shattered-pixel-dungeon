@@ -368,7 +368,8 @@ public enum ChangeIcons {
 	V010_TORTURE,
 	V010_ESCAPE_PLAN,
 	
-	V020_BUCKET
+	V020_BUCKET,
+	V020_STAIR
 
 	;
 

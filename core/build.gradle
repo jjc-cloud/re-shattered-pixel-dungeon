@@ -6,6 +6,7 @@ java.sourceCompatibility = java.targetCompatibility = appJavaCompatibility
 dependencies {
     api project(':SPD-classes')
     implementation project(':services')
+    testRuntimeOnly "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
 }
 
 //TestStart 的开关由构建决定，省得打包前手改源码、测试时又改回来。
@@ -60,4 +61,10 @@ tasks.register('terrainInteractionRegression', JavaExec) {
     dependsOn testClasses
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'com.shatteredpixel.shatteredpixeldungeon.TerrainInteractionRegression'
+}
+
+tasks.register('superSecretRoomRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.shatteredpixel.shatteredpixeldungeon.SuperSecretRoomRegression'
 }

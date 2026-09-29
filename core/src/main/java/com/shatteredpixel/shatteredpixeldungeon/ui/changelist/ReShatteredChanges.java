@@ -49,6 +49,11 @@ public class ReShatteredChanges {
 
 		changes.addButton(new ChangeButton(ChangeIcons.V020_BUCKET, "环境交互",
 				"\n-木桶，岩石瓦砾现在能被直接摧毁。\n-雕像现在能被爆炸摧毁。\n-地毯现在能被解离射线，爆炸摧毁。\n-监狱铁笼与钢铁架构现在会导电。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V020_STAIR, "隐藏楼层",
+				"\n新增特殊隐藏，隐藏楼层。隐藏楼层不会被探地效果所揭示，只有经过隐藏楼层的入口时，会发出特殊的声音暗示，摧毁入口的表面即可打开隐藏的入口。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V064_CHASM, "超级隐藏房",
+				"\n新增超级隐藏房。超级隐藏房不会生成常规的门，它的墙面与普通的墙壁别无二致，但可被爆炸、冲击所摧毁。首次看见超级隐藏房的入口时，会生成一枚炸弹告知其存在。超级隐藏房可以生成在任何位置，即便是走廊，处于第一层。"));
+		
 
 
 		changes = new ChangeInfo("改动", false, null);
@@ -88,7 +93,7 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V010_FLUORESCENT_MOSS, "双向环境光源",
 				"\n环境光真正提供照明，不论是英雄还是敌人都享有光源的视野。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V020_BUCKET, "环境交互",
-				"\n现在地图中的装饰会响应特定的动作，新增了一种特殊的木桶，其中装有随机的宝物。"));
+				"\n现在地图中的元素接入了响应系统，会响应特定的动作，新增了一种特殊的木桶，其中装有随机的宝物。"));
 
 	}
 
