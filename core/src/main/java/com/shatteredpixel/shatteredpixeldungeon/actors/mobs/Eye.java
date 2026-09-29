@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
@@ -184,13 +185,7 @@ public class Eye extends Mob {
 		Invisibility.dispel(this);
 		for (int pos : beam.subPath(1, beam.dist)) {
 
-			if (Dungeon.level.flamable[pos]) {
-
-				Dungeon.level.destroy( pos );
-				GameScene.updateMap( pos );
-				terrainAffected = true;
-
-			}
+			terrainAffected |= Dungeon.level.affectTerrain(pos, TerrainInteractions.Source.DISINTEGRATION);
 
 			Char ch = Actor.findChar( pos );
 			if (ch == null) {

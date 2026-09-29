@@ -75,6 +75,16 @@ public class HeroAction {
 			this.dst = wall;
 		}
 	}
+
+	public static class InteractTerrain extends HeroAction {
+		public final com.shatteredpixel.shatteredpixeldungeon.levels.Level level;
+		public final int terrain;
+		public InteractTerrain(int cell) {
+			dst = cell;
+			level = com.shatteredpixel.shatteredpixeldungeon.Dungeon.level;
+			terrain = level.map[cell];
+		}
+	}
 	
 	public static class Alchemy extends HeroAction {
 		public Alchemy( int pot ) {

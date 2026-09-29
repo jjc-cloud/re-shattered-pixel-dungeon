@@ -23,6 +23,8 @@ package com.shatteredpixel.shatteredpixeldungeon.items.stones;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
@@ -51,12 +53,16 @@ public class StoneOfShock extends Runestone {
 		
 		ArrayList<Lightning.Arc> arcs = new ArrayList<>();
 		int hits = 0;
+		TerrainPropagation propagation = TerrainPropagation.event(Dungeon.level, TerrainInteractions.Source.ELECTRIC);
+		ArrayList<Char> targets = propagation == null ? null : new ArrayList<>();
 		
 		PathFinder.buildDistanceMap( cell, BArray.not( Dungeon.level.solid, null ), 2 );
 		for (int i = 0; i < PathFinder.distance.length; i++) {
 			if (PathFinder.distance[i] < Integer.MAX_VALUE) {
+				if (propagation != null) propagation.touch(i);
 				Char n = Actor.findChar(i);
 				if (n != null) {
+					if (targets != null) targets.add(n);
 					arcs.add(new Lightning.Arc(cell, n.sprite.center()));
 					Buff.prolong(n, Paralysis.class, 1f);
 					hits++;
@@ -64,6 +70,17 @@ public class StoneOfShock extends Runestone {
 			}
 		}
 		
+		if (propagation != null) {
+			int direct = targets.size();
+			propagation.extendTargets(targets, null);
+			for (int i = direct; i < targets.size(); i++) {
+				Char target = targets.get(i);
+				arcs.add(new Lightning.Arc(cell, target.sprite.center()));
+				Buff.prolong(target, Paralysis.class, 1f);
+				hits++;
+			}
+		}
+
 		CellEmitter.center( cell ).burst( SparkParticle.FACTORY, 3 );
 		
 		if (hits > 0) {

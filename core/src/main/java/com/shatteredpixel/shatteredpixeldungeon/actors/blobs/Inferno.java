@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.blobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.effects.BlobEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -57,12 +58,7 @@ public class Inferno extends Blob {
 					
 					Fire.burn(cell);
 
-					if (Dungeon.level.flamable[cell]){
-						Dungeon.level.destroy( cell );
-
-						observe = true;
-						GameScene.updateMap( cell );
-					}
+					observe |= Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.FIRE);
 					
 				} else if (Dungeon.level.flamable[cell]
 						&& (cur[cell-1] > 0

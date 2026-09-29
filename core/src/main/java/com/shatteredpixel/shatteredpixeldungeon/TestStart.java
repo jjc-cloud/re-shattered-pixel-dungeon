@@ -26,6 +26,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
+import com.shatteredpixel.shatteredpixeldungeon.levels.SewerLevel;
+import com.shatteredpixel.shatteredpixeldungeon.levels.PrisonLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -65,6 +68,8 @@ public class TestStart {
 	 * Starting hero strength when test start is enabled.
 	 */
 	public static final int START_STRENGTH = 18;
+	/** 类别交互演示，默认关闭；仅作用于新生成的下水道和监狱普通楼层。 */
+	public static final boolean TERRAIN_INTERACTION_DEMO = false;
 
 	public static void apply() {
 		if (!ENABLED) return;
@@ -103,10 +108,11 @@ public class TestStart {
 	 */
 	public static void applyToLevel(Level level) {
 		if (!ENABLED || Dungeon.branch != 0) return;
+		if (TERRAIN_INTERACTION_DEMO) applyTerrainInteractions(level);
 
 		// Add spawnMobs(...) and spawnTraps(...) calls here.
 		spawnMobs(level, START_DEPTH, MedusaEye::new, 0);
-		spawnMobs(level, START_DEPTH, Torturer::new, 1);
+		spawnMobs(level, START_DEPTH, Torturer::new, 0);
 		spawnTraps(level, START_DEPTH, WornDartTrap::new, 2, false);
 
 	}
@@ -120,6 +126,31 @@ public class TestStart {
 	 */
 	public interface Factory<T> {
 		T create();
+	}
+
+	private static void applyTerrainInteractions(Level level) {
+		if (!(level instanceof SewerLevel) && !(level instanceof PrisonLevel)) return;
+		TerrainInteractions.Rule decoration = TerrainInteractions.Rule.LEGACY.on(
+				level instanceof SewerLevel ? TerrainInteractions.Source.CLICK : TerrainInteractions.Source.ELECTRIC,
+				level instanceof SewerLevel ? TerrainInteractions.Response.DESTROY : TerrainInteractions.Response.CONDUCT);
+		level.interactions().setDefault(Terrain.REGION_DECO, decoration);
+		level.interactions().setDefault(Terrain.REGION_DECO_ALT, decoration);
+		TerrainInteractions.Rule wall = TerrainInteractions.Rule.NONE
+				.on(TerrainInteractions.Source.EXPLOSION, TerrainInteractions.Response.replaceWith(Terrain.EMPTY_DECO))
+				.on(TerrainInteractions.Source.DISINTEGRATION, TerrainInteractions.Response.replaceWith(Terrain.EMPTY_DECO));
+		int best = -1, distance = Integer.MAX_VALUE;
+		for (int cell = 0; cell < level.length(); cell++) {
+			if (!level.insideMap(cell) || level.map[cell] != Terrain.WALL) continue;
+			int near = level.distance(cell, level.entrance());
+			if (near <= 2 || near >= distance || level.distance(cell, level.exit()) <= 2) continue;
+			for (int offset : com.watabou.utils.PathFinder.NEIGHBOURS4) {
+				if (level.map[cell + offset] == Terrain.EMPTY) { best = cell; distance = near; break; }
+			}
+		}
+		if (best != -1) {
+			Level.set(best, Terrain.WALL_DECO, level);
+			level.interactions().setOverride(best, wall);
+		}
 	}
 
 	/** Returns the number placed; stops when no suitable empty floor remains. */

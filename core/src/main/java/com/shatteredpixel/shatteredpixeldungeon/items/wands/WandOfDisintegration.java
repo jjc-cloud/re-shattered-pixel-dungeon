@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -105,13 +107,7 @@ public class WandOfDisintegration extends DamageWand {
 				terrainPassed++;
 			}
 
-			if (Dungeon.level.flamable[c]) {
-
-				Dungeon.level.destroy( c );
-				GameScene.updateMap( c );
-				terrainAffected = true;
-				
-			}
+			terrainAffected |= Dungeon.level.affectTerrain(c, TerrainInteractions.Source.DISINTEGRATION);
 			
 			CellEmitter.center( c ).burst( PurpleParticle.BURST, Random.IntRange( 1, 2 ) );
 		}

@@ -838,6 +838,7 @@ public enum Talent {
 				}
 				if (Dungeon.level.map[grassCell] == Terrain.EMPTY ||
 						Dungeon.level.map[grassCell] == Terrain.EMBERS ||
+						Dungeon.level.map[grassCell] == Terrain.EMBERS_SP ||
 						Dungeon.level.map[grassCell] == Terrain.EMPTY_DECO){
 					Level.set(grassCell, Terrain.GRASS);
 					GameScene.updateMap(grassCell);
@@ -851,7 +852,7 @@ public enum Talent {
 			}
 			for (int grassCell : grassCells){
 				int t = Dungeon.level.map[grassCell];
-				if ((t == Terrain.EMPTY || t == Terrain.EMPTY_DECO || t == Terrain.EMBERS
+				if ((t == Terrain.EMPTY || t == Terrain.EMPTY_DECO || t == Terrain.EMBERS || t == Terrain.EMBERS_SP
 						|| t == Terrain.GRASS || t == Terrain.FURROWED_GRASS)
 						&& Dungeon.level.plants.get(grassCell) == null){
 					Level.set(grassCell, Terrain.HIGH_GRASS);

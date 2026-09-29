@@ -99,7 +99,7 @@ public class HallowedGround extends TargetedClericSpell {
 		for (int i = 0; i < Dungeon.level.length(); i++){
 			if (PathFinder.distance[i] != Integer.MAX_VALUE){
 				int c = Dungeon.level.map[i];
-				if (c == Terrain.EMPTY || c == Terrain.EMBERS || c == Terrain.EMPTY_DECO) {
+				if (c == Terrain.EMPTY || c == Terrain.EMBERS || c == Terrain.EMBERS_SP || c == Terrain.EMPTY_DECO) {
 					Level.set( i, Terrain.GRASS);
 					GameScene.updateMap( i );
 					CellEmitter.get(i).burst(LeafParticle.LEVEL_SPECIFIC, 2);
@@ -200,7 +200,7 @@ public class HallowedGround extends TargetedClericSpell {
 								GameScene.updateMap(cell);
 								CellEmitter.get(cell).burst(LeafParticle.LEVEL_SPECIFIC, 5);
 							}
-						} else if (c == Terrain.EMPTY || c == Terrain.EMBERS || c == Terrain.EMPTY_DECO) {
+						} else if (c == Terrain.EMPTY || c == Terrain.EMBERS || c == Terrain.EMBERS_SP || c == Terrain.EMPTY_DECO) {
 							Level.set(cell, Terrain.GRASS);
 							GameScene.updateMap(cell);
 							CellEmitter.get(cell).burst(LeafParticle.LEVEL_SPECIFIC, 2);

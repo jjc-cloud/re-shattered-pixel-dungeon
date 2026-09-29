@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.scenes;
 
+import com.badlogic.gdx.utils.IntArray;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
@@ -163,6 +165,11 @@ import java.util.Locale;
 public class GameScene extends PixelScene {
 
 	static GameScene scene;
+
+	//运行时改地形后待重建的自定义图层所在格：自定义图层只在场景建立时创建一次，
+	//不重建就会留着按旧地形画出来的贴图（例如鼠王房被炸掉的雕像）。
+	private static final IntArray dirtyCustomTiles = new IntArray();
+	private static volatile boolean customTilesQueued;
 
 	private SkinnedBlock water;
 	private DungeonTerrainTilemap tiles;
@@ -1411,7 +1418,52 @@ public class GameScene extends PixelScene {
 			scene.walls.updateMapCell( cell );
 			//update adjacent cells too
 			updateFog( cell, 1 );
+			updateCustomTiles( cell );
 		}
+	}
+
+	/** 地形在运行时改变后，把盖住这些格的自定义图层按当前地形重画一次。 */
+	public static void updateCustomTiles( int cell ) {
+		if (scene == null) return;
+		synchronized (dirtyCustomTiles) {
+			if (!dirtyCustomTiles.contains( cell )) dirtyCustomTiles.add( cell );
+			//地形破坏常一次改一批格，合成一次重建
+			if (customTilesQueued) return;
+			customTilesQueued = true;
+		}
+		Game.runOnRenderThread( () -> {
+			IntArray cells;
+			synchronized (dirtyCustomTiles) {
+				cells = new IntArray( dirtyCustomTiles );
+				dirtyCustomTiles.clear();
+				customTilesQueued = false;
+			}
+			rebuildCustomTiles( scene.customTiles, Dungeon.level.customTiles, cells );
+			rebuildCustomTiles( scene.customTerrain, Dungeon.level.customTerrain, cells );
+			rebuildCustomTiles( scene.customWalls, Dungeon.level.customWalls, cells );
+		} );
+	}
+
+	//整组重建：Group 只能追加，只重建一部分会打乱同组图层的先后顺序。
+	private static void rebuildCustomTiles( Group group, ArrayList<CustomTilemap> masters, IntArray cells ) {
+		boolean dirty = false;
+		for (CustomTilemap master : masters) {
+			if (coversAny( master, cells )) {
+				dirty = true;
+				break;
+			}
+		}
+		if (dirty) for (CustomTilemap master : masters) group.add( master.create() );
+	}
+
+	//留一格余量：像鼠王房的雕像延伸层，是按下一行的地形决定自己画不画的。
+	private static boolean coversAny( CustomTilemap master, IntArray cells ) {
+		for (int i = 0; i < cells.size; i++) {
+			Point p = Dungeon.level.cellToPoint( cells.get( i ) );
+			if (p.x >= master.tileX - 1 && p.x <= master.tileX + master.tileW
+					&& p.y >= master.tileY - 1 && p.y <= master.tileY + master.tileH) return true;
+		}
+		return false;
 	}
 
 	public static void plantSeed( int cell ) {

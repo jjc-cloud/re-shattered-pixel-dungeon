@@ -62,6 +62,8 @@ public class DungeonTileSheet {
 	public static final int FLOOR_DECO_ALT  = GROUND +7;
 	public static final int GRASS_ALT       = GROUND +8;
 	public static final int EMBERS_ALT      = GROUND +9;
+	public static final int EMBERS_SP       = GROUND +13;
+	public static final int EMBERS_SP_ALT   = GROUND +14;
 	public static final int FLOOR_SP_ALT    = GROUND +10;
 
 	public static final int MINE_FLOOR_DECO_HEAVY_ALT   = GROUND +11;
@@ -90,15 +92,19 @@ public class DungeonTileSheet {
 		chasmStitcheable.put( Terrain.EMPTY,        CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.GRASS,        CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.EMBERS,       CHASM_FLOOR );
+		chasmStitcheable.put( Terrain.EMBERS_SP,    CHASM_FLOOR_SP );
 		chasmStitcheable.put( Terrain.EMPTY_WELL,   CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.HIGH_GRASS,   CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.FURROWED_GRASS,CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.EMPTY_DECO,   CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.CUSTOM_DECO,  CHASM_FLOOR );
+		chasmStitcheable.put( Terrain.CUSTOM_DECO_EMBERS_SP, CHASM_FLOOR_SP );
 		chasmStitcheable.put( Terrain.EMPTY_WELL,   CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.WELL,         CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.STATUE,       CHASM_FLOOR );
+		chasmStitcheable.put( Terrain.STATUE_EMBERS, CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.REGION_DECO,  CHASM_FLOOR );
+		chasmStitcheable.put( Terrain.SEWER_BARREL_MARKED, CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.SECRET_TRAP,  CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.INACTIVE_TRAP,CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.TRAP,         CHASM_FLOOR );
@@ -112,6 +118,7 @@ public class DungeonTileSheet {
 		//special floor
 		chasmStitcheable.put( Terrain.EMPTY_SP,     CHASM_FLOOR_SP );
 		chasmStitcheable.put( Terrain.STATUE_SP,    CHASM_FLOOR_SP );
+		chasmStitcheable.put( Terrain.STATUE_SP_EMBERS, CHASM_FLOOR_SP );
 
 		//wall
 		chasmStitcheable.put( Terrain.WALL,         CHASM_WALL );
@@ -128,7 +135,7 @@ public class DungeonTileSheet {
 
 	public static int stitchChasmTile(int above){
 		//alt region deco has different visuals per region, but most commonly FLOOR_SP
-		if (above == Terrain.REGION_DECO_ALT){
+		if (above == Terrain.REGION_DECO_ALT || above == Terrain.SEWER_BARREL_MARKED_ALT){
 			if (Dungeon.depth <= 5)     return CHASM_FLOOR_SP;
 			if (Dungeon.depth <= 10)    return CHASM;
 			if (Dungeon.depth <= 20)    return CHASM_FLOOR_SP;
@@ -148,17 +155,19 @@ public class DungeonTileSheet {
 	//These tiles can stitch with water
 	public static HashSet<Integer> waterStitcheable = new HashSet<>(Arrays.asList(
 			Terrain.EMPTY, Terrain.GRASS, Terrain.EMPTY_WELL,
-			Terrain.ENTRANCE, Terrain.EXIT, Terrain.EMBERS,
+			Terrain.ENTRANCE, Terrain.EXIT, Terrain.EMBERS, Terrain.EMBERS_SP,
 			Terrain.BARRICADE, Terrain.HIGH_GRASS, Terrain.FURROWED_GRASS, Terrain.SECRET_TRAP,
 			Terrain.TRAP, Terrain.INACTIVE_TRAP, Terrain.EMPTY_DECO,
-			Terrain.CUSTOM_DECO, Terrain.WELL, Terrain.STATUE, Terrain.REGION_DECO, Terrain.ALCHEMY,
+			Terrain.CUSTOM_DECO, Terrain.CUSTOM_DECO_EMBERS_SP, Terrain.WELL,
+			Terrain.STATUE, Terrain.STATUE_EMBERS, Terrain.STATUE_SP_EMBERS, Terrain.REGION_DECO,
+			Terrain.SEWER_BARREL_MARKED, Terrain.ALCHEMY,
 			Terrain.CUSTOM_DECO_EMPTY, Terrain.MINE_CRYSTAL, Terrain.MINE_BOULDER,
 			Terrain.DOOR, Terrain.OPEN_DOOR, Terrain.LOCKED_DOOR, Terrain.HERO_LKD_DR, Terrain.CRYSTAL_DOOR
 	));
 
 	public static boolean waterStitcheable(int tile){
 		//alt region deco has different visuals per region, is stitcheable in demon halls
-		if (tile == Terrain.REGION_DECO_ALT){
+		if (tile == Terrain.REGION_DECO_ALT || tile == Terrain.SEWER_BARREL_MARKED_ALT){
 			if (Dungeon.depth <= 20)    return false;
 			else                        return true;
 		}
@@ -213,6 +222,8 @@ public class DungeonTileSheet {
 	public static final int FLAT_STATUE_SP      = FLAT_OTHER+9;
 	public static final int FLAT_REGION_DECO    = FLAT_OTHER+10;
 	public static final int FLAT_REGION_DECO_ALT= FLAT_OTHER+11;
+	public static final int FLAT_SEWER_BARREL_MARKED = FLAT_OTHER+12;
+	public static final int FLAT_SEWER_BARREL_MARKED_ALT = FLAT_OTHER+13;
 
 	public static final int FLAT_MINE_CRYSTAL         = FLAT_OTHER+12;
 	public static final int FLAT_MINE_CRYSTAL_ALT     = FLAT_OTHER+13;
@@ -311,8 +322,14 @@ public class DungeonTileSheet {
 
 	public static final int RAISED_STATUE           = RAISED_OTHER+8;
 	public static final int RAISED_STATUE_SP        = RAISED_OTHER+9;
+	public static final int RAISED_STATUE_EMBERS    = RAISED_OTHER+12;
+	public static final int RAISED_STATUE_EMBERS_ALT= RAISED_OTHER+13;
+	public static final int RAISED_STATUE_SP_EMBERS = RAISED_OTHER+14;
+	public static final int RAISED_STATUE_SP_EMBERS_ALT = RAISED_OTHER+15;
 	public static final int RAISED_REGION_DECO      = RAISED_OTHER+10;
 	public static final int RAISED_REGION_DECO_ALT  = RAISED_OTHER+11;
+	public static final int RAISED_SEWER_BARREL_MARKED = RAISED_OTHER+12;
+	public static final int RAISED_SEWER_BARREL_MARKED_ALT = RAISED_OTHER+13;
 
 	public static final int RAISED_MINE_CRYSTAL_BLUE_1  = RAISED_OTHER+12; //blue1 is the default
 	public static final int RAISED_MINE_CRYSTAL_BLUE_2  = RAISED_OTHER+13;
@@ -403,6 +420,8 @@ public class DungeonTileSheet {
 	public static final int STATUE_SP_OVERHANG          = OTHER_OVERHANG+9;
 	public static final int REGION_DECO_OVERHANG        = OTHER_OVERHANG+10;
 	public static final int REGION_DECO_ALT_OVERHANG    = OTHER_OVERHANG+11;
+	public static final int SEWER_BARREL_MARKED_OVERHANG = OTHER_OVERHANG+12;
+	public static final int SEWER_BARREL_MARKED_ALT_OVERHANG = OTHER_OVERHANG+13;
 
 	public static final int MINE_CRYSTAL_OVERHANG_BLUE  = OTHER_OVERHANG+12;
 	public static final int MINE_CRYSTAL_OVERHANG_GREEN = OTHER_OVERHANG+13;
@@ -424,6 +443,7 @@ public class DungeonTileSheet {
 		directVisuals.put(Terrain.ENTRANCE,         ENTRANCE);
 		directVisuals.put(Terrain.EXIT,             EXIT);
 		directVisuals.put(Terrain.EMBERS,           EMBERS);
+		directVisuals.put(Terrain.EMBERS_SP,        EMBERS_SP);
 		directVisuals.put(Terrain.PEDESTAL,         PEDESTAL);
 		directVisuals.put(Terrain.EMPTY_SP,         FLOOR_SP);
 		directVisuals.put(Terrain.ENTRANCE_SP,      ENTRANCE_SP);
@@ -432,6 +452,7 @@ public class DungeonTileSheet {
 		directVisuals.put(Terrain.TRAP,             directVisuals.get(Terrain.EMPTY));
 		directVisuals.put(Terrain.INACTIVE_TRAP,    directVisuals.get(Terrain.EMPTY));
 		directVisuals.put(Terrain.CUSTOM_DECO,      directVisuals.get(Terrain.EMPTY));
+		directVisuals.put(Terrain.CUSTOM_DECO_EMBERS_SP, EMBERS_SP);
 		directVisuals.put(Terrain.CUSTOM_DECO_EMPTY,directVisuals.get(Terrain.EMPTY));
 		directVisuals.put(Terrain.CUSTOM_DECO_WTR,  WATER);
 
@@ -461,8 +482,12 @@ public class DungeonTileSheet {
 
 		directFlatVisuals.put(Terrain.STATUE,           FLAT_STATUE);
 		directFlatVisuals.put(Terrain.STATUE_SP,        FLAT_STATUE_SP);
+		directFlatVisuals.put(Terrain.STATUE_EMBERS,   FLAT_STATUE);
+		directFlatVisuals.put(Terrain.STATUE_SP_EMBERS, FLAT_STATUE_SP);
 		directFlatVisuals.put(Terrain.REGION_DECO,      FLAT_REGION_DECO);
 		directFlatVisuals.put(Terrain.REGION_DECO_ALT,  FLAT_REGION_DECO_ALT);
+		directFlatVisuals.put(Terrain.SEWER_BARREL_MARKED, FLAT_SEWER_BARREL_MARKED);
+		directFlatVisuals.put(Terrain.SEWER_BARREL_MARKED_ALT, FLAT_SEWER_BARREL_MARKED_ALT);
 
 		directFlatVisuals.put(Terrain.MINE_CRYSTAL,     FLAT_MINE_CRYSTAL);
 		directFlatVisuals.put(Terrain.MINE_BOULDER,     FLAT_MINE_BOULDER);
@@ -504,6 +529,7 @@ public class DungeonTileSheet {
 		tileAltVisuals.put(GRASS,           new tileAlt(new float[]{50f}, GRASS_ALT));
 		tileAltVisuals.put(FLAT_WALL,       new tileAlt(new float[]{50f}, FLAT_WALL_ALT));
 		tileAltVisuals.put(EMBERS,          new tileAlt(new float[]{50f}, EMBERS_ALT));
+		tileAltVisuals.put(EMBERS_SP,       new tileAlt(new float[]{50f}, EMBERS_SP_ALT));
 		tileAltVisuals.put(FLAT_WALL_DECO,  new tileAlt(new float[]{50f}, FLAT_WALL_DECO_ALT));
 		tileAltVisuals.put(FLOOR_SP,        new tileAlt(new float[]{50f}, FLOOR_SP_ALT));
 		tileAltVisuals.put(FLOOR_DECO,      new tileAlt(new float[]{50f}, FLOOR_DECO_ALT));

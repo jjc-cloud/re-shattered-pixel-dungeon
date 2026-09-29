@@ -143,7 +143,8 @@ public class RatKingRoom extends SecretRoom {
 					if (x == 2 && y == 2){
 						//center, pillow
 						data[i] = 3;
-					} else if (Dungeon.level.map[cell] == Terrain.CUSTOM_DECO){
+						} else if (Dungeon.level.map[cell] == Terrain.CUSTOM_DECO
+								|| Dungeon.level.map[cell] == Terrain.CUSTOM_DECO_EMBERS_SP){
 						//statue
 						data[i] = 0;
 					} else {
@@ -160,7 +161,8 @@ public class RatKingRoom extends SecretRoom {
 		@Override
 		public Image image(int tileX, int tileY) {
 			int cell = this.tileX+tileX + (this.tileY + tileY)*Dungeon.level.width();
-			if (Dungeon.level.map[cell] == Terrain.CUSTOM_DECO){
+			if (Dungeon.level.map[cell] == Terrain.CUSTOM_DECO
+					|| Dungeon.level.map[cell] == Terrain.CUSTOM_DECO_EMBERS_SP){
 				//custom visual for rat king statue examine
 				//TODO should make a method for this if we have to do it with any frequency
 				Image img = new Image(texture);
@@ -174,7 +176,8 @@ public class RatKingRoom extends SecretRoom {
 		@Override
 		public String name(int tileX, int tileY) {
 			int cell = this.tileX+tileX + (this.tileY + tileY)*Dungeon.level.width();
-			if (Dungeon.level.map[cell] == Terrain.CUSTOM_DECO){
+			if (Dungeon.level.map[cell] == Terrain.CUSTOM_DECO
+					|| Dungeon.level.map[cell] == Terrain.CUSTOM_DECO_EMBERS_SP){
 				return Messages.get(this, "statue_name");
 			} else if (tileX == 2 && tileY == 2){
 				return Messages.get(this, "pillow_name");
@@ -186,7 +189,8 @@ public class RatKingRoom extends SecretRoom {
 		@Override
 		public String desc(int tileX, int tileY) {
 			int cell = this.tileX+tileX + (this.tileY + tileY)*Dungeon.level.width();
-			if (Dungeon.level.map[cell] == Terrain.CUSTOM_DECO){
+			if (Dungeon.level.map[cell] == Terrain.CUSTOM_DECO
+					|| Dungeon.level.map[cell] == Terrain.CUSTOM_DECO_EMBERS_SP){
 				return Messages.get(this, "statue_desc");
 			} else if (tileX == 2 && tileY == 2){
 				return Messages.get(this, "pillow_desc");
@@ -210,7 +214,8 @@ public class RatKingRoom extends SecretRoom {
 			for (int y = 0; y < tileH; y++){
 				int cell = tileX + (tileY+y)*Dungeon.level.width();
 				for (int x = 0; x < tileW; x++){
-					if (Dungeon.level.map[cell] == Terrain.CUSTOM_DECO){
+						if (Dungeon.level.map[cell] == Terrain.CUSTOM_DECO
+								|| Dungeon.level.map[cell] == Terrain.CUSTOM_DECO_EMBERS_SP){
 						//statue
 						data[i] = 1;
 					} else {
@@ -240,7 +245,8 @@ public class RatKingRoom extends SecretRoom {
 			for (int y = 0; y < tileH; y++){
 				int cell = tileX + (tileY+y)*Dungeon.level.width();
 				for (int x = 0; x < tileW; x++){
-					if (Dungeon.level.map[cell + Dungeon.level.width()] == Terrain.CUSTOM_DECO){
+						if (Dungeon.level.map[cell + Dungeon.level.width()] == Terrain.CUSTOM_DECO
+								|| Dungeon.level.map[cell + Dungeon.level.width()] == Terrain.CUSTOM_DECO_EMBERS_SP){
 						//statue overhang
 						data[i] = 2;
 					} else {

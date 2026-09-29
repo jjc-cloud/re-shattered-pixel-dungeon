@@ -24,8 +24,10 @@ package com.shatteredpixel.shatteredpixeldungeon.tiles.custom;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.CustomTilemap;
+import com.watabou.noosa.Game;
 import com.watabou.noosa.Tilemap;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.SparseArray;
@@ -39,8 +41,50 @@ public class Carpet extends CustomTilemap {
 	}
 
 	protected SparseArray<Integer> tileOverrides = new SparseArray<>();
+	private volatile boolean updateQueued;
 
 	public static final int SKIP = -1;
+	public static final int DESTROYED = -2;
+	private static final int CITY_DAMAGE_BASE = 96;    // 地毯贴图第 7–9 行：都市（含王座厅与秘库支线）
+	private static final int PRISON_DAMAGE_BASE = 144; // 地毯贴图第 10–12 行：监狱与矿洞（两区域同色，共用一块）
+	private static final int SEWER_DAMAGE_BASE = 192;  // 地毯贴图第 13–15 行：下水道（实际只有王鼠房铺地毯）
+	// 上、右、下、左四向连接的位值依次为 1、2、4、8。
+	private static final int[] INNER_DAMAGE = {
+			SKIP, 4, 5, 2, 6, 14, 3, 11,
+			7, 1, 13, 10, 0, 9, 8, 12
+	};
+	// 三向形状（只缺一边）里，缺口那一侧正好落在地毯外缘时的内圈图；
+	// 索引顺序与 INNER_DAMAGE 相同，用不到的 connected 留 SKIP。
+	// 7 = 上+右+下缺左，11 = 上+右+左缺下，13 = 上+下+左缺右，14 = 右+下+左缺上。
+	private static final int[] INNER_EDGE = {
+			SKIP, SKIP, SKIP, SKIP, SKIP, SKIP, SKIP, 45,
+			SKIP, SKIP, SKIP, 44, SKIP, 43, 42, SKIP
+	};
+	// 通道型（只连对边）的垂直两侧贴着地毯外缘时的图；列依次是都不靠外缘、第一条、第二条、两条都靠外缘。
+	// 行依次是竖毯（只连上下：左、右外缘）、横毯（只连左右：上、下外缘）。
+	// 竖毯贴右缘那一张画在装饰行（80–95）里，不在区域块内，用 OUT_OF_BLOCK 占位、按区域另取。
+	private static final int OUT_OF_BLOCK = -100;
+	private static final int CITY_STRAIGHT_EDGE = 90;
+	private static final int PRISON_STRAIGHT_EDGE = 92;
+	private static final int SEWER_STRAIGHT_EDGE = 94;
+	private static final int[][] STRAIGHT_DAMAGE = {
+			{14, 47, OUT_OF_BLOCK, 41},
+			{13, 15, 46, 40}
+	};
+	// 单向连接；列依次是不在外缘、第一条垂直外缘、第二条垂直外缘、两条垂直外缘。
+	private static final int[][] SINGLE_DAMAGE = {
+			{4, 33, 32, 28}, // 上：左、右外缘
+			{5, 34, 35, 29}, // 右：上、下外缘
+			{6, 36, 37, 30}, // 下：左、右外缘
+			{7, 38, 39, 31}  // 左：上、下外缘
+	};
+	// 相邻双向连接；行依次为上右、右下、上左、下左，列为缺失方向上的外缘组合。
+	private static final int[][] PAIR_DAMAGE = {
+			{2, 23, 26, 18},
+			{3, 21, 27, 19},
+			{1, 24, 22, 17},
+			{0, 20, 25, 16}
+	};
 	//first 80 tiles are regular carpet and stiching, so we start customs at 80
 	public static final int CITY_STATUE = 80;
 	public static final int CITY_PEDESTAL = 81;
@@ -65,22 +109,42 @@ public class Carpet extends CustomTilemap {
 	}
 
 	//specify a tile (in level map index) to override
-	public void overrideTile(int tile, Level level, int override){
+	public synchronized boolean overrideTile(int tile, Level level, int override){
 		int x = tile % level.width() - tileX;
 		int y = tile / level.width() - tileY;
-		tileOverrides.put(x + tileW*y, override);
+		if (x < 0 || y < 0 || x >= tileW || y >= tileH) return false;
+		int index = x + tileW*y;
+		if (override == DESTROYED && tileOverrides.containsKey(index)
+				&& tileOverrides.get(index) == SKIP) return false;
+		if (tileOverrides.containsKey(index) && tileOverrides.get(index) == override) return false;
+		tileOverrides.put(index, override);
+		if (vis != null && vis.alive && !updateQueued) {
+			updateQueued = true;
+			Game.runOnRenderThread(() -> {
+				updateQueued = false;
+				if (vis != null && vis.alive) create();
+			});
+		}
+		return true;
 	}
 
 	@Override
-	public Tilemap create() {
-		Tilemap v = super.create();
+	public synchronized Tilemap create() {
+		Tilemap v = vis != null && vis.alive ? vis : super.create();
 		int[] data = new int[tileW*tileH];
+		boolean[] intact = new boolean[data.length];
 		int regionOfs = 16 * (int)((Dungeon.depth-1)/5);
-		int i = 0;
+		//按区域选破坏过渡图的基址；三块的配色分别对应都市红、监狱/矿洞蓝灰、下水道绿
+		int damageBase = regionOfs == 48 ? CITY_DAMAGE_BASE
+				: regionOfs == 0 ? SEWER_DAMAGE_BASE
+				: regionOfs == 16 || regionOfs == 32 ? PRISON_DAMAGE_BASE
+				: SKIP;
 		for (int y = 0; y < tileH; y++){
 			for (int x = 0; x < tileW; x++){
+				int i = x + tileW*y;
 				if (tileOverrides.containsKey(i)){
-					data[i] = tileOverrides.get(i);
+					int override = tileOverrides.get(i);
+					data[i] = override == DESTROYED ? SKIP : override;
 				} else {
 					data[i] = regionOfs;
 					if (y == 0) data[i] += 1;
@@ -88,7 +152,61 @@ public class Carpet extends CustomTilemap {
 					if (y == tileH - 1) data[i] += 4;
 					if (x == 0) data[i] += 8;
 				}
-				i++;
+				intact[i] = data[i] >= 0;
+			}
+		}
+		if (damageBase != SKIP) {
+			for (int y = 0; y < tileH; y++){
+				for (int x = 0; x < tileW; x++){
+					int i = x + tileW*y;
+					if (!tileOverrides.containsKey(i) || tileOverrides.get(i) != DESTROYED) continue;
+					int cell = tileX + x + (tileY + y) * Dungeon.level.width();
+					int ground = Dungeon.level.map[cell];
+					if (ground != Terrain.EMBERS && ground != Terrain.EMBERS_SP
+							&& ground != Terrain.STATUE_EMBERS && ground != Terrain.STATUE_SP_EMBERS
+							&& ground != Terrain.CUSTOM_DECO_EMBERS_SP) continue;
+					int connected = 0;
+					if (y > 0 && intact[i-tileW]) connected |= 1;
+					if (x < tileW-1 && intact[i+1]) connected |= 2;
+					if (y < tileH-1 && intact[i+tileW]) connected |= 4;
+					if (x > 0 && intact[i-1]) connected |= 8;
+					if (connected == 0) continue;
+					int border = (y == 0 ? 1 : 0) | (x == tileW-1 ? 2 : 0)
+							| (y == tileH-1 ? 4 : 0) | (x == 0 ? 8 : 0);
+					int visual = INNER_DAMAGE[connected];
+					if (Integer.bitCount(connected) == 1) {
+						int direction = Integer.numberOfTrailingZeros(connected);
+						int ends = (direction & 1) == 0
+								? ((border & 8) != 0 ? 1 : 0) | ((border & 2) != 0 ? 2 : 0)
+								: ((border & 1) != 0 ? 1 : 0) | ((border & 4) != 0 ? 2 : 0);
+						visual = SINGLE_DAMAGE[direction][ends];
+					} else if (connected == 5 || connected == 10) {
+						int direction = connected == 5 ? 0 : 1;
+						int ends = direction == 0
+								? ((border & 8) != 0 ? 1 : 0) | ((border & 2) != 0 ? 2 : 0)
+								: ((border & 1) != 0 ? 1 : 0) | ((border & 4) != 0 ? 2 : 0);
+						visual = STRAIGHT_DAMAGE[direction][ends];
+						if (visual == OUT_OF_BLOCK){
+							//不在区域块里，按区域取绝对索引再换算成相对 damageBase 的偏移
+							int slot = damageBase == CITY_DAMAGE_BASE ? CITY_STRAIGHT_EDGE
+									: damageBase == PRISON_DAMAGE_BASE ? PRISON_STRAIGHT_EDGE
+									: SEWER_STRAIGHT_EDGE;
+							visual = slot - damageBase;
+						}
+					} else if (connected == 3 || connected == 6 || connected == 9 || connected == 12) {
+						int missing = (~connected) & 15;
+						int first = Integer.lowestOneBit(missing);
+						int ends = ((border & first) != 0 ? 1 : 0)
+								| ((border & (missing ^ first)) != 0 ? 2 : 0);
+						int pair = connected == 3 ? 0 : connected == 6 ? 1 : connected == 9 ? 2 : 3;
+						visual = PAIR_DAMAGE[pair][ends];
+					} else if (INNER_EDGE[connected] != SKIP
+							&& (border & ((~connected) & 15)) != 0) {
+						//缺口那一侧就是地毯外缘，不能沿用"缺口只是另一格余烬"的图
+						visual = INNER_EDGE[connected];
+					}
+					data[i] = damageBase + visual;
+				}
 			}
 		}
 		v.map( data, tileW );

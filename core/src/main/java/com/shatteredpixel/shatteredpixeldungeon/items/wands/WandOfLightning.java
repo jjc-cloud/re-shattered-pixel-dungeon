@@ -33,6 +33,8 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Lightning;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
@@ -46,6 +48,7 @@ import com.watabou.utils.BArray;
 import com.watabou.utils.Callback;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
+import com.watabou.utils.SparseArray;
 
 import java.util.ArrayList;
 
@@ -58,6 +61,11 @@ public class WandOfLightning extends DamageWand {
 	private ArrayList<Char> affected = new ArrayList<>();
 
 	private ArrayList<Lightning.Arc> arcs = new ArrayList<>();
+	private TerrainPropagation conduction;
+	private boolean conducting;
+	private SparseArray<Char> conductorChars;
+	private int impactCell;
+	private boolean impactInWater;
 
 	public int min(int lvl){
 		return 5+lvl;
@@ -69,9 +77,10 @@ public class WandOfLightning extends DamageWand {
 	
 	@Override
 	public void onZap(Ballistica bolt) {
+		int impact = impactCell;
 
 		for (Char ch : affected.toArray(new Char[0])){
-			if (ch != curUser && ch.alignment == curUser.alignment && ch.pos != bolt.collisionPos){
+			if (ch != curUser && ch.alignment == curUser.alignment && ch.pos != impact){
 				affected.remove(ch);
 			} else if (ch.buff(LightningCharge.class) != null){
 				affected.remove(ch);
@@ -79,9 +88,10 @@ public class WandOfLightning extends DamageWand {
 		}
 
 		//lightning deals less damage per-target, the more targets that are hit.
+		if (affected.isEmpty()) return;
 		float multiplier = 0.4f + (0.6f/affected.size());
 		//if the main target is in water, all affected take full damage
-		if (Dungeon.level.water[bolt.collisionPos]) multiplier = 1f;
+		if (impactInWater) multiplier = 1f;
 
 		for (Char ch : affected){
 			if (ch == Dungeon.hero) PixelScene.shake( 2, 0.3f );
@@ -167,6 +177,36 @@ public class WandOfLightning extends DamageWand {
 			arcs.add(new Lightning.Arc(ch.sprite.center(), hit.sprite.center()));
 			arc(hit);
 		}
+		if (conducting) conduction.touch(ch.pos);
+	}
+
+	private void collectConduction() {
+		if (!conduction.hasNext()) return;
+		// 一次施法建立一次位置索引，避免每个导体都扫描 Actor 集合。
+		if (conductorChars == null) conductorChars = new SparseArray<>();
+		conductorChars.clear();
+		for (Char ch : Actor.chars()) conductorChars.put(ch.pos, ch);
+		while (conduction.hasNext()) {
+			int cell = conduction.next();
+			int from = conduction.parent();
+			if (from != cell && (Dungeon.level.heroFOV[from] || Dungeon.level.heroFOV[cell])) {
+				arcs.add(new Lightning.Arc(DungeonTilemap.raisedTileCenterToWorld(from),
+						DungeonTilemap.raisedTileCenterToWorld(cell)));
+			}
+			for (int offset : PathFinder.NEIGHBOURS9) {
+				int next = cell + offset;
+				if (next != cell && !Dungeon.level.adjacent(cell, next)) continue;
+				Char ch = conductorChars.get(next);
+				if (ch != null && !affected.contains(ch)) {
+					affected.add(ch);
+					if (Dungeon.level.heroFOV[cell] || Dungeon.level.heroFOV[next]) {
+						arcs.add(new Lightning.Arc(DungeonTilemap.raisedTileCenterToWorld(cell), ch.sprite.center()));
+					}
+					arc(ch);
+				}
+			}
+		}
+		conductorChars.clear();
 	}
 	
 	@Override
@@ -174,8 +214,15 @@ public class WandOfLightning extends DamageWand {
 
 		affected.clear();
 		arcs.clear();
+		conducting = Dungeon.level.terrainInteractions != null && Dungeon.level.terrainInteractions.hasEffects(TerrainInteractions.Source.ELECTRIC);
+		if (conducting) {
+			if (conduction == null) conduction = new TerrainPropagation();
+			conduction.begin(Dungeon.level, TerrainInteractions.Source.ELECTRIC);
+		}
 
-		int cell = bolt.collisionPos;
+		int cell = TerrainPropagation.impactCell(Dungeon.level, bolt, TerrainInteractions.Source.ELECTRIC);
+		impactCell = cell;
+		impactInWater = Dungeon.level.water[cell];
 
 		Char ch = Actor.findChar( cell );
 		if (ch != null) {
@@ -187,8 +234,14 @@ public class WandOfLightning extends DamageWand {
 			arcs.add( new Lightning.Arc(curUser.sprite.center(), ch.sprite.center()));
 			arc(ch);
 		} else {
-			arcs.add( new Lightning.Arc(curUser.sprite.center(), DungeonTilemap.raisedTileCenterToWorld(bolt.collisionPos)));
+			arcs.add( new Lightning.Arc(curUser.sprite.center(), DungeonTilemap.raisedTileCenterToWorld(cell)));
 			CellEmitter.center( cell ).burst( SparkParticle.FACTORY, 3 );
+			if (conducting) conduction.touch(cell);
+		}
+		if (conducting) {
+			collectConduction();
+			conduction.end();
+			conducting = false;
 		}
 
 		//don't want to wait for the effect before processing damage.

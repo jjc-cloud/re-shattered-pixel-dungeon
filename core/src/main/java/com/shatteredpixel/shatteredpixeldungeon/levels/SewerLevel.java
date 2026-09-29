@@ -31,6 +31,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Ripple;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
 import com.shatteredpixel.shatteredpixeldungeon.items.Amulet;
+import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
+import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
+import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.SewerPainter;
@@ -187,7 +190,8 @@ public class SewerLevel extends RegularLevel {
 	public void buildFlagMaps() {
 		super.buildFlagMaps();
 		for (int i=0; i < length(); i++) {
-			if (map[i] == Terrain.REGION_DECO || map[i] == Terrain.REGION_DECO_ALT){
+			if (map[i] == Terrain.REGION_DECO || map[i] == Terrain.REGION_DECO_ALT
+					|| map[i] == Terrain.SEWER_BARREL_MARKED || map[i] == Terrain.SEWER_BARREL_MARKED_ALT){
 				flamable[i] = true;
 			}
 		}
@@ -197,12 +201,16 @@ public class SewerLevel extends RegularLevel {
 	public void destroy(int pos) {
 		//if we're burning  sewers barrels
 		int terr = map[pos];
-		if (terr == Terrain.REGION_DECO){
+		if (terr == Terrain.REGION_DECO || terr == Terrain.SEWER_BARREL_MARKED){
 			set(pos, Terrain.WATER);
-			Splash.at(pos, 0xFF507B5D, 10);
-		} else if (terr == Terrain.REGION_DECO_ALT){
+			Splash.at(pos, 0xFF8A5A2E, 8);
+		} else if (terr == Terrain.REGION_DECO_ALT || terr == Terrain.SEWER_BARREL_MARKED_ALT){
 			set(pos, Terrain.EMPTY_SP);
-			Splash.at(pos, 0xFF507B5D, 10);
+			Splash.at(pos, 0xFF8A5A2E, 8);
+		}
+		if (terr == Terrain.SEWER_BARREL_MARKED || terr == Terrain.SEWER_BARREL_MARKED_ALT) {
+			Heap heap = drop(Random.Int(4) == 0 ? Generator.random() : new Gold().random(), pos);
+			if (heap.sprite != null) heap.sprite.drop();
 		}
 		super.destroy(pos);
 	}
@@ -222,6 +230,8 @@ public class SewerLevel extends RegularLevel {
 				return Messages.get(SewerLevel.class, "water_name");
 			case Terrain.REGION_DECO:
 			case Terrain.REGION_DECO_ALT:
+			case Terrain.SEWER_BARREL_MARKED:
+			case Terrain.SEWER_BARREL_MARKED_ALT:
 				return Messages.get(SewerLevel.class, "region_deco_name");
 			default:
 				return super.tileName( tile );
@@ -238,6 +248,9 @@ public class SewerLevel extends RegularLevel {
 			case Terrain.REGION_DECO:
 			case Terrain.REGION_DECO_ALT:
 				return Messages.get(SewerLevel.class, "region_deco_desc");
+			case Terrain.SEWER_BARREL_MARKED:
+			case Terrain.SEWER_BARREL_MARKED_ALT:
+				return Messages.get(SewerLevel.class, "marked_barrel_desc");
 			default:
 				return super.tileDesc( tile );
 		}

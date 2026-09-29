@@ -59,7 +59,7 @@ public class Foliage extends Blob {
 					off[cell] = cur[cell];
 					volume += off[cell];
 
-					if (map[cell] == Terrain.EMBERS) {
+					if (map[cell] == Terrain.EMBERS || map[cell] == Terrain.EMBERS_SP) {
 						//only turn terrain into grass if no fire is adjacent to it
 						boolean valid = true;
 						if (fire != null && fire.volume > 0) {

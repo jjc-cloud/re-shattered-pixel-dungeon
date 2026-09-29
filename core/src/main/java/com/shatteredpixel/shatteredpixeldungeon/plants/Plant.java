@@ -172,7 +172,7 @@ public abstract class Plant implements Bundlable {
 					for (int i : PathFinder.NEIGHBOURS8) {
 						int c = Dungeon.level.map[cell + i];
 						if ( c == Terrain.EMPTY || c == Terrain.EMPTY_DECO
-								|| c == Terrain.EMBERS || c == Terrain.GRASS){
+								|| c == Terrain.EMBERS || c == Terrain.EMBERS_SP || c == Terrain.GRASS){
 							Level.set(cell + i, Terrain.FURROWED_GRASS);
 							GameScene.updateMap(cell + i);
 							CellEmitter.get( cell + i ).burst( LeafParticle.LEVEL_SPECIFIC, 4 );

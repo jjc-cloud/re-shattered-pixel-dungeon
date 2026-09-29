@@ -34,6 +34,7 @@ public class Terrain {
 	public static final int ENTRANCE_SP		= 37;
 	public static final int EXIT			= 8;
 	public static final int EMBERS			= 9;
+	public static final int EMBERS_SP        = 42;
 	public static final int LOCKED_DOOR		= 10;
 	public static final int HERO_LKD_DR     = 38; //a door that was locked by the skeleton key
 	public static final int CRYSTAL_DOOR	= 31;
@@ -62,9 +63,14 @@ public class Terrain {
 	public static final int CUSTOM_DECO_WTR = 39; //invisible decoration that needs water-passthrough, not floor
 	public static final int STATUE			= 25;
 	public static final int STATUE_SP		= 26;
+	public static final int STATUE_EMBERS   = 43;
+	public static final int STATUE_SP_EMBERS= 44;
+	public static final int CUSTOM_DECO_EMBERS_SP = 45;
 	//These decorations are environment-specific
 	public static final int REGION_DECO		= 33;
 	public static final int REGION_DECO_ALT = 34; //alt visual for region deco, sometimes SP, sometimes other
+	public static final int SEWER_BARREL_MARKED = 40;
+	public static final int SEWER_BARREL_MARKED_ALT = 41;
 	public static final int MINE_CRYSTAL    = 35;
 	public static final int MINE_BOULDER    = 36;
 
@@ -93,6 +99,7 @@ public class Terrain {
 		flags[ENTRANCE_SP]	= flags[ENTRANCE];
 		flags[EXIT]			= PASSABLE;
 		flags[EMBERS]		= PASSABLE;
+		flags[EMBERS_SP] = flags[EMBERS];
 		flags[LOCKED_DOOR]	= LOS_BLOCKING | SOLID;
 		flags[HERO_LKD_DR]  = flags[LOCKED_DOOR];
 		flags[CRYSTAL_DOOR]	= SOLID;
@@ -117,12 +124,17 @@ public class Terrain {
 
 		flags[CUSTOM_DECO_EMPTY] = flags[EMPTY];
 		flags[CUSTOM_DECO] = SOLID;
+		flags[CUSTOM_DECO_EMBERS_SP] = flags[CUSTOM_DECO];
 		flags[CUSTOM_DECO_WTR] = SOLID;
 		flags[STATUE] = SOLID;
 		flags[STATUE_SP] = flags[STATUE];
+		flags[STATUE_EMBERS] = flags[STATUE];
+		flags[STATUE_SP_EMBERS] = flags[STATUE_SP];
 
 		flags[REGION_DECO] = flags[STATUE];
 		flags[REGION_DECO_ALT] = flags[STATUE_SP];
+		flags[SEWER_BARREL_MARKED] = flags[REGION_DECO];
+		flags[SEWER_BARREL_MARKED_ALT] = flags[REGION_DECO_ALT];
 		flags[MINE_CRYSTAL] = SOLID;
 		flags[MINE_BOULDER] = SOLID;
 
