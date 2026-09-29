@@ -24,6 +24,8 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -121,36 +123,10 @@ public class VaultSentry extends NPC {
 							if (ch != null
 									&& ch.alignment == Alignment.ALLY
 									&& ch.invisible == 0) {
-								if (recentZaps.contains(ch.id())) {
-									ch.damage(Random.NormalIntRange(3, 6), new DM100.LightningBolt());
-								} else {
-									ch.damage(Random.NormalIntRange(6, 12), new DM100.LightningBolt());
-								}
-								curZaps.add(ch.id());
-								if (ch.sprite.visible || sprite.visible) {
-									Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);
-									sprite.parent.add(new Lightning(sprite.center(), ch.sprite.destinationCenter(), null));
-									if (ch.sprite.visible) {
-										Emitter e = GameScene.emitter();
-										if (e != null) {
-											e.pos(ch.sprite.destinationCenter());
-											e.burst(SparkParticle.FACTORY, 3);
-										}
-										ch.sprite.flash();
-									}
-								}
-								if (ch == Dungeon.hero) {
-									if (Imp.Quest.hazardFreebies > 0){
-										Imp.Quest.hazardFreebies--;
-									} else {
-										Statistics.questScores[3] -= 100;
-									}
-									if (!ch.isAlive()) {
-										Badges.validateDeathFromEnemyMagic();
-										Dungeon.fail(this);
-										GLog.n(Messages.get(this, "ondeath"));
-									}
-								}
+								TerrainPropagation.point(Dungeon.level, TerrainInteractions.Source.ELECTRIC, ch.pos,
+										ch, this, target -> {
+									if (target.alignment == Alignment.ALLY && target.invisible == 0) shockTarget(target, curZaps);
+								});
 							}
 							GameScene.checkedCell(cell, pos);
 						}
@@ -218,6 +194,39 @@ public class VaultSentry extends NPC {
 
 		spend(TICK);
 		return true;
+	}
+
+	private void shockTarget(Char ch, ArrayList<Integer> curZaps) {
+		if (recentZaps.contains(ch.id())) {
+			ch.damage(Random.NormalIntRange(3, 6), new DM100.LightningBolt());
+		} else {
+			ch.damage(Random.NormalIntRange(6, 12), new DM100.LightningBolt());
+		}
+		curZaps.add(ch.id());
+		if (ch.sprite.visible || sprite.visible) {
+			Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);
+			sprite.parent.add(new Lightning(sprite.center(), ch.sprite.destinationCenter(), null));
+			if (ch.sprite.visible) {
+				Emitter e = GameScene.emitter();
+				if (e != null) {
+					e.pos(ch.sprite.destinationCenter());
+					e.burst(SparkParticle.FACTORY, 3);
+				}
+				ch.sprite.flash();
+			}
+		}
+		if (ch == Dungeon.hero) {
+			if (Imp.Quest.hazardFreebies > 0){
+				Imp.Quest.hazardFreebies--;
+			} else {
+				Statistics.questScores[3] -= 100;
+			}
+			if (!ch.isAlive()) {
+				Badges.validateDeathFromEnemyMagic();
+				Dungeon.fail(this);
+				GLog.n(Messages.get(this, "ondeath"));
+			}
+		}
 	}
 
 	@Override

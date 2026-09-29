@@ -94,14 +94,20 @@ public class DungeonWallsTilemap extends DungeonTilemap {
 			return DungeonTileSheet.DOOR_OVERHANG_OPEN;
 		} else if (Dungeon.level.insideMap(pos) && map[pos+mapWidth] == Terrain.CRYSTAL_DOOR ) {
 			return DungeonTileSheet.DOOR_OVERHANG_CRYSTAL;
-		} else if (pos + mapWidth < size && map[pos+mapWidth] == Terrain.STATUE){
+		} else if (pos + mapWidth < size && (map[pos+mapWidth] == Terrain.STATUE
+				|| map[pos+mapWidth] == Terrain.STATUE_EMBERS)){
 			return DungeonTileSheet.STATUE_OVERHANG;
-		} else if (pos + mapWidth < size && map[pos+mapWidth] == Terrain.STATUE_SP){
+		} else if (pos + mapWidth < size && (map[pos+mapWidth] == Terrain.STATUE_SP
+				|| map[pos+mapWidth] == Terrain.STATUE_SP_EMBERS)){
 			return DungeonTileSheet.STATUE_SP_OVERHANG;
 		} else if (pos + mapWidth < size && map[pos+mapWidth] == Terrain.REGION_DECO){
 			return DungeonTileSheet.REGION_DECO_OVERHANG;
 		} else if (pos + mapWidth < size && map[pos+mapWidth] == Terrain.REGION_DECO_ALT){
 			return DungeonTileSheet.REGION_DECO_ALT_OVERHANG;
+		} else if (pos + mapWidth < size && map[pos+mapWidth] == Terrain.SEWER_BARREL_MARKED){
+			return DungeonTileSheet.SEWER_BARREL_MARKED_OVERHANG;
+		} else if (pos + mapWidth < size && map[pos+mapWidth] == Terrain.SEWER_BARREL_MARKED_ALT){
+			return DungeonTileSheet.SEWER_BARREL_MARKED_ALT_OVERHANG;
 		} else if (pos + mapWidth < size && map[pos+mapWidth] == Terrain.MINE_CRYSTAL){
 			return DungeonTileSheet.getVisualWithAlts(DungeonTileSheet.MINE_CRYSTAL_OVERHANG_BLUE, pos + mapWidth);
 		} else if (pos + mapWidth < size && map[pos+mapWidth] == Terrain.MINE_BOULDER){

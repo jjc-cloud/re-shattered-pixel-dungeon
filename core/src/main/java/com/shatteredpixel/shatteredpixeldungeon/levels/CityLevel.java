@@ -226,6 +226,8 @@ public class CityLevel extends RegularLevel {
 				return Messages.get(CityLevel.class, "deco_desc");
 			case Terrain.STATUE:
 			case Terrain.STATUE_SP:
+			case Terrain.STATUE_EMBERS:
+			case Terrain.STATUE_SP_EMBERS:
 				return Messages.get(CityLevel.class, "statue_desc");
 			case Terrain.BOOKSHELF:
 				return Messages.get(CityLevel.class, "bookshelf_desc");

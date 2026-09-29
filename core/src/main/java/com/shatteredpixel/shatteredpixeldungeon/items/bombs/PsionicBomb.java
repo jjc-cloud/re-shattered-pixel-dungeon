@@ -22,12 +22,12 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Point;
 
-public class ShockBomb extends Bomb {
+public class PsionicBomb extends Bomb {
 
 	private static final int RANGE = 8;
 
 	{
-		image = ItemSpriteSheet.SHOCK_BOMB;
+		image = ItemSpriteSheet.PSIONIC_BOMB;
 	}
 
 	@Override

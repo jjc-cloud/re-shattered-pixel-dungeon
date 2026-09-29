@@ -48,7 +48,7 @@ public class PetrifiedStatue extends Mob {
 		return from(subject, false, subject.sprite != null && subject.sprite.flipHorizontal);
 	}
 
-	/** 截取当前动作；未放置的生物先选择待机或攻击动作。朝向由调用方指定。 */
+	/** 截取当前动作；生成楼层时没有 Dungeon.level，未放置的生物只截取待机姿态。朝向由调用方指定。 */
 	public static PetrifiedStatue from(Char subject, boolean attacking, boolean flipped) {
 		PetrifiedStatue statue = new PetrifiedStatue();
 		statue.victimName = subject.name();
@@ -57,7 +57,7 @@ public class PetrifiedStatue extends Mob {
 		if (temporarySprite && subject instanceof Mob) {
 			source = ((Mob)subject).sprite();
 			source.linkVisuals(subject);
-			if (attacking) {
+			if (attacking && Dungeon.level != null) {
 				source.ch = subject;
 				source.attack(subject.pos + (flipped ? -1 : 1));
 			}

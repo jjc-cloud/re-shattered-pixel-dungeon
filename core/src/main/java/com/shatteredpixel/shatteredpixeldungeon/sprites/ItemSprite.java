@@ -362,6 +362,7 @@ public class ItemSprite extends MovieClip {
 						Sample.INSTANCE.play( Assets.Sounds.STURDY, 0.8f, Random.Float( 1.16f, 1.25f ) );
 					} else if (Dungeon.level.map[heap.pos] == Terrain.GRASS
 							|| Dungeon.level.map[heap.pos] == Terrain.EMBERS
+							|| Dungeon.level.map[heap.pos] == Terrain.EMBERS_SP
 							|| Dungeon.level.map[heap.pos] == Terrain.FURROWED_GRASS){
 						Sample.INSTANCE.play( Assets.Sounds.GRASS, 0.8f, Random.Float( 1.16f, 1.25f ) );
 					} else if (Dungeon.level.map[heap.pos] == Terrain.HIGH_GRASS) {

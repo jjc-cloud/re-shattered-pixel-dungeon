@@ -79,7 +79,7 @@ public class RegrowthBomb extends Bomb {
 						PotionOfHealing.cure(ch);
 						PotionOfHealing.heal(ch);
 					}
-				} else if ((t == Terrain.EMPTY || t == Terrain.EMPTY_DECO || t == Terrain.EMBERS
+			} else if ((t == Terrain.EMPTY || t == Terrain.EMPTY_DECO || t == Terrain.EMBERS || t == Terrain.EMBERS_SP
 						|| t == Terrain.GRASS || t == Terrain.FURROWED_GRASS || t == Terrain.HIGH_GRASS)
 						&& Dungeon.level.plants.get(i) == null){
 					plantCandidates.add(i);

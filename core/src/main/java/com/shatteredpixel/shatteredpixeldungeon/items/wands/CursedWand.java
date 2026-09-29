@@ -25,6 +25,8 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -542,12 +544,14 @@ public class CursedWand {
 		public boolean effect(Item origin, Char user, Ballistica bolt, boolean positiveOnly) {
 
 			ArrayList<Char> affected = new ArrayList<>();
+			TerrainPropagation propagation = TerrainPropagation.event(Dungeon.level, TerrainInteractions.Source.ELECTRIC);
 
 			user.sprite.parent.add(new Lightning(user.pos - 1, user.pos + 1, null));
 			user.sprite.parent.add(new Lightning(user.pos - Dungeon.level.width(), user.pos + Dungeon.level.width(), null));
 			user.sprite.parent.add(new Lightning(user.pos - 1 - Dungeon.level.width(), user.pos + 1 + Dungeon.level.width(), null));
 			user.sprite.parent.add(new Lightning(user.pos - 1 + Dungeon.level.width(), user.pos + 1 - Dungeon.level.width(), null));
 			for (int i : PathFinder.NEIGHBOURS9){
+				if (propagation != null) propagation.touch(user.pos+i);
 				if (Actor.findChar(user.pos+i) != null){
 					affected.add(Actor.findChar(user.pos+i));
 				}
@@ -559,11 +563,13 @@ public class CursedWand {
 			user.sprite.parent.add(new Lightning(pos - 1 - Dungeon.level.width(), pos + 1 + Dungeon.level.width(), null));
 			user.sprite.parent.add(new Lightning(pos - 1 + Dungeon.level.width(), pos + 1 - Dungeon.level.width(), null));
 			for (int i : PathFinder.NEIGHBOURS9){
+				if (propagation != null) propagation.touch(pos+i);
 				if (Actor.findChar(pos+i) != null && !affected.contains(Actor.findChar(pos+i))){
 					affected.add(Actor.findChar(pos+i));
 				}
 			}
 
+			if (propagation != null) propagation.extendTargets(affected, null);
 			tryForWandProc(Actor.findChar(bolt.collisionPos), origin);
 
 			for (Char ch : affected){

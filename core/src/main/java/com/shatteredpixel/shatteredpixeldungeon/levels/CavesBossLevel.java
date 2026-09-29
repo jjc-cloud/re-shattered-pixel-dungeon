@@ -25,6 +25,8 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Bones;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -903,6 +905,9 @@ public class CavesBossLevel extends Level {
 
 		@Override
 		protected void evolve() {
+			TerrainPropagation propagation = TerrainPropagation.event(Dungeon.level, TerrainInteractions.Source.ELECTRIC);
+			java.util.ArrayList<Integer> shocks = propagation == null ? null : new java.util.ArrayList<>();
+
 			for (int cell = 0; cell < Dungeon.level.length(); cell++) {
 				if (Dungeon.level.insideMap(cell)) {
 					off[cell] = cur[cell];
@@ -917,29 +922,38 @@ public class CavesBossLevel extends Level {
 
 					if (off[cell] > 0){
 
-						Char ch = Actor.findChar(cell);
-						if (ch != null && !(ch instanceof DM300) && !ch.flying) {
-							if (ch instanceof Mob){
-								//incredibly specific but I'll 100% get a bug report in a year if I don't add this
-								Buff.prolong(ch, Trap.HazardAssistTracker.class, Trap.HazardAssistTracker.DURATION);
-							}
+						if (propagation == null) shockCell(cell);
+						else shocks.add(cell);
+					}
+				}
+			}
+			if (propagation != null) {
+				propagation.extendCells(shocks);
+				for (int hit : shocks) shockCell(hit);
+			}
+		}
 
-							Sample.INSTANCE.play( Assets.Sounds.LIGHTNING );
-							ch.damage( Random.NormalIntRange(6, 12), new Electricity());
-							ch.sprite.flash();
+		private void shockCell(int cell) {
+			Char ch = Actor.findChar(cell);
+			if (ch != null && !(ch instanceof DM300) && !ch.flying) {
+				if (ch instanceof Mob){
+					//incredibly specific but I'll 100% get a bug report in a year if I don't add this
+					Buff.prolong(ch, Trap.HazardAssistTracker.class, Trap.HazardAssistTracker.DURATION);
+				}
 
-							if (ch == Dungeon.hero){
-								if (energySourceSprite != null && energySourceSprite instanceof PylonSprite){
-									//took damage while DM-300 was supercharged
-									Statistics.qualifiedForBossChallengeBadge = false;
-								}
-								Statistics.bossScores[2] -= 200;
-								if ( !ch.isAlive()) {
-									Dungeon.fail(DM300.class);
-									GLog.n(Messages.get(Electricity.class, "ondeath"));
-								}
-							}
-						}
+				Sample.INSTANCE.play( Assets.Sounds.LIGHTNING );
+				ch.damage( Random.NormalIntRange(6, 12), new Electricity());
+				ch.sprite.flash();
+
+				if (ch == Dungeon.hero){
+					if (energySourceSprite != null && energySourceSprite instanceof PylonSprite){
+						//took damage while DM-300 was supercharged
+						Statistics.qualifiedForBossChallengeBadge = false;
+					}
+					Statistics.bossScores[2] -= 200;
+					if ( !ch.isAlive()) {
+						Dungeon.fail(DM300.class);
+						GLog.n(Messages.get(Electricity.class, "ondeath"));
 					}
 				}
 			}

@@ -24,7 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb;
 import com.shatteredpixel.shatteredpixeldungeon.items.bombs.ExorcismBomb;
-import com.shatteredpixel.shatteredpixeldungeon.items.bombs.ShockBomb;
+import com.shatteredpixel.shatteredpixeldungeon.items.bombs.PsionicBomb;
 import com.shatteredpixel.shatteredpixeldungeon.items.bombs.StunBomb;
 import com.shatteredpixel.shatteredpixeldungeon.items.bombs.SuperBomb;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.Blandfruit;
@@ -335,7 +335,7 @@ public abstract class Recipe {
 					Bomb.class, PotionOfStrength.class),
 			new SpecialRecipe(EXPERIMENTAL_BOMBS, 2, StunBomb.class,
 					Bomb.class, PotionOfLevitation.class),
-			new SpecialRecipe(EXPERIMENTAL_BOMBS, 6, ShockBomb.class,
+			new SpecialRecipe(EXPERIMENTAL_BOMBS, 6, PsionicBomb.class,
 					Bomb.class, ScrollOfRetribution.class),
 			new SpecialRecipe(EXPERIMENTAL_BOMBS, 2, ExorcismBomb.class,
 					Bomb.class, ScrollOfAntiMagic.class),

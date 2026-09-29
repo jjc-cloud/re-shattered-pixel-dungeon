@@ -39,6 +39,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.ImpShopRoo
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.CustomTilemap;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.Carpet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.Group;
@@ -185,6 +186,21 @@ public class CityBossLevel extends Level {
 
 		Painter.set(this, c.x, arena.top, Terrain.LOCKED_DOOR);
 
+		//地面图层必须排在地毯之前注册：它整层铺满，晚注册会盖住地毯以及地毯被破坏后的过渡图。
+		CustomTilemap groundVisuals = new CustomGroundVisuals();
+		groundVisuals.setRect(0, 0, width(), height());
+		customTiles.add(groundVisuals);
+
+		//通往王座的两条一格宽直地毯改用真正的 Carpet 图层，这样破坏性爆炸与解离射线能按统一规则
+		//把它烧成余烬；王座那圈 3×3 平台仍由 city_boss.png 画，不做改动。
+		Carpet throneTail = new Carpet(); //王座向下的直毯
+		throneTail.setRect(c.x, c.y+2, 1, 4);
+		customTiles.add(throneTail);
+
+		Carpet entryCarpet = new Carpet(); //入口走廊的直毯（门把它和王座那段隔开）
+		entryCarpet.setRect(entry.center().x, entry.top+1, 1, 6);
+		customTiles.add(entryCarpet);
+
 		//exit hallway
 		Painter.fill(this, end, Terrain.CHASM);
 		Painter.fill(this, end.left+4, end.top+5, 7, 18, Terrain.EMPTY);
@@ -219,11 +235,7 @@ public class CityBossLevel extends Level {
 		Painter.fill(this, end.right-3, end.top+12, 2, 2, Terrain.WALL);
 		Painter.fill(this, end.right-3, end.top+17, 2, 2, Terrain.WALL);
 
-		CustomTilemap customVisuals = new CustomGroundVisuals();
-		customVisuals.setRect(0, 0, width(), height());
-		customTiles.add(customVisuals);
-
-		customVisuals = new CustomTerrainVisuals();
+		CustomTilemap customVisuals = new CustomTerrainVisuals();
 		customVisuals.setRect(0, 0, width(), height());
 		customTerrain.add(customVisuals);
 

@@ -153,9 +153,12 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWea
 import com.shatteredpixel.shatteredpixeldungeon.journal.Catalog;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Document;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
+import com.shatteredpixel.shatteredpixeldungeon.levels.HallsBossLevel;
+import com.shatteredpixel.shatteredpixeldungeon.levels.HallsLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.MiningLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Chasm;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
@@ -997,6 +1000,9 @@ public class Hero extends Char {
 			} else if (curAction instanceof HeroAction.Mine) {
 				actResult = actMine( (HeroAction.Mine)curAction );
 
+			} else if (curAction instanceof HeroAction.InteractTerrain) {
+				actResult = actInteractTerrain((HeroAction.InteractTerrain) curAction);
+
 			}else if (curAction instanceof HeroAction.LvlTransition) {
 				actResult = actTransition( (HeroAction.LvlTransition)curAction );
 				
@@ -1391,6 +1397,44 @@ public class Hero extends Char {
 			ready();
 			return false;
 		}
+	}
+
+	private boolean actInteractTerrain(HeroAction.InteractTerrain action) {
+		if (Dungeon.level != action.level || !action.level.insideMap(action.dst)
+				|| action.level.map[action.dst] != action.terrain
+				|| action.level.terrainInteractions == null
+				|| !action.level.terrainInteractions.ruleAt(action.dst).allows(TerrainInteractions.Source.CLICK)
+				|| belongings.weapon() == null
+				|| Actor.findChar(action.dst) != null) {
+			ready();
+			return false;
+		}
+		if (!action.level.adjacent(pos, action.dst)) {
+			if (getCloser(action.dst)) return true;
+			ready();
+			return false;
+		}
+		path = null;
+		sprite.attack(action.dst, new Callback() {
+			@Override public void call() {
+				if (curAction != action || !isAlive() || Dungeon.level != action.level) return;
+				if (action.level.map[action.dst] == action.terrain
+						&& action.level.adjacent(pos, action.dst) && Actor.findChar(action.dst) == null
+						&& belongings.weapon() != null
+						&& action.level.terrainInteractions != null
+						&& action.level.terrainInteractions.interact(action.dst, TerrainInteractions.Source.CLICK)
+						== TerrainInteractions.Result.CHANGED) {
+					if ((action.level instanceof HallsLevel || action.level instanceof HallsBossLevel)
+							&& (action.terrain == Terrain.REGION_DECO || action.terrain == Terrain.REGION_DECO_ALT)) {
+						Splash.at(action.dst, 0xFF958472, 8);
+					}
+					Dungeon.observe();
+					spendAndNext(TICK);
+				}
+				ready();
+			}
+		});
+		return false;
 	}
 
 	private boolean actMine(HeroAction.Mine action){
@@ -2092,7 +2136,14 @@ public class Hero extends Char {
 				&& (Dungeon.depth < 26 || Dungeon.level.getTransition(cell).type == LevelTransition.Type.REGULAR_ENTRANCE) ) {
 
 			curAction = new HeroAction.LvlTransition( cell );
-			
+
+		} else if (Dungeon.level.terrainInteractions != null
+				&& belongings.weapon() != null
+				&& (fieldOfView[cell] || Dungeon.level.visited[cell] || Dungeon.level.mapped[cell])
+				&& Dungeon.level.terrainInteractions.ruleAt(cell).allows(TerrainInteractions.Source.CLICK)) {
+			curAction = new HeroAction.InteractTerrain(cell);
+			lastAction = null;
+
 		}  else {
 			
 			curAction = new HeroAction.Move( cell );
@@ -2442,6 +2493,7 @@ public class Hero extends Char {
 				Sample.INSTANCE.play( Assets.Sounds.STURDY, 1, Random.Float( 0.96f, 1.05f ) );
 			} else if (Dungeon.level.map[pos] == Terrain.GRASS
 					|| Dungeon.level.map[pos] == Terrain.EMBERS
+					|| Dungeon.level.map[pos] == Terrain.EMBERS_SP
 					|| Dungeon.level.map[pos] == Terrain.FURROWED_GRASS){
 				if (step == pos && wasHighGrass) {
 					Sample.INSTANCE.play(Assets.Sounds.TRAMPLE, 1, Random.Float( 0.96f, 1.05f ) );

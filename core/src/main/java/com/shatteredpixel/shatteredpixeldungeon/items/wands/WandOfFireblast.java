@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
@@ -188,8 +189,7 @@ public class WandOfFireblast extends DamageWand {
 				for (int i : PathFinder.NEIGHBOURS9) {
 					CellEmitter.get(defender.pos + i).burst(SmokeParticle.FACTORY, 4);
 					if (Fire.volumeAt(defender.pos+i, Fire.class) > 0){
-						Dungeon.level.destroy(defender.pos + i);
-						GameScene.updateMap(defender.pos + i);
+						Dungeon.level.affectTerrain(defender.pos + i, TerrainInteractions.Source.FIRE, true);
 						fire.clear(defender.pos + i);
 					}
 

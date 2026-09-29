@@ -25,6 +25,8 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -890,12 +892,7 @@ public class Tengu extends Mob {
 								plant.wither();
 							}
 							
-							if (Dungeon.level.flamable[cell]){
-								Dungeon.level.destroy( cell );
-								
-								observe = true;
-								GameScene.updateMap( cell );
-							}
+							observe |= Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.FIRE);
 							
 							burned = true;
 							CellEmitter.get(cell).start(FlameParticle.FACTORY, 0.03f, 10);
@@ -1049,6 +1046,9 @@ public class Tengu extends Mob {
 			
 			@Override
 			protected void evolve() {
+				TerrainPropagation propagation = TerrainPropagation.event(Dungeon.level, TerrainInteractions.Source.ELECTRIC);
+				java.util.ArrayList<Integer> shocks = propagation == null ? null : new java.util.ArrayList<>();
+
 
 				boolean shocked = false;
 				
@@ -1066,28 +1066,37 @@ public class Tengu extends Mob {
 
 							shocked = true;
 							
-							Char ch = Actor.findChar(cell);
-							if (ch != null && !(ch instanceof Tengu)){
-								ch.damage(2 + Dungeon.scalingDepth(), new Electricity());
-								
-								if (ch == Dungeon.hero){
-									Statistics.qualifiedForBossChallengeBadge = false;
-									Statistics.bossScores[1] -= 100;
-									if (!ch.isAlive()) {
-										Dungeon.fail(Tengu.class);
-										GLog.n(Messages.get(Electricity.class, "ondeath"));
-									}
-								}
-							}
+							if (propagation == null) shockCell(cell);
+							else shocks.add(cell);
 							
 						}
 					}
 				}
 
+				if (propagation != null) {
+					propagation.extendCells(shocks);
+					for (int hit : shocks) shockCell(hit);
+				}
 				if (shocked) Sample.INSTANCE.play( Assets.Sounds.LIGHTNING );
 				
 			}
 			
+			private void shockCell(int cell) {
+				Char ch = Actor.findChar(cell);
+				if (ch != null && !(ch instanceof Tengu)){
+					ch.damage(2 + Dungeon.scalingDepth(), new Electricity());
+
+					if (ch == Dungeon.hero){
+						Statistics.qualifiedForBossChallengeBadge = false;
+						Statistics.bossScores[1] -= 100;
+						if (!ch.isAlive()) {
+							Dungeon.fail(Tengu.class);
+							GLog.n(Messages.get(Electricity.class, "ondeath"));
+						}
+					}
+				}
+			}
+
 			@Override
 			public void use(BlobEmitter emitter) {
 				super.use(emitter);

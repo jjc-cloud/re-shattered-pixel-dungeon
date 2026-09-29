@@ -28,11 +28,15 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Lightning;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.watabou.utils.BArray;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
+import com.watabou.utils.SparseArray;
 
 import java.util.ArrayList;
 
@@ -81,6 +85,36 @@ public class Shocking extends Weapon.Enchantment {
 	private ArrayList<Lightning.Arc> arcs = new ArrayList<>();
 	
 	public static void arc( Char attacker, Char defender, int dist, ArrayList<Char> affected, ArrayList<Lightning.Arc> arcs ) {
+		TerrainPropagation conduction = TerrainPropagation.event(Dungeon.level, TerrainInteractions.Source.ELECTRIC);
+		arc(attacker, defender, dist, affected, arcs, conduction);
+		if (conduction == null) return;
+		if (!conduction.hasNext()) { conduction.end(); return; }
+		SparseArray<Char> occupants = new SparseArray<>();
+		for (Char ch : Actor.chars()) occupants.put(ch.pos, ch);
+		while (conduction.hasNext()) {
+			int cell = conduction.next(), from = conduction.parent();
+			if (cell != from && (Dungeon.level.heroFOV[cell] || Dungeon.level.heroFOV[from])) {
+				arcs.add(new Lightning.Arc(DungeonTilemap.raisedTileCenterToWorld(from),
+						DungeonTilemap.raisedTileCenterToWorld(cell)));
+			}
+			for (int offset : PathFinder.NEIGHBOURS9) {
+				int next = cell + offset;
+				if (next != cell && !Dungeon.level.adjacent(cell, next)) continue;
+				Char ch = occupants.get(next);
+				if (ch != null && ch != attacker && !affected.contains(ch)) {
+					affected.add(ch);
+					if (Dungeon.level.heroFOV[cell] || Dungeon.level.heroFOV[next]) {
+						arcs.add(new Lightning.Arc(DungeonTilemap.raisedTileCenterToWorld(cell), ch.sprite.center()));
+					}
+					arc(attacker, ch, (Dungeon.level.water[next] && !ch.flying) ? 2 : 1, affected, arcs, conduction);
+				}
+			}
+		}
+		conduction.end();
+	}
+
+	private static void arc(Char attacker, Char defender, int dist, ArrayList<Char> affected,
+	                        ArrayList<Lightning.Arc> arcs, TerrainPropagation conduction) {
 
 		defender.sprite.centerEmitter().burst(SparkParticle.FACTORY, 3);
 		defender.sprite.flash();
@@ -99,8 +133,9 @@ public class Shocking extends Weapon.Enchantment {
 		affected.addAll(hitThisArc);
 		for (Char hit : hitThisArc){
 			arcs.add(new Lightning.Arc(defender.sprite.center(), hit.sprite.center()));
-			arc(attacker, hit, (Dungeon.level.water[hit.pos] && !hit.flying) ? 2 : 1, affected, arcs);
+			arc(attacker, hit, (Dungeon.level.water[hit.pos] && !hit.flying) ? 2 : 1, affected, arcs, conduction);
 		}
+		if (conduction != null) conduction.touch(defender.pos);
 
 	}
 }

@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -87,11 +88,7 @@ public class VaultLaser extends NPC {
 				if (Dungeon.level.heroFOV[cell]){
 					visible = true;
 				}
-				if (Dungeon.level.flamable[cell]){
-					Dungeon.level.destroy( cell );
-					observe = true;
-					GameScene.updateMap( cell );
-				}
+				observe |= Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.DISINTEGRATION);
 				Char ch = Actor.findChar(cell);
 				if (ch != null && ch.alignment == Alignment.ALLY){
 					ch.damage(Random.NormalIntRange(10, 20), new Eye.DeathGaze());

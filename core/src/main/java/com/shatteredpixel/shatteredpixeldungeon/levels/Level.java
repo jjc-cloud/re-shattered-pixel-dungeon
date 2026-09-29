@@ -107,6 +107,7 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.InterlevelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.CustomTilemap;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.Carpet;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.Group;
@@ -175,6 +176,62 @@ public abstract class Level implements Bundlable {
 	public boolean[] pit;
 
 	public boolean[] openSpace;
+
+	public TerrainInteractions terrainInteractions;
+
+	/** 只在生成器或测试场景显式配置交互时创建。运行时查询应直接检查可空字段。 */
+	public TerrainInteractions interactions() {
+		if (terrainInteractions == null) terrainInteractions = new TerrainInteractions(this);
+		return terrainInteractions;
+	}
+
+	/** 作用路径的公共地形入口。未配置元素保留原有可燃地形破坏行为。 */
+	public boolean affectTerrain(int cell, TerrainInteractions.Source source) {
+		return affectTerrain(cell, source, flamable[cell]);
+	}
+
+	/** 少数旧效果也破坏空地；只改变未接管时的回退，不绕过类别拒绝。 */
+	public boolean affectTerrain(int cell, TerrainInteractions.Source source, boolean legacyDestroy) {
+		TerrainInteractions.Result result = terrainInteractions == null ? TerrainInteractions.Result.UNHANDLED
+				: terrainInteractions.interact(cell, source);
+		if (result == TerrainInteractions.Result.DENIED) return false;
+		boolean changed = result == TerrainInteractions.Result.CHANGED;
+		if (result == TerrainInteractions.Result.UNHANDLED
+				&& (source == TerrainInteractions.Source.EXPLOSION || source == TerrainInteractions.Source.DISINTEGRATION
+				|| source == TerrainInteractions.Source.FIRE) && legacyDestroy) {
+			destroy(cell);
+			GameScene.updateMap(cell);
+			changed = true;
+		}
+		if (source == TerrainInteractions.Source.DISINTEGRATION && customTiles != null) {
+			for (CustomTilemap tilemap : customTiles) {
+				if (!(tilemap instanceof Carpet)) continue;
+				Carpet carpet = (Carpet) tilemap;
+				int terrain = map[cell];
+				int ash;
+				//EMPTY_DECO 是不可燃的装饰地面，但 Level.destroy() 一直把它和 EMPTY 同等看待，
+				//地毯盖住的这两种地面都应该露出普通余烬。
+				if (terrain == Terrain.EMPTY || terrain == Terrain.EMPTY_DECO
+						|| terrain == Terrain.CUSTOM_DECO_EMPTY) ash = Terrain.EMBERS;
+				else if (terrain == Terrain.EMPTY_SP) ash = Terrain.EMBERS_SP;
+				else if (terrain == Terrain.STATUE && this instanceof CityLevel) ash = Terrain.STATUE_EMBERS;
+				else if (terrain == Terrain.STATUE_SP && this instanceof CityLevel) ash = Terrain.STATUE_SP_EMBERS;
+				else if (terrain == Terrain.CUSTOM_DECO && this instanceof SewerBossLevel) ash = Terrain.CUSTOM_DECO_EMBERS_SP;
+				else if (terrain == Terrain.EMBERS || terrain == Terrain.EMBERS_SP
+						|| terrain == Terrain.STATUE_EMBERS || terrain == Terrain.STATUE_SP_EMBERS
+						|| terrain == Terrain.CUSTOM_DECO_EMBERS_SP) ash = terrain;
+				else continue;
+				if (carpet.overrideTile(cell, this, Carpet.DESTROYED)) {
+					if (ash != terrain) {
+						Level.set(cell, ash, this);
+						GameScene.updateMap(cell);
+					}
+					changed = true;
+				}
+			}
+		}
+		return changed;
+	}
 	
 	public Feeling feeling = Feeling.NONE;
 	
@@ -324,8 +381,52 @@ public abstract class Level implements Bundlable {
 			customWalls = new ArrayList<>();
 			
 		} while (!build());
+		if (this instanceof SewerLevel) {
+			for (int i = 0; i < length(); i++) {
+				if (map[i] == Terrain.REGION_DECO && Random.Int(10) == 0) {
+					map[i] = Terrain.SEWER_BARREL_MARKED;
+				} else if (map[i] == Terrain.REGION_DECO_ALT && Random.Int(10) == 0) {
+					map[i] = Terrain.SEWER_BARREL_MARKED_ALT;
+				}
+			}
+		}
 		
 		buildFlagMaps();
+		TerrainInteractions.Rule statue = TerrainInteractions.Rule.LEGACY.on(
+				TerrainInteractions.Source.EXPLOSION, TerrainInteractions.Response.replaceWith(Terrain.EMBERS));
+		TerrainInteractions.Rule statueSp = TerrainInteractions.Rule.LEGACY.on(
+				TerrainInteractions.Source.EXPLOSION, TerrainInteractions.Response.replaceWith(
+						this instanceof CityLevel || this instanceof SewerLevel ? Terrain.EMBERS_SP : Terrain.EMBERS));
+		interactions().setDefault(Terrain.STATUE, statue);
+		interactions().setDefault(Terrain.STATUE_SP, statueSp);
+		interactions().setDefault(Terrain.STATUE_EMBERS, statue);
+		interactions().setDefault(Terrain.STATUE_SP_EMBERS, statueSp);
+		//鼠王房雕像（下水道 Boss 层的隐藏房间，用自定义装饰表示）：炸掉后雕像消失，
+		//留下可通行的普通余烬（不走房间自身的特殊地面余烬，那种是木板地面）。
+		if (this instanceof SewerBossLevel) {
+			interactions().setDefault(Terrain.CUSTOM_DECO, TerrainInteractions.Rule.LEGACY.on(
+					TerrainInteractions.Source.EXPLOSION,
+					TerrainInteractions.Response.replaceWith(Terrain.EMBERS)));
+		}
+		if (this instanceof SewerLevel) {
+			TerrainInteractions.Rule barrel = TerrainInteractions.Rule.LEGACY.on(
+					TerrainInteractions.Source.CLICK, TerrainInteractions.Response.DESTROY);
+			interactions().setDefault(Terrain.REGION_DECO, barrel);
+			interactions().setDefault(Terrain.REGION_DECO_ALT, barrel);
+			interactions().setDefault(Terrain.SEWER_BARREL_MARKED, barrel);
+			interactions().setDefault(Terrain.SEWER_BARREL_MARKED_ALT, barrel);
+		} else if (this instanceof PrisonLevel || this instanceof PrisonBossLevel
+				|| this instanceof CavesLevel || this instanceof CavesBossLevel) {
+			TerrainInteractions.Rule metal = TerrainInteractions.Rule.LEGACY.on(
+					TerrainInteractions.Source.ELECTRIC, TerrainInteractions.Response.CONDUCT);
+			interactions().setDefault(Terrain.REGION_DECO, metal);
+			interactions().setDefault(Terrain.REGION_DECO_ALT, metal);
+		} else if (this instanceof HallsLevel || this instanceof HallsBossLevel) {
+			TerrainInteractions.Rule rubble = TerrainInteractions.Rule.LEGACY.on(
+					TerrainInteractions.Source.CLICK, TerrainInteractions.Response.replaceWith(Terrain.EMPTY));
+			interactions().setDefault(Terrain.REGION_DECO, rubble);
+			interactions().setDefault(Terrain.REGION_DECO_ALT, rubble);
+		}
 		cleanWalls();
 		
 		createMobs();
@@ -341,6 +442,7 @@ public abstract class Level implements Bundlable {
 	}
 	
 	public void setSize(int w, int h){
+		terrainInteractions = null;
 		
 		width = w;
 		height = h;
@@ -404,6 +506,9 @@ public abstract class Level implements Bundlable {
 		customWalls = new ArrayList<>();
 		
 		map		= bundle.getIntArray( MAP );
+		if (bundle.contains("terrain_interactions")) {
+			interactions().restoreFromBundle(bundle.getBundle("terrain_interactions"));
+		}
 
 		visited	= bundle.getBooleanArray( VISITED );
 		mapped	= bundle.getBooleanArray( MAPPED );
@@ -503,6 +608,11 @@ public abstract class Level implements Bundlable {
 		bundle.put( WIDTH, width );
 		bundle.put( HEIGHT, height );
 		bundle.put( MAP, map );
+		if (terrainInteractions != null) {
+			Bundle rules = new Bundle();
+			terrainInteractions.storeInBundle(rules);
+			bundle.put("terrain_interactions", rules);
+		}
 		bundle.put( VISITED, visited );
 		bundle.put( MAPPED, mapped );
 		bundle.put( TRANSITIONS, transitions );
@@ -984,6 +1094,9 @@ public abstract class Level implements Bundlable {
 	}
 	
 	public static void set( int cell, int terrain, Level level ) {
+		if (level.terrainInteractions != null && level.map[cell] != terrain) {
+			level.terrainInteractions.clearOverride(cell);
+		}
 		Painter.set(level, cell, terrain);
 
 		if (terrain != Terrain.TRAP && terrain != Terrain.SECRET_TRAP && terrain != Terrain.INACTIVE_TRAP) {
@@ -1007,7 +1120,8 @@ public abstract class Level implements Bundlable {
 		water[cell]         = terrain == Terrain.WATER;
 
 		if (this instanceof SewerLevel){
-			if (map[cell] == Terrain.REGION_DECO || map[cell] == Terrain.REGION_DECO_ALT){
+			if (map[cell] == Terrain.REGION_DECO || map[cell] == Terrain.REGION_DECO_ALT
+					|| map[cell] == Terrain.SEWER_BARREL_MARKED || map[cell] == Terrain.SEWER_BARREL_MARKED_ALT){
 				flamable[cell] = true;
 			}
 		}
@@ -1128,6 +1242,7 @@ public abstract class Level implements Bundlable {
 				map[pos] == Terrain.FURROWED_GRASS ||
 				map[pos] == Terrain.EMPTY ||
 				map[pos] == Terrain.EMBERS ||
+				map[pos] == Terrain.EMBERS_SP ||
 				map[pos] == Terrain.EMPTY_DECO) {
 			set(pos, Terrain.GRASS, this);
 			GameScene.updateMap(pos);
@@ -1206,7 +1321,7 @@ public abstract class Level implements Bundlable {
 
 		int terr = map[cell];
 		if (terr == Terrain.EMPTY || terr == Terrain.GRASS ||
-				terr == Terrain.EMBERS || terr == Terrain.EMPTY_SP ||
+				terr == Terrain.EMBERS || terr == Terrain.EMBERS_SP || terr == Terrain.EMPTY_SP ||
 				terr == Terrain.HIGH_GRASS || terr == Terrain.FURROWED_GRASS
 				|| terr == Terrain.EMPTY_DECO){
 			set(cell, Terrain.WATER);
@@ -1258,7 +1373,8 @@ public abstract class Level implements Bundlable {
 				}
 			}
 
-			if ( (map[ch.pos] == Terrain.GRASS || map[ch.pos] == Terrain.EMBERS)
+			if ( (map[ch.pos] == Terrain.GRASS || map[ch.pos] == Terrain.EMBERS
+					|| map[ch.pos] == Terrain.EMBERS_SP)
 					&& ch == Dungeon.hero && Dungeon.hero.hasTalent(Talent.REJUVENATING_STEPS)
 					&& ch.buff(Talent.RejuvenatingStepsCooldown.class) == null){
 
@@ -1910,6 +2026,7 @@ public abstract class Level implements Bundlable {
 			case Terrain.EXIT:
 				return Messages.get(Level.class, "exit_name");
 			case Terrain.EMBERS:
+			case Terrain.EMBERS_SP:
 				return Messages.get(Level.class, "embers_name");
 			case Terrain.FURROWED_GRASS:
 				return Messages.get(Level.class, "furrowed_grass_name");
@@ -1934,6 +2051,8 @@ public abstract class Level implements Bundlable {
 				return Messages.get(Level.class, "empty_well_name");
 			case Terrain.STATUE:
 			case Terrain.STATUE_SP:
+			case Terrain.STATUE_EMBERS:
+			case Terrain.STATUE_SP_EMBERS:
 				return Messages.get(Level.class, "statue_name");
 			case Terrain.INACTIVE_TRAP:
 				return Messages.get(Level.class, "inactive_trap_name");
@@ -1960,6 +2079,7 @@ public abstract class Level implements Bundlable {
 			case Terrain.UNLOCKED_EXIT:
 				return Messages.get(Level.class, "exit_desc");
 			case Terrain.EMBERS:
+			case Terrain.EMBERS_SP:
 				return Messages.get(Level.class, "embers_desc");
 			case Terrain.HIGH_GRASS:
 			case Terrain.FURROWED_GRASS:
@@ -1977,6 +2097,8 @@ public abstract class Level implements Bundlable {
 				return Messages.get(Level.class, "inactive_trap_desc");
 			case Terrain.STATUE:
 			case Terrain.STATUE_SP:
+			case Terrain.STATUE_EMBERS:
+			case Terrain.STATUE_SP_EMBERS:
 				return Messages.get(Level.class, "statue_desc");
 			case Terrain.ALCHEMY:
 				return Messages.get(Level.class, "alchemy_desc");

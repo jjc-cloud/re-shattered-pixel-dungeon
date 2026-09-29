@@ -32,6 +32,8 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.PathFinder;
@@ -45,12 +47,14 @@ public class Electricity extends Blob {
 	}
 	
 	private boolean[] water;
+	private TerrainPropagation conduction;
 	
 	@Override
 	protected void evolve() {
 		
 		water = Dungeon.level.water;
 		int cell;
+		boolean terrainAffected = false;
 		
 		//spread first..
 		for (int i = area.left-1; i <= area.right; i++) {
@@ -58,11 +62,19 @@ public class Electricity extends Blob {
 				cell = i + j*Dungeon.level.width();
 				
 				if (cur[cell] > 0) {
+					if (Dungeon.level.terrainInteractions != null) {
+						terrainAffected |= Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.ELECTRIC);
+					}
 					spreadFromCell(cell, cur[cell]);
 				}
 			}
 		}
 		
+		if (Dungeon.level.terrainInteractions != null && Dungeon.level.terrainInteractions.hasConductors(TerrainInteractions.Source.ELECTRIC)) {
+			spreadThroughConductors();
+		}
+		if (terrainAffected) Dungeon.observe();
+
 		//..then decrement/shock
 		for (int i = area.left-1; i <= area.right; i++) {
 			for (int j = area.top-1; j <= area.bottom; j++) {
@@ -113,6 +125,42 @@ public class Electricity extends Blob {
 				spreadFromCell(cell + c, power);
 			}
 		}
+	}
+
+	/** 各连通导体采用接触电场的最大剩余时间，不叠加时间；伤害仍由本 Blob 每格结算一次。 */
+	private void spreadThroughConductors() {
+		if (conduction == null) conduction = new TerrainPropagation();
+		conduction.begin(Dungeon.level, TerrainInteractions.Source.ELECTRIC);
+		int width = Dungeon.level.width();
+		// 只从本回合已带电的区域发起接触，新增区域由导体遍历处理。
+		int left = area.left, right = area.right, top = area.top, bottom = area.bottom;
+		for (int y = top; y < bottom; y++) {
+			for (int x = left; x < right; x++) {
+				int origin = x + y * width;
+				if (cur[origin] <= 0) continue;
+				for (int offset : PathFinder.NEIGHBOURS9) {
+					int seed = origin + offset;
+					if (!Dungeon.level.insideMap(seed) || (seed != origin && !Dungeon.level.adjacent(origin, seed))) continue;
+					int first = conduction.size();
+					conduction.seed(origin, seed);
+					if (!conduction.hasNext()) continue;
+					int power = cur[origin];
+					while (conduction.hasNext()) {
+						int cell = conduction.next();
+						for (int near : PathFinder.NEIGHBOURS9) power = Math.max(power, cur[cell + near]);
+					}
+					for (int index = first; index < conduction.size(); index++) {
+						int cell = conduction.cell(index);
+						spreadFromCell(cell, power);
+						for (int near : PathFinder.NEIGHBOURS8) {
+							int next = cell + near;
+							if (Dungeon.level.insideMap(next) && !Dungeon.level.solid[next]) spreadFromCell(next, power);
+						}
+					}
+				}
+			}
+		}
+		conduction.end();
 	}
 	
 	@Override

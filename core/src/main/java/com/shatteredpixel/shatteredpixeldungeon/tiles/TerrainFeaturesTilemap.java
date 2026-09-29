@@ -93,17 +93,21 @@ public class TerrainFeaturesTilemap extends DungeonTilemap {
 		} else if (tile == Terrain.ALCHEMY) {
 			return 135 + 16*stage;
 
-		} else if (tile == Terrain.STATUE || tile == Terrain.STATUE_SP) {
+		} else if (tile == Terrain.STATUE || tile == Terrain.STATUE_SP
+				|| tile == Terrain.STATUE_EMBERS || tile == Terrain.STATUE_SP_EMBERS) {
 			return 136 + 16*stage;
 
 		} else if (tile == Terrain.REGION_DECO) {
+			// 标记木桶直接使用区域贴图；这里的普通木桶前景会遮住桶身标记。
 			return 137 + 16 * stage;
 
 		} else if (tile == Terrain.REGION_DECO_ALT) {
 			return 138 + 16 * stage;
 
-		} else if (tile == Terrain.EMBERS) {
-			if (DungeonTileSheet.getVisualWithAlts(DungeonTileSheet.EMBERS, pos) == DungeonTileSheet.EMBERS_ALT){
+		} else if (tile == Terrain.EMBERS || tile == Terrain.EMBERS_SP) {
+			int embers = tile == Terrain.EMBERS_SP ? DungeonTileSheet.EMBERS_SP : DungeonTileSheet.EMBERS;
+			int embersAlt = tile == Terrain.EMBERS_SP ? DungeonTileSheet.EMBERS_SP_ALT : DungeonTileSheet.EMBERS_ALT;
+			if (DungeonTileSheet.getVisualWithAlts(embers, pos) == embersAlt){
 				return 208 + 1;
 			} else {
 				return 208;

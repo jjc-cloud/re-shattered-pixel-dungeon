@@ -81,10 +81,20 @@ public class DungeonTerrainTilemap extends DungeonTilemap {
 				return DungeonTileSheet.RAISED_STATUE;
 			} else if (tile == Terrain.STATUE_SP) {
 				return DungeonTileSheet.RAISED_STATUE_SP;
+			} else if (tile == Terrain.STATUE_EMBERS) {
+				return DungeonTileSheet.getVisualWithAlts(DungeonTileSheet.EMBERS, pos) == DungeonTileSheet.EMBERS_ALT
+						? DungeonTileSheet.RAISED_STATUE_EMBERS_ALT : DungeonTileSheet.RAISED_STATUE_EMBERS;
+			} else if (tile == Terrain.STATUE_SP_EMBERS) {
+				return DungeonTileSheet.getVisualWithAlts(DungeonTileSheet.EMBERS_SP, pos) == DungeonTileSheet.EMBERS_SP_ALT
+						? DungeonTileSheet.RAISED_STATUE_SP_EMBERS_ALT : DungeonTileSheet.RAISED_STATUE_SP_EMBERS;
 			} else if (tile == Terrain.REGION_DECO) {
 				return DungeonTileSheet.RAISED_REGION_DECO;
 			} else if (tile == Terrain.REGION_DECO_ALT) {
 				return DungeonTileSheet.RAISED_REGION_DECO_ALT;
+			} else if (tile == Terrain.SEWER_BARREL_MARKED) {
+				return DungeonTileSheet.RAISED_SEWER_BARREL_MARKED;
+			} else if (tile == Terrain.SEWER_BARREL_MARKED_ALT) {
+				return DungeonTileSheet.RAISED_SEWER_BARREL_MARKED_ALT;
 			} else if (tile == Terrain.MINE_CRYSTAL) {
 				return DungeonTileSheet.getVisualWithAlts(
 						DungeonTileSheet.RAISED_MINE_CRYSTAL_BLUE_1,
@@ -109,6 +119,9 @@ public class DungeonTerrainTilemap extends DungeonTilemap {
 				return DungeonTileSheet.NULL_TILE;
 			}
 		} else {
+			if (tile == Terrain.SEWER_BARREL_MARKED || tile == Terrain.SEWER_BARREL_MARKED_ALT) {
+				return DungeonTileSheet.directFlatVisuals.get(tile);
+			}
 			return DungeonTileSheet.getVisualWithAlts(
 					DungeonTileSheet.directFlatVisuals.get(tile),
 					pos);

@@ -24,6 +24,8 @@ package com.shatteredpixel.shatteredpixeldungeon.items.bombs;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Electricity;
@@ -60,13 +62,16 @@ public class FlashBangBomb extends Bomb {
 		super.explode(cell);
 
 		ArrayList<Char> affected = new ArrayList<>();
+		TerrainPropagation event = TerrainPropagation.event(Dungeon.level, TerrainInteractions.Source.ELECTRIC);
 		PathFinder.buildDistanceMap( cell, BArray.not( Dungeon.level.solid, null ), explosionRange() );
 		for (int i = 0; i < PathFinder.distance.length; i++) {
+			if (event != null && PathFinder.distance[i] < Integer.MAX_VALUE) event.touch(i);
 			if (PathFinder.distance[i] < Integer.MAX_VALUE && Actor.findChar(i) != null) {
 				affected.add(Actor.findChar(i));
 			}
 		}
 
+		if (event != null) event.extendTargets(affected, null);
 		ArrayList<Lightning.Arc> arcs = new ArrayList<>();
 		for (Char ch : affected){
 			//25% bonus damage and 10 turns of stun

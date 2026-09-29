@@ -10,11 +10,13 @@ dependencies {
 
 //TestStart 的开关由构建决定，省得打包前手改源码、测试时又改回来。
 //打包/发布类任务(assembleXxx、createIPA、portableZip、jpackage…)一律关闭，
-//只有下面这些"直接在本地跑起来"的任务自动开启，其余情况(含 IDE 同步、无任务名)也关闭。
+//本地运行和地形回归任务自动开启；回归编译后直接从 IDE 运行也能沿用测试开局。
+//其余情况(含 IDE 同步、无任务名)关闭。
 //需要时可以用 -PtestStart=true/false 强制指定。
 def testStartLocalRunTasks = ['debug', 'run', 'installdebug',
                              'launchiphonesimulator', 'launchipadsimulator',
-                             'launchiosdevice', 'launchiossimulator']
+                             'launchiosdevice', 'launchiossimulator',
+                             'terraininteractionregression']
 def requestedTaskNames = gradle.startParameter.taskNames.collect { it.tokenize(':').last().toLowerCase(Locale.ROOT) }
 def testStartEnabled = providers.gradleProperty('testStart').map { it.toBoolean() }
         .getOrElse(requestedTaskNames.any { testStartLocalRunTasks.contains(it) })
@@ -52,4 +54,10 @@ tasks.register('chestRegression', JavaExec) {
     dependsOn testClasses
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'com.shatteredpixel.shatteredpixeldungeon.ChestRegression'
+}
+
+tasks.register('terrainInteractionRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.shatteredpixel.shatteredpixeldungeon.TerrainInteractionRegression'
 }

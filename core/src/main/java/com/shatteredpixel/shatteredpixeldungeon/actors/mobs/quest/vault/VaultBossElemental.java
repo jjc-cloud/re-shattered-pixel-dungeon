@@ -24,6 +24,8 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.quest.vault;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -313,17 +315,20 @@ public class VaultBossElemental extends Mob {
 	public int defenseProc(Char enemy, int damage) {
 		if (form == ElementalForm.SHOCK && enemy == Dungeon.hero && !(Dungeon.hero.belongings.attackingWeapon() instanceof MissileWeapon)){
 			enemy.sprite.parent.addToFront( new Lightning( sprite.center(), enemy.sprite.center(), null ) );
-			enemy.damage( Random.IntRange(5, 10), new Shocking() );
-			Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);
-			PixelScene.shake( 2, 0.3f );
-			enemy.sprite.centerEmitter().burst(SparkParticle.FACTORY, 3);
-			enemy.sprite.flash();
-			if (!enemy.isAlive()){
-				Badges.validateDeathFromEnemyMagic();
-				Dungeon.fail(this);
-			} else {
-				GLog.w(Messages.get(this, "shock_resist"));
-			}
+			TerrainPropagation.point(Dungeon.level, TerrainInteractions.Source.ELECTRIC, enemy.pos,
+					enemy, this, target -> {
+				target.damage( Random.IntRange(5, 10), new Shocking() );
+				Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);
+				PixelScene.shake( 2, 0.3f );
+				target.sprite.centerEmitter().burst(SparkParticle.FACTORY, 3);
+				target.sprite.flash();
+				if (!target.isAlive()){
+					Badges.validateDeathFromEnemyMagic();
+					Dungeon.fail(VaultBossElemental.this);
+				} else {
+					GLog.w(Messages.get(VaultBossElemental.this, "shock_resist"));
+				}
+			});
 		}
 		return super.defenseProc(enemy, damage);
 	}
@@ -1231,6 +1236,9 @@ public class VaultBossElemental extends Mob {
 			CellEmitter.get(cell + PathFinder.CIRCLE8[i]).burst(SparkParticle.FACTORY, 5);
 			affectedCells.add(cell + PathFinder.CIRCLE8[i]);
 		}
+
+		TerrainPropagation propagation = TerrainPropagation.event(Dungeon.level, TerrainInteractions.Source.ELECTRIC);
+		if (propagation != null) propagation.extendCells(affectedCells);
 
 		for (int c : affectedCells){
 			Char ch = Actor.findChar(c);
