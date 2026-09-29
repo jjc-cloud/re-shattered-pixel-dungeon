@@ -19,6 +19,8 @@
 package com.shatteredpixel.shatteredpixeldungeon.items;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Bundlable;
 import com.watabou.utils.Random;
@@ -98,28 +100,70 @@ public class ShopOrder {
 		return pending.size();
 	}
 
-	//订购武器分类的候选：从下一阶段（下一间商店售卖阶数）的全部武器里随机抽三个。
-	//随机源取当前层种子，所以同一层始终得到同一组候选，与何时打开订购界面无关；
-	//种子偏移是为了与关卡生成(seedCurDepth)、盗贼预见(seedCurDepth+1)的随机流错开，
-	//另开一个生成器也确保不会干扰关卡生成的随机流。
-	public static Class<?>[] weaponChoices(int floorSet) {
-		Class<?>[] pool = Generator.wepTiers[floorSet].classes;
-		int[] order = new int[pool.length];
-		for (int i = 0; i < order.length; i++) {
-			order[i] = i;
+	//订购药剂/卷轴分类各随机取这么多种（而不是把已鉴定的全部列出来）
+	private static final int KINDS_PER_CATEGORY = 6;
+
+	//种子偏移：同一层里不同用途必须各用一个偏移，否则会抽到同一个洗牌序列。
+	//已占用：+1 盗贼预见(GameScene:681)、YogDzewa:111；这里往下依次分配，新增用途接着往后取。
+	private static final int SEED_OFFSET_WEAPONS = 2;
+	private static final int SEED_OFFSET_POTIONS = 3;
+	private static final int SEED_OFFSET_SCROLLS = 4;
+	private static final int SEED_OFFSET_BOMB    = 5;
+
+	//从 pool 里排除 excluded 后随机取 count 种（不足则全取），结果按池中原本的顺序排列。
+	//随机源取当前层种子，所以同一层始终得到同一组结果，与何时打开订购界面、是否存档重读都无关；
+	//另开一个生成器既保证可复现，也确保不会消费（污染）关卡生成或其它用途的随机流。
+	public static Class<?>[] randomKinds(Class<?>[] pool, int count, int seedOffset, Class<?>... excluded) {
+		int[] candidates = new int[pool.length];
+		int size = 0;
+		for (int i = 0; i < pool.length; i++) {
+			boolean skip = false;
+			for (Class<?> ex : excluded) {
+				if (pool[i] == ex) skip = true;
+			}
+			if (!skip) candidates[size++] = i;
 		}
-		Random.pushGenerator(Dungeon.seedCurDepth() + 2);
-			Random.shuffle(order);
+		if (size != candidates.length) candidates = Arrays.copyOf(candidates, size);
+
+		Random.pushGenerator(Dungeon.seedCurDepth() + seedOffset);
+			Random.shuffle(candidates);
 		Random.popGenerator();
 
-		int count = Math.min(MAX_ITEMS, order.length);
-		//抽中的三项按阶层原本的顺序排列，界面里看起来更整齐
-		Arrays.sort(order, 0, count);
-		Class<?>[] choices = new Class<?>[count];
-		for (int i = 0; i < count; i++) {
-			choices[i] = pool[order[i]];
+		int n = Math.min(count, candidates.length);
+		//抽中的项按池中原本的顺序排列，界面里看起来更整齐
+		Arrays.sort(candidates, 0, n);
+		Class<?>[] choices = new Class<?>[n];
+		for (int i = 0; i < n; i++) {
+			choices[i] = pool[candidates[i]];
 		}
 		return choices;
+	}
+
+	//订购武器分类的候选：从下一阶段（下一间商店售卖阶数）的全部武器里随机抽三个，同一间商店内固定
+	public static Class<?>[] weaponChoices(int floorSet) {
+		return randomKinds(Generator.wepTiers[floorSet].classes, MAX_ITEMS, SEED_OFFSET_WEAPONS);
+	}
+
+	//订购药剂分类的候选：类别里去掉力量药水（每章保底发放的成长资源）后，按层种子随机取六种。
+	//界面还会再按"是否已鉴定"过滤一次，所以实际能订的只会更少。
+	public static Class<?>[] potionChoices() {
+		return randomKinds(Generator.Category.POTION.classes, KINDS_PER_CATEGORY, SEED_OFFSET_POTIONS,
+				PotionOfStrength.class);
+	}
+
+	//订购卷轴分类的候选：同上，去掉升级卷轴。随机流与药剂分开（偏移不同）
+	public static Class<?>[] scrollChoices() {
+		return randomKinds(Generator.Category.SCROLL.classes, KINDS_PER_CATEGORY, SEED_OFFSET_SCROLLS,
+				ScrollOfUpgrade.class);
+	}
+
+	//杂项分类的炸弹：50% 概率是一对炸弹（DoubleBomb，拾取时得到 2 个）。
+	//同样按层种子确定，反复打开订购界面或存档重读都不会变。
+	public static boolean bombIsPair() {
+		Random.pushGenerator(Dungeon.seedCurDepth() + SEED_OFFSET_BOMB);
+			boolean pair = Random.Int(2) == 0;
+		Random.popGenerator();
+		return pair;
 	}
 
 	//商店实体化时取走待交付货物；具体摆放继续交给商店房间处理
