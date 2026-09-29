@@ -47,6 +47,7 @@ public abstract class SecretRoom extends SpecialRoom {
 	// plus the chance for an extra secret room (fractional value)
 	private static float[] baseRegionSecrets = new float[]{2f, 2.25f, 2.5f, 2.75f, 3.0f};
 	private static int[] regionSecretsThisRun = new int[5];
+	private static int[] superSecretDepths = new int[5];
 	
 	public static void initForRun(){
 		
@@ -61,6 +62,9 @@ public abstract class SecretRoom extends SpecialRoom {
 		
 		runSecrets = new ArrayList<>(ALL_SECRETS);
 		Random.shuffle(runSecrets);
+		for (int i = 0; i < superSecretDepths.length; i++) {
+			superSecretDepths[i] = i * 5 + Random.IntRange(1, 4);
+		}
 		
 	}
 	
@@ -88,6 +92,11 @@ public abstract class SecretRoom extends SpecialRoom {
 		return (int)secrets;
 	}
 	
+	public static boolean superSecretForFloor(int depth) {
+		return depth >= 1 && depth <= 24 && depth % 5 != 0
+				&& superSecretDepths[depth / 5] == depth;
+	}
+
 	public static SecretRoom createRoom(){
 
 		//60% chance for front of queue, 30% chance for next, 10% for one after that
@@ -111,6 +120,7 @@ public abstract class SecretRoom extends SpecialRoom {
 				if (type != null) runSecrets.add(type);
 			}
 			regionSecretsThisRun = bundle.getIntArray(REGIONS);
+			superSecretDepths = bundle.getIntArray("super_secret_depths");
 		} else {
 			initForRun();
 			ShatteredPixelDungeon.reportException(new Exception("secrets array didn't exist!"));
@@ -120,6 +130,7 @@ public abstract class SecretRoom extends SpecialRoom {
 	public static void storeRoomsInBundle( Bundle bundle ) {
 		bundle.put( ROOMS, runSecrets.toArray(new Class[0]) );
 		bundle.put( REGIONS, regionSecretsThisRun );
+		bundle.put("super_secret_depths", superSecretDepths);
 	}
 
 }

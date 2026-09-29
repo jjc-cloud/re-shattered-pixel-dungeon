@@ -54,6 +54,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Recipe;
 import com.shatteredpixel.shatteredpixeldungeon.items.RealityWarp;
 import com.shatteredpixel.shatteredpixeldungeon.items.ShopOrder;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TalismanOfForesight;
+import com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
@@ -83,6 +84,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.AmbitiousImpRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.BlacksmithRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretRoom;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SuperSecretRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.SpecialRoom;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -1033,6 +1035,24 @@ public class Dungeon {
 
 		int previousEnvironmentalViewDistance = level.environmentalViewDistance();
 		level.updateFieldOfView(hero, level.heroFOV);
+
+		if (branch == 0 && level instanceof RegularLevel
+				&& !SPDSettings.getBoolean(SPDSettings.KEY_SUPER_SECRET_HINT, false)) {
+			SuperSecretRoom room = (SuperSecretRoom) ((RegularLevel) level).room(SuperSecretRoom.class);
+			if (room != null && room.entrance() != null) {
+				int wall = level.pointToCell(room.entrance());
+				int outside = 2 * wall - level.pointToCell(room.pointInside(room.entrance(), 1));
+				// 亲眼看见入口及墙外落点才给提示，地图揭示不会提前消耗全局次数。
+				if (level.insideMap(outside) && level.heroFOV[wall] && level.heroFOV[outside]
+						&& level.solid[wall] && level.passable[outside] && !level.pit[outside]
+						&& level.heaps.get(outside) == null
+						&& (level.traps.get(outside) == null || !level.traps.get(outside).active)) {
+					// 先记一次性标记，避免物品落地引起的视野更新重复进入。
+					SPDSettings.put(SPDSettings.KEY_SUPER_SECRET_HINT, true);
+					level.drop(new Bomb(), outside).autoExplored = true;
+				}
+			}
+		}
 		dist = Math.max(dist, Math.max(previousEnvironmentalViewDistance,
 				level.environmentalViewDistance()) + 1);
 

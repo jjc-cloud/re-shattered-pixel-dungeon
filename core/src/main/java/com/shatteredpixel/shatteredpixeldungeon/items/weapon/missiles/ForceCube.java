@@ -29,6 +29,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.SnipersMark;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.TenguDartTrap;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
@@ -83,6 +84,14 @@ public class ForceCube extends MissileWeapon {
 		MissileWeapon parentTemp = parent;
 		rangedHit( null, cell );
 		parent = parentTemp;
+		boolean terrainAffected = false;
+		for (int offset : PathFinder.NEIGHBOURS9) {
+			int target = cell + offset;
+			if (Dungeon.level.insideMap(target)) {
+				terrainAffected |= Dungeon.level.affectTerrain(target, TerrainInteractions.Source.SHOCKWAVE);
+			}
+		}
+		if (terrainAffected) Dungeon.observe();
 		Dungeon.level.pressCell(cell);
 		
 		ArrayList<Char> targets = new ArrayList<>();

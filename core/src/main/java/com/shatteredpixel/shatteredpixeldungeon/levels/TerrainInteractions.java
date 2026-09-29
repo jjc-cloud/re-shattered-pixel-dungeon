@@ -15,7 +15,7 @@ import java.util.List;
 public final class TerrainInteractions {
 
 	/** 作用类别，不是物品类别。不同来源沿同一作用路径报告同一类别。 */
-	public enum Source { CLICK, EXPLOSION, DISINTEGRATION, ELECTRIC, FIRE }
+	public enum Source { CLICK, EXPLOSION, DISINTEGRATION, ELECTRIC, FIRE, SHOCKWAVE }
 
 	public enum Action { LEGACY, IGNORE, REPLACE, DESTROY, CONDUCT }
 

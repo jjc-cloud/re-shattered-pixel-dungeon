@@ -36,6 +36,7 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.TenguDartTrap;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
@@ -73,6 +74,14 @@ public class WandOfBlastWave extends DamageWand {
 	public void onZap(Ballistica bolt) {
 		Sample.INSTANCE.play( Assets.Sounds.BLAST );
 		BlastWave.blast(bolt.collisionPos);
+		boolean terrainAffected = false;
+		for (int offset : PathFinder.NEIGHBOURS9) {
+			int cell = bolt.collisionPos + offset;
+			if (Dungeon.level.insideMap(cell)) {
+				terrainAffected |= Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.SHOCKWAVE);
+			}
+		}
+		if (terrainAffected) Dungeon.observe();
 
 		//presses all tiles in the AOE first, with the exception of tengu dart traps
 		for (int i : PathFinder.NEIGHBOURS9){
