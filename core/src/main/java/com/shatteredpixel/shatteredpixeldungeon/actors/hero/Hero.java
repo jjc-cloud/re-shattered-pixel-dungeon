@@ -1429,10 +1429,10 @@ public class Hero extends Char {
 						&& action.level.terrainInteractions != null
 						&& action.level.terrainInteractions.interact(action.dst, TerrainInteractions.Source.CLICK)
 						== TerrainInteractions.Result.CHANGED) {
-					if ((action.level instanceof HallsLevel || action.level instanceof HallsBossLevel)
-							&& (action.terrain == Terrain.REGION_DECO || action.terrain == Terrain.REGION_DECO_ALT)) {
-						Splash.at(action.dst, 0xFF958472, 8);
-					}
+				if (Dungeon.depth >= 1 && (Dungeon.depth - 1) / 5 == 4
+						&& (action.terrain == Terrain.REGION_DECO || action.terrain == Terrain.REGION_DECO_ALT)) {
+					Splash.at(action.dst, 0xFF958472, 8);
+				}
 					Dungeon.observe();
 					spendAndNext(TICK);
 				}
@@ -2492,7 +2492,9 @@ public class Hero extends Char {
 		}
 		
 		if (!flying && travelling) {
-			if (Dungeon.level.water[pos]) {
+			if (step == pos && pos != previousPos && pos == Dungeon.level.hiddenEntranceCell) {
+				Sample.INSTANCE.play( Assets.Sounds.STEP_HOLLOW, 1, Random.Float( 0.96f, 1.05f ) );
+			} else if (Dungeon.level.water[pos]) {
 				Sample.INSTANCE.play( Assets.Sounds.WATER, 1, Random.Float( 0.8f, 1.25f ) );
 			} else if (Dungeon.level.map[pos] == Terrain.EMPTY_SP) {
 				Sample.INSTANCE.play( Assets.Sounds.STURDY, 1, Random.Float( 0.96f, 1.05f ) );

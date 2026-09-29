@@ -33,6 +33,8 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.TestSupplies;
+import com.shatteredpixel.shatteredpixeldungeon.items.Torch;
+import com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.MedusaEye;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Torturer;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WornDartTrap;
@@ -92,6 +94,8 @@ public class TestStart {
 
 		new TestSupplies().collect(hero.belongings.backpack);
 		new com.shatteredpixel.shatteredpixeldungeon.items.BasicSupplies().collect(hero.belongings.backpack);
+		new Torch().quantity(100).collect(hero.belongings.backpack);
+		new Bomb().quantity(100).collect(hero.belongings.backpack);
 		Item.updateQuickslot();
 	}
 

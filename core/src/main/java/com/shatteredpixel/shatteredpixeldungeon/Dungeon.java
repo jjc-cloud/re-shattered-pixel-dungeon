@@ -69,6 +69,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.CityLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.DeadEndLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.HallsBossLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.HallsLevel;
+import com.shatteredpixel.shatteredpixeldungeon.levels.HiddenLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.LastLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.MiningLevel;
@@ -79,6 +80,8 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.SewerBossLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.SewerLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.AmbitiousImpRoom;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.BlacksmithRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.SpecialRoom;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -119,6 +122,7 @@ public class Dungeon {
 		INT_STONE,
 		TRINKET_CATA,
 		LAB_ROOM, //actually a room, but logic is the same
+		HIDDEN_SEWERS, HIDDEN_PRISON, HIDDEN_CAVES, HIDDEN_CITY, HIDDEN_HALLS,
 
 		//Health potion sources
 		//enemies
@@ -188,6 +192,10 @@ public class Dungeon {
 		}
 
 	}
+	private static final LimitedDrops[] HIDDEN_ENTRANCES = {
+			LimitedDrops.HIDDEN_SEWERS, LimitedDrops.HIDDEN_PRISON, LimitedDrops.HIDDEN_CAVES,
+			LimitedDrops.HIDDEN_CITY, LimitedDrops.HIDDEN_HALLS
+	};
 
 	public static int challenges;
 	public static float mobsToChampion;
@@ -424,6 +432,8 @@ public class Dungeon {
 				default:
 					level = new DeadEndLevel();
 			}
+		} else if (branch == 2 && depth >= 1 && depth <= 24 && depth % 5 != 0) {
+			level = new HiddenLevel();
 		} else {
 			level = new DeadEndLevel();
 		}
@@ -451,6 +461,30 @@ public class Dungeon {
 		
 		level.create();
 		TestStart.applyToLevel(level);
+		if (branch == 0 && level instanceof RegularLevel && depth >= 1 && depth <= 24
+				&& depth % 5 != 0) {
+			int region = (depth - 1) / 5;
+			int first = region * 5 + 1;
+			Random.pushGenerator(seedForDepth(first, 2));
+			int target = TestStart.ENABLED ? first
+					: region == 0 ? 2 + Random.Int(2) : first + Random.Int(3);
+			Random.popGenerator();
+			if (depth >= target && (HIDDEN_ENTRANCES[region].count == 0
+					|| HIDDEN_ENTRANCES[region].count == depth)) {
+				RegularLevel regular = (RegularLevel) level;
+				boolean questFloor = regular.room(BlacksmithRoom.class) != null
+						|| regular.room(AmbitiousImpRoom.class) != null;
+				for (Mob mob : level.mobs) {
+					if (mob instanceof Ghost || mob instanceof Wandmaker
+							|| mob instanceof Blacksmith || mob instanceof Imp) questFloor = true;
+				}
+				if (!questFloor) {
+					Random.pushGenerator(seedForDepth(depth, 2));
+					if (regular.placeHiddenEntrance(TestStart.ENABLED)) HIDDEN_ENTRANCES[region].count = depth;
+					Random.popGenerator();
+				}
+			}
+		}
 		
 		if (branch == 0) Statistics.qualifiedForNoKilling = !bossLevel();
 		Statistics.qualifiedForBossChallengeBadge = false;

@@ -729,6 +729,45 @@ public abstract class RegularLevel extends Level {
 		return null;
 	}
 
+	public boolean placeHiddenEntrance(boolean fixedInEntranceRoom) {
+		ArrayList<Integer> preferred = new ArrayList<>();
+		ArrayList<Integer> fallback = new ArrayList<>();
+		ArrayList<Integer> convertible = new ArrayList<>();
+		ArrayList<Integer> entranceCandidates = new ArrayList<>();
+		ArrayList<Integer> entranceConvertible = new ArrayList<>();
+		for (int cell = 0; cell < length(); cell++) {
+			Room room = room(cell);
+			if (!(room instanceof StandardRoom) || room instanceof ShopRoom
+					|| !room.canPlaceCharacter(cellToPoint(cell), this)
+					|| !passable[cell] || solid[cell] || getTransition(cell) != null
+					|| heaps.get(cell) != null || traps.get(cell) != null
+					|| plants.get(cell) != null || findMob(cell) != null) continue;
+			int terrain = map[cell];
+			if (terrain == Terrain.EMPTY || terrain == Terrain.EMPTY_DECO || terrain == Terrain.GRASS) {
+				if (room == roomEntrance) {
+					fallback.add(cell);
+					entranceCandidates.add(cell);
+				} else if (room == roomExit) fallback.add(cell);
+				else preferred.add(cell);
+			} else if (terrain == Terrain.EMPTY_SP) {
+				convertible.add(cell);
+				if (room == roomEntrance) entranceConvertible.add(cell);
+			}
+		}
+		ArrayList<Integer> candidates = fixedInEntranceRoom
+				? (!entranceCandidates.isEmpty() ? entranceCandidates : entranceConvertible)
+				: (!preferred.isEmpty() ? preferred : !fallback.isEmpty() ? fallback : convertible);
+		if (candidates.isEmpty()) return false;
+		int cell = candidates.get(fixedInEntranceRoom ? 0 : Random.Int(candidates.size()));
+		if (map[cell] == Terrain.EMPTY_SP) Level.set(cell, Terrain.EMPTY, this);
+		hiddenEntranceCell = cell;
+		hiddenEntranceGrass = map[cell] == Terrain.GRASS;
+		if (!hiddenEntranceGrass) {
+			interactions().setOverride(cell, HIDDEN_ENTRANCE_RULE);
+		}
+		return true;
+	}
+
 	protected int randomDropCell(){
 		return randomDropCell(StandardRoom.class);
 	}

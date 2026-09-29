@@ -102,7 +102,7 @@ public class SewerLevel extends RegularLevel {
 	}
 	
 	@Override
-	protected Painter painter() {
+	public Painter painter() {
 		return new SewerPainter()
 				.setWater(feeling == Feeling.WATER ? 0.85f : 0.30f, 5)
 				.setGrass(feeling == Feeling.GRASS ? 0.80f : 0.20f, 4)
@@ -184,37 +184,6 @@ public class SewerLevel extends RegularLevel {
 		super.addVisuals();
 		addSewerVisuals(this, visuals);
 		return visuals;
-	}
-
-	@Override
-	public void buildFlagMaps() {
-		super.buildFlagMaps();
-		for (int i=0; i < length(); i++) {
-			if (map[i] == Terrain.REGION_DECO || map[i] == Terrain.REGION_DECO_ALT
-					|| map[i] == Terrain.SEWER_BARREL_MARKED || map[i] == Terrain.SEWER_BARREL_MARKED_ALT){
-				flamable[i] = true;
-			}
-		}
-	}
-
-	@Override
-	public void destroy(int pos) {
-		//if we're burning  sewers barrels
-		int terr = map[pos];
-		if (terr == Terrain.REGION_DECO || terr == Terrain.SEWER_BARREL_MARKED){
-			set(pos, Terrain.WATER);
-			Splash.at(pos, 0xFF8A5A2E, 8);
-		} else if (terr == Terrain.REGION_DECO_ALT || terr == Terrain.SEWER_BARREL_MARKED_ALT){
-			set(pos, Terrain.EMPTY_SP);
-			Splash.at(pos, 0xFF8A5A2E, 8);
-		}
-		if (terr == Terrain.SEWER_BARREL_MARKED || terr == Terrain.SEWER_BARREL_MARKED_ALT) {
-			Heap heap = drop(Random.Int(4) == 0 ? Generator.random() : new Gold().random(), pos);
-			//砸桶是可选收获，掉出来的东西不计入探索
-			heap.autoExplored = true;
-			if (heap.sprite != null) heap.sprite.drop();
-		}
-		super.destroy(pos);
 	}
 
 	public static void addSewerVisuals(Level level, Group group ) {

@@ -123,7 +123,7 @@ public class SewerBossLevel extends SewerLevel {
 	}
 	
 	@Override
-	protected Painter painter() {
+	public Painter painter() {
 		return new SewerPainter()
 				.setWater(0.50f, 5)
 				.setGrass(0.20f, 4)

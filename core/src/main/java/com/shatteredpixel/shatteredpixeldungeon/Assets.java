@@ -166,6 +166,7 @@ public class Assets {
 		public static final String ITEM     = "sounds/item.mp3";
 		public static final String DEWDROP  = "sounds/dewdrop.mp3";
 		public static final String STEP     = "sounds/step.mp3";
+		public static final String STEP_HOLLOW = "sounds/step_hollow.mp3";
 		public static final String WATER    = "sounds/water.mp3";
 		public static final String GRASS    = "sounds/grass.mp3";
 		public static final String TRAMPLE  = "sounds/trample.mp3";
@@ -231,7 +232,7 @@ public class Assets {
 		public static final String[] all = new String[]{
 				CLICK, BADGE, GOLD,
 
-				OPEN, UNLOCK, ITEM, DEWDROP, STEP, WATER, GRASS, TRAMPLE, STURDY,
+				OPEN, UNLOCK, ITEM, DEWDROP, STEP, STEP_HOLLOW, WATER, GRASS, TRAMPLE, STURDY,
 
 				HIT, MISS, HIT_SLASH, HIT_STAB, HIT_CRUSH, HIT_MAGIC, HIT_STRONG, HIT_PARRY,
 				HIT_ARROW, ATK_SPIRITBOW, ATK_CROSSBOW, HEALTH_WARN, HEALTH_CRITICAL,

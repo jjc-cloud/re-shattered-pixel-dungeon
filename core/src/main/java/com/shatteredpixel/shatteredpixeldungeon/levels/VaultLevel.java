@@ -187,7 +187,7 @@ public class VaultLevel extends CityLevel {
 	}
 
 	@Override
-	protected Painter painter() {
+	public Painter painter() {
 		return new CityPainter(){
 			public float hiddenDoorChance( Level l ){
 				return 0; //no hidden doors in the vault

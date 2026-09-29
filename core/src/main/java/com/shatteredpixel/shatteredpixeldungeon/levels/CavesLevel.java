@@ -114,7 +114,7 @@ public class CavesLevel extends RegularLevel {
 	}
 	
 	@Override
-	protected Painter painter() {
+	public Painter painter() {
 		return new CavesPainter()
 				.setWater(feeling == Feeling.WATER ? 0.85f : 0.30f, 6)
 				.setGrass(feeling == Feeling.GRASS ? 0.65f : 0.15f, 3)
@@ -123,7 +123,7 @@ public class CavesLevel extends RegularLevel {
 	
 	@Override
 	public boolean activateTransition(Hero hero, LevelTransition transition) {
-		if (transition.type == LevelTransition.Type.BRANCH_EXIT
+		if (transition.type == LevelTransition.Type.BRANCH_EXIT && transition.destBranch == 1
 				&& (!Blacksmith.Quest.given() || Blacksmith.Quest.completed() || !Blacksmith.Quest.started())) {
 
 			Blacksmith smith = null;
