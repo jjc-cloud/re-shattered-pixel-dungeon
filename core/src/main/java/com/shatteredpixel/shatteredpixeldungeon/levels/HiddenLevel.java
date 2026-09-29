@@ -11,7 +11,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
-import com.shatteredpixel.shatteredpixeldungeon.mechanics.ShadowCaster;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.Carpet;
 import com.watabou.noosa.Group;
@@ -335,23 +334,6 @@ public class HiddenLevel extends Level {
 		int count = 0;
 		for (int cell = 0; cell < length(); cell++) {
 			if (staticEnvironmentalLightRadius(cell) >= 0) lightSources[count++] = cell;
-		}
-		if (count == 0) return;
-		//光源自身在英雄视线内时强制照亮它周围九格：环境光的逐格视线判定会在
-		//拐角/墙垛处漏掉紧贴光源的格子（阴影投射的离散化死角）。
-		//看不见光源（被墙隔开）时依然不会隔墙亮起。
-		boolean[] heroLos = new boolean[length()];
-		ShadowCaster.castShadow(ch.pos % width(), ch.pos / width(), width(), heroLos, losBlocking,
-				(int) Math.ceil(Math.hypot(width(), height())));
-		for (int i = 0; i < count; i++) {
-			int source = lightSources[i];
-			if (!heroLos[source]) continue;
-			int sx = source % width(), sy = source / width();
-			for (int y = Math.max(0, sy - 1); y <= Math.min(height() - 1, sy + 1); y++) {
-				for (int x = Math.max(0, sx - 1); x <= Math.min(width() - 1, sx + 1); x++) {
-					fieldOfView[x + y * width()] = true;
-				}
-			}
 		}
 		for (int cell = 0; cell < length(); cell++) {
 			if (distance(ch.pos, cell) <= 1) continue;

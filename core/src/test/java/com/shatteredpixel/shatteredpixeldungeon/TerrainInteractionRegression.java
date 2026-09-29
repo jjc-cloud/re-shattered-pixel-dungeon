@@ -549,12 +549,8 @@ public class TerrainInteractionRegression {
 			}
 			for (int pedestal = 0; pedestal < hidden.length(); pedestal++) {
 				if (hidden.map[pedestal] != Terrain.PEDESTAL) continue;
-				for (int y = -1; y <= 1; y++) {
-					for (int x = -1; x <= 1; x++) {
-						check(hidden.heroFOV[pedestal + x + y * hidden.width()],
-								"基座周围九格强制照亮");
-					}
-				}
+				//基座只是普通环境光源（半径 1）：英雄有视线时点亮自身，更好发现而已
+				check(hidden.heroFOV[pedestal], "基座作为可见光源点亮自身");
 			}
 			for (int offset : PathFinder.NEIGHBOURS8) {
 				Level.set(Dungeon.hero.pos + offset, Terrain.WALL, hidden);
