@@ -27,10 +27,8 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Stylus;
 import com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
-import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfIdentify;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
 import com.shatteredpixel.shatteredpixeldungeon.items.stones.StoneOfAugmentation;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WornShortsword;
@@ -147,12 +145,12 @@ public class WndShopOrder extends Window {
 		java.util.Set<?> availableClasses = null;
 		boolean prepareEquipment = false;
 		switch (category) {
-			case 0: //药剂：直接使用现有的已鉴定类型集合
-				classes = Generator.Category.POTION.classes;
+			case 0: //药剂：从类别里随机取六种（同一间商店内固定），再按已鉴定过滤
+				classes = ShopOrder.potionChoices();
 				availableClasses = Potion.getKnown();
 				break;
-			case 1: //卷轴：直接使用现有的已鉴定类型集合
-				classes = Generator.Category.SCROLL.classes;
+			case 1: //卷轴：同上，随机流与药剂分开
+				classes = ShopOrder.scrollChoices();
 				availableClasses = Scroll.getKnown();
 				break;
 			case 2: //投掷武器：展示下一间商店售卖阶数的全部种类
@@ -163,19 +161,16 @@ public class WndShopOrder extends Window {
 				classes = ShopOrder.weaponChoices((Dungeon.depth + 5) / 5);
 				prepareEquipment = true;
 				break;
-			case 4: //杂项
+			case 4: //杂项：炸弹有 50% 概率是一对（同样按层种子确定）
 				result.add(new Stylus());
 				result.add(new Honeypot());
 				result.add(new StoneOfAugmentation());
-				result.add(new Bomb());
+				result.add(ShopOrder.bombIsPair() ? new Bomb.DoubleBomb() : new Bomb());
 				break;
 		}
 		if (classes != null) {
 			for (Class<?> cls : classes) {
 				if (availableClasses != null && !availableClasses.contains(cls)) continue;
-				//力量药水与升级卷轴是每章保底发放的成长资源：它们挂在 Generator 类别数组的第 0 位，
-				//但 defaultProbs 为 0，从不作为随机掉落出现，只能靠探索获得，因此不列入订购。
-				if (cls == PotionOfStrength.class || cls == ScrollOfUpgrade.class) continue;
 				Item item = Reflection.newInstance((Class<Item>) cls);
 				if (prepareEquipment) {
 					//与商店货架上的武器保持同等待遇
