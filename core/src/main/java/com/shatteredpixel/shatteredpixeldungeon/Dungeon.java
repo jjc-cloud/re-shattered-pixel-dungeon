@@ -466,8 +466,8 @@ public class Dungeon {
 			int region = (depth - 1) / 5;
 			int first = region * 5 + 1;
 			Random.pushGenerator(seedForDepth(first, 2));
-			int target = TestStart.ENABLED ? first
-					: region == 0 ? 2 + Random.Int(2) : first + Random.Int(3);
+			//隐藏入口目标层：区域 0 抽第 2/3 层，其余区域抽区域内第 1~3 层
+			int target = region == 0 ? 2 + Random.Int(2) : first + Random.Int(3);
 			Random.popGenerator();
 			if (depth >= target && (HIDDEN_ENTRANCES[region].count == 0
 					|| HIDDEN_ENTRANCES[region].count == depth)) {
@@ -480,7 +480,8 @@ public class Dungeon {
 				}
 				if (!questFloor) {
 					Random.pushGenerator(seedForDepth(depth, 2));
-					if (regular.placeHiddenEntrance(TestStart.ENABLED)) HIDDEN_ENTRANCES[region].count = depth;
+					//false = 不固定在入口房，全层随机选合法格（传 true 则固定入口房，测试用）
+					if (regular.placeHiddenEntrance(false)) HIDDEN_ENTRANCES[region].count = depth;
 					Random.popGenerator();
 				}
 			}
