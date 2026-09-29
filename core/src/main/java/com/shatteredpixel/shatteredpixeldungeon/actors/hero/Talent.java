@@ -686,6 +686,7 @@ public enum Talent {
 				//0.67 weapon charge at +1, 1 at +2
 				Buff.affect( hero, MeleeWeapon.Charger.class).gainCharge(
 						hero.pointsInTalent(STRENGTHENING_MEAL) == 1 ? 0.67f : 1f);
+				ScrollOfRecharging.charge( hero );
 			} else {
 				//for other classes this keeps the lvl/3 / lvl/2 bonus dmg that focused meal used to give them
 				Buff.affect( hero, PhysicalEmpower.class).set(Math.round(hero.lvl / (4f - hero.pointsInTalent(STRENGTHENING_MEAL))), 1);
