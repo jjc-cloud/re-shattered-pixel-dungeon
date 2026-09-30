@@ -198,6 +198,7 @@ import com.watabou.utils.Point;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 
@@ -219,6 +220,9 @@ public class Hero extends Char {
 	
 	public HeroClass heroClass = HeroClass.ROGUE;
 	public HeroSubClass subClass = HeroSubClass.NONE;
+	public boolean randomMode = false;
+	public HeroSubClass[] randomSubclassChoices;
+	public ArmorAbility[] randomArmorChoices;
 
 	public boolean hasWeaponSlots() {
 		return subClass != HeroSubClass.MONK;
@@ -330,6 +334,9 @@ public class Hero extends Char {
 	private static final String CLASS       = "class";
 	private static final String SUBCLASS    = "subClass";
 	private static final String ABILITY     = "armorAbility";
+	private static final String RANDOM_MODE = "random_mode";
+	private static final String RANDOM_SUBCLASSES = "random_subclasses";
+	private static final String RANDOM_ABILITIES = "random_abilities";
 
 	private static final String ATTACK		= "attackSkill";
 	private static final String DEFENSE		= "defenseSkill";
@@ -346,6 +353,13 @@ public class Hero extends Char {
 		bundle.put( CLASS, heroClass );
 		bundle.put( SUBCLASS, subClass );
 		bundle.put( ABILITY, armorAbility );
+		bundle.put( RANDOM_MODE, randomMode );
+		if (randomSubclassChoices != null) {
+			String[] choices = new String[randomSubclassChoices.length];
+			for (int i = 0; i < choices.length; i++) choices[i] = randomSubclassChoices[i].name();
+			bundle.put(RANDOM_SUBCLASSES, choices);
+		}
+		if (randomArmorChoices != null) bundle.put(RANDOM_ABILITIES, Arrays.asList(randomArmorChoices));
 		Talent.storeTalentsInBundle( bundle, this );
 		
 		bundle.put( ATTACK, attackSkill );
@@ -374,6 +388,15 @@ public class Hero extends Char {
 		heroClass = bundle.getEnum( CLASS, HeroClass.class );
 		subClass = bundle.getEnum( SUBCLASS, HeroSubClass.class );
 		armorAbility = (ArmorAbility)bundle.get( ABILITY );
+		randomMode = bundle.getBoolean(RANDOM_MODE);
+		if (bundle.contains(RANDOM_SUBCLASSES)) {
+			String[] choices = bundle.getStringArray(RANDOM_SUBCLASSES);
+			randomSubclassChoices = new HeroSubClass[choices.length];
+			for (int i = 0; i < choices.length; i++) randomSubclassChoices[i] = HeroSubClass.valueOf(choices[i]);
+		}
+		if (bundle.contains(RANDOM_ABILITIES)) {
+			randomArmorChoices = bundle.getCollection(RANDOM_ABILITIES).toArray(new ArmorAbility[0]);
+		}
 		Talent.restoreTalentsFromBundle( bundle, this );
 		
 		attackSkill = bundle.getInt( ATTACK );

@@ -1388,6 +1388,31 @@ public enum Talent {
 
 	public static void initClassTalents( Hero hero ){
 		initClassTalents( hero.heroClass, hero.talents, hero.metamorphedTalents );
+		if (hero.randomMode) {
+			//分阶等概率抽取，公共天赋跨阶不重复。
+			HashSet<Talent> selected = new HashSet<>();
+			for (int i = 0; i < 2; i++) {
+				HashSet<Talent> pool = new HashSet<>();
+				for (HeroClass cls : HeroClass.values()) {
+					ArrayList<LinkedHashMap<Talent, Integer>> classTalents = new ArrayList<>();
+					initClassTalents(cls, classTalents);
+					pool.addAll(classTalents.get(i).keySet());
+				}
+				Collections.addAll(pool, COMMON_METAMORPH_TALENTS);
+				Collections.addAll(pool, RARE_METAMORPH_TALENTS);
+				pool.removeAll(selected);
+				ArrayList<Talent> shuffled = new ArrayList<>(pool);
+				//使用枚举顺序固定候选池，保持相同种子的抽取结果一致。
+				Collections.sort(shuffled);
+				Random.shuffle(shuffled);
+				hero.talents.get(i).clear();
+				for (int j = 0; j < 4+i; j++) {
+					Talent talent = shuffled.get(j);
+					hero.talents.get(i).put(talent, 0);
+					selected.add(talent);
+				}
+			}
+		}
 	}
 
 	public static void initClassTalents( HeroClass cls, ArrayList<LinkedHashMap<Talent, Integer>> talents){
@@ -1583,6 +1608,12 @@ public enum Talent {
 				}
 			}
 			bundle.put(TALENT_TIER+(i+1), tierBundle);
+			if (hero.randomMode && i < 2) {
+				String[] order = new String[tier.size()];
+				int next = 0;
+				for (Talent talent : tier.keySet()) order[next++] = talent.name();
+				bundle.put(TALENT_TIER+(i+1)+"_order", order);
+			}
 		}
 
 		Bundle replacementsBundle = new Bundle();
@@ -1619,12 +1650,19 @@ public enum Talent {
 			}
 		}
 
-		if (hero.heroClass != null)     initClassTalents(hero);
+		//读档只恢复已经抽出的天赋，不重新抽取。
+		if (hero.heroClass != null)     initClassTalents(hero.heroClass, hero.talents, hero.metamorphedTalents);
 		if (hero.subClass != null)      initSubclassTalents(hero);
 		if (hero.armorAbility != null)  initArmorTalents(hero);
 
 		for (int i = 0; i < MAX_TALENT_TIERS; i++){
 			LinkedHashMap<Talent, Integer> tier = hero.talents.get(i);
+			if (hero.randomMode && i < 2) {
+				tier.clear();
+				for (String name : bundle.getStringArray(TALENT_TIER+(i+1)+"_order")) {
+					tier.put(Talent.valueOf(name), 0);
+				}
+			}
 			Bundle tierBundle = bundle.contains(TALENT_TIER+(i+1)) ? bundle.getBundle(TALENT_TIER+(i+1)) : null;
 
 			if (tierBundle != null){

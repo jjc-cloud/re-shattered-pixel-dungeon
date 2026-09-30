@@ -84,6 +84,10 @@ public class TalentsPane extends ScrollPane {
 		}
 
 		tiersAvailable = Math.min(tiersAvailable, talents.size());
+		if (Dungeon.hero != null && Dungeon.hero.randomMode && Dungeon.hero.lvl < 6
+				&& (mode != TalentButton.Mode.INFO || talents == Dungeon.hero.talents)) {
+			tiersAvailable = Math.min(tiersAvailable, 1);
+		}
 
 		for (int i = 0; i < Math.min(tiersAvailable, talents.size()); i++){
 			if (talents.get(i).isEmpty()) continue;

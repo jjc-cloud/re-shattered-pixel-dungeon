@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Berserk;
@@ -76,7 +77,13 @@ public class TengusMask extends Item {
 		}
 	}
 
-	protected HeroSubClass[] subclassChoices(Hero hero) {
+	public HeroSubClass[] subclassChoices(Hero hero) {
+		if (hero.randomMode) {
+			if (hero.randomSubclassChoices == null) {
+				hero.randomSubclassChoices = new ExperimentalTengusMask().subclassChoices(hero);
+			}
+			return hero.randomSubclassChoices;
+		}
 		return hero.heroClass.subClasses();
 	}
 	
@@ -105,6 +112,13 @@ public class TengusMask extends Item {
 		curUser.busy();
 		
 		curUser.subClass = way;
+		if (curUser.randomMode && !(this instanceof ExperimentalTengusMask)) {
+			Item item = new ExperimentalTengusMask().requiredClassItem(way);
+			if (item != null && curUser.belongings.getItem(item.getClass()) == null) {
+				item.identify();
+				if (!item.collect(curUser.belongings.backpack)) Dungeon.level.drop(item, curUser.pos).sprite.drop();
+			}
+		}
 		curUser.removeMonkWeapons();
 		Talent.initSubclassTalents(curUser);
 		if (way == HeroSubClass.BERSERKER) {

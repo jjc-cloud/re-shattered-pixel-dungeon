@@ -64,6 +64,8 @@ public class ReShatteredChanges {
 
 		changes.addButton(new ChangeButton(ChangeIcons.V010_ESCAPE_PLAN, "公共天赋",
 				"\n-现在逃脱计划触发后会直接选中交换的单位。\n-现在启用多重存在会每100回合尝试在英雄周围生成一个镜像。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V33_RANDOMIZE,"随机模式",
+				"\n随机一切！"));	
 		changes.addButton(new ChangeButton(ChangeIcons.V061_BUGFIX,"bug修复",
 				"\n-修复了20层可破坏地形被破坏后仍使用原有的连续绘制导致的贴图错误问题。"));
 		changes = new ChangeInfo("增强", false, null);

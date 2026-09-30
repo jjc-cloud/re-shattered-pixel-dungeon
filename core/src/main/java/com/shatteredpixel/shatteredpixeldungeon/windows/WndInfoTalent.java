@@ -32,6 +32,9 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.TalentIcon;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 import com.watabou.utils.Callback;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+
 public class WndInfoTalent extends Window {
 
 	private static final float GAP	= 2;
@@ -57,6 +60,15 @@ public class WndInfoTalent extends Window {
 
 		boolean metaDesc = (buttonCallback != null && buttonCallback.metamorphDesc()) ||
 				(Dungeon.hero != null && Dungeon.hero.metamorphedTalents.containsValue(talent));
+		if (Dungeon.hero != null && Dungeon.hero.randomMode && !talent.isPublicMetamorphTalent()) {
+			ArrayList<LinkedHashMap<Talent, Integer>> classTalents = new ArrayList<>();
+			Talent.initClassTalents(Dungeon.hero.heroClass, classTalents);
+			boolean nativeTalent = false;
+			for (LinkedHashMap<Talent, Integer> tier : classTalents) {
+				if (tier.containsKey(talent)) nativeTalent = true;
+			}
+			metaDesc |= !nativeTalent;
+		}
 
 		RenderedTextBlock txtInfo = PixelScene.renderTextBlock(talent.desc(metaDesc), 6);
 		txtInfo.maxWidth(width);
