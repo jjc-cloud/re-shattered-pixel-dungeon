@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
@@ -108,7 +109,7 @@ public class ItemSprite extends MovieClip {
 		this.heap = heap;
 		view(heap);
 		renderShadow = true;
-		visible = heap.seen;
+		visible = heap.seen && (Dungeon.level == null || Dungeon.level.map[heap.pos] != Terrain.COLLAPSE_WALL);
 		place(heap.pos);
 	}
 	
@@ -334,7 +335,7 @@ public class ItemSprite extends MovieClip {
 	public synchronized void update() {
 		super.update();
 
-		visible = (heap == null || heap.seen);
+		visible = (heap == null || (heap.seen && (Dungeon.level == null || Dungeon.level.map[heap.pos] != Terrain.COLLAPSE_WALL)));
 
 		if (emitter != null){
 			emitter.visible = visible;

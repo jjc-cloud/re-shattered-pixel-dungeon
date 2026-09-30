@@ -558,10 +558,7 @@ public class Hero extends Char {
 		if (enemy != null && hasTalent(Talent.LIQUID_WILLPOWER)) {
 			Buff.affect(this, HoldFast.class).pos = pos;
 		}
-		int enemyHP = enemy == null ? 0 : enemy.HP;
 		boolean result = super.attack(enemy, dmgMulti, dmgBonus, accMulti);
-		Berserk berserk = buff(Berserk.class);
-		if (berserk != null && enemy != null) berserk.onAttackResolved(enemyHP, enemy.HP);
 		if (!(belongings.attackingWeapon() instanceof MissileWeapon)){
 			if (buff(Talent.PreciseAssaultTracker.class) != null){
 				buff(Talent.PreciseAssaultTracker.class).detach();
@@ -1150,6 +1147,7 @@ public class Hero extends Char {
 	
 	private boolean actBuy( HeroAction.Buy action ) {
 		int dst = action.dst;
+		if (Dungeon.level.map[dst] == Terrain.COLLAPSE_WALL) { ready(); return false; }
 		if (pos == dst) {
 
 			ready();
@@ -1208,6 +1206,7 @@ public class Hero extends Char {
 
 	private boolean actPickUp( HeroAction.PickUp action ) {
 		int dst = action.dst;
+		if (Dungeon.level.map[dst] == Terrain.COLLAPSE_WALL) { ready(); return false; }
 		if (pos == dst) {
 			
 			Heap heap = Dungeon.level.heaps.get( pos );
@@ -1289,6 +1288,7 @@ public class Hero extends Char {
 	
 	private boolean actOpenChest( HeroAction.OpenChest action ) {
 		int dst = action.dst;
+		if (Dungeon.level.map[dst] == Terrain.COLLAPSE_WALL) { ready(); return false; }
 		if (Dungeon.level.adjacent( pos, dst ) || pos == dst) {
 			path = null;
 			
@@ -1404,39 +1404,62 @@ public class Hero extends Char {
 		}
 	}
 
+	private boolean canInteractTerrain(int cell) {
+		KindOfWeapon weapon = belongings.weapon();
+		if (weapon == null) return false;
+		if (Dungeon.level.map[cell] != Terrain.COLLAPSE_WALL) return Dungeon.level.adjacent(pos, cell);
+		if (!(weapon instanceof MeleeWeapon)) return false;
+		// 复活后可能身处塌方墙内，允许打掉脚下墙体脱困。
+		return (cell == pos && Dungeon.level.map[cell] == Terrain.COLLAPSE_WALL)
+				|| Dungeon.level.adjacent(pos, cell) || weapon.canReach(this, cell);
+	}
+
 	private boolean actInteractTerrain(HeroAction.InteractTerrain action) {
 		if (Dungeon.level != action.level || !action.level.insideMap(action.dst)
 				|| action.level.map[action.dst] != action.terrain
 				|| action.level.terrainInteractions == null
 				|| !action.level.terrainInteractions.ruleAt(action.dst).allows(TerrainInteractions.Source.CLICK)
 				|| belongings.weapon() == null
-				|| Actor.findChar(action.dst) != null) {
+				|| (action.terrain == Terrain.COLLAPSE_WALL && !(belongings.weapon() instanceof MeleeWeapon))
+				|| (Actor.findChar(action.dst) != null && !(action.dst == pos && action.terrain == Terrain.COLLAPSE_WALL))) {
 			ready();
 			return false;
 		}
-		if (!action.level.adjacent(pos, action.dst)) {
+		if (!canInteractTerrain(action.dst)) {
 			if (getCloser(action.dst)) return true;
 			ready();
 			return false;
 		}
 		path = null;
+		busy();
 		sprite.attack(action.dst, new Callback() {
+			private boolean completed;
 			@Override public void call() {
-				if (curAction != action || !isAlive() || Dungeon.level != action.level) return;
+				if (completed) return;
+				completed = true;
+				// 动画已经提交，期间点击取消/更换动作不能丢掉这次结算或卡住 Actor。
+				sprite.idle();
+				if (curAction == action) curAction = null;
+				if (!isAlive() || Dungeon.level != action.level) { next(); return; }
 				if (action.level.map[action.dst] == action.terrain
-						&& action.level.adjacent(pos, action.dst) && Actor.findChar(action.dst) == null
+						&& canInteractTerrain(action.dst)
+						&& (Actor.findChar(action.dst) == null || (action.dst == pos && action.terrain == Terrain.COLLAPSE_WALL))
 						&& belongings.weapon() != null
 						&& action.level.terrainInteractions != null
 						&& action.level.terrainInteractions.interact(action.dst, TerrainInteractions.Source.CLICK)
 						== TerrainInteractions.Result.CHANGED) {
+					if (!isAlive()) { next(); return; }
 				if (Dungeon.depth >= 1 && (Dungeon.depth - 1) / 5 == 4
 						&& (action.terrain == Terrain.REGION_DECO || action.terrain == Terrain.REGION_DECO_ALT)) {
 					Splash.at(action.dst, 0xFF958472, 8);
 				}
 					Dungeon.observe();
 					spendAndNext(TICK);
+					return;
 				}
-				ready();
+				// 由下一次 Hero.act 恢复输入，避免敌人回合尚未结束时再次接受点击。
+				busy();
+				next();
 			}
 		});
 		return false;
@@ -2084,6 +2107,7 @@ public class Hero extends Char {
 		
 		Char ch = Actor.findChar( cell );
 		Heap heap = Dungeon.level.heaps.get( cell );
+		if (Dungeon.level.map[cell] == Terrain.COLLAPSE_WALL) heap = null;
 
 		if (Dungeon.level.map[cell] == Terrain.ALCHEMY && cell != pos) {
 			
@@ -2494,6 +2518,9 @@ public class Hero extends Char {
 		if (!flying && travelling) {
 			if (step == pos && pos != previousPos && pos == Dungeon.level.hiddenEntranceCell) {
 				Sample.INSTANCE.play( Assets.Sounds.STEP_HOLLOW, 1, Random.Float( 0.96f, 1.05f ) );
+				if (!SPDSettings.soundFx() || SPDSettings.SFXVol() == 0) {
+					GLog.i(Messages.get(this, "hidden_entrance_hint"));
+				}
 			} else if (Dungeon.level.water[pos]) {
 				Sample.INSTANCE.play( Assets.Sounds.WATER, 1, Random.Float( 0.8f, 1.25f ) );
 			} else if (Dungeon.level.map[pos] == Terrain.EMPTY_SP) {
@@ -2647,7 +2674,8 @@ public class Hero extends Char {
 		} else if (curAction instanceof HeroAction.OpenChest) {
 			
 			Heap heap = Dungeon.level.heaps.get( ((HeroAction.OpenChest)curAction).dst );
-			if (heap == null || !isAlive() || Dungeon.level.distance(pos, heap.pos) > 1) {
+			if (heap == null || !isAlive() || Dungeon.level.distance(pos, heap.pos) > 1
+					|| Dungeon.level.map[heap.pos] == Terrain.COLLAPSE_WALL) {
 				ready();
 				return;
 			}

@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.windows;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CaveCollapse;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.CustomTilemap;
@@ -84,6 +85,8 @@ public class WndInfoCell extends Window {
 	}
 
 	public static String cellName( int cell ){
+		if (Dungeon.level.caveCollapse != null && Dungeon.level.caveCollapse.contains(cell)
+				&& Dungeon.level.map[cell] != Terrain.COLLAPSE_WALL) return Messages.get(CaveCollapse.class, "ground_name");
 
 		CustomTilemap customTile = null;
 		int x = cell % Dungeon.level.width();
@@ -165,6 +168,10 @@ public class WndInfoCell extends Window {
 		} else {
 
 			desc += Dungeon.level.tileDesc(Dungeon.level.map[cell]);
+			if (Dungeon.level.caveCollapse != null && Dungeon.level.caveCollapse.contains(cell)
+					&& Dungeon.level.map[cell] != Terrain.COLLAPSE_WALL) {
+				desc += "\n\n" + Messages.get(CaveCollapse.class, "ground_desc");
+			}
 		}
 		titlebar.setRect(0, 0, WIDTH, 0);
 		add(titlebar);

@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
 import com.watabou.input.ControllerHandler;
 import com.watabou.input.GameAction;
@@ -110,7 +111,8 @@ public class CellSelector extends ScrollArea {
 
 			//then heaps
 			for (Heap heap : Dungeon.level.heaps.valueList()){
-				if (heap.sprite != null && heap.sprite.overlapsPoint( p.x, p.y)){
+				if (Dungeon.level.map[heap.pos] != Terrain.COLLAPSE_WALL
+						&& heap.sprite != null && heap.sprite.overlapsPoint( p.x, p.y)){
 					PointF c = DungeonTilemap.tileCenterToWorld(heap.pos);
 					if (Math.abs(p.x - c.x) <= 12 && Math.abs(p.y - c.y) <= 12) {
 						select(heap.pos, event.button);

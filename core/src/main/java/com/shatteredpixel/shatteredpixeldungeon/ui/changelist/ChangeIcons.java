@@ -369,8 +369,8 @@ public enum ChangeIcons {
 	V010_ESCAPE_PLAN,
 	
 	V020_BUCKET,
-	V020_STAIR
-
+	V020_STAIR,
+	V020_COLLAPSE_WALL
 	;
 
 

@@ -545,6 +545,8 @@ public abstract class Char extends Actor {
 			}
 
 			enemy.damage( effectiveDamage, this );
+			//按本次物理攻击的伤害积怒，护盾吸收与剩余生命值不影响积累。
+			if (berserk != null) berserk.onAttackResolved(effectiveDamage);
 
 			if (buff(FireImbue.class) != null)  buff(FireImbue.class).proc(enemy);
 			if (buff(FrostImbue.class) != null) buff(FrostImbue.class).proc(enemy);

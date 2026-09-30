@@ -207,9 +207,9 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 		energy = Math.min(energy, energyCap());
 
 		if (target instanceof Hero && ((Hero) target).hasTalent(Talent.COMBINED_ENERGY)) {
-			//refunds 6%/13%/20% of the energy spent
+			//返还本次内力消耗的10%/20%/30%。
 			int points = ((Hero) target).pointsInTalent(Talent.COMBINED_ENERGY);
-			energy = Math.min(energy + cost * (0.06f + 0.07f * (points - 1)), energyCap());
+			energy = Math.min(energy + cost * 0.1f * points, energyCap());
 		}
 
 		if (cooldown > 0 || energy < 1){

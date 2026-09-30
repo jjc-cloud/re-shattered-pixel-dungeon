@@ -65,6 +65,7 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Surprise;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Wound;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
+import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.MasterThievesArmband;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TalismanOfForesight;
@@ -1102,7 +1103,10 @@ public abstract class Mob extends Char {
 	@SuppressWarnings("unchecked")
 	public Item createLoot() {
 		Item item;
-		if (loot instanceof Generator.Category) {
+		//怪物金币保留原数量，场景随机金币的减半不影响战斗掉落。
+		if (loot == Gold.class || loot == Generator.Category.GOLD) {
+			item = new Gold(Random.IntRange(30 + Dungeon.depth * 10, 60 + Dungeon.depth * 20));
+		} else if (loot instanceof Generator.Category) {
 
 			item = Generator.randomUsingDefaults( (Generator.Category)loot );
 

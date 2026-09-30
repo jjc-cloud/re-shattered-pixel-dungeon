@@ -210,7 +210,8 @@ public class RingOfWealth extends Ring {
 	private static Item genLowValueConsumable(){
 		switch (Random.Int(4)){
 			case 0: default:
-				Item i = new Gold().random();
+				//财富之戒与幸运附魔共用此掉落池，使用减半调整前的金币基数。
+				Item i = new Gold(Random.IntRange(30 + Dungeon.depth * 10, 60 + Dungeon.depth * 20));
 				return i.quantity(i.quantity()/2);
 			case 1:
 				return Generator.randomUsingDefaults(Generator.Category.STONE);

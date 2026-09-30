@@ -64,11 +64,7 @@ public class WandOfDisintegration extends DamageWand {
 	
 	@Override
 	public int targetingPos(Hero user, int dst) {
-		if (!cursed || !cursedKnown) {
-			return dst;
-		} else {
-			return super.targetingPos(user, dst);
-		}
+		return super.targetingPos(user, dst);
 	}
 
 	@Override
@@ -130,7 +126,7 @@ public class WandOfDisintegration extends DamageWand {
 		//no direct effect, see magesStaff.reachfactor
 	}
 
-	private int distance() {
+	int distance() {
 		return buffedLvl()*2 + 6;
 	}
 

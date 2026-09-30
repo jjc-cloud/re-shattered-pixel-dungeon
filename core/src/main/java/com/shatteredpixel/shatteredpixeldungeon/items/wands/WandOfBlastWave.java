@@ -54,6 +54,8 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.PointF;
 import com.watabou.utils.Random;
 
+import java.util.ArrayList;
+
 public class WandOfBlastWave extends DamageWand {
 
 	{
@@ -75,12 +77,18 @@ public class WandOfBlastWave extends DamageWand {
 		Sample.INSTANCE.play( Assets.Sounds.BLAST );
 		BlastWave.blast(bolt.collisionPos);
 		boolean terrainAffected = false;
+		ArrayList<Integer> affectedCells = new ArrayList<>();
+		ArrayList<Integer> wallCells = new ArrayList<>();
 		for (int offset : PathFinder.NEIGHBOURS9) {
 			int cell = bolt.collisionPos + offset;
 			if (Dungeon.level.insideMap(cell)) {
-				terrainAffected |= Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.SHOCKWAVE);
+				if (Dungeon.level.map[cell] == Terrain.COLLAPSE_WALL) wallCells.add(cell);
+				else affectedCells.add(cell);
 			}
 		}
+		// 固定冲击前的墙面；最后支撑墙触发坍塌后，同次冲击不会再清理新落下的岩壁。
+		for (int cell : affectedCells) terrainAffected |= Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.SHOCKWAVE);
+		for (int cell : wallCells) terrainAffected |= Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.SHOCKWAVE);
 		if (terrainAffected) Dungeon.observe();
 
 		//presses all tiles in the AOE first, with the exception of tengu dart traps

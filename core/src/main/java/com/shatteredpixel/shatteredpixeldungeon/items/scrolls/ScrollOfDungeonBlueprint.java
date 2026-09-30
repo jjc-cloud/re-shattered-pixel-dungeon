@@ -30,7 +30,7 @@ public class ScrollOfDungeonBlueprint extends ScrollOfMagicMapping {
 
 	@Override
 	protected void logLayout() {
-		GLog.p( Messages.get(this, "layout") );
+		GLog.n( Messages.get(this, "layout") );
 	}
 
 	@Override

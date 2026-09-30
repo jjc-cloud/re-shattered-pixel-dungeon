@@ -59,7 +59,7 @@ public class TestStart {
 	/**
 	 * Starting depth when test start is enabled.
 	 */
-	public static final int START_DEPTH = 6;
+	public static final int START_DEPTH = 11;
 
 	/**
 	 * Starting hero level when test start is enabled.

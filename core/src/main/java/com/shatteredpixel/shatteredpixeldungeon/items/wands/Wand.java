@@ -60,6 +60,9 @@ import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ShardOfOblivion;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.WondrousResin;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.CellSelector;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -132,14 +135,48 @@ public abstract class Wand extends Item implements ChargeItem {
 
 	@Override
 	public int targetingPos(Hero user, int dst) {
-		if (cursed && cursedKnown){
-			return new Ballistica(user.pos, dst, Ballistica.MAGIC_BOLT).collisionPos;
-		} else {
-			return new Ballistica(user.pos, dst, collisionProperties).collisionPos;
+		Ballistica bolt = new Ballistica(user.pos, dst, cursed && !cursedKnown ? collisionProperties : collisionProperties(dst));
+		if (!cursed && !(this instanceof WandOfFireblast) && !(this instanceof WandOfCorrosion)) {
+			if (this instanceof WandOfDisintegration) {
+				int range = Math.min(bolt.dist, ((WandOfDisintegration)this).distance());
+				for (int cell : bolt.subPath(1, range)) {
+					if (Dungeon.level.map[cell] == Terrain.COLLAPSE_WALL) return cell;
+				}
+			} else {
+				// 使用实际弹道的停止规则，补充实体墙面接触，不依赖点击格的地形。
+				Ballistica contact = (bolt.collisionProperties & Ballistica.STOP_SOLID) != 0 ? bolt
+						: new Ballistica(user.pos, dst, bolt.collisionProperties | Ballistica.STOP_SOLID);
+				int surface = (contact.collisionProperties & Ballistica.STOP_TARGET) != 0
+						&& contact.collisionPos == dst && !Dungeon.level.solid[dst] ? contact.collisionPos
+						: TerrainPropagation.impactCell(Dungeon.level, contact, TerrainInteractions.Source.WAND);
+				if (this instanceof WandOfRegrowth && contact.path.indexOf(surface) > 2 + 2 * chargesPerCast()) {
+					return contact.path.get(Math.min(contact.dist, 2 + 2 * chargesPerCast()));
+				}
+				if (Dungeon.level.map[surface] == Terrain.COLLAPSE_WALL
+						|| (Dungeon.level.insideMap(dst) && Dungeon.level.map[dst] == Terrain.COLLAPSE_WALL)) return surface;
+			}
 		}
+		if (this instanceof WandOfDisintegration && (!cursed || !cursedKnown)) return dst;
+		return bolt.collisionPos;
 	}
 
 	public abstract void onZap(Ballistica attack);
+
+	/** 普通法杖接管主弹道的第一格塌方墙；冲击波交给自身范围结算。 */
+	public final boolean zapTerrain(Hero owner, int target) {
+		if (cursed || this instanceof WandOfFireblast || this instanceof WandOfCorrosion || this instanceof WandOfBlastWave
+				|| !Dungeon.level.insideMap(target)) return false;
+		int impact = targetingPos(owner, target);
+		if (!Dungeon.level.insideMap(impact) || Dungeon.level.map[impact] != Terrain.COLLAPSE_WALL) return false;
+		if (this instanceof WandOfDisintegration) {
+			// 解离仍可贯穿遮挡，只接管自身射程内最先接触到的塌方墙。
+			Ballistica beam = new Ballistica(owner.pos, target, collisionProperties(target));
+			int distance = beam.path.indexOf(impact);
+			if (distance < 1 || distance > ((WandOfDisintegration)this).distance()) return false;
+		}
+		if (Dungeon.level.affectTerrain(impact, TerrainInteractions.Source.WAND)) Dungeon.observe();
+		return true;
+	}
 
 	public abstract void onHit( MagesStaff staff, Char attacker, Char defender, int damage);
 
@@ -720,6 +757,14 @@ public abstract class Wand extends Item implements ChargeItem {
 
 				final Ballistica shot = new Ballistica( curUser.pos, target, curWand.collisionProperties(target));
 				int cell = shot.collisionPos;
+				if (!curWand.cursed) {
+					int surface = curWand.targetingPos(curUser, target);
+					if (Dungeon.level.insideMap(surface) && Dungeon.level.map[surface] == Terrain.COLLAPSE_WALL) {
+						cell = surface;
+						shot.collisionPos = surface;
+						shot.dist = shot.path.indexOf(surface);
+					}
+				}
 				
 				if (target == curUser.pos || cell == curUser.pos) {
 					if (target == curUser.pos && curUser.hasTalent(Talent.SHIELD_BATTERY)){
@@ -819,7 +864,7 @@ public abstract class Wand extends Item implements ChargeItem {
 					} else {
 						curWand.fx(shot, new Callback() {
 							public void call() {
-								curWand.onZap(shot);
+								if (!curWand.zapTerrain(curUser, target)) curWand.onZap(shot);
 								if (Random.Float() < WondrousResin.extraCurseEffectChance()){
 									WondrousResin.forcePositive = true;
 									CursedWand.cursedZap(curWand,

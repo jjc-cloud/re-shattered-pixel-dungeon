@@ -122,6 +122,7 @@ public class DungeonTileSheet {
 
 		//wall
 		chasmStitcheable.put( Terrain.WALL,         CHASM_WALL );
+		chasmStitcheable.put( Terrain.COLLAPSE_WALL, CHASM_WALL );
 		chasmStitcheable.put( Terrain.DOOR,         CHASM_WALL );
 		chasmStitcheable.put( Terrain.OPEN_DOOR,    CHASM_WALL );
 		chasmStitcheable.put( Terrain.LOCKED_DOOR,  CHASM_WALL );
@@ -253,7 +254,7 @@ public class DungeonTileSheet {
 
 	//These tiles count as wall for the purposes of wall stitching
 	private static int[] wallStitcheable = new int[]{
-			Terrain.WALL, Terrain.WALL_DECO, Terrain.SECRET_DOOR,
+			Terrain.WALL, Terrain.COLLAPSE_WALL, Terrain.WALL_DECO, Terrain.SECRET_DOOR,
 			Terrain.LOCKED_EXIT, Terrain.UNLOCKED_EXIT, Terrain.BOOKSHELF, NULL_TILE
 	};
 
@@ -269,7 +270,7 @@ public class DungeonTileSheet {
 		
 		if (below == -1 || wallStitcheable(below))                      return -1;
 		else if (doorTile(below))                                       result = RAISED_WALL_DOOR;
-		else if (tile == Terrain.WALL || tile == Terrain.SECRET_DOOR)   result = RAISED_WALL;
+		else if (tile == Terrain.WALL || tile == Terrain.COLLAPSE_WALL || tile == Terrain.SECRET_DOOR) result = RAISED_WALL;
 		else if (tile == Terrain.WALL_DECO)                             result = RAISED_WALL_DECO;
 		else if (tile == Terrain.BOOKSHELF)                             result = RAISED_WALL_BOOKSHELF;
 		else                                                            return -1;
@@ -468,6 +469,7 @@ public class DungeonTileSheet {
 	public static SparseArray<Integer> directFlatVisuals = new SparseArray<>();
 	static {
 		directFlatVisuals.put(Terrain.WALL,             FLAT_WALL);
+		directFlatVisuals.put(Terrain.COLLAPSE_WALL,    FLAT_WALL);
 		directFlatVisuals.put(Terrain.DOOR,             FLAT_DOOR);
 		directFlatVisuals.put(Terrain.OPEN_DOOR,        FLAT_DOOR_OPEN);
 		directFlatVisuals.put(Terrain.LOCKED_DOOR,      FLAT_DOOR_LOCKED);

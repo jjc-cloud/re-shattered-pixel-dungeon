@@ -57,7 +57,7 @@ public class DungeonWallsTilemap extends DungeonTilemap {
 				}
 
 			} else {
-				return DungeonTileSheet.stitchInternalWallTile(
+				int wall = DungeonTileSheet.stitchInternalWallTile(
 						tile,
 						(pos+1) % mapWidth != 0 ?                           map[pos + 1] : -1,
 						(pos+1) % mapWidth != 0 && pos + mapWidth < size ?  map[pos + 1 + mapWidth] : -1,
@@ -65,6 +65,7 @@ public class DungeonWallsTilemap extends DungeonTilemap {
 						pos % mapWidth != 0 && pos + mapWidth < size ?      map[pos - 1 + mapWidth] : -1,
 						pos % mapWidth != 0 ?                               map[pos - 1] : -1
 				);
+				return tile == Terrain.COLLAPSE_WALL ? wall + collapseVisualOffset : wall;
 			}
 
 		}
@@ -77,12 +78,13 @@ public class DungeonWallsTilemap extends DungeonTilemap {
 			return DungeonTileSheet.EXIT_UNDERHANG;
 		} else if (pos + mapWidth < size && DungeonTileSheet.wallStitcheable(map[pos+mapWidth])) {
 
-			return DungeonTileSheet.stitchWallOverhangTile(
+			int overhang = DungeonTileSheet.stitchWallOverhangTile(
 					tile,
 					(pos+1) % mapWidth != 0 ?   map[pos + 1 + mapWidth] : -1,
 												map[pos + mapWidth],
 					pos % mapWidth != 0 ?       map[pos - 1 + mapWidth] : -1
 			);
+			return map[pos + mapWidth] == Terrain.COLLAPSE_WALL ? overhang + collapseVisualOffset : overhang;
 
 		} else if (Dungeon.level.insideMap(pos) && map[pos+mapWidth] == Terrain.DOOR ) {
 			return DungeonTileSheet.DOOR_OVERHANG;

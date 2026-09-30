@@ -179,8 +179,8 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 		return damageMultiplier() * (shield != null && shield.isDeathShield() ? 1.5f : 1f);
 	}
 
-	public void onAttackResolved(int hpBefore, int hpAfter) {
-		gainRage(Math.max(0, hpBefore - hpAfter) * 0.005f);
+	public void onAttackResolved(int damage) {
+		gainRage(Math.max(0, damage) * 0.005f);
 	}
 
 	public float modifyIncomingDamage(int rawDamage, Object source) {
