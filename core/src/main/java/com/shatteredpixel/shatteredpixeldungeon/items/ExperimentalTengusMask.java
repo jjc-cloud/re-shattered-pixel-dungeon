@@ -29,11 +29,11 @@ public class ExperimentalTengusMask extends TengusMask {
 	private HeroSubClass[] choices;
 
 	@Override
-	protected HeroSubClass[] subclassChoices(Hero hero) {
+	public HeroSubClass[] subclassChoices(Hero hero) {
 		if (choices == null) {
 			ArrayList<HeroSubClass> pool = new ArrayList<>(Arrays.asList(HeroSubClass.values()));
 			pool.remove(HeroSubClass.NONE);
-			pool.removeAll(Arrays.asList(hero.heroClass.subClasses()));
+			if (!hero.randomMode) pool.removeAll(Arrays.asList(hero.heroClass.subClasses()));
 			Random.shuffle(pool);
 			choices = new HeroSubClass[]{pool.get(0), pool.get(1)};
 		}

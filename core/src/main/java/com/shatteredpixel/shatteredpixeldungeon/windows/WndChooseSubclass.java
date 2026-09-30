@@ -45,7 +45,7 @@ public class WndChooseSubclass extends Window {
 	private static final float GAP		= 2;
 	
 	public WndChooseSubclass(final TengusMask tome, final Hero hero ) {
-		this(tome, hero, hero.heroClass.subClasses());
+		this(tome, hero, tome.subclassChoices(hero));
 	}
 
 	public WndChooseSubclass(final TengusMask tome, final Hero hero, final HeroSubClass[] choices ) {
@@ -97,7 +97,7 @@ public class WndChooseSubclass extends Window {
 		add(random);
 
 		RenderedTextBlock message = PixelScene.renderTextBlock( 6 );
-		message.text( Messages.get(this, "message"), WIDTH );
+		message.text( Messages.get(this, hero.randomMode ? "random_message" : "message"), WIDTH );
 		message.setPos( titlebar.left(), titlebar.bottom() + GAP );
 		add( message );
 

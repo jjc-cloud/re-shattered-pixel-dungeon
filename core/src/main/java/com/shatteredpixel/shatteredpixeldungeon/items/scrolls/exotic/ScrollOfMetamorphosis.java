@@ -135,6 +135,11 @@ public class ScrollOfMetamorphosis extends ExoticScroll {
 
 			ArrayList<LinkedHashMap<Talent, Integer>> talents = new ArrayList<>();
 			Talent.initClassTalents(Dungeon.hero.heroClass, talents, Dungeon.hero.metamorphedTalents);
+			if (Dungeon.hero.randomMode) {
+				for (int i = 0; i < 2; i++) {
+					talents.set(i, new LinkedHashMap<>(Dungeon.hero.talents.get(i)));
+				}
+			}
 
 			for (LinkedHashMap<Talent, Integer> tier : talents){
 				for (Talent talent : tier.keySet()){
@@ -211,6 +216,12 @@ public class ScrollOfMetamorphosis extends ExoticScroll {
 
 			LinkedHashMap<Talent, Integer> options = new LinkedHashMap<>();
 			Set<Talent> curTalentsAtTier = Dungeon.hero.talents.get(tier-1).keySet();
+			HashSet<Talent> excludedTalents = new HashSet<>(curTalentsAtTier);
+			if (Dungeon.hero.randomMode) {
+				for (LinkedHashMap<Talent, Integer> heroTier : Dungeon.hero.talents) {
+					excludedTalents.addAll(heroTier.keySet());
+				}
+			}
 
 			for (HeroClass cls : HeroClass.values()){
 
@@ -224,7 +235,7 @@ public class ScrollOfMetamorphosis extends ExoticScroll {
 						replacingIsInSet = true;
 						break;
 					} else {
-						if (curTalentsAtTier.contains(talent)){
+						if (excludedTalents.contains(talent)){
 							clsTalentsAtTier.remove(talent);
 						}
 					}

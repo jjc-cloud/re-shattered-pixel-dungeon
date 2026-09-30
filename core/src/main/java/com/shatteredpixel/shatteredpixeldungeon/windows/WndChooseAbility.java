@@ -24,7 +24,6 @@ package com.shatteredpixel.shatteredpixeldungeon.windows;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.ArmorAbility;
 import com.shatteredpixel.shatteredpixeldungeon.items.KingsCrown;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
@@ -51,9 +50,7 @@ public class WndChooseAbility extends Window {
 	}
 
 	private static ArmorAbility[] defaultAbilities(Hero hero) {
-		ArmorAbility[] classAbilities = hero.heroClass.armorAbilities();
-		return hero.subClass == HeroSubClass.MONK
-				? new ArmorAbility[]{classAbilities[0], classAbilities[2]} : classAbilities;
+		return new KingsCrown().abilityChoices(hero);
 	}
 
 	public WndChooseAbility(final KingsCrown crown, final Armor armor, final Hero hero,
@@ -108,7 +105,7 @@ public class WndChooseAbility extends Window {
 
 		RenderedTextBlock body = PixelScene.renderTextBlock( 6 );
 		if (crown != null) {
-			body.text(Messages.get(this, "message"), WIDTH);
+			body.text(Messages.get(this, hero.randomMode ? "random_message" : "message"), WIDTH);
 		} else {
 			body.text(Messages.get(this, "message_no_crown"), WIDTH);
 		}

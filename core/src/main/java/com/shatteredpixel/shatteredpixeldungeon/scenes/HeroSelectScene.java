@@ -865,6 +865,11 @@ public class HeroSelectScene extends PixelScene {
 				chkHero.setRect(0, 0, 120, 16);
 				chkHero.checked(heroWasRandomized);
 				add(chkHero);
+				RenderedTextBlock randomDesc = PixelScene.renderTextBlock(6);
+				randomDesc.text(Messages.get(HeroSelectScene.class, "randomize_desc"), 120);
+				randomDesc.setPos(0, chkHero.bottom() + 2);
+				add(randomDesc);
+				float settingsTop = randomDesc.bottom() + 4;
 
 				chkChals = new CheckBox(Messages.get(HeroSelectScene.class, "randomize_chals")){
 					@Override
@@ -874,7 +879,7 @@ public class HeroSelectScene extends PixelScene {
 						chalWasRandomized = value;
 					}
 				};
-				chkChals.setRect(0, 20, 120, 16);
+				chkChals.setRect(0, settingsTop, 120, 16);
 				add(chkChals);
 
 				int max = Challenges.MAX_CHALS;
@@ -886,7 +891,7 @@ public class HeroSelectScene extends PixelScene {
 				};
 				optChals.enable(false);
 				optChals.setSelectedValue(Challenges.activeChallenges(SPDSettings.challenges()));
-				optChals.setRect(0, 38, 120, 22);
+				optChals.setRect(0, settingsTop + 18, 120, 22);
 				add(optChals);
 
 				chkChals.checked(chalWasRandomized);
@@ -898,7 +903,7 @@ public class HeroSelectScene extends PixelScene {
 						hide();
 					}
 				};
-				btnCancel.setRect(61, 64, 60, 16);
+				btnCancel.setRect(61, optChals.bottom() + 4, 60, 16);
 				add(btnCancel);
 
 				RedButton btnConfirm = new RedButton(Messages.get(HeroSelectScene.class, "randomize_confirm")){
@@ -935,7 +940,7 @@ public class HeroSelectScene extends PixelScene {
 						}
 					}
 				};
-				btnConfirm.setRect(0, 64, 60, 16);
+				btnConfirm.setRect(0, optChals.bottom() + 4, 60, 16);
 				add(btnConfirm);
 
 				resize(120, (int)btnConfirm.bottom());

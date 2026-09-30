@@ -78,7 +78,13 @@ public class KingsCrown extends Item {
 		}
 	}
 
-	protected ArmorAbility[] abilityChoices(Hero hero) {
+	public ArmorAbility[] abilityChoices(Hero hero) {
+		if (hero.randomMode) {
+			if (hero.randomArmorChoices == null) {
+				hero.randomArmorChoices = new ExperimentalKingsCrown().abilityChoices(hero);
+			}
+			return hero.randomArmorChoices;
+		}
 		ArmorAbility[] classAbilities = hero.heroClass.armorAbilities();
 		return hero.subClass == com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass.MONK
 				? new ArmorAbility[]{classAbilities[0], classAbilities[2]} : classAbilities;

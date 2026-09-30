@@ -12,9 +12,14 @@ package com.shatteredpixel.shatteredpixeldungeon.items;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.ArmorAbility;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.cleric.AscendedForm;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.cleric.PowerOfMany;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.cleric.Trinity;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.duelist.ElementalStrike;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.huntress.NaturesPower;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.mage.ElementalBlast;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HolyTome;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.watabou.utils.Bundle;
@@ -28,16 +33,25 @@ public class ExperimentalKingsCrown extends KingsCrown {
 	private ArmorAbility[] choices;
 
 	@Override
-	protected ArmorAbility[] abilityChoices(Hero hero) {
+	public ArmorAbility[] abilityChoices(Hero hero) {
 		if (choices == null) {
 			ArrayList<ArmorAbility> pool = new ArrayList<>();
 			for (HeroClass heroClass : HeroClass.values()) {
-				if (heroClass == hero.heroClass) continue;
+				if (!hero.randomMode && heroClass == hero.heroClass) continue;
 				for (ArmorAbility ability : heroClass.armorAbilities()) {
 					if (ability instanceof ElementalBlast
 							&& hero.belongings.getItem(MagesStaff.class) == null) continue;
 					if (ability instanceof Trinity
 							&& hero.belongings.getItem(HolyTome.class) == null) continue;
+					if (hero.randomMode) {
+						if ((ability instanceof AscendedForm || ability instanceof PowerOfMany)
+								&& hero.belongings.getItem(HolyTome.class) == null) continue;
+						if (ability instanceof NaturesPower
+								&& hero.belongings.getItem(SpiritBow.class) == null) continue;
+						if (ability instanceof ElementalBlast
+								&& hero.belongings.getItem(MagesStaff.class).wandClass() == null) continue;
+						if (ability instanceof ElementalStrike && !hero.hasWeaponSlots()) continue;
+					}
 					pool.add(ability);
 				}
 			}
