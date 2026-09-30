@@ -50,6 +50,16 @@ public class TerrainInteractionRegression {
 	private static final Rule METAL = Rule.LEGACY.on(Source.ELECTRIC, Response.CONDUCT);
 
 	public static void main(String[] args) throws Exception {
+		//地形回归不生成新手提示；使用内存配置，避免访问玩家设置或未生成的房间表。
+		com.watabou.utils.GameSettings.set((com.badlogic.gdx.Preferences) java.lang.reflect.Proxy.newProxyInstance(
+				com.badlogic.gdx.Preferences.class.getClassLoader(), new Class<?>[]{com.badlogic.gdx.Preferences.class},
+				(proxy, method, values) -> {
+					if (method.getName().startsWith("get") && values != null && values.length == 2) {
+						return SPDSettings.KEY_SUPER_SECRET_HINT.equals(values[0]) ? true : values[1];
+					}
+					if (method.getReturnType() == boolean.class) return false;
+					return null;
+				}));
 		Dungeon.hero = new Hero();
 		Dungeon.depth = 1;
 		configuration();
@@ -285,7 +295,7 @@ public class TerrainInteractionRegression {
 	}
 
 	/** 通往王座的两条直毯改成 Carpet 图层后，应该能被爆炸摧毁并露出余烬。 */
-	private static void cityBossCarpet() {
+	private static void cityBossCarpet() throws Exception {
 		TestCityBossLevel boss = new TestCityBossLevel();
 		Dungeon.level = boss;
 		Dungeon.depth = 20;
@@ -331,6 +341,33 @@ public class TerrainInteractionRegression {
 		new Bomb().explode(beside);
 		check(boss.map[target] == Terrain.EMBERS, "爆炸把直毯烧成余烬");
 		check(!targetCarpet.overrideTile(target, boss, Carpet.DESTROYED), "地毯记录为已破坏");
+
+		//使用真实的两张自定义图层，覆盖四格雕像的全部破坏组合，检查首次绘制与重复重绘。
+		com.badlogic.gdx.utils.GdxNativesLoader.load();
+		com.watabou.gltextures.TextureCache.create(Assets.Environment.CITY_BOSS, 128, 256);
+		java.lang.reflect.Field tileData = com.watabou.noosa.Tilemap.class.getDeclaredField("data");
+		tileData.setAccessible(true);
+		int[] statues = {CityBossLevel.throne - 4, CityBossLevel.throne - 3,
+				CityBossLevel.throne + 3, CityBossLevel.throne + 4};
+		for (int cell : statues) check(boss.map[cell] == Terrain.STATUE, "王座四格雕像仍在原位置");
+		for (int destroyed = 0; destroyed < 16; destroyed++) {
+			for (int j = 0; j < statues.length; j++) {
+				Level.set(statues[j], (destroyed & (1 << j)) == 0 ? Terrain.STATUE : Terrain.EMBERS, boss);
+			}
+			for (CustomTilemap layer : new CustomTilemap[]{new CityBossLevel.CustomGroundVisuals(),
+					new CityBossLevel.CustomTerrainVisuals()}) {
+				for (int redraw = 0; redraw < 2; redraw++) {
+					int[] data = (int[]) tileData.get(layer.create());
+					for (int j = 0; j < statues.length; j++) {
+						boolean remains = (destroyed & (1 << j)) == 0;
+						check(data[statues[j]] == (remains ? (8 + j) * 8 + 7 : -1),
+								"独立破坏后雕像贴图保留原朝向，已破坏格不再绘制");
+					}
+					check(data[statues[1] + 1] == -1 && data[statues[3] + 1] == -1,
+							"雕像重绘不会越过原范围覆盖邻格");
+				}
+			}
+		}
 	}
 
 	private static void clickAction() throws Exception {

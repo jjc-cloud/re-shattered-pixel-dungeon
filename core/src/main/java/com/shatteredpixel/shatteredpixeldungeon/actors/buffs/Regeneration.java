@@ -24,9 +24,11 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.SpiritForm;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.ChaliceOfBlood;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfEnergy;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMirrorImage;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ChaoticCenser;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.SaltCube;
 import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
@@ -41,12 +43,23 @@ public class Regeneration extends Buff {
 	}
 
 	private float partialRegen = 0f;
+	private float multipleExistenceTurns = 0f;
 
 	private static final float REGENERATION_DELAY = 10; //1HP every 10 turns
 	
 	@Override
 	public boolean act() {
 		if (target.isAlive()) {
+			//独立于生命恢复状态计时；周围无空位也算一次尝试，下一轮仍需等待100回合。
+			if (((Hero) target).hasTalent(Talent.MULTIPLE_EXISTENCE)) {
+				multipleExistenceTurns += TICK;
+				if (multipleExistenceTurns >= 100f) {
+					multipleExistenceTurns -= 100f;
+					ScrollOfMirrorImage.spawnImages((Hero) target, 1);
+				}
+			} else {
+				multipleExistenceTurns = 0f;
+			}
 
 			//if other trinkets ever get buffs like this should probably make the buff attaching
 			// behaviour more like wands/rings/artifacts
@@ -130,6 +143,7 @@ public class Regeneration extends Buff {
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
 		bundle.put(PARTIAL_REGEN, partialRegen);
+		bundle.put("multiple_existence_turns", multipleExistenceTurns);
 	}
 
 	@Override
@@ -137,5 +151,6 @@ public class Regeneration extends Buff {
 		super.restoreFromBundle(bundle);
 		// Merge the separate warrior progress from older saves into natural regeneration.
 		partialRegen = bundle.getFloat(PARTIAL_REGEN) + bundle.getFloat(WARRIOR_PARTIAL_REGEN);
+		multipleExistenceTurns = bundle.getFloat("multiple_existence_turns");
 	}
 }

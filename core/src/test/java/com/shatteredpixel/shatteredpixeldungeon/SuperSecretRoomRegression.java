@@ -20,6 +20,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ForceCube;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.levels.HiddenLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.RegularLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.SewerLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
@@ -77,6 +78,7 @@ public class SuperSecretRoomRegression {
 		Dungeon.branch = 0;
 		Random.pushGenerator(20260929L);
 		Generator.fullReset();
+		com.shatteredpixel.shatteredpixeldungeon.journal.Notes.reset();
 		regions();
 		floorIntegration();
 		rotationsAndRewards();
@@ -186,8 +188,8 @@ public class SuperSecretRoomRegression {
 			Heap heap = level.heaps.get(pedestal + offset);
 			check(heap != null && heap.items.size() == 1 && heap.peek() instanceof Gold, "周围八格各有一堆金币");
 			check(heap.autoExplored, "周围金币不计探索分");
-			check(heap.peek().quantity() >= 30 + Dungeon.depth * 10
-					&& heap.peek().quantity() <= 60 + Dungeon.depth * 20, "金币数量使用当前楼层范围");
+			check(heap.peek().quantity() >= 15 + Dungeon.depth * 5
+					&& heap.peek().quantity() <= 30 + Dungeon.depth * 10, "金币数量使用减半后的楼层范围");
 		}
 	}
 
@@ -262,9 +264,15 @@ public class SuperSecretRoomRegression {
 			int wall = level.pointToCell(door);
 			int outside = 2 * wall - level.pointToCell(room.pointInside(door, 1));
 			check(level.passable[outside] || level.avoid[outside], "入口直接接入可到达的外部通路");
-			// 只用该房间验证评分，避免普通房间的隐藏门影响结果。
-			// 注意 rooms() 返回拷贝，必须写进关卡真正的房间表。
-			level.addRoom(room);
+			//清除普通房间的门障碍，保留超级隐藏房的实墙与未见奖励，隔离可选解谜的评分影响。
+			for (Room r : placed) level.addRoom(r);
+			for (int cell = 0; cell < level.length(); cell++) {
+				if (level.map[cell] == Terrain.SECRET_DOOR || level.map[cell] == Terrain.LOCKED_DOOR
+						|| level.map[cell] == Terrain.BARRICADE) Level.set(cell, Terrain.DOOR, level);
+			}
+			check(level.levelExplorePercent(Dungeon.depth) == 1f, "未破超级隐藏房入口实墙、未见奖励仍为满探索分");
+			check(level.placeHiddenEntrance(false), "普通房间可放置隐藏楼层入口");
+			check(level.levelExplorePercent(Dungeon.depth) == 1f, "未揭露隐藏楼层入口不扣探索分");
 			if (sample < 2) {
 				Dungeon.level = level;
 				Dungeon.hero.pos = outside;
@@ -291,6 +299,31 @@ public class SuperSecretRoomRegression {
 				}
 				Dungeon.level = null;
 			}
+			Dungeon.level = level;
+			check(level.affectTerrain(wall, TerrainInteractions.Source.DISINTEGRATION), "评分验证中可破坏超级隐藏房入口墙");
+			check(level.levelExplorePercent(Dungeon.depth) == 1f, "破墙后未取奖励仍为满探索分");
+			int hiddenEntrance = level.hiddenEntranceCell;
+			if (level.hiddenEntranceGrass) Level.set(hiddenEntrance, Terrain.EMPTY, level);
+			else check(level.affectTerrain(hiddenEntrance, TerrainInteractions.Source.EXPLOSION), "评分验证中可揭露隐藏楼梯");
+			check(level.hiddenEntranceCell == -1 && level.map[hiddenEntrance] == Terrain.EXIT,
+					"隐藏入口解谜确实完成");
+			check(level.levelExplorePercent(Dungeon.depth) == 1f, "隐藏入口解谜前后探索分一致");
+			Dungeon.branch = 0;
+			Dungeon.updateLevelExplored();
+			check(Statistics.floorsExplored.get(Dungeon.depth) == 1f, "主线记录满探索分");
+			Dungeon.branch = 2;
+			Dungeon.level = new HiddenLevel();
+			Dungeon.updateLevelExplored();
+			check(Statistics.floorsExplored.get(Dungeon.depth) == 1f, "隐藏支线不覆盖同深度主线探索分");
+			Dungeon.branch = 0;
+			Dungeon.level = level;
+			Room ordinaryRoom = level.room(EmptyRoom.class);
+			int ordinaryCell = level.pointToCell(ordinaryRoom.center());
+			int originalTerrain = level.map[ordinaryCell];
+			Level.set(ordinaryCell, Terrain.BARRICADE, level);
+			check(level.levelExplorePercent(Dungeon.depth) == 0.5f, "普通房间的未解除障碍仍扣探索分");
+			Level.set(ordinaryCell, originalTerrain, level);
+			Dungeon.level = null;
 		}
 		for (int count : orientations) check(count > 0, "地图生成覆盖四向旋转");
 	}

@@ -568,17 +568,11 @@ public class CityBossLevel extends Level {
 
 					//throne statues
 					if (i < tileW*32){
-						//facing left
+						//固定地图的雕像可逐格破坏，按原位置选图，不再连画下一格。
 						if (i%tileW > 7) {
-							data[i] = 10 * 8 + 7;
-
-							i++;
-							data[i] = 11 * 8 + 7;
-
+							data[i] = (i%tileW == 10 ? 10 : 11) * 8 + 7;
 						} else {
-							data[i] = 8 * 8 + 7;
-							i++;
-							data[i] = 9 * 8 + 7;
+							data[i] = (i%tileW == 3 ? 8 : 9) * 8 + 7;
 						}
 					} else {
 
@@ -724,17 +718,11 @@ public class CityBossLevel extends Level {
 
 					//throne statues
 					if (i < tileW*32){
-						//facing left
+						//与地面图层一致：只绘制当前仍存在的雕像格。
 						if (i%tileW > 7) {
-							data[i] = 10 * 8 + 7;
-
-							i++;
-							data[i] = 11 * 8 + 7;
-
+							data[i] = (i%tileW == 10 ? 10 : 11) * 8 + 7;
 						} else {
-							data[i] = 8 * 8 + 7;
-							i++;
-							data[i] = 9 * 8 + 7;
+							data[i] = (i%tileW == 3 ? 8 : 9) * 8 + 7;
 						}
 					} else {
 
