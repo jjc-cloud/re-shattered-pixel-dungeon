@@ -15,7 +15,7 @@ import java.util.List;
 public final class TerrainInteractions {
 
 	/** 作用类别，不是物品类别。不同来源沿同一作用路径报告同一类别。 */
-	public enum Source { CLICK, EXPLOSION, DISINTEGRATION, ELECTRIC, FIRE, SHOCKWAVE }
+	public enum Source { CLICK, EXPLOSION, DISINTEGRATION, ELECTRIC, FIRE, SHOCKWAVE, MISSILE, WAND }
 
 	public enum Action { LEGACY, IGNORE, REPLACE, DESTROY, CONDUCT }
 
@@ -139,7 +139,10 @@ public final class TerrainInteractions {
 		} else if (response.action == Action.DESTROY) {
 			level.destroy(cell);
 		}
-		if (level.map[cell] == before) return Result.UNCHANGED;
+		// 最后一格支撑墙可能已经被坍塌补回，仍须按成功破坏结算本次动作。
+		if (level.map[cell] == before && !(response.action == Action.REPLACE && before != response.terrain)) {
+			return Result.UNCHANGED;
+		}
 		// 开墙后邻格可能由不可发现变为可发现；沿用矿洞的局部更新方式。
 		for (int offset : PathFinder.NEIGHBOURS9) {
 			int next = cell + offset;

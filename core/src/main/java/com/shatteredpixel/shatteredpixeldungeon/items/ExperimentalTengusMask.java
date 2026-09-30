@@ -43,26 +43,23 @@ public class ExperimentalTengusMask extends TengusMask {
 	@Override
 	public void choose(HeroSubClass way) {
 		super.choose(way);
-		grantRequiredClassItem(way);
-	}
-
-	private void grantRequiredClassItem(HeroSubClass way) {
 		Item item = requiredClassItem(way);
-		if (item != null && Dungeon.hero.belongings.getItem(item.getClass()) == null) {
+		if (item != null && curUser.belongings.getItem(item.getClass()) == null) {
 			item.identify();
-			if (!item.collect()) Dungeon.level.drop(item, Dungeon.hero.pos).sprite.drop();
+			if (!item.collect(curUser.belongings.backpack)) Dungeon.level.drop(item, curUser.pos).sprite.drop();
 		}
+		Item.updateQuickslot();
 	}
 
 	protected Item requiredClassItem(HeroSubClass way) {
 		switch (way) {
 			case BERSERKER: case GLADIATOR:
 				return new BrokenSeal();
-			case BATTLEMAGE:
+			case BATTLEMAGE: case WARLOCK:
 				return new MagesStaff(new WandOfMagicMissile());
 			case ASSASSIN: case FREERUNNER:
 				return new CloakOfShadows();
-			case SNIPER:
+			case SNIPER: case WARDEN:
 				return new SpiritBow();
 			case PRIEST: case PALADIN:
 				return new HolyTome();

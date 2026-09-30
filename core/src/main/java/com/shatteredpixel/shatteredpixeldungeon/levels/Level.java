@@ -179,6 +179,7 @@ public abstract class Level implements Bundlable {
 	public boolean[] openSpace;
 
 	public TerrainInteractions terrainInteractions;
+	public CaveCollapse caveCollapse;
 
 	/** 只在生成器或测试场景显式配置交互时创建。运行时查询应直接检查可空字段。 */
 	public TerrainInteractions interactions() {
@@ -459,6 +460,7 @@ public abstract class Level implements Bundlable {
 	
 	public void setSize(int w, int h){
 		terrainInteractions = null;
+		caveCollapse = null;
 		
 		width = w;
 		height = h;
@@ -617,6 +619,10 @@ public abstract class Level implements Bundlable {
 
 		buildFlagMaps();
 		cleanWalls();
+		if (bundle.contains("cave_collapse")) {
+			caveCollapse = new CaveCollapse(this);
+			caveCollapse.restoreFromBundle(bundle.getBundle("cave_collapse"));
+		}
 
 	}
 	
@@ -626,6 +632,11 @@ public abstract class Level implements Bundlable {
 		bundle.put( WIDTH, width );
 		bundle.put( HEIGHT, height );
 		bundle.put( MAP, map );
+		if (caveCollapse != null) {
+			Bundle regions = new Bundle();
+			caveCollapse.storeInBundle(regions);
+			bundle.put("cave_collapse", regions);
+		}
 		bundle.put( HIDDEN_ENTRANCE, hiddenEntranceCell );
 		bundle.put( HIDDEN_ENTRANCE_GRASS, hiddenEntranceGrass );
 		if (terrainInteractions != null) {
@@ -853,6 +864,15 @@ public abstract class Level implements Bundlable {
 		} else {
 			wallVisuals.clear();
 			wallVisuals.camera = null;
+		}
+		if (caveCollapse != null && Terrain.COLLAPSE_PARTICLE_INTERVAL > 0) {
+			for (int i = 0; i < length(); i++) {
+				if (caveCollapse.contains(i)) {
+					WindParticle.Wind wind = new WindParticle.Wind(i);
+					wind.pour(WindParticle.FACTORY, Terrain.COLLAPSE_PARTICLE_INTERVAL);
+					wallVisuals.add(wind);
+				}
+			}
 		}
 		return wallVisuals;
 	}
@@ -1152,6 +1172,7 @@ public abstract class Level implements Bundlable {
 		}
 
 		level.updateCellFlags(cell);
+		if (level.caveCollapse != null) level.caveCollapse.terrainChanged(cell, previous, terrain);
 		if (cell == level.hiddenEntranceCell && level.hiddenEntranceGrass
 				&& (previous == Terrain.GRASS || previous == Terrain.HIGH_GRASS || previous == Terrain.FURROWED_GRASS)
 				&& terrain != Terrain.GRASS && terrain != Terrain.HIGH_GRASS && terrain != Terrain.FURROWED_GRASS) {

@@ -47,6 +47,10 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Crysta
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Projecting;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.Dart;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
@@ -207,7 +211,10 @@ abstract public class MissileWeapon extends Weapon {
 				&& Dungeon.level.distance(user.pos, dst) <= Math.round(projecting * Enchantment.genericProcChanceMultiplier(user))){
 			return dst;
 		} else {
-			return super.throwPos(user, dst);
+			Ballistica shot = new Ballistica(user.pos, dst, Ballistica.PROJECTILE);
+			int surface = shot.collisionPos == dst && !Dungeon.level.solid[dst] ? shot.collisionPos
+					: TerrainPropagation.impactCell(Dungeon.level, shot, TerrainInteractions.Source.MISSILE);
+			return Dungeon.level.map[surface] == Terrain.COLLAPSE_WALL ? surface : shot.collisionPos;
 		}
 	}
 
@@ -270,6 +277,12 @@ abstract public class MissileWeapon extends Weapon {
 
 	@Override
 	protected void onThrow( int cell ) {
+		if (Dungeon.level.map[cell] == Terrain.COLLAPSE_WALL) {
+			if (Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.MISSILE)) Dungeon.observe();
+			parent = null;
+			if (!spawnedForEffect) super.onThrow(cell);
+			return;
+		}
 		Char enemy = Actor.findChar( cell );
 		if (enemy == null || enemy == curUser) {
 			parent = null;

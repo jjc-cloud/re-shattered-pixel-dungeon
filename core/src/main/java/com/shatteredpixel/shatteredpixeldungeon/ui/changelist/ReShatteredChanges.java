@@ -49,6 +49,8 @@ public class ReShatteredChanges {
 
 		changes.addButton(new ChangeButton(ChangeIcons.V020_BUCKET, "环境交互",
 				"\n-木桶，岩石瓦砾现在能被直接摧毁。\n-雕像现在能被爆炸摧毁。\n-地毯现在能被解离射线，爆炸摧毁。\n-监狱铁笼与钢铁架构现在会导电。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V020_COLLAPSE_WALL, "塌方",
+				"\n矿洞新增不稳定塌方区域，区域内无任何支撑物时会导致整片区域塌方，活埋区域内的所有单位。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V020_STAIR, "隐藏楼层",
 				"\n新增特殊隐藏，隐藏楼层。隐藏楼层不会被探地效果所揭示，只有经过隐藏楼层的入口时，会发出特殊的声音暗示，摧毁入口的表面即可打开隐藏的入口。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V064_CHASM, "超级隐藏房",
@@ -68,10 +70,14 @@ public class ReShatteredChanges {
 		changes.hardlight(CharSprite.POSITIVE);
 		changeInfos.add(changes);
 		
+		changes.addButton(new ChangeButton(ChangeIcons.V035_WARRIOR_HEROARM, "狂战士",
+				"\n现在怒气值按实际造成的伤害结算。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V071_HUNTRESS_HEROARM, "守望者",
 				"\n现在守望者在开启荒芜之地挑战下仍可消耗种子手动种植催生出高草。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V40_BARKSKIN, "树肤韧甲",
 				"\n现在只需要进入草地即可刷新树肤韧甲，且数值上调33%。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V20_DUELIST_HEROARM, "武僧",
+				"\n阴阳调和返还的内力上升至10%/20%/30%。"));
 
 		changes = new ChangeInfo("削弱", false, null);
 		changes.hardlight(CharSprite.NEGATIVE);
@@ -79,7 +85,10 @@ public class ReShatteredChanges {
 
 		changes.addButton(new ChangeButton(ChangeIcons.V21_SHOPKEEPER, "订购",
 				"\n现在商店提供随机六种物资的订购服务，而非所有已鉴定物资。"));
-		
+		changes.addButton(new ChangeButton(ChangeIcons.V010_WAND_OF_PETRIFICATION, "石化法杖",
+				"\n现在石化法杖仅可对生物使用。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V035_WARRIOR_CLOTH, "来都来了",
+				"\n削弱战士。"));
 		}
 
 

@@ -30,6 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.SnipersMark;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.TenguDartTrap;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
@@ -85,12 +86,18 @@ public class ForceCube extends MissileWeapon {
 		rangedHit( null, cell );
 		parent = parentTemp;
 		boolean terrainAffected = false;
+		ArrayList<Integer> affectedCells = new ArrayList<>();
+		ArrayList<Integer> wallCells = new ArrayList<>();
 		for (int offset : PathFinder.NEIGHBOURS9) {
 			int target = cell + offset;
 			if (Dungeon.level.insideMap(target)) {
-				terrainAffected |= Dungeon.level.affectTerrain(target, TerrainInteractions.Source.SHOCKWAVE);
+				if (Dungeon.level.map[target] == Terrain.COLLAPSE_WALL) wallCells.add(target);
+				else affectedCells.add(target);
 			}
 		}
+		// 固定冲击前的墙面，保留本次击碎最后支撑墙后重新落下的岩壁。
+		for (int target : affectedCells) terrainAffected |= Dungeon.level.affectTerrain(target, TerrainInteractions.Source.SHOCKWAVE);
+		for (int target : wallCells) terrainAffected |= Dungeon.level.affectTerrain(target, TerrainInteractions.Source.SHOCKWAVE);
 		if (terrainAffected) Dungeon.observe();
 		Dungeon.level.pressCell(cell);
 		

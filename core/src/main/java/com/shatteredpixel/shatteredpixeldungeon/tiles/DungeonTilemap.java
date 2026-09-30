@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.tiles;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.watabou.gltextures.TextureCache;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.TextureFilm;
 import com.watabou.noosa.Tilemap;
@@ -36,9 +37,30 @@ public abstract class DungeonTilemap extends Tilemap {
 	public static final int SIZE = 16;
 
 	protected int[] map;
+	protected int collapseVisualOffset;
 
 	public DungeonTilemap(String tex) {
 		super(tex, new TextureFilm( tex, SIZE, SIZE ) );
+		int color = Terrain.COLLAPSE_WALL_COLOR & 0xFFFFFF;
+		if (color != 0xFFFFFF && Dungeon.level.caveCollapse != null
+				&& (this instanceof DungeonTerrainTilemap || this instanceof DungeonWallsTilemap)) {
+			int width = texture.width, height = texture.height;
+			int[] pixels = new int[width * height * 2];
+			for (int y = 0; y < height; y++) {
+				for (int x = 0; x < width; x++) {
+					int pixel = texture.bitmap.getPixel(x, y);
+					int red = (pixel >>> 24) * (color >>> 16) / 255;
+					int green = ((pixel >>> 16) & 0xFF) * ((color >>> 8) & 0xFF) / 255;
+					int blue = ((pixel >>> 8) & 0xFF) * (color & 0xFF) / 255;
+					pixels[x + y * width] = pixel;
+					pixels[x + (y + height) * width] = (red << 24) | (green << 16) | (blue << 8) | (pixel & 0xFF);
+				}
+			}
+			// 上半张保留原贴图，下半张存染色副本，只有塌方墙的绘制编号使用副本。
+			collapseVisualOffset = (width / SIZE) * (height / SIZE);
+			texture = TextureCache.createPixels(tex + "#collapse-wall:" + color, width, height * 2, pixels);
+			tileset = new TextureFilm(texture, SIZE, SIZE);
+		}
 	}
 
 	@Override

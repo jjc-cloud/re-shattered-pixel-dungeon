@@ -36,6 +36,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.WondrousResin;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.CursedWand;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HeroIcon;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
@@ -138,8 +139,13 @@ public class WildMagic extends ArmorAbility {
 		Wand cur = wands.remove(0);
 
 		Ballistica aim = new Ballistica(hero.pos, cell, cur.collisionProperties(cell));
+		int impact = cur.targetingPos(hero, cell);
+		if (!cur.cursed && Dungeon.level.insideMap(impact) && Dungeon.level.map[impact] == Terrain.COLLAPSE_WALL) {
+			aim.collisionPos = impact;
+			aim.dist = aim.path.indexOf(impact);
+		}
 
-		hero.sprite.zap(cell);
+		hero.sprite.zap(aim.collisionPos);
 
 		float startTime = Game.timeTotal;
 		if (cur.beginZap(hero, cell)) {
@@ -147,7 +153,7 @@ public class WildMagic extends ArmorAbility {
 				cur.fx(aim, new Callback() {
 					@Override
 					public void call() {
-						cur.onZap(aim);
+						if (!cur.zapTerrain(hero, cell)) cur.onZap(aim);
 						boolean alsoCursedZap = Random.Float() < WondrousResin.extraCurseEffectChance();
 						if (Game.timeTotal - startTime < 0.33f) {
 							hero.sprite.parent.add(new Delayer(0.33f - (Game.timeTotal - startTime)) {

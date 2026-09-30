@@ -27,6 +27,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
+import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GnollExileSprite;
@@ -108,6 +109,7 @@ public class GnollExile extends Gnoll {
 		if (Random.Int(2) == 0) items.add(Generator.randomUsingDefaults());
 
 		for (Item item : items){
+			if (item instanceof Gold) item.quantity(Random.IntRange(30 + Dungeon.depth * 10, 60 + Dungeon.depth * 20));
 			int ofs;
 			do {
 				ofs = PathFinder.NEIGHBOURS9[Random.Int(9)];

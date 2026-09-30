@@ -70,13 +70,14 @@ public class DungeonTerrainTilemap extends DungeonTilemap {
 			if ((DungeonTileSheet.doorTile(tile))) {
 				return DungeonTileSheet.getRaisedDoorTile(tile, map[pos - mapWidth]);
 			} else if (DungeonTileSheet.wallStitcheable(tile)){
-				return DungeonTileSheet.getRaisedWallTile(
+				int wall = DungeonTileSheet.getRaisedWallTile(
 						tile,
 						pos,
 						(pos+1) % mapWidth != 0 ?   map[pos + 1] : -1,
 						pos + mapWidth < size ?     map[pos + mapWidth] : -1,
 						pos % mapWidth != 0 ?       map[pos - 1] : -1
 						);
+				return tile == Terrain.COLLAPSE_WALL && wall >= 0 ? wall + collapseVisualOffset : wall;
 			} else if (tile == Terrain.STATUE) {
 				return DungeonTileSheet.RAISED_STATUE;
 			} else if (tile == Terrain.STATUE_SP) {
@@ -122,9 +123,10 @@ public class DungeonTerrainTilemap extends DungeonTilemap {
 			if (tile == Terrain.SEWER_BARREL_MARKED || tile == Terrain.SEWER_BARREL_MARKED_ALT) {
 				return DungeonTileSheet.directFlatVisuals.get(tile);
 			}
-			return DungeonTileSheet.getVisualWithAlts(
+			visual = DungeonTileSheet.getVisualWithAlts(
 					DungeonTileSheet.directFlatVisuals.get(tile),
 					pos);
+			return tile == Terrain.COLLAPSE_WALL ? visual + collapseVisualOffset : visual;
 		}
 
 	}

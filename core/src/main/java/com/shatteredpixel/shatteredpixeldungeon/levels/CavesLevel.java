@@ -68,6 +68,16 @@ import java.util.ArrayList;
 public class CavesLevel extends RegularLevel {
 
 	@Override
+	protected boolean build() {
+		if (!super.build()) return false;
+		if (Dungeon.branch == 0 && Dungeon.depth >= 11 && Dungeon.depth <= 14) {
+			caveCollapse = new CaveCollapse(this);
+			return caveCollapse.generate(rooms);
+		}
+		return true;
+	}
+
+	@Override
 	protected int staticEnvironmentalLightRadius( int cell ) {
 		if (map[cell] == Terrain.GRASS
 				|| map[cell] == Terrain.HIGH_GRASS
@@ -201,6 +211,8 @@ public class CavesLevel extends RegularLevel {
 	@Override
 	public String tileName( int tile ) {
 		switch (tile) {
+			case Terrain.COLLAPSE_WALL:
+				return Messages.get(CaveCollapse.class, "wall_name");
 			case Terrain.GRASS:
 				return Messages.get(CavesLevel.class, "grass_name");
 			case Terrain.HIGH_GRASS:
@@ -218,6 +230,8 @@ public class CavesLevel extends RegularLevel {
 	@Override
 	public String tileDesc( int tile ) {
 		switch (tile) {
+			case Terrain.COLLAPSE_WALL:
+				return Messages.get(CaveCollapse.class, "wall_desc");
 			case Terrain.ENTRANCE:
 			case Terrain.ENTRANCE_SP:
 				return Messages.get(CavesLevel.class, "entrance_desc");

@@ -335,7 +335,7 @@ public class Mimic extends Mob {
 
 		//generate an extra reward for killing the mimic
 		m.generatePrize(useDecks);
-		m.items.add(new Gold().random());
+		m.items.add(new Gold(Random.IntRange(30 + Dungeon.depth * 10, 60 + Dungeon.depth * 20)));
 
 		if (MimicTooth.stealthyMimics()){
 			m.stealthy = true;
@@ -349,7 +349,7 @@ public class Mimic extends Mob {
 		do {
 			switch (Random.Int(5)) {
 				case 0:
-					reward = new Gold().random();
+					reward = new Gold(Random.IntRange(30 + Dungeon.depth * 10, 60 + Dungeon.depth * 20));
 					break;
 				case 1:
 					reward = Generator.randomMissile(!useDecks);
@@ -369,7 +369,9 @@ public class Mimic extends Mob {
 
 		if (MimicTooth.stealthyMimics()){
 			//add an extra random item if player has a mimic tooth
-			items.add(Generator.randomUsingDefaults());
+			Item extra = Generator.randomUsingDefaults();
+			if (extra instanceof Gold) extra.quantity(Random.IntRange(30 + Dungeon.depth * 10, 60 + Dungeon.depth * 20));
+			items.add(extra);
 		}
 	}
 

@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.EquipableItem;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
+import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
@@ -98,7 +99,9 @@ public class EbonyMimic extends Mimic {
 	protected void generatePrize( boolean useDecks ) {
 		super.generatePrize( useDecks );
 		//add one extra random loot item, on top of the one granted by mimic tooth
-		items.add(Generator.randomUsingDefaults());
+		Item extra = Generator.randomUsingDefaults();
+		if (extra instanceof Gold) extra.quantity(com.watabou.utils.Random.IntRange(30 + Dungeon.depth * 10, 60 + Dungeon.depth * 20));
+		items.add(extra);
 
 		//all existing prize items are guaranteed uncursed, and are always at least +1
 		for (Item i : items){
