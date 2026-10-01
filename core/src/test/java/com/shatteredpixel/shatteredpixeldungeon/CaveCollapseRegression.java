@@ -20,6 +20,8 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.EmptyRoom;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WornDartTrap;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
@@ -75,6 +77,11 @@ public class CaveCollapseRegression {
 
 	private static void generation() {
 		int doubles = 0;
+		int waterCells = 0, trapCells = 0;
+		int[] filledWater = new int[2];
+		int[] groundTypes = {Terrain.EMPTY, Terrain.EMPTY_DECO, Terrain.EMPTY_SP, Terrain.CUSTOM_DECO_EMPTY,
+				Terrain.GRASS, Terrain.HIGH_GRASS, Terrain.FURROWED_GRASS, Terrain.WATER,
+				Terrain.SECRET_TRAP, Terrain.TRAP, Terrain.INACTIVE_TRAP, Terrain.EMBERS, Terrain.EMBERS_SP};
 		for (int trial = 0; trial < 100; trial++) {
 			Random.pushGenerator(20260930L + trial);
 			try {
@@ -87,7 +94,15 @@ public class CaveCollapseRegression {
 					for (int y = room.top + 1; y < room.bottom; y++) {
 						for (int x = room.left + 1; x < room.right; x++) {
 							int cell = x + y * level.width();
-							level.map[cell] = Random.Int(5) == 0 ? Terrain.CHASM : Terrain.EMPTY;
+							int tile = trial < 80 ? (Random.Int(5) == 0 ? Terrain.CHASM : groundTypes[Random.Int(groundTypes.length)])
+									: groundTypes[trial % groundTypes.length];
+							level.map[cell] = tile;
+							if (tile == Terrain.SECRET_TRAP || tile == Terrain.TRAP || tile == Terrain.INACTIVE_TRAP) {
+								Trap trap = new WornDartTrap().set(cell);
+								trap.visible = tile != Terrain.SECRET_TRAP;
+								trap.active = tile != Terrain.INACTIVE_TRAP;
+								level.traps.put(cell, trap);
+							}
 						}
 					}
 				}
@@ -105,12 +120,23 @@ public class CaveCollapseRegression {
 					HashSet<Integer> remaining = new HashSet<>();
 					int walls = 0, left = 31, right = 0, top = 31, bottom = 0;
 					for (int cell : cells) {
-						check(original[cell] == Terrain.EMPTY, "悬崖和原有墙不进入区域");
+						check(original[cell] != Terrain.CHASM && !com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTileSheet
+								.wallStitcheable(original[cell]), "悬崖和原有墙不进入区域");
+						if (original[cell] == Terrain.WATER) waterCells++;
+						if (original[cell] == Terrain.TRAP || original[cell] == Terrain.SECRET_TRAP
+								|| original[cell] == Terrain.INACTIVE_TRAP) trapCells++;
 						check(all.add(cell), "区域互不重叠");
 						remaining.add(cell);
 						left = Math.min(left, cell % 31); right = Math.max(right, cell % 31);
 						top = Math.min(top, cell / 31); bottom = Math.max(bottom, cell / 31);
 						if (level.map[cell] == Terrain.COLLAPSE_WALL) {
+							int buried = regions.getIntArray("buried_terrain")[cell];
+							int expected = original[cell] == Terrain.HIGH_GRASS || original[cell] == Terrain.FURROWED_GRASS
+									? Terrain.GRASS : original[cell];
+							check(expected == Terrain.WATER ? buried == Terrain.EMPTY || buried == Terrain.EMPTY_DECO
+									: buried == expected, "初始支撑墙记住原地形，高草压扁、水面填成随机空地");
+							if (original[cell] == Terrain.WATER) filledWater[buried == Terrain.EMPTY ? 0 : 1]++;
+							check(level.traps.get(cell) == null, "初始支撑墙下陷阱从活动地图移除");
 							walls++;
 							for (int offset : PathFinder.NEIGHBOURS8) {
 								check(!com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTileSheet
@@ -132,6 +158,8 @@ public class CaveCollapseRegression {
 			} finally { Random.popGenerator(); }
 		}
 		check(doubles >= 30 && doubles <= 70, "第二处的生成概率约50%");
+		check(waterCells > 0 && trapCells > 0, "混合地形与全水面、全陷阱房间均能生成危险区");
+		check(filledWater[0] > 0 && filledWater[1] > 0, "水面填平的随机空地包括普通和装饰两种地形");
 	}
 
 	private static void collapseAndSave() {
@@ -158,6 +186,58 @@ public class CaveCollapseRegression {
 		Actor.clear(); restored.mobs.clear();
 		for (int cell : REGION) if (restored.map[cell] == Terrain.COLLAPSE_WALL) restored.affectTerrain(cell, TerrainInteractions.Source.CLICK);
 		for (int cell : REGION) check(restored.map[cell] == Terrain.COLLAPSE_WALL, "读档后清空所有墙再次坍塌");
+
+		// 用真实陷阱对象验证覆盖、读档、挖开与再次塌方，避免只恢复一个空陷阱图块。
+		level = fixture();
+		Level.set(61, Terrain.WATER, level);
+		Level.set(72, Terrain.EMPTY_DECO, level);
+		Level.set(73, Terrain.SECRET_TRAP, level);
+		Trap originalTrap = level.setTrap(new WornDartTrap(), 73);
+		originalTrap.outdated = true;
+		originalTrap.primed = true;
+		level.affectTerrain(60, TerrainInteractions.Source.CLICK);
+		Level.set(60, Terrain.EMPTY_SP, level);
+		level.affectTerrain(84, TerrainInteractions.Source.WAND);
+		check(level.traps.get(73) == null, "塌方掩埋陷阱，不显示或参与普通陷阱查询");
+		check(!level.water[61] && level.solid[61], "被落石覆盖的水面同步变为实体墙");
+		saved = new Bundle(); level.storeInBundle(saved); saved.put("version", ShatteredPixelDungeon.v3_1_1);
+		int filled = saved.getBundle("cave_collapse").getIntArray("buried_terrain")[61];
+		restored = new TestLevel(); restored.restoreFromBundle(saved); Dungeon.level = restored;
+		check(restored.traps.get(73) == null, "读档后陷阱仍被掩埋");
+		for (int cell : new int[]{60, 61, 72, 73}) check(restored.affectTerrain(cell, TerrainInteractions.Source.MISSILE), "挖开恢复原地形仍报告成功");
+		check(restored.map[60] == Terrain.EMPTY_SP && restored.map[72] == Terrain.EMPTY_DECO, "保留特殊地面与装饰地面的区别");
+		check(restored.map[61] == Terrain.EMPTY || restored.map[61] == Terrain.EMPTY_DECO, "读档后挖开被填平的水面成为随机空地");
+		check(restored.map[61] == filled, "读档与挖开不重新随机填水后的地形");
+		check(!restored.water[61] && restored.passable[61] && !restored.solid[61], "填平的水面恢复为空地通行标记");
+		Trap recovered = restored.traps.get(73);
+		check(restored.map[73] == Terrain.SECRET_TRAP && recovered instanceof WornDartTrap
+				&& !recovered.visible && recovered.active && recovered.outdated && recovered.primed, "恢复真实隐藏陷阱及待触发状态");
+		check(com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoCell.cellName(72).equals(restored.tileName(Terrain.EMPTY_DECO)), "危险区内保留装饰地面名称");
+		recovered.disarm();
+		Level.set(61, Terrain.EMBERS, restored);
+		restored.affectTerrain(84, TerrainInteractions.Source.SHOCKWAVE);
+		check(restored.traps.get(73) == null, "再次塌方重新掩埋已经解除的陷阱");
+		restored.affectTerrain(61, TerrainInteractions.Source.CLICK);
+		restored.affectTerrain(73, TerrainInteractions.Source.CLICK);
+		check(restored.map[61] == Terrain.EMBERS, "再次塌方记住最新地形，不回退到初始水面");
+		check(restored.map[73] == Terrain.INACTIVE_TRAP && restored.traps.get(73) == recovered && !recovered.active,
+				"再次挖开保持陷阱解除状态，不复活陷阱");
+
+		for (int tile : new int[]{Terrain.HIGH_GRASS, Terrain.FURROWED_GRASS, Terrain.GRASS,
+				Terrain.EMPTY_DECO, Terrain.EMPTY_SP, Terrain.CUSTOM_DECO_EMPTY, Terrain.EMBERS, Terrain.EMBERS_SP}) {
+			level = fixture();
+			Level.set(61, tile, level);
+			check(com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoCell.cellName(61).equals(level.tileName(tile)),
+					"塌方前查看保留各自地形名称");
+			level.affectTerrain(60, TerrainInteractions.Source.CLICK);
+			level.affectTerrain(84, TerrainInteractions.Source.CLICK);
+			saved = new Bundle(); level.storeInBundle(saved); saved.put("version", ShatteredPixelDungeon.v3_1_1);
+			restored = new TestLevel(); restored.restoreFromBundle(saved); Dungeon.level = restored;
+			restored.affectTerrain(61, TerrainInteractions.Source.CLICK);
+			int expected = tile == Terrain.HIGH_GRASS || tile == Terrain.FURROWED_GRASS ? Terrain.GRASS : tile;
+			check(restored.map[61] == expected && restored.passable[61] && !restored.losBlocking[61],
+					"高草压成普通草地，其他地形恢复各自类型与通行视线标记");
+		}
 	}
 
 	private static void realCaves() {
@@ -444,6 +524,9 @@ public class CaveCollapseRegression {
 		level.caveCollapse = new CaveCollapse(level);
 		Bundle regions = new Bundle(); regions.put("count", 2);
 		regions.put("region_0", REGION); regions.put("region_1", new int[]{96, 97, 108});
+		int[] ground = level.map.clone();
+		ground[60] = ground[84] = ground[96] = Terrain.EMPTY;
+		regions.put("buried_terrain", ground);
 		level.caveCollapse.restoreFromBundle(regions);
 		return level;
 	}

@@ -11,6 +11,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.BlacksmithRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.StandardRoom;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
@@ -19,11 +20,14 @@ import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.noosa.Game;
 import com.watabou.utils.Bundle;
+import com.watabou.utils.Bundlable;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
+import com.watabou.utils.SparseArray;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 
 /** 固定的四向连通危险区；墙被清空后立即重新填满，不参与逐回合调度。 */
@@ -33,11 +37,15 @@ public final class CaveCollapse implements Hero.Doom {
 	private final ArrayList<int[]> regions = new ArrayList<>();
 	private final ArrayList<Integer> walls = new ArrayList<>();
 	private final int[] regionAt;
+	// 由 Level.set 在覆盖地形前记录、开墙前取回；只对危险区内的格子使用。
+	final int[] buriedTerrain;
+	final SparseArray<Trap> buriedTraps = new SparseArray<>();
 	private boolean collapsing;
 
 	public CaveCollapse(Level level) {
 		this.level = level;
 		regionAt = new int[level.length()];
+		buriedTerrain = level.map.clone();
 		Arrays.fill(regionAt, -1);
 		level.interactions().setDefault(Terrain.COLLAPSE_WALL, TerrainInteractions.Rule.NONE
 				.on(TerrainInteractions.Source.CLICK, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
@@ -70,9 +78,11 @@ public final class CaveCollapse implements Hero.Doom {
 				for (int x = room.left + 1; x < room.right; x++) {
 					int cell = x + y * level.width();
 					int tile = level.map[cell];
-					if (tile != Terrain.EMPTY && tile != Terrain.EMPTY_DECO && tile != Terrain.GRASS
-							&& tile != Terrain.HIGH_GRASS && tile != Terrain.FURROWED_GRASS) continue;
-					if (contains(cell) || level.traps.get(cell) != null || level.plants.get(cell) != null
+					int flags = Terrain.flags[tile];
+					if ((flags & (Terrain.PASSABLE | Terrain.AVOID)) == 0
+							|| (flags & (Terrain.SOLID | Terrain.PIT)) != 0
+							|| tile == Terrain.WELL || tile == Terrain.OPEN_DOOR) continue;
+					if (contains(cell) || level.plants.get(cell) != null
 							|| level.heaps.get(cell) != null || level.findMob(cell) != null
 							|| level.getTransition(cell) != null) continue;
 					boolean doorway = false;
@@ -157,7 +167,17 @@ public final class CaveCollapse implements Hero.Doom {
 				}
 				regions.add(region);
 				walls.add(supports.size());
-				for (int cell : supports) Painter.set(level, cell, Terrain.COLLAPSE_WALL);
+				for (int cell : supports) {
+					int groundTile = level.map[cell];
+					// 高草压扁、水面填平；在覆盖时确定结果，挖开与读档不再重抽。
+					if (groundTile == Terrain.HIGH_GRASS || groundTile == Terrain.FURROWED_GRASS) groundTile = Terrain.GRASS;
+					else if (groundTile == Terrain.WATER) groundTile = Random.Int(2) == 0 ? Terrain.EMPTY : Terrain.EMPTY_DECO;
+					buriedTerrain[cell] = groundTile;
+					Trap trap = level.traps.remove(cell);
+					if (trap != null) buriedTraps.put(cell, trap);
+					level.interactions().clearOverride(cell);
+					Painter.set(level, cell, Terrain.COLLAPSE_WALL);
+				}
 				break;
 			}
 			if (regions.size() == count) return true;
@@ -187,7 +207,12 @@ public final class CaveCollapse implements Hero.Doom {
 			LinkedHashSet<Char> victims = new LinkedHashSet<>(Actor.chars());
 			victims.addAll(level.mobs);
 			if (Dungeon.hero != null) victims.add(Dungeon.hero);
-			victims.removeIf(ch -> !ch.isAlive() || !contains(ch.pos) || regionAt[ch.pos] != index);
+			// RoboVM 类库没有 Predicate/removeIf，沿用已有的显式迭代器过滤方式。
+			Iterator<Char> iterator = victims.iterator();
+			while (iterator.hasNext()) {
+				Char ch = iterator.next();
+				if (!ch.isAlive() || !contains(ch.pos) || regionAt[ch.pos] != index) iterator.remove();
+			}
 			boolean killHero = victims.remove(Dungeon.hero);
 			// 英雄最后结算，避免终局先保存成绩/删除存档，其他单位尚未完成掉落。
 			for (Char ch : victims) { ch.HP = 0; ch.die(this); }
@@ -218,12 +243,21 @@ public final class CaveCollapse implements Hero.Doom {
 	}
 
 	public void storeInBundle(Bundle bundle) {
+		bundle.put("buried_terrain", buriedTerrain);
+		bundle.put("buried_traps", buriedTraps.valueList());
 		bundle.put("count", regions.size());
 		for (int i = 0; i < regions.size(); i++) bundle.put("region_" + i, regions.get(i));
 	}
 
 	public void restoreFromBundle(Bundle bundle) {
 		regions.clear(); walls.clear(); Arrays.fill(regionAt, -1);
+		int[] terrain = bundle.getIntArray("buried_terrain");
+		System.arraycopy(terrain, 0, buriedTerrain, 0, buriedTerrain.length);
+		buriedTraps.clear();
+		for (Bundlable b : bundle.getCollection("buried_traps")) {
+			Trap trap = (Trap)b;
+			buriedTraps.put(trap.pos, trap);
+		}
 		for (int i = 0; i < bundle.getInt("count"); i++) {
 			int[] cells = bundle.getIntArray("region_" + i);
 			int remaining = 0;

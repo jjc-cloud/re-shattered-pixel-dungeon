@@ -1162,6 +1162,20 @@ public abstract class Level implements Bundlable {
 	
 	public static void set( int cell, int terrain, Level level ) {
 		int previous = level.map[cell];
+		CaveCollapse collapse = level.caveCollapse;
+		if (collapse != null && collapse.contains(cell)) {
+			if (previous != Terrain.COLLAPSE_WALL && terrain == Terrain.COLLAPSE_WALL) {
+				// 记住本次落石覆盖前的实际地形，已燃烧或解除的陷阱不会被倒回。
+				int groundTile = previous;
+				if (groundTile == Terrain.HIGH_GRASS || groundTile == Terrain.FURROWED_GRASS) groundTile = Terrain.GRASS;
+				else if (groundTile == Terrain.WATER) groundTile = Random.Int(2) == 0 ? Terrain.EMPTY : Terrain.EMPTY_DECO;
+				collapse.buriedTerrain[cell] = groundTile;
+				Trap trap = level.traps.get(cell);
+				if (trap != null) collapse.buriedTraps.put(cell, trap);
+			} else if (previous == Terrain.COLLAPSE_WALL && terrain == Terrain.EMPTY) {
+				terrain = collapse.buriedTerrain[cell];
+			}
+		}
 		if (level.terrainInteractions != null && level.map[cell] != terrain) {
 			level.terrainInteractions.clearOverride(cell);
 		}
@@ -1169,6 +1183,13 @@ public abstract class Level implements Bundlable {
 
 		if (terrain != Terrain.TRAP && terrain != Terrain.SECRET_TRAP && terrain != Terrain.INACTIVE_TRAP) {
 			level.traps.remove(cell);
+		}
+		if (collapse != null && collapse.contains(cell)
+				&& previous == Terrain.COLLAPSE_WALL && terrain != Terrain.COLLAPSE_WALL) {
+			Trap trap = collapse.buriedTraps.remove(cell);
+			if (trap != null && (terrain == Terrain.TRAP || terrain == Terrain.SECRET_TRAP || terrain == Terrain.INACTIVE_TRAP)) {
+				level.setTrap(trap, cell);
+			}
 		}
 
 		level.updateCellFlags(cell);
