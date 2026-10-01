@@ -132,6 +132,10 @@ public class WndShopOrder extends Window {
 	}
 
 	private void setSlot(int idx, Item item) {
+		for (int i = 0; i < chosen.length; i++) {
+			if (i != idx && item != null && chosen[i] != null
+					&& chosen[i].getClass() == item.getClass()) return;
+		}
 		chosen[idx] = item;
 		slots[idx].item(item);
 		btnConfirm.enable(countChosen() > 0);
@@ -275,9 +279,22 @@ public class WndShopOrder extends Window {
 			int left = 0;
 			int top = 0;
 			for (final Item item : items) {
+				boolean alreadyChosen = false;
+				for (Item selected : chosen) {
+					if (selected != null && selected.getClass() == item.getClass()) {
+						alreadyChosen = true;
+						break;
+					}
+				}
+				final boolean selectable = !alreadyChosen;
 				ItemButton button = new ItemButton() {
+					{
+						if (!selectable) bg.hardlight(0x777777);
+					}
+
 					@Override
 					protected void onClick() {
+						if (!selectable) return;
 						setSlot(slotIdx, item);
 						ItemPicker.this.hide();
 					}
@@ -289,6 +306,7 @@ public class WndShopOrder extends Window {
 					}
 				};
 				button.item(item);
+				button.slot().enable(selectable);
 				button.setRect(grid.left() + left, grid.top() + top, 19, 19);
 				grid.add(button);
 				left += GRID_SLOT;

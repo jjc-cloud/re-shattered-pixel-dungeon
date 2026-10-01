@@ -74,7 +74,17 @@ public class ShopOrder {
 
 	public static void place(ArrayList<Item> items) {
 		seq++;
-		pending = new ArrayList<>(items);
+		pending = new ArrayList<>();
+		for (Item item : items) {
+			boolean duplicate = false;
+			for (Item selected : pending) {
+				if (selected.getClass() == item.getClass()) {
+					duplicate = true;
+					break;
+				}
+			}
+			if (!duplicate) pending.add(item);
+		}
 		pendingPlacedDepth = Dungeon.depth;
 		pendingSeq = seq;
 		for (Item item : pending) {

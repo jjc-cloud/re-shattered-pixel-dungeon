@@ -26,6 +26,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.SpiritForm;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.MirrorImage;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.ChaliceOfBlood;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfEnergy;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMirrorImage;
@@ -50,12 +52,21 @@ public class Regeneration extends Buff {
 	@Override
 	public boolean act() {
 		if (target.isAlive()) {
-			//独立于生命恢复状态计时；周围无空位也算一次尝试，下一轮仍需等待100回合。
+			//没有镜像才开始计时；已开始的计时不中断，到期时仍无镜像才尝试生成一个。
 			if (((Hero) target).hasTalent(Talent.MULTIPLE_EXISTENCE)) {
-				multipleExistenceTurns += TICK;
-				if (multipleExistenceTurns >= 100f) {
-					multipleExistenceTurns -= 100f;
-					ScrollOfMirrorImage.spawnImages((Hero) target, 1);
+				boolean hasMirror = false;
+				for (Mob mob : Dungeon.level.mobs) {
+					if (mob instanceof MirrorImage && mob.isAlive()) {
+						hasMirror = true;
+						break;
+					}
+				}
+				if (multipleExistenceTurns > 0f || !hasMirror) {
+					multipleExistenceTurns += TICK;
+					if (multipleExistenceTurns >= 100f) {
+						multipleExistenceTurns = 0f;
+						if (!hasMirror) ScrollOfMirrorImage.spawnImages((Hero) target, 1);
+					}
 				}
 			} else {
 				multipleExistenceTurns = 0f;
