@@ -25,6 +25,16 @@ local.properties
 .claude/
 .workbuddy/
 
+# Local development notes and tool configuration
+/docs/*
+!/docs/FUNDING.yml
+!/docs/PULL_REQUEST_TEMPLATE.md
+!/docs/getting-started-android.md
+!/docs/getting-started-desktop.md
+!/docs/getting-started-ios.md
+!/docs/recommended-changes.md
+/opencode.json
+
 
 #vs files
 .vs/
