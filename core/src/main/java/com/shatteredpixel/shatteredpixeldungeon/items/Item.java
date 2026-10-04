@@ -87,6 +87,7 @@ public class Item implements Bundlable {
 	
 	public boolean cursed;
 	public boolean cursedKnown;
+	public boolean holyIntuitionChecked;
 	
 	// Unique items persist through revival
 	public boolean unique = false;
@@ -622,6 +623,7 @@ public class Item implements Bundlable {
 	private static final String LEVEL_KNOWN		= "levelKnown";
 	private static final String CURSED			= "cursed";
 	private static final String CURSED_KNOWN	= "cursedKnown";
+	private static final String HOLY_INTUITION_CHECKED = "holy_intuition_checked";
 	private static final String QUICKSLOT		= "quickslotpos";
 	private static final String KEPT_LOST       = "kept_lost";
 	private static final String CUSTOM_NOTE_ID = "custom_note_id";
@@ -634,6 +636,7 @@ public class Item implements Bundlable {
 		bundle.put( LEVEL_KNOWN, levelKnown );
 		bundle.put( CURSED, cursed );
 		bundle.put( CURSED_KNOWN, cursedKnown );
+		bundle.put(HOLY_INTUITION_CHECKED, holyIntuitionChecked);
 		if (Dungeon.quickslot.contains(this)) {
 			bundle.put( QUICKSLOT, Dungeon.quickslot.getSlot(this) );
 		}
@@ -647,6 +650,7 @@ public class Item implements Bundlable {
 		quantity	= bundle.getInt( QUANTITY );
 		levelKnown	= bundle.getBoolean( LEVEL_KNOWN );
 		cursedKnown	= bundle.getBoolean( CURSED_KNOWN );
+		holyIntuitionChecked = bundle.getBoolean(HOLY_INTUITION_CHECKED);
 		
 		int level = bundle.getInt( LEVEL );
 		if (level > 0) {

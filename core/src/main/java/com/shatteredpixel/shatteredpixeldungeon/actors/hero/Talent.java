@@ -56,6 +56,7 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.LeafParticle;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle;
+import com.shatteredpixel.shatteredpixeldungeon.items.EquipableItem;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.MirrorLink;
 import com.shatteredpixel.shatteredpixeldungeon.items.RealityWarp;
@@ -598,7 +599,7 @@ public enum Talent {
 			Buff.affect(hero, Talent.ProtectiveShadowsTracker.class);
 		}
 
-		if (talent == LIGHT_CLOAK && hero.heroClass == HeroClass.ROGUE){
+		if (talent == LIGHT_CLOAK){
 			for (Item item : Dungeon.hero.belongings.backpack){
 				if (item instanceof CloakOfShadows){
 					if (!hero.belongings.lostInventory() || item.keptThroughLostInventory()) {
@@ -624,7 +625,7 @@ public enum Talent {
 			}
 		}
 
-		if (talent == LIGHT_READING && hero.heroClass == HeroClass.CLERIC){
+		if (talent == LIGHT_READING){
 			for (Item item : Dungeon.hero.belongings.backpack){
 				if (item instanceof HolyTome){
 					if (!hero.belongings.lostInventory() || item.keptThroughLostInventory()) {
@@ -973,6 +974,16 @@ public enum Talent {
 	public static void onItemCollected( Hero hero, Item item ){
 		if (hero.pointsInTalent(THIEFS_INTUITION) == 2){
 			if (item instanceof Ring) ((Ring) item).setKnown();
+		}
+		if (hero.heroClass != HeroClass.CLERIC && hero.hasTalent(HOLY_INTUITION)
+				&& item instanceof EquipableItem && !item.holyIntuitionChecked) {
+			// 每件装备仅判定一次，失败也记住，丢弃、换包和读档均不重试。
+			item.holyIntuitionChecked = true;
+			if (!item.cursedKnown && Random.Int(20) < 1 + 2*hero.pointsInTalent(HOLY_INTUITION)) {
+				item.cursedKnown = true;
+				GLog.i(Messages.get(Talent.class, HOLY_INTUITION.name()
+						+ (item.cursed ? ".cursed" : ".not_cursed"), item.name()));
+			}
 		}
 	}
 

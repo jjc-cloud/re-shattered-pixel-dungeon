@@ -668,8 +668,8 @@ public abstract class Char extends Actor {
 		if (Dungeon.hero.heroClass != HeroClass.CLERIC
 				&& Dungeon.hero.hasTalent(Talent.BLESS)
 				&& attacker.alignment == Alignment.ALLY){
-			// + 3%/5%
-			acuRoll *= 1.01f + 0.02f*Dungeon.hero.pointsInTalent(Talent.BLESS);
+			// + 10%/20%
+			acuRoll *= 1f + 0.1f*Dungeon.hero.pointsInTalent(Talent.BLESS);
 		}
 		acuRoll *= accMulti;
 
@@ -684,8 +684,8 @@ public abstract class Char extends Actor {
 		if (Dungeon.hero.heroClass != HeroClass.CLERIC
 				&& Dungeon.hero.hasTalent(Talent.BLESS)
 				&& defender.alignment == Alignment.ALLY){
-			// + 3%/5%
-			defRoll *= 1.01f + 0.02f*Dungeon.hero.pointsInTalent(Talent.BLESS);
+			// + 10%/20%
+			defRoll *= 1f + 0.1f*Dungeon.hero.pointsInTalent(Talent.BLESS);
 		}
 		defRoll *= FerretTuft.evasionMultiplier();
 
@@ -750,10 +750,7 @@ public abstract class Char extends Actor {
 				&& Dungeon.hero.heroClass != HeroClass.CLERIC
 				&& Dungeon.hero.hasTalent(Talent.SHIELD_OF_LIGHT)
 				&& TargetHealthIndicator.instance.target() == enemy){
-			//33/50%
-			if (Random.Int(6) < 1+Dungeon.hero.pointsInTalent(Talent.SHIELD_OF_LIGHT)){
-				damage -= 1;
-			}
+			damage = Math.max(0, damage - 1 - Dungeon.hero.pointsInTalent(Talent.SHIELD_OF_LIGHT));
 		}
 
 		// hero and pris images skip this as they already benefit from hero's armor glyph proc

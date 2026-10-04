@@ -34,7 +34,13 @@ public class ExperimentalTengusMask extends TengusMask {
 			ArrayList<HeroSubClass> pool = new ArrayList<>(Arrays.asList(HeroSubClass.values()));
 			pool.remove(HeroSubClass.NONE);
 			if (!hero.randomMode) pool.removeAll(Arrays.asList(hero.heroClass.subClasses()));
-			Random.shuffle(pool);
+			//固定本局种子与初始职业，抽取选项不消耗其他随机流。
+			Random.pushGenerator(Dungeon.seed ^ 0x4D41534BL ^ ((long) hero.heroClass.ordinal() << 32));
+			try {
+				Random.shuffle(pool);
+			} finally {
+				Random.popGenerator();
+			}
 			choices = new HeroSubClass[]{pool.get(0), pool.get(1)};
 		}
 		return choices;
