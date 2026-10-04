@@ -154,7 +154,6 @@ public class UnstableSpellbook extends ChargedArtifact {
 				|| !ExoticScroll.regToExo.containsKey(scroll.getClass()));
 
 		scroll.anonymize();
-		scroll.talentChance = 0;  //spellbook does not trigger on-scroll talents
 		curItem = scroll;
 		curUser = hero;
 
@@ -178,7 +177,6 @@ public class UnstableSpellbook extends ChargedArtifact {
 						curItem = scroll;
 						spendCharge(1);
 						scroll.anonymize();
-						scroll.talentChance = 0;
 						checkForArtifactProc(curUser, scroll);
 						scroll.doRead();
 						Talent.onArtifactUsed(Dungeon.hero);
@@ -232,7 +230,6 @@ public class UnstableSpellbook extends ChargedArtifact {
 			curUser = Dungeon.hero;
 			curItem = scroll;
 			scroll.anonymize();
-			scroll.talentChance = 0;
 			Game.runOnRenderThread(new Callback() {
 				@Override
 				public void call() {

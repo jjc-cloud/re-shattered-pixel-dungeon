@@ -78,6 +78,8 @@ public class ReShatteredChanges {
 				"\n-守望者在开启荒芜之地挑战下仍可消耗种子手动种植催生出高草。\n-守望者只需要进入草地即可刷新树肤韧甲，且数值上调33%。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V20_DUELIST_HEROARM, "武僧",
 				"\n阴阳调和返还的内力上升至10%/20%/30%。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V061_SPELLBOOK, "无序魔典",
+				"\n阅读无序魔典可以触发天赋效果。"));
 
 		changes = new ChangeInfo("削弱", false, null);
 		changes.hardlight(CharSprite.NEGATIVE);
