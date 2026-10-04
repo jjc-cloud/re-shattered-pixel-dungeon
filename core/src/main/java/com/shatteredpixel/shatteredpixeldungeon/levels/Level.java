@@ -1631,6 +1631,7 @@ public abstract class Level implements Bundlable {
 	}
 
 	private static boolean[] heroMindFov;
+	private boolean[] heroFOVBuffer;
 
 	private static boolean[] modifiableBlocking;
 	private static boolean[] environmentalFOV;
@@ -1650,6 +1651,14 @@ public abstract class Level implements Bundlable {
 	private ArrayList<Class<? extends Blob>> environmentalLightBlobs;
 
 	public void updateFieldOfView( Char c, boolean[] fieldOfView ) {
+		// 渲染线程只读取完成的英雄视野，避免普通视野清空后、扩展视野补回前闪烁。
+		boolean[] destination = fieldOfView;
+		if (c == Dungeon.hero) {
+			if (heroFOVBuffer == null || heroFOVBuffer.length != length()) {
+				heroFOVBuffer = new boolean[length()];
+			}
+			fieldOfView = heroFOVBuffer;
+		}
 
 		int cx = c.pos % width();
 		int cy = c.pos / width();
@@ -1898,6 +1907,7 @@ public abstract class Level implements Bundlable {
 			for (Heap heap : heaps.valueList())
 				if (!heap.seen && fieldOfView[heap.pos])
 					heap.seen = true;
+			System.arraycopy(fieldOfView, 0, destination, 0, fieldOfView.length);
 		}
 
 	}

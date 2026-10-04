@@ -77,7 +77,8 @@ public class SuperSecretRoom extends SecretRoom {
 
 	private Item createPrize() {
 		Item prize;
-		switch (Random.Int(4)) {
+		// 武器、护甲各 12.5%，法杖 50%，戒指 25%。
+		switch (Random.Int(8)) {
 			case 0:
 				// 与隐藏迷宫房相同：使用下一区域的阶数概率及默认武器池。
 				prize = Generator.randomWeapon(Dungeon.depth / 5 + 1, true);
@@ -88,6 +89,9 @@ public class SuperSecretRoom extends SecretRoom {
 				if (((Armor) prize).hasCurseGlyph()) ((Armor) prize).inscribe(null);
 				break;
 			case 2:
+			case 3:
+			case 4:
+			case 5:
 				prize = Generator.randomUsingDefaults(Generator.Category.WAND);
 				break;
 			default:

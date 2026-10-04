@@ -288,10 +288,6 @@ public class WndShopOrder extends Window {
 				}
 				final boolean selectable = !alreadyChosen;
 				ItemButton button = new ItemButton() {
-					{
-						if (!selectable) bg.hardlight(0x777777);
-					}
-
 					@Override
 					protected void onClick() {
 						if (!selectable) return;

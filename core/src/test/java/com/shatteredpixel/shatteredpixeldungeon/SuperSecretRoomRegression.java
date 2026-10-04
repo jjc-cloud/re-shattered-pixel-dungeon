@@ -168,7 +168,11 @@ public class SuperSecretRoomRegression {
 		check(Math.abs(upgrades[1] / 4000f - 0.5f) < 0.03f, "+1 概率约 50%");
 		check(Math.abs(upgrades[2] / 4000f - 0.3f) < 0.03f, "+2 概率约 30%");
 		check(Math.abs(upgrades[3] / 4000f - 0.2f) < 0.03f, "+3 概率约 20%");
-		for (int count : categories) check(Math.abs(count / 4000f - 0.25f) < 0.03f, "四类装备等概率");
+		float[] categoryChances = {0.125f, 0.125f, 0.5f, 0.25f};
+		for (int i = 0; i < categories.length; i++) {
+			check(Math.abs(categories[i] / 4000f - categoryChances[i]) < 0.03f,
+					"武器护甲合计 25%，法杖 50%，戒指 25%");
+		}
 		System.out.println("强化等级抽样: " + Arrays.toString(upgrades) + "; 装备类别抽样: " + Arrays.toString(categories));
 	}
 
@@ -271,6 +275,8 @@ public class SuperSecretRoomRegression {
 						|| level.map[cell] == Terrain.BARRICADE) Level.set(cell, Terrain.DOOR, level);
 			}
 			check(level.levelExplorePercent(Dungeon.depth) == 1f, "未破超级隐藏房入口实墙、未见奖励仍为满探索分");
+			// 高水草覆盖可能没有合格地面，为隐藏入口评分检查明确预留一格空地。
+			Level.set(level.pointToCell(level.room(EmptyRoom.class).center()), Terrain.EMPTY, level);
 			check(level.placeHiddenEntrance(false), "普通房间可放置隐藏楼层入口");
 			check(level.levelExplorePercent(Dungeon.depth) == 1f, "未揭露隐藏楼层入口不扣探索分");
 			if (sample < 2) {

@@ -160,16 +160,20 @@ public abstract class RegularBuilder extends Builder {
 			}
 			
 			Room r = roomsToBranch.get(i);
+			boolean superSecret = r instanceof SuperSecretRoom;
+			// 超级隐藏房按实际候选对象等概率抽取，不继承大房间的重复权重。
+			ArrayList<Room> candidates = superSecret
+					? new ArrayList<>(new LinkedHashSet<>(branchable)) : branchable;
 			
 			connectingRoomsThisBranch.clear();
 			
 			do {
-				curr = Random.element(branchable);
-			} while( r instanceof SecretRoom && !(r instanceof SuperSecretRoom) && curr instanceof ConnectionRoom);
+				curr = Random.element(candidates);
+			} while( r instanceof SecretRoom && !superSecret && curr instanceof ConnectionRoom);
 			
 			// 超级隐藏房自带两格直道，直接接在可容纳它的位置。
 			int connectingRooms = 0;
-			if (!(r instanceof SuperSecretRoom)) {
+			if (!superSecret) {
 				connectingRooms = Random.chances(connectionChances);
 				if (connectingRooms == -1){
 					connectionChances = connChances.clone();
@@ -211,7 +215,9 @@ public abstract class RegularBuilder extends Builder {
 			tries = 10;
 			
 			do {
-				angle = placeRoom(rooms, curr, r, randomBranchAngle(curr));
+				// 超级隐藏房直接随机方向，不采用环路构建器的朝中心偏向。
+				float branchAngle = superSecret ? Random.Float(360f) : randomBranchAngle(curr);
+				angle = placeRoom(rooms, curr, r, branchAngle);
 				tries--;
 			} while (angle == -1 && tries > 0);
 			
