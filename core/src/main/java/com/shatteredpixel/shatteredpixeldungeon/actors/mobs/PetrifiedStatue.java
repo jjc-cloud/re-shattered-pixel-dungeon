@@ -1,6 +1,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
@@ -147,6 +148,9 @@ public class PetrifiedStatue extends Mob {
 		if (Dungeon.level != null) Dungeon.level.mobs.remove(this);
 	}
 	@Override public void die(Object source) {
+		if (isAlive() && Dungeon.hero != null && Dungeon.hero.isAlive()) {
+			Badges.validatePetrifiedStatueShattered();
+		}
 		destroy();
 		if (sprite != null) sprite.die();
 	}

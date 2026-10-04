@@ -459,10 +459,14 @@ public class Hero extends Char {
 	public void upgradeTalent( Talent talent ){
 		for (LinkedHashMap<Talent, Integer> tier : talents){
 			for (Talent f : tier.keySet()){
-				if (f == talent) tier.put(talent, tier.get(talent)+1);
+				if (f == talent) {
+					tier.put(talent, tier.get(talent)+1);
+					if (this == Dungeon.hero) Statistics.talentsActivated = true;
+				}
 			}
 		}
 		Talent.onTalentUpgraded(this, talent);
+		if (this == Dungeon.hero) Badges.validateLevelReached();
 	}
 
 	public int talentPointsSpent(int tier){
@@ -2440,6 +2444,7 @@ public class Hero extends Char {
 	}
 	
 	public static void reallyDie( Object cause ) {
+		Badges.validateDeathFromAlly(cause);
 		
 		int length = Dungeon.level.length();
 		int[] map = Dungeon.level.map;

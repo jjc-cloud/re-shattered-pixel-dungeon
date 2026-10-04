@@ -58,6 +58,9 @@ public class ReShatteredChanges {
 		
 
 
+		changes.addButton(new ChangeButton(ChangeIcons.V061_BADGE, "新徽章",
+				"\n-混沌终局！：在开启所有挑战，且所有选择全随机的的情况下通关随机模式。\n-不堪一击：摧毁一个石化雕像。\n-夺命一击：在不触发光耀之拳或暗影之拳闪现的情况下击杀其中之一。\n-倒戈：死于友方单位。\n-速通玩家：在8000回合内通关。\n-绝食：不食用任何食物的情况下通关。\n-孱弱之躯：通关时基础力量为10。\n-炼金麻瓜：通关时没有炼制任何物品。\n-一无所长：通关时没有投入任何天赋点数。\n-天启之人：投入至少37点天赋点数。"));
+
 		changes = new ChangeInfo("改动", false, null);
 		changes.hardlight(CharSprite.WARNING);
 		changeInfos.add(changes);

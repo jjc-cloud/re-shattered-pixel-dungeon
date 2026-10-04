@@ -74,3 +74,10 @@ tasks.register('caveCollapseRegression', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'com.shatteredpixel.shatteredpixeldungeon.CaveCollapseRegression'
 }
+
+tasks.register('achievementRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    workingDir = projectDir.parentFile
+    mainClass = 'com.shatteredpixel.shatteredpixeldungeon.AchievementRegression'
+}

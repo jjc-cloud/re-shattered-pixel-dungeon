@@ -112,6 +112,14 @@ runtime {
 
 }
 
+tasks.register('journalRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    workingDir = projectDir.parentFile
+    mainClass = 'com.shatteredpixel.shatteredpixeldungeon.desktop.JournalRegression'
+    args providers.gradleProperty('journalOrientation').getOrElse('landscape')
+}
+
 //portable build: a folder that can be extracted and run directly, no installer needed
 tasks.register('portableZip', Zip) {
     dependsOn jpackageImage

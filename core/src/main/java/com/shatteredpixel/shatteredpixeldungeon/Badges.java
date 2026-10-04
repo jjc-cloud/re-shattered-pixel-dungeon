@@ -22,8 +22,11 @@
 package com.shatteredpixel.shatteredpixeldungeon;
 
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.YogFist;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
@@ -132,6 +135,8 @@ public class Badges {
 		RESEARCHER_2                ( 55, BadgeType.JOURNAL ),
 		GAMES_PLAYED_2              ( 56, BadgeType.GLOBAL ),
 		HIGH_SCORE_2                ( 57 ),
+		PETRIFIED_STATUE_SHATTERED  ( 137 ),
+		DEATH_FROM_ALLY             ( 139 ),
 
 		//gold
 		ENEMY_HAZARDS               ( 64 ),
@@ -162,6 +167,10 @@ public class Badges {
 		RESEARCHER_3                ( 85, BadgeType.JOURNAL ),
 		GAMES_PLAYED_3              ( 86, BadgeType.GLOBAL ),
 		HIGH_SCORE_3                ( 87 ),
+		FIST_WITHOUT_TELEPORT       ( 138 ),
+		SPEEDRUN_1                  ( 140 ),
+		VICTORY_LOW_STRENGTH        ( 144 ),
+		VICTORY_NO_ALCHEMY          ( 145 ),
 
 		//platinum
 		MANY_BUFFS                  ( 96 ),
@@ -198,6 +207,10 @@ public class Badges {
 		GAMES_PLAYED_4              ( 109, BadgeType.GLOBAL ),
 		HIGH_SCORE_4                ( 110 ),
 		CHAMPION_1                  ( 111 ),
+		SPEEDRUN_2                  ( 141 ),
+		VICTORY_NO_FOOD             ( 143 ),
+		VICTORY_NO_TALENTS          ( 146 ),
+		VICTORY_MANY_TALENTS        ( 147 ),
 
 		//diamond
 		PACIFIST_ASCENT             ( 120 ),
@@ -207,7 +220,10 @@ public class Badges {
 		GAMES_PLAYED_5              ( 124, BadgeType.GLOBAL ),
 		HIGH_SCORE_5                ( 125 ),
 		CHAMPION_2                  ( 126 ),
-		CHAMPION_3                  ( 127 );
+		CHAMPION_3                  ( 127 ),
+		// 新增徽章从图集第 18 行起独占 136–147 号，行列从 1 开始计数。
+		VICTORY_CHAOS               ( 136 ),
+		SPEEDRUN_3                  ( 142 );
 
 		public boolean meta;
 
@@ -440,6 +456,17 @@ public class Badges {
 		}
 		
 		displayBadge( badge );
+
+		// 天赋投入与等级成长共用此入口，达到门槛即获得，无需取得护符。
+		if (!local.contains(Badge.VICTORY_MANY_TALENTS)) {
+			int talentPoints = 0;
+			for (int tier = 1; tier <= Dungeon.hero.talents.size(); tier++) {
+				talentPoints += Dungeon.hero.talentPointsSpent(tier);
+			}
+			if (talentPoints >= 37 && local.add(Badge.VICTORY_MANY_TALENTS)) {
+				displayBadge(Badge.VICTORY_MANY_TALENTS);
+			}
+		}
 	}
 	
 	public static void validateStrengthAttained() {
@@ -1015,6 +1042,9 @@ public class Badges {
 	
 	public static void validateVictory() {
 
+		// 护符界面可反复打开，所有胜利条件固定在第一次取得护符时。
+		if (local.contains(Badge.VICTORY)) return;
+
 		Badge badge = Badge.VICTORY;
 		local.add( badge );
 		displayBadge( badge );
@@ -1022,10 +1052,53 @@ public class Badges {
 		//technically player can also not spend talent points if they want for some reason
 		if (Statistics.qualifiedForRandomVictoryBadge
 				&& Dungeon.hero.subClass != null
+				&& Dungeon.hero.subClass != HeroSubClass.NONE
 				&& Dungeon.hero.armorAbility != null){
 			badge = Badge.VICTORY_RANDOM;
 			local.add( badge );
+			if (Challenges.activeChallenges() == Challenges.MASKS.length){
+				unlock(badge);
+				badge = Badge.VICTORY_CHAOS;
+				local.add(badge);
+			}
 			displayBadge( badge );
+		}
+
+		float turns = Statistics.duration + Actor.now();
+		badge = null;
+		if (turns <= 8000) {
+			badge = Badge.SPEEDRUN_1;
+			local.add(badge);
+		}
+		if (turns <= 6000) {
+			unlock(badge);
+			badge = Badge.SPEEDRUN_2;
+			local.add(badge);
+		}
+		if (turns <= 4000) {
+			unlock(badge);
+			badge = Badge.SPEEDRUN_3;
+			local.add(badge);
+		}
+		displayBadge(badge);
+
+		int talentPoints = 0;
+		for (int tier = 1; tier <= Dungeon.hero.talents.size(); tier++) {
+			talentPoints += Dungeon.hero.talentPointsSpent(tier);
+		}
+		Badge[] conditionalBadges = {
+				Badge.VICTORY_NO_FOOD, Badge.VICTORY_LOW_STRENGTH, Badge.VICTORY_NO_ALCHEMY,
+				Badge.VICTORY_NO_TALENTS
+		};
+		boolean[] conditions = {
+				Statistics.foodEaten == 0, Dungeon.hero.STR == 10, Statistics.itemsCrafted == 0,
+				!Statistics.talentsActivated && talentPoints == 0
+		};
+		for (int i = 0; i < conditionalBadges.length; i++) {
+			if (conditions[i]) {
+				local.add(conditionalBadges[i]);
+				displayBadge(conditionalBadges[i]);
+			}
 		}
 
 		badge = victoryClassBadges.get(Dungeon.hero.heroClass);
@@ -1043,6 +1116,27 @@ public class Badges {
 		if (allUnlocked){
 			badge = Badge.VICTORY_ALL_CLASSES;
 			displayBadge( badge );
+		}
+	}
+
+	public static void validatePetrifiedStatueShattered() {
+		if (local.add(Badge.PETRIFIED_STATUE_SHATTERED)) {
+			displayBadge(Badge.PETRIFIED_STATUE_SHATTERED);
+		}
+	}
+
+	public static void validateFistSlain(YogFist fist) {
+		if ((fist instanceof YogFist.BrightFist || fist instanceof YogFist.DarkFist)
+				&& !fist.hasTeleported && local.add(Badge.FIST_WITHOUT_TELEPORT)) {
+			displayBadge(Badge.FIST_WITHOUT_TELEPORT);
+		}
+	}
+
+	public static void validateDeathFromAlly(Object cause) {
+		if (cause instanceof Char && cause != Dungeon.hero
+				&& ((Char) cause).alignment == Char.Alignment.ALLY
+				&& local.add(Badge.DEATH_FROM_ALLY)) {
+			displayBadge(Badge.DEATH_FROM_ALLY);
 		}
 	}
 
@@ -1244,7 +1338,9 @@ public class Badges {
 			{Badge.RESEARCHER_1, Badge.RESEARCHER_2, Badge.RESEARCHER_3, Badge.RESEARCHER_4, Badge.RESEARCHER_5},
 			{Badge.HIGH_SCORE_1, Badge.HIGH_SCORE_2, Badge.HIGH_SCORE_3, Badge.HIGH_SCORE_4, Badge.HIGH_SCORE_5},
 			{Badge.GAMES_PLAYED_1, Badge.GAMES_PLAYED_2, Badge.GAMES_PLAYED_3, Badge.GAMES_PLAYED_4, Badge.GAMES_PLAYED_5},
-			{Badge.CHAMPION_1, Badge.CHAMPION_2, Badge.CHAMPION_3}
+			{Badge.CHAMPION_1, Badge.CHAMPION_2, Badge.CHAMPION_3},
+			{Badge.VICTORY_RANDOM, Badge.VICTORY_CHAOS},
+			{Badge.SPEEDRUN_1, Badge.SPEEDRUN_2, Badge.SPEEDRUN_3}
 	};
 
 	//don't show the later badge if the earlier one isn't unlocked

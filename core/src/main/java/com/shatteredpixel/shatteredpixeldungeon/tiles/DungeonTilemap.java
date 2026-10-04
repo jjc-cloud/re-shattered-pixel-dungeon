@@ -42,7 +42,8 @@ public abstract class DungeonTilemap extends Tilemap {
 	public DungeonTilemap(String tex) {
 		super(tex, new TextureFilm( tex, SIZE, SIZE ) );
 		int color = Terrain.COLLAPSE_WALL_COLOR & 0xFFFFFF;
-		if (color != 0xFFFFFF && Dungeon.level.caveCollapse != null
+		// 主菜单日志也会创建地形图标，此时还没有载入楼层。
+		if (color != 0xFFFFFF && Dungeon.level != null && Dungeon.level.caveCollapse != null
 				&& (this instanceof DungeonTerrainTilemap || this instanceof DungeonWallsTilemap)) {
 			int width = texture.width, height = texture.height;
 			int[] pixels = new int[width * height * 2];
