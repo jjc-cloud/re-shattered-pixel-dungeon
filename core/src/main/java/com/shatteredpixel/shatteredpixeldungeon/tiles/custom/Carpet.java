@@ -118,11 +118,11 @@ public class Carpet extends CustomTilemap {
 				&& tileOverrides.get(index) == SKIP) return false;
 		if (tileOverrides.containsKey(index) && tileOverrides.get(index) == override) return false;
 		tileOverrides.put(index, override);
-		if (vis != null && vis.alive && !updateQueued) {
+		if (vis != null && vis.alive && vis.parent != null && !updateQueued) {
 			updateQueued = true;
 			Game.runOnRenderThread(() -> {
 				updateQueued = false;
-				if (vis != null && vis.alive) create();
+				if (vis != null && vis.alive && vis.parent != null) create();
 			});
 		}
 		return true;
@@ -130,7 +130,8 @@ public class Carpet extends CustomTilemap {
 
 	@Override
 	public synchronized Tilemap create() {
-		Tilemap v = vis != null && vis.alive ? vis : super.create();
+		// 场景销毁会释放缓冲区并清空 parent，但不会清除 alive；返回游戏时必须重建。
+		Tilemap v = vis != null && vis.alive && vis.parent != null ? vis : super.create();
 		int[] data = new int[tileW*tileH];
 		boolean[] intact = new boolean[data.length];
 		int regionOfs = 16 * (int)((Dungeon.depth-1)/5);

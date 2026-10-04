@@ -327,31 +327,26 @@ public class CloakOfShadows extends ChargedArtifact {
 					((Hero) target).interrupt();
 				} else {
 					spendCharge(1);
-					if (charge < 0) {
-						detach();
-						GLog.w(Messages.get(this, "no_charge"));
-						((Hero) target).interrupt();
-					} else {
-						//target hero level is 1 + 2*cloak level
-						int lvlDiffFromTarget = ((Hero) target).lvl - (1+level()*2);
-						//plus an extra one for each level after 6
-						if (level() >= 7){
-							lvlDiffFromTarget -= level()-6;
-						}
-						if (lvlDiffFromTarget >= 0){
-							exp += Math.round(10f * Math.pow(1.1f, lvlDiffFromTarget));
-						} else {
-							exp += Math.round(10f * Math.pow(0.75f, -lvlDiffFromTarget));
-						}
-
-						if (exp >= (level() + 1) * 50 && level() < levelCap) {
-							upgrade();
-							Catalog.countUse(CloakOfShadows.class);
-							exp -= level() * 50;
-							GLog.p(Messages.get(this, "levelup"));
-						}
-						turnsToCost = 4;
+					// 获准借用的充能同样提供完整的四回合隐身，下次扣费时再检查。
+					//target hero level is 1 + 2*cloak level
+					int lvlDiffFromTarget = ((Hero) target).lvl - (1+level()*2);
+					//plus an extra one for each level after 6
+					if (level() >= 7){
+						lvlDiffFromTarget -= level()-6;
 					}
+					if (lvlDiffFromTarget >= 0){
+						exp += Math.round(10f * Math.pow(1.1f, lvlDiffFromTarget));
+					} else {
+						exp += Math.round(10f * Math.pow(0.75f, -lvlDiffFromTarget));
+					}
+
+					if (exp >= (level() + 1) * 50 && level() < levelCap) {
+						upgrade();
+						Catalog.countUse(CloakOfShadows.class);
+						exp -= level() * 50;
+						GLog.p(Messages.get(this, "levelup"));
+					}
+					turnsToCost = 4;
 				}
 				updateQuickslot();
 			}

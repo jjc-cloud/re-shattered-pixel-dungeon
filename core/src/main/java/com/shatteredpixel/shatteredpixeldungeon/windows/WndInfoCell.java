@@ -166,9 +166,9 @@ public class WndInfoCell extends Window {
 
 			desc += Dungeon.level.tileDesc(Dungeon.level.map[cell]);
 		}
-		if (Dungeon.level.caveCollapse != null && Dungeon.level.caveCollapse.contains(cell)
-				&& Dungeon.level.map[cell] != Terrain.COLLAPSE_WALL) {
-			desc += "\n\n" + Messages.get(CaveCollapse.class, "ground_desc");
+		// 先确定基础说明，再逐层追加环境；空地的默认说明也不被环境文本挤掉。
+		if (desc.length() == 0) {
+			desc = Messages.get(this, "nothing");
 		}
 		titlebar.setRect(0, 0, WIDTH, 0);
 		add(titlebar);
@@ -185,8 +185,12 @@ public class WndInfoCell extends Window {
 				desc += blob.tileDesc();
 			}
 		}
+		if (Dungeon.level.caveCollapse != null && Dungeon.level.caveCollapse.contains(cell)
+				&& Dungeon.level.map[cell] != Terrain.COLLAPSE_WALL) {
+			desc += "\n\n" + Messages.get(CaveCollapse.class, "ground_desc");
+		}
 		
-		info.text( desc.length() == 0 ? Messages.get(this, "nothing") : desc );
+		info.text( desc );
 		info.maxWidth(WIDTH);
 		info.setPos(titlebar.left(), titlebar.bottom() + 2*GAP);
 		
