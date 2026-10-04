@@ -42,8 +42,23 @@ public class Fire extends Blob {
 
 	@Override
 	public void seed( Level level, int cell, int amount ) {
+		Freezing freezing = (Freezing)level.blobs.get(Freezing.class);
+		Blizzard blizzard = (Blizzard)level.blobs.get(Blizzard.class);
+		boolean hasFreezing = freezing != null && freezing.volume > 0
+				&& freezing.cur != null && freezing.cur[cell] > 0;
+		boolean hasBlizzard = blizzard != null && blizzard.volume > 0
+				&& blizzard.cur != null && blizzard.cur[cell] > 0;
+		if (hasFreezing || hasBlizzard) {
+			// 冰先处理新加入的火，不能先蒸发冰下面的水。
+			super.seed(level, cell, amount);
+			clear(cell);
+			// 暴风雪保留原本吸收普通火的规则，普通冻结则与火整格抵消。
+			if (hasFreezing && !hasBlizzard) freezing.clear(cell);
+			return;
+		}
 		if (level.water[cell]) {
-			Level.set(cell, Terrain.EMPTY, level);
+			// 蒸发时露出覆水前的地面；天然水没有记录，仍露出普通地面。
+			Level.set(cell, level.waterCoveredTerrain.get(cell, Terrain.EMPTY), level);
 			//Hero-side effects generate before blobs act, while mob-side effects generate
 			//after them. Give early generators one setup tick so both timings leave the
 			//steam visible for one complete turn.

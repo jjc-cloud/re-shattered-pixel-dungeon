@@ -174,6 +174,8 @@ public abstract class Level implements Bundlable {
 	public boolean[] solid;
 	public boolean[] avoid;
 	public boolean[] water;
+	// 只记录运行中被水覆盖的地面；草地、陷阱及可破坏物不随退水复原。
+	public final SparseArray<Integer> waterCoveredTerrain = new SparseArray<>();
 	public boolean[] pit;
 
 	public boolean[] openSpace;
@@ -278,6 +280,8 @@ public abstract class Level implements Bundlable {
 	private static final String WIDTH       = "width";
 	private static final String HEIGHT      = "height";
 	private static final String MAP			= "map";
+	private static final String WATER_COVERED_CELLS = "water_covered_cells";
+	private static final String WATER_COVERED_TERRAIN = "water_covered_terrain";
 	private static final String VISITED		= "visited";
 	private static final String MAPPED		= "mapped";
 	private static final String TRANSITIONS	= "transitions";
@@ -481,6 +485,7 @@ public abstract class Level implements Bundlable {
 		solid		= new boolean[length];
 		avoid		= new boolean[length];
 		water		= new boolean[length];
+		waterCoveredTerrain.clear();
 		pit			= new boolean[length];
 
 		openSpace   = new boolean[length];
@@ -524,6 +529,13 @@ public abstract class Level implements Bundlable {
 		customWalls = new ArrayList<>();
 		
 		map		= bundle.getIntArray( MAP );
+		if (bundle.contains(WATER_COVERED_CELLS)) {
+			int[] cells = bundle.getIntArray(WATER_COVERED_CELLS);
+			int[] terrain = bundle.getIntArray(WATER_COVERED_TERRAIN);
+			for (int i = 0; i < cells.length; i++) {
+				waterCoveredTerrain.put(cells[i], terrain[i]);
+			}
+		}
 		hiddenEntranceCell = bundle.contains(HIDDEN_ENTRANCE) ? bundle.getInt(HIDDEN_ENTRANCE) : -1;
 		hiddenEntranceGrass = bundle.getBoolean(HIDDEN_ENTRANCE_GRASS);
 		if (bundle.contains("terrain_interactions")) {
@@ -632,6 +644,13 @@ public abstract class Level implements Bundlable {
 		bundle.put( WIDTH, width );
 		bundle.put( HEIGHT, height );
 		bundle.put( MAP, map );
+		int[] waterCells = waterCoveredTerrain.keyArray();
+		int[] waterTerrain = new int[waterCells.length];
+		for (int i = 0; i < waterCells.length; i++) {
+			waterTerrain[i] = waterCoveredTerrain.get(waterCells[i]);
+		}
+		bundle.put(WATER_COVERED_CELLS, waterCells);
+		bundle.put(WATER_COVERED_TERRAIN, waterTerrain);
 		if (caveCollapse != null) {
 			Bundle regions = new Bundle();
 			caveCollapse.storeInBundle(regions);
@@ -1179,6 +1198,22 @@ public abstract class Level implements Bundlable {
 		if (level.terrainInteractions != null && level.map[cell] != terrain) {
 			level.terrainInteractions.clearOverride(cell);
 		}
+		if (terrain == Terrain.WATER && previous != Terrain.WATER) {
+			int ground = Terrain.EMPTY;
+			switch (previous) {
+				case Terrain.EMBERS_SP:
+					ground = Terrain.EMPTY_SP;
+					break;
+				case Terrain.EMPTY_SP:
+				case Terrain.EMPTY_DECO:
+				case Terrain.CUSTOM_DECO_EMPTY:
+					ground = previous;
+					break;
+			}
+			level.waterCoveredTerrain.put(cell, ground);
+		} else if (previous == Terrain.WATER && terrain != Terrain.WATER) {
+			level.waterCoveredTerrain.remove(cell);
+		}
 		Painter.set(level, cell, terrain);
 
 		if (terrain != Terrain.TRAP && terrain != Terrain.SECRET_TRAP && terrain != Terrain.INACTIVE_TRAP) {
@@ -1228,7 +1263,8 @@ public abstract class Level implements Bundlable {
 		pit[cell]           = (flags & Terrain.PIT) != 0;
 		water[cell]         = terrain == Terrain.WATER;
 
-		if (this instanceof SewerLevel){
+		//与全量构建一致，下水道区域的 Boss 层和隐藏楼层也保留木桶的可燃性。
+		if (Dungeon.depth >= 1 && (Dungeon.depth - 1) / 5 == 0){
 			if (map[cell] == Terrain.REGION_DECO || map[cell] == Terrain.REGION_DECO_ALT
 					|| map[cell] == Terrain.SEWER_BARREL_MARKED || map[cell] == Terrain.SEWER_BARREL_MARKED_ALT){
 				flamable[cell] = true;
@@ -1433,13 +1469,12 @@ public abstract class Level implements Bundlable {
 				terr == Terrain.EMBERS || terr == Terrain.EMBERS_SP || terr == Terrain.EMPTY_SP ||
 				terr == Terrain.HIGH_GRASS || terr == Terrain.FURROWED_GRASS
 				|| terr == Terrain.EMPTY_DECO){
-			set(cell, Terrain.WATER);
+			set(cell, Terrain.WATER, this);
 			GameScene.updateMap(cell);
 			return true;
 		} else if (includeTraps && (terr == Terrain.SECRET_TRAP ||
 				terr == Terrain.TRAP || terr == Terrain.INACTIVE_TRAP)){
-			set(cell, Terrain.WATER);
-			Dungeon.level.traps.remove(cell);
+			set(cell, Terrain.WATER, this);
 			GameScene.updateMap(cell);
 			return true;
 		}

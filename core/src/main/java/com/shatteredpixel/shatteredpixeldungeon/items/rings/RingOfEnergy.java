@@ -27,6 +27,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.CloakOfShadows;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HolyTome;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
@@ -70,7 +72,9 @@ public class RingOfEnergy extends Ring {
 			if (hero.subClass == HeroSubClass.MONK) bonus *= 1.2f;
 		}
 
-		if (target instanceof Hero && ((Hero) target).heroClass != HeroClass.CLERIC && ((Hero) target).hasTalent(Talent.LIGHT_READING)){
+		if (target instanceof Hero && ((Hero) target).heroClass != HeroClass.CLERIC
+				&& ((Hero) target).hasTalent(Talent.LIGHT_READING)
+				&& ((Hero) target).belongings.getItem(HolyTome.class) == null){
 			bonus *= 1f + (0.2f * ((Hero) target).pointsInTalent(Talent.LIGHT_READING)/3f);
 		}
 
@@ -86,7 +90,9 @@ public class RingOfEnergy extends Ring {
 			if (hero.subClass == HeroSubClass.MONK) bonus *= 1.2f;
 		}
 
-		if (target instanceof Hero && ((Hero) target).heroClass != HeroClass.ROGUE && ((Hero) target).hasTalent(Talent.LIGHT_CLOAK)){
+		if (target instanceof Hero && ((Hero) target).heroClass != HeroClass.ROGUE
+				&& ((Hero) target).hasTalent(Talent.LIGHT_CLOAK)
+				&& ((Hero) target).belongings.getItem(CloakOfShadows.class) == null){
 			bonus *= 1f + (0.2f * ((Hero) target).pointsInTalent(Talent.LIGHT_CLOAK)/3f);
 		}
 

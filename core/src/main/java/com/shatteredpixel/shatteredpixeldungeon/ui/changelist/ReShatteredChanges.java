@@ -60,8 +60,8 @@ public class ReShatteredChanges {
 		changes.hardlight(CharSprite.WARNING);
 		changeInfos.add(changes);
 
-		changes.addButton(new ChangeButton(ChangeIcons.V010_ESCAPE_PLAN, "公共天赋",
-				"\n-现在逃脱计划触发后会直接选中交换的单位。\n-现在启用多重存在会每100回合尝试在英雄周围生成一个镜像。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V010_ESCAPE_PLAN, "天赋相关",
+				"\n-现在逃脱计划触发后会直接选中交换的单位。\n-现在启用多重存在会每100回合尝试在英雄周围生成一个镜像。\n-增强了一些被其他职业获取效果不同的天赋。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V33_RANDOMIZE,"随机模式",
 				"\n随机一切！"));	
 		changes.addButton(new ChangeButton(ChangeIcons.V062_ROGUE_CLOTH,"搜索范围",
