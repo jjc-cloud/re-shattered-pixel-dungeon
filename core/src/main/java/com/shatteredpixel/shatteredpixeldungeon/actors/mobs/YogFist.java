@@ -80,6 +80,7 @@ public abstract class YogFist extends Mob {
 	}
 
 	private float rangedCooldown;
+	public boolean hasTeleported;
 	protected boolean canRangedInMelee = true;
 
 	protected void incrementRangedCooldown(){
@@ -159,6 +160,7 @@ public abstract class YogFist extends Mob {
 
 	@Override
 	public void die(Object cause) {
+		Badges.validateFistSlain(this);
 		super.die(cause);
 		for ( Char c : Actor.chars() ){
 			if (c instanceof YogDzewa){
@@ -199,17 +201,20 @@ public abstract class YogFist extends Mob {
 	}
 
 	public static final String RANGED_COOLDOWN = "ranged_cooldown";
+	private static final String HAS_TELEPORTED = "has_teleported";
 
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
 		bundle.put(RANGED_COOLDOWN, rangedCooldown);
+		bundle.put(HAS_TELEPORTED, hasTeleported);
 	}
 
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
 		rangedCooldown = bundle.getFloat(RANGED_COOLDOWN);
+		hasTeleported = bundle.getBoolean(HAS_TELEPORTED);
 	}
 
 	public static class BurningFist extends YogFist {
@@ -522,6 +527,7 @@ public abstract class YogFist extends Mob {
 			int beforeHP = HP;
 			super.damage(dmg, src);
 			if (isAlive() && beforeHP > HT/2 && HP <= HT/2){
+				hasTeleported = true;
 				HP = HT/2;
 				Buff.prolong( Dungeon.hero, Blindness.class, Blindness.DURATION*1.5f );
 				int i;
@@ -592,6 +598,7 @@ public abstract class YogFist extends Mob {
 			int beforeHP = HP;
 			super.damage(dmg, src);
 			if (isAlive() && beforeHP > HT/2 && HP <= HT/2){
+				hasTeleported = true;
 				HP = HT/2;
 				Light l = Dungeon.hero.buff(Light.class);
 				if (l != null){

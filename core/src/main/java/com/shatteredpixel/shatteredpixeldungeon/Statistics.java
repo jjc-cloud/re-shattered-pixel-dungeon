@@ -35,6 +35,7 @@ public class Statistics {
 	public static int enemiesSlain;
 	public static int foodEaten;
 	public static int itemsCrafted;
+	public static boolean talentsActivated;
 	public static int piranhasKilled;
 	public static int hazardAssistedKills;
 	public static int ankhsUsed;
@@ -85,6 +86,7 @@ public class Statistics {
 		enemiesSlain	= 0;
 		foodEaten		= 0;
 		itemsCrafted    = 0;
+		talentsActivated = false;
 		piranhasKilled	= 0;
 		hazardAssistedKills = 0;
 		ankhsUsed		= 0;
@@ -130,6 +132,7 @@ public class Statistics {
 	private static final String SLAIN		= "enemiesSlain";
 	private static final String FOOD		= "foodEaten";
 	private static final String ALCHEMY		= "potionsCooked";
+	private static final String TALENTS_ACTIVATED = "talents_activated";
 	private static final String PIRANHAS	= "priranhas";
 	private static final String HAZARD_ASSISTS	= "hazard_assists";
 	private static final String ANKHS		= "ankhsUsed";
@@ -173,6 +176,7 @@ public class Statistics {
 		bundle.put( SLAIN,		enemiesSlain );
 		bundle.put( FOOD,		foodEaten );
 		bundle.put( ALCHEMY,    itemsCrafted );
+		bundle.put(TALENTS_ACTIVATED, talentsActivated);
 		bundle.put( PIRANHAS,	piranhasKilled );
 		bundle.put(HAZARD_ASSISTS, hazardAssistedKills);
 		bundle.put( ANKHS,		ankhsUsed );
@@ -220,6 +224,7 @@ public class Statistics {
 		enemiesSlain	= bundle.getInt( SLAIN );
 		foodEaten		= bundle.getInt( FOOD );
 		itemsCrafted    = bundle.getInt( ALCHEMY );
+		talentsActivated = bundle.getBoolean(TALENTS_ACTIVATED);
 		piranhasKilled	= bundle.getInt( PIRANHAS );
 		hazardAssistedKills = bundle.getInt( HAZARD_ASSISTS );
 		ankhsUsed		= bundle.getInt( ANKHS );
