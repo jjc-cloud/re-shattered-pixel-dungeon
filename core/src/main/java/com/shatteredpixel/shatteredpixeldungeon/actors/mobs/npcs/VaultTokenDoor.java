@@ -95,7 +95,7 @@ public class VaultTokenDoor extends NPC {
 									Sample.INSTANCE.playDelayed(Assets.Sounds.UNLOCK, 0.25f);
 									GLog.p(Messages.get(VaultTokenDoor.class, "unlocked"));
 									VaultTokenDoor.this.destroy();
-									Level.set(pos, Terrain.DOOR);
+									Level.set(pos, Terrain.EMPTY_SP);
 									GameScene.updateMap(pos);
 									ScrollOfMagicMapping.discover(pos);
 									sprite.killAndErase();

@@ -270,6 +270,8 @@ public class AmbitiousImpRoom extends SpecialRoom {
 					super.update();
 				}
 			};
+			// 地形刷新可能在绘制前重建光幕，首帧也要接上当前亮度，避免以默认全不透明闪一下。
+			vis.alpha(0.3f + 0.3f*(float)Math.sin(Game.timeTotal));
 			vis.x = tileX*SIZE;
 			vis.y = tileY*SIZE;
 			vis.map(mapSimpleImage(5, 1, TEX_WIDTH), 3);

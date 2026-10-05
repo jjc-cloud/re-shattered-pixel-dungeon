@@ -47,8 +47,8 @@ public class ReShatteredChanges {
 		changes.hardlight(Window.TITLE_COLOR);
 		changeInfos.add(changes);
 
-		changes.addButton(new ChangeButton(ChangeIcons.V020_BUCKET, "环境交互",
-				"\n-木桶，岩石瓦砾现在能被直接摧毁。\n-雕像现在能被爆炸摧毁。\n-地毯现在能被解离射线，爆炸摧毁。\n-监狱铁笼与钢铁架构现在会导电。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V020_VAULT_TOKENS_DOOR, "环境交互",
+				"\n-新增一种透明渐隐类型的魔法门，目前替换现有奇怪的门。\n-木桶，岩石瓦砾现在能被直接摧毁。\n-雕像现在能被爆炸摧毁。\n-地毯现在能被解离射线，爆炸摧毁。\n-监狱铁笼与钢铁架构现在会导电。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V020_COLLAPSE_WALL, "塌方",
 				"\n-矿洞新增不稳定塌方区域，区域内无任何支撑物时会导致整片区域塌方，活埋区域内的所有单位。\n-矿洞区域不同房间之间的墙壁若小于2格宽度，则会生成为可摧毁的松动墙壁。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V020_STAIR, "新隐藏类型",
