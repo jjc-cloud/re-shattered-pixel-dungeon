@@ -454,50 +454,6 @@ public class CaveCollapseRegression {
 		level.affectTerrain(60, TerrainInteractions.Source.CLICK); heap.sprite.update();
 		check(heap.sprite.visible && ((ArrayList<?>)objects.invoke(null, 60)).contains(heap), "开墙后物品重新显示和可查看");
 
-		int previousColor = Terrain.COLLAPSE_WALL_COLOR;
-		try {
-			Terrain.COLLAPSE_WALL_COLOR = 0x80C0FF;
-			com.watabou.gltextures.SmartTexture original = com.watabou.gltextures.TextureCache.create(
-					Assets.Environment.TILES_CAVES, 256, 256);
-			original.bitmap.setBlending(com.badlogic.gdx.graphics.Pixmap.Blending.None);
-			original.bitmap.drawPixel(2, 3, 0xA0C0E080);
-			TestCaves rendered = new TestCaves(); rendered.setSize(11, 11);
-			rendered.map = level.map.clone(); rendered.caveCollapse = level.caveCollapse;
-			rendered.map[60] = Terrain.COLLAPSE_WALL; rendered.map[62] = Terrain.WALL;
-			rendered.map[71] = Terrain.EMPTY;
-			Dungeon.level = rendered;
-			com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTileSheet.setupVariance(rendered.length(), 1234L);
-			com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTerrainTilemap terrain =
-					new com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTerrainTilemap();
-			com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonWallsTilemap walls =
-					new com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonWallsTilemap();
-			java.lang.reflect.Field offsetField = com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap.class
-					.getDeclaredField("collapseVisualOffset"); offsetField.setAccessible(true);
-			int offset = offsetField.getInt(terrain);
-			java.lang.reflect.Field textureField = com.watabou.noosa.Tilemap.class.getDeclaredField("texture");
-			textureField.setAccessible(true);
-			com.watabou.gltextures.SmartTexture colored = (com.watabou.gltextures.SmartTexture)textureField.get(terrain);
-			check(colored.bitmap.getPixel(2, 3) == 0xA0C0E080, "原贴图片段保留原色和透明度");
-			check(colored.bitmap.getPixel(2, 3 + original.height) == 0x5090E080, "染色副本按RGB乘色，保留透明度");
-			check(textureField.get(walls) == colored, "墙面和墙顶复用同一染色缓存");
-			Method terrainVisual = terrain.getClass().getDeclaredMethod("getTileVisual", int.class, int.class, boolean.class);
-			terrainVisual.setAccessible(true);
-			check((int)terrainVisual.invoke(terrain, 60, Terrain.COLLAPSE_WALL, false)
-					== (int)terrainVisual.invoke(terrain, 60, Terrain.WALL, false) + offset, "塌方墙面使用染色片段");
-			check((int)terrainVisual.invoke(terrain, 60, Terrain.COLLAPSE_WALL, true)
-					== (int)terrainVisual.invoke(terrain, 60, Terrain.WALL, true) + offset, "俯视和详情贴图使用染色片段");
-			check((int)terrainVisual.invoke(terrain, 62, Terrain.WALL, false) < offset, "普通墙保留原贴图");
-			Method wallVisual = walls.getClass().getDeclaredMethod("getTileVisual", int.class, int.class, boolean.class);
-			wallVisual.setAccessible(true);
-			check((int)wallVisual.invoke(walls, 49, Terrain.EMPTY, false) >= offset, "塌方墙上沿使用染色片段");
-			rendered.map[71] = Terrain.COLLAPSE_WALL;
-			check((int)wallVisual.invoke(walls, 60, Terrain.COLLAPSE_WALL, false) >= offset, "塌方墙顶使用染色片段");
-			check((int)terrainVisual.invoke(terrain, 60, Terrain.COLLAPSE_WALL, false) == -1, "被墙顶遮盖的墙面继续不绘制");
-		} finally {
-			Terrain.COLLAPSE_WALL_COLOR = previousColor;
-			Dungeon.level = level;
-		}
-
 		float previousInterval = Terrain.COLLAPSE_PARTICLE_INTERVAL;
 		try {
 			Terrain.COLLAPSE_PARTICLE_INTERVAL = 0.75f;

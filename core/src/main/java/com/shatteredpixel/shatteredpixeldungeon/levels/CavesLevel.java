@@ -71,7 +71,6 @@ public class CavesLevel extends RegularLevel {
 	protected boolean build() {
 		if (!super.build()) return false;
 		if (Dungeon.branch == 0 && Dungeon.depth >= 11 && Dungeon.depth <= 14) {
-			caveCollapse = new CaveCollapse(this);
 			return caveCollapse.generate(rooms);
 		}
 		return true;
@@ -264,7 +263,7 @@ public class CavesLevel extends RegularLevel {
 	
 	public static void addCavesVisuals( Level level, Group group, boolean overHang ) {
 		for (int i=0; i < level.length(); i++) {
-			if (level.map[i] == Terrain.WALL_DECO) {
+			if (level.map[i] == Terrain.WALL_DECO || (level.caveCollapse != null && level.caveCollapse.hasGold(i))) {
 				group.add( new Vein( i, overHang ) );
 			}
 		}
@@ -301,7 +300,8 @@ public class CavesLevel extends RegularLevel {
 				if ((delay -= Game.elapsed) <= 0) {
 
 					//pickaxe can remove the ore, should remove the sparkling too.
-					if (Dungeon.level.map[pos] != Terrain.WALL_DECO){
+					if (Dungeon.level.map[pos] != Terrain.WALL_DECO
+							&& (Dungeon.level.caveCollapse == null || !Dungeon.level.caveCollapse.hasGold(pos))){
 						kill();
 						return;
 					}

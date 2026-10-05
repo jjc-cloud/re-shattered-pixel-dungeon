@@ -1,5 +1,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels;
 
+import com.badlogic.gdx.utils.IntArray;
+import com.badlogic.gdx.utils.IntSet;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -9,6 +11,7 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.RoomProtection;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.BlacksmithRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.StandardRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
@@ -37,6 +40,8 @@ public final class CaveCollapse implements Hero.Doom {
 	private final ArrayList<int[]> regions = new ArrayList<>();
 	private final ArrayList<Integer> walls = new ArrayList<>();
 	private final int[] regionAt;
+	// 矿脉是初始岩壁的外观，挖掉后不随塌方重新生成。
+	public final IntSet goldVeins = new IntSet();
 	// 由 Level.set 在覆盖地形前记录、开墙前取回；只对危险区内的格子使用。
 	final int[] buriedTerrain;
 	final SparseArray<Trap> buriedTraps = new SparseArray<>();
@@ -58,9 +63,103 @@ public final class CaveCollapse implements Hero.Doom {
 		return cell >= 0 && cell < regionAt.length && regionAt[cell] >= 0;
 	}
 
+	public boolean hasGold(int cell) {
+		return contains(cell) && level.map[cell] == Terrain.COLLAPSE_WALL && goldVeins.contains(cell);
+	}
+
+	/** 洞穴结构绘制时生成薄隔墙，与实际门直接相邻的墙格不参与。 */
+	public void generateWalls(ArrayList<Room> rooms) {
+		int width = level.width();
+		int[] owner = new int[level.length()];
+		boolean[] stairRooms = new boolean[rooms.size() + 1];
+		boolean[] protectedCells = new boolean[level.length()];
+		boolean[] thinWalls = new boolean[level.length()];
+		for (int i = 0; i < rooms.size(); i++) {
+			Room room = rooms.get(i);
+			stairRooms[i + 1] = room.isEntrance() || room.isExit();
+			boolean protectedRoom = RoomProtection.isProtected(room);
+			for (int y = room.top; y <= room.bottom; y++) {
+				for (int x = room.left; x <= room.right; x++) {
+					int cell = x + y * width;
+					if (protectedRoom) {
+						protectedCells[cell] = true;
+					} else {
+						int tile = level.map[cell];
+						int flags = Terrain.flags[tile];
+						if ((flags & (Terrain.PASSABLE | Terrain.AVOID)) != 0
+								&& (flags & Terrain.SOLID) == 0 && !DungeonTileSheet.doorTile(tile)) {
+							owner[cell] = i + 1;
+						}
+					}
+				}
+			}
+		}
+		// Room.Door 也表示开放连接，保护范围以已经绘制出的实体门为准。
+		for (int cell = 0; cell < level.length(); cell++) {
+			if (DungeonTileSheet.doorTile(level.map[cell]) || level.map[cell] == Terrain.SECRET_DOOR) {
+				for (int offset : PathFinder.NEIGHBOURS4) {
+					int next = cell + offset;
+					if (level.insideMap(next) && level.distance(cell, next) <= 1
+							&& (level.map[next] == Terrain.WALL || level.map[next] == Terrain.WALL_DECO)) {
+						protectedCells[next] = true;
+					}
+				}
+			}
+		}
+		// 从实际空间检查右侧和下侧；楼梯房也允许其内部的薄岩壁参与。
+		int[] directions = {1, width};
+		for (int cell = 0; cell < level.length(); cell++) {
+			if (owner[cell] == 0) continue;
+			for (int offset : directions) {
+				int end = cell + offset;
+				int thickness = 0;
+				while (level.insideMap(end) && (offset != 1 || end / width == cell / width)
+						&& (level.map[end] == Terrain.WALL || level.map[end] == Terrain.WALL_DECO)) {
+					thickness++;
+					if (thickness > 2) break;
+					end += offset;
+				}
+				if (thickness < 1 || thickness > 2 || !level.insideMap(end)
+						|| (offset == 1 && end / width != cell / width)
+						|| owner[end] == 0
+						|| (owner[end] == owner[cell] && !stairRooms[owner[cell]])) continue;
+				for (int wall = cell + offset; wall != end; wall += offset) {
+					if (!protectedCells[wall]) thinWalls[wall] = true;
+				}
+			}
+		}
+		// 门保护应用完后再分组；连通关系在生成时固定，挖开后不重新划分。
+		for (int seed = 0; seed < level.length(); seed++) {
+			if (!thinWalls[seed]) continue;
+			IntArray cells = new IntArray();
+			cells.add(seed);
+			thinWalls[seed] = false;
+			for (int i = 0; i < cells.size; i++) {
+				int cell = cells.get(i);
+				regionAt[cell] = regions.size();
+				for (int offset : PathFinder.NEIGHBOURS4) {
+					int next = cell + offset;
+					if (level.insideMap(next) && thinWalls[next]) {
+						thinWalls[next] = false;
+						cells.add(next);
+					}
+				}
+			}
+			regions.add(cells.toArray());
+			walls.add(cells.size);
+			for (int i = 0; i < cells.size; i++) {
+				int cell = cells.get(i);
+				if (level.map[cell] == Terrain.WALL_DECO) goldVeins.add(cell);
+				buriedTerrain[cell] = Terrain.EMPTY;
+				level.interactions().clearOverride(cell);
+				Painter.set(level, cell, Terrain.COLLAPSE_WALL);
+			}
+		}
+	}
+
 	/** 在绘制结束后生成；不能完成指定数量时重试整个楼层，避免悄悄少生成。 */
 	public boolean generate(ArrayList<Room> rooms) {
-		int count = Random.Int(2) == 0 ? 1 : 2;
+		int count = regions.size() + (Random.Int(2) == 0 ? 1 : 2);
 		ArrayList<Room> candidates = new ArrayList<>();
 		for (Room room : rooms) {
 			if (room instanceof StandardRoom && !(room instanceof BlacksmithRoom)
@@ -188,6 +287,7 @@ public final class CaveCollapse implements Hero.Doom {
 	/** 从 Level.set 接收实际变化，任何开墙入口都不会遗漏最后一格。 */
 	public void terrainChanged(int cell, int before, int after) {
 		if (collapsing || !contains(cell) || before == after) return;
+		if (before == Terrain.COLLAPSE_WALL && after != Terrain.COLLAPSE_WALL) goldVeins.remove(cell);
 		if (before == Terrain.COLLAPSE_WALL && level == Dungeon.level && level.heroFOV[cell]
 				&& Game.scene() instanceof GameScene) {
 			CellEmitter.get(cell).burst(Speck.factory(Speck.ROCK), 8);
@@ -197,7 +297,8 @@ public final class CaveCollapse implements Hero.Doom {
 		int remaining = walls.get(region) + (after == Terrain.COLLAPSE_WALL ? 1 : 0)
 				- (before == Terrain.COLLAPSE_WALL ? 1 : 0);
 		walls.set(region, remaining);
-		if (before == Terrain.COLLAPSE_WALL && remaining == 0) collapse(region);
+		// 单格区域只允许挖开，不触发塌方。
+		if (before == Terrain.COLLAPSE_WALL && remaining == 0 && regions.get(region).length > 1) collapse(region);
 	}
 
 	private void collapse(int index) {
@@ -218,6 +319,7 @@ public final class CaveCollapse implements Hero.Doom {
 			for (Char ch : victims) { ch.HP = 0; ch.die(this); }
 			boolean seen = false;
 			for (int cell : cells) {
+				goldVeins.remove(cell);
 				if (level.plants.get(cell) != null) level.plants.get(cell).wither();
 				Level.set(cell, Terrain.COLLAPSE_WALL, level);
 				for (int offset : PathFinder.NEIGHBOURS9) {
@@ -243,6 +345,7 @@ public final class CaveCollapse implements Hero.Doom {
 	}
 
 	public void storeInBundle(Bundle bundle) {
+		bundle.put("gold_veins", goldVeins.iterator().toArray().toArray());
 		bundle.put("buried_terrain", buriedTerrain);
 		bundle.put("buried_traps", buriedTraps.valueList());
 		bundle.put("count", regions.size());
@@ -251,6 +354,8 @@ public final class CaveCollapse implements Hero.Doom {
 
 	public void restoreFromBundle(Bundle bundle) {
 		regions.clear(); walls.clear(); Arrays.fill(regionAt, -1);
+		goldVeins.clear();
+		for (int cell : bundle.getIntArray("gold_veins")) goldVeins.add(cell);
 		int[] terrain = bundle.getIntArray("buried_terrain");
 		System.arraycopy(terrain, 0, buriedTerrain, 0, buriedTerrain.length);
 		buriedTraps.clear();

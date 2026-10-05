@@ -25,12 +25,10 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Petrification;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ShieldBuff;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
-import com.shatteredpixel.shatteredpixeldungeon.levels.features.Chasm;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.BruteSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
@@ -74,11 +72,9 @@ public class Brute extends Mob {
 
 	@Override
 	public void die(Object cause) {
+		// 实际死亡后不能再由血条等存活检查触发死亡狂暴。
+		hasRaged = true;
 		super.die(cause);
-
-		if (cause == Chasm.class || cause instanceof Petrification){
-			hasRaged = true; //don't let enrage trigger for chasm or petrification deaths
-		}
 	}
 
 	//cache this buff to prevent having to call buff(...) a bunch in isAlive

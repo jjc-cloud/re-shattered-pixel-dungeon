@@ -50,7 +50,7 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V020_BUCKET, "环境交互",
 				"\n-木桶，岩石瓦砾现在能被直接摧毁。\n-雕像现在能被爆炸摧毁。\n-地毯现在能被解离射线，爆炸摧毁。\n-监狱铁笼与钢铁架构现在会导电。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V020_COLLAPSE_WALL, "塌方",
-				"\n矿洞新增不稳定塌方区域，区域内无任何支撑物时会导致整片区域塌方，活埋区域内的所有单位。"));
+				"\n-矿洞新增不稳定塌方区域，区域内无任何支撑物时会导致整片区域塌方，活埋区域内的所有单位。\n-矿洞区域不同房间之间的墙壁若小于2格宽度，则会生成为可摧毁的松动墙壁。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V020_STAIR, "新隐藏类型",
 				"\n-新增隐藏楼层。隐藏楼层不会被探地效果所揭示，只有经过隐藏楼层的入口时，会发出特殊的声音暗示，摧毁入口的表面即可打开隐藏的入口。\n-新增超级隐藏房。超级隐藏房不会生成常规的门，它的墙面与普通的墙壁别无二致，但可被爆炸、冲击所摧毁。首次看见超级隐藏房的入口时，会生成一枚炸弹告知其存在。超级隐藏房可以生成在任何位置，即便是走廊，处于第一层。\n-这两种特殊隐藏不计入探索分数。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V061_BADGE, "新徽章",

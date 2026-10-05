@@ -74,8 +74,6 @@ public class Terrain {
 	public static final int MINE_CRYSTAL    = 35;
 	public static final int MINE_BOULDER    = 36;
 	public static final int COLLAPSE_WALL   = 46;
-	// 塌方岩壁染色：0xRRGGBB，白色保留原色；修改后重新编译运行。
-	public static int COLLAPSE_WALL_COLOR = 0xb7b0a5;
 	// 塌方区域气流粒子的生成间隔（秒）：越小越密集，0 或负数关闭；不影响普通深渊。
 	public static float COLLAPSE_PARTICLE_INTERVAL = 1.5f;
 

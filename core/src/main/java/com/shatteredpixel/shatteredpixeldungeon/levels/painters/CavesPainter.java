@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.levels.painters;
 
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CaveCollapse;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
@@ -107,19 +109,24 @@ public class CavesPainter extends RegularPainter {
 
 		}
 
+		if (Dungeon.branch == 0 && Dungeon.depth >= 11 && Dungeon.depth <= 14) {
+			level.caveCollapse = new CaveCollapse(level);
+			level.caveCollapse.generateWalls(rooms);
+		}
+
 		for (int i=w + 1; i < l - w; i++) {
 			if (map[i] == Terrain.EMPTY) {
 				int n = 0;
-				if (map[i+1] == Terrain.WALL) {
+				if (map[i+1] == Terrain.WALL || map[i+1] == Terrain.COLLAPSE_WALL) {
 					n++;
 				}
-				if (map[i-1] == Terrain.WALL) {
+				if (map[i-1] == Terrain.WALL || map[i-1] == Terrain.COLLAPSE_WALL) {
 					n++;
 				}
-				if (map[i+w] == Terrain.WALL) {
+				if (map[i+w] == Terrain.WALL || map[i+w] == Terrain.COLLAPSE_WALL) {
 					n++;
 				}
-				if (map[i-w] == Terrain.WALL) {
+				if (map[i-w] == Terrain.WALL || map[i-w] == Terrain.COLLAPSE_WALL) {
 					n++;
 				}
 				if (Random.Int( 6 ) <= n) {
@@ -138,10 +145,11 @@ public class CavesPainter extends RegularPainter {
 		int[] map = level.map;
 
 		for (int i=0; i < l - w; i++) {
-			if (map[i] == Terrain.WALL &&
+			if ((map[i] == Terrain.WALL || map[i] == Terrain.COLLAPSE_WALL) &&
 					DungeonTileSheet.floorTile(map[i + w])
 					&& Random.Int( 4 ) == 0) {
-				map[i] = Terrain.WALL_DECO;
+				if (map[i] == Terrain.COLLAPSE_WALL) level.caveCollapse.goldVeins.add(i);
+				else map[i] = Terrain.WALL_DECO;
 			}
 		}
 	}

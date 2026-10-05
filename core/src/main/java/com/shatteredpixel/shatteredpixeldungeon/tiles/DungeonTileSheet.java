@@ -203,6 +203,12 @@ public class DungeonTileSheet {
 	public static final int FLAT_WALL_DECO_ALT  = FLAT_WALLS+5;
 	public static final int FLAT_BOOKSHELF_ALT  = FLAT_WALLS+6;
 
+	// 洞穴图集扩展区保留各行原来的横向拼接顺序。
+	public static final int FLAT_COLLAPSE_WALL          = xy(1, 17);
+	public static final int FLAT_COLLAPSE_WALL_DECO     = FLAT_COLLAPSE_WALL+1;
+	public static final int FLAT_COLLAPSE_WALL_ALT      = FLAT_COLLAPSE_WALL+4;
+	public static final int FLAT_COLLAPSE_WALL_DECO_ALT = FLAT_COLLAPSE_WALL+5;
+
 	public static final int FLAT_DOOR           = FLAT_WALLS+8;
 	public static final int FLAT_DOOR_OPEN      = FLAT_WALLS+9;
 	public static final int FLAT_DOOR_LOCKED    = FLAT_WALLS+10;
@@ -249,6 +255,12 @@ public class DungeonTileSheet {
 	public static final int RAISED_WALL_DECO_ALT        = RAISED_WALLS+20;
 	public static final int RAISED_WALL_BOOKSHELF_ALT   = RAISED_WALLS+28;
 
+	public static final int RAISED_COLLAPSE_WALL          = xy(1, 18);
+	public static final int RAISED_COLLAPSE_WALL_DECO     = RAISED_COLLAPSE_WALL+4;
+	public static final int RAISED_COLLAPSE_WALL_DOOR     = RAISED_COLLAPSE_WALL+8;
+	public static final int RAISED_COLLAPSE_WALL_ALT      = xy(1, 19);
+	public static final int RAISED_COLLAPSE_WALL_DECO_ALT = RAISED_COLLAPSE_WALL_ALT+4;
+
 	//we use an array instead of a collection because the small element count
 	// makes array traversal much faster than something like HashSet.contains.
 
@@ -269,8 +281,13 @@ public class DungeonTileSheet {
 		int result;
 		
 		if (below == -1 || wallStitcheable(below))                      return -1;
+		else if (tile == Terrain.COLLAPSE_WALL) {
+			if (doorTile(below)) result = RAISED_COLLAPSE_WALL_DOOR;
+			else result = Dungeon.level != null && Dungeon.level.caveCollapse != null && Dungeon.level.caveCollapse.hasGold(pos)
+					? RAISED_COLLAPSE_WALL_DECO : RAISED_COLLAPSE_WALL;
+		}
 		else if (doorTile(below))                                       result = RAISED_WALL_DOOR;
-		else if (tile == Terrain.WALL || tile == Terrain.COLLAPSE_WALL || tile == Terrain.SECRET_DOOR) result = RAISED_WALL;
+		else if (tile == Terrain.WALL || tile == Terrain.SECRET_DOOR) result = RAISED_WALL;
 		else if (tile == Terrain.WALL_DECO)                             result = RAISED_WALL_DECO;
 		else if (tile == Terrain.BOOKSHELF)                             result = RAISED_WALL_BOOKSHELF;
 		else                                                            return -1;
@@ -353,11 +370,17 @@ public class DungeonTileSheet {
 	private static final int WALL_INTERNAL              = WALLS_INTERNAL+0;
 	private static final int WALL_INTERNAL_DECO         = WALLS_INTERNAL+16;
 	private static final int WALL_INTERNAL_WOODEN       = WALLS_INTERNAL+32;
+	private static final int COLLAPSE_WALL_INTERNAL      = xy(1, 20);
+	private static final int COLLAPSE_WALL_INTERNAL_DECO = xy(1, 21);
 
-	public static int stitchInternalWallTile(int tile, int right, int rightBelow, int below, int leftBelow, int left){
+	public static int stitchInternalWallTile(int tile, int pos, int right, int rightBelow, int below, int leftBelow, int left){
 		int result;
 
-		if (tile == Terrain.BOOKSHELF || below == Terrain.BOOKSHELF)        result = WALL_INTERNAL_WOODEN;
+		if (tile == Terrain.COLLAPSE_WALL) {
+			result = Dungeon.level != null && Dungeon.level.caveCollapse != null && Dungeon.level.caveCollapse.hasGold(pos)
+					? COLLAPSE_WALL_INTERNAL_DECO : COLLAPSE_WALL_INTERNAL;
+		}
+		else if (tile == Terrain.BOOKSHELF || below == Terrain.BOOKSHELF) result = WALL_INTERNAL_WOODEN;
 		//TODO currently this line on triggers on mining floors, do we want to make it universal?
 		else if (Dungeon.branch == 1 && tile == Terrain.WALL_DECO)          result = WALL_INTERNAL_DECO;
 		else                                                                result = WALL_INTERNAL;
@@ -374,15 +397,22 @@ public class DungeonTileSheet {
 	public static final int WALL_OVERHANG                   = WALLS_OVERHANG+0;
 	public static final int WALL_OVERHANG_DECO              = WALLS_OVERHANG+4;
 	public static final int WALL_OVERHANG_WOODEN            = WALLS_OVERHANG+8;
+	public static final int COLLAPSE_WALL_OVERHANG          = xy(1, 22);
+	public static final int COLLAPSE_WALL_OVERHANG_DECO     = COLLAPSE_WALL_OVERHANG+4;
 	public static final int DOOR_SIDEWAYS_OVERHANG          = WALLS_OVERHANG+16;
 	public static final int DOOR_SIDEWAYS_OVERHANG_CLOSED   = WALLS_OVERHANG+20;
 	public static final int DOOR_SIDEWAYS_OVERHANG_LOCKED   = WALLS_OVERHANG+24;
 	public static final int DOOR_SIDEWAYS_OVERHANG_CRYSTAL  = WALLS_OVERHANG+28;
 
 
-	public static int stitchWallOverhangTile(int tile, int rightBelow, int below, int leftBelow){
+	public static int stitchWallOverhangTile(int tile, int pos, int rightBelow, int below, int leftBelow){
 		int visual;
-		if (tile == Terrain.OPEN_DOOR)                              visual = DOOR_SIDEWAYS_OVERHANG;
+		if (below == Terrain.COLLAPSE_WALL) {
+			visual = Dungeon.level != null && Dungeon.level.caveCollapse != null
+					&& Dungeon.level.caveCollapse.hasGold(pos + Dungeon.level.width())
+					? COLLAPSE_WALL_OVERHANG_DECO : COLLAPSE_WALL_OVERHANG;
+		}
+		else if (tile == Terrain.OPEN_DOOR)                         visual = DOOR_SIDEWAYS_OVERHANG;
 		else if (tile == Terrain.DOOR)                              visual = DOOR_SIDEWAYS_OVERHANG_CLOSED;
 		else if (tile == Terrain.LOCKED_DOOR)                       visual = DOOR_SIDEWAYS_OVERHANG_LOCKED;
 		else if (tile == Terrain.HERO_LKD_DR)                       visual = DOOR_SIDEWAYS_OVERHANG_LOCKED;
@@ -469,7 +499,7 @@ public class DungeonTileSheet {
 	public static SparseArray<Integer> directFlatVisuals = new SparseArray<>();
 	static {
 		directFlatVisuals.put(Terrain.WALL,             FLAT_WALL);
-		directFlatVisuals.put(Terrain.COLLAPSE_WALL,    FLAT_WALL);
+		directFlatVisuals.put(Terrain.COLLAPSE_WALL,    FLAT_COLLAPSE_WALL);
 		directFlatVisuals.put(Terrain.DOOR,             FLAT_DOOR);
 		directFlatVisuals.put(Terrain.OPEN_DOOR,        FLAT_DOOR_OPEN);
 		directFlatVisuals.put(Terrain.LOCKED_DOOR,      FLAT_DOOR_LOCKED);
@@ -530,6 +560,8 @@ public class DungeonTileSheet {
 		tileAltVisuals.put(FLOOR,           new tileAlt(new float[]{52.5f, 5f}, FLOOR_ALT_1, FLOOR_ALT_2));
 		tileAltVisuals.put(GRASS,           new tileAlt(new float[]{50f}, GRASS_ALT));
 		tileAltVisuals.put(FLAT_WALL,       new tileAlt(new float[]{50f}, FLAT_WALL_ALT));
+		tileAltVisuals.put(FLAT_COLLAPSE_WALL, new tileAlt(new float[]{50f}, FLAT_COLLAPSE_WALL_ALT));
+		tileAltVisuals.put(FLAT_COLLAPSE_WALL_DECO, new tileAlt(new float[]{50f}, FLAT_COLLAPSE_WALL_DECO_ALT));
 		tileAltVisuals.put(EMBERS,          new tileAlt(new float[]{50f}, EMBERS_ALT));
 		tileAltVisuals.put(EMBERS_SP,       new tileAlt(new float[]{50f}, EMBERS_SP_ALT));
 		tileAltVisuals.put(FLAT_WALL_DECO,  new tileAlt(new float[]{50f}, FLAT_WALL_DECO_ALT));
@@ -542,6 +574,8 @@ public class DungeonTileSheet {
 		tileAltVisuals.put(FLAT_FURROWED_GRASS, new tileAlt(new float[]{50f}, FLAT_FURROWED_ALT));
 
 		tileAltVisuals.put(RAISED_WALL,             new tileAlt(new float[]{50f}, RAISED_WALL_ALT));
+		tileAltVisuals.put(RAISED_COLLAPSE_WALL, new tileAlt(new float[]{50f}, RAISED_COLLAPSE_WALL_ALT));
+		tileAltVisuals.put(RAISED_COLLAPSE_WALL_DECO, new tileAlt(new float[]{50f}, RAISED_COLLAPSE_WALL_DECO_ALT));
 		tileAltVisuals.put(RAISED_WALL_DECO,        new tileAlt(new float[]{50f}, RAISED_WALL_DECO_ALT));
 		tileAltVisuals.put(RAISED_WALL_BOOKSHELF,   new tileAlt(new float[]{50f}, RAISED_WALL_BOOKSHELF_ALT));
 

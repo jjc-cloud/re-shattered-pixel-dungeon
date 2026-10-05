@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CaveCollapse;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CavesLevel;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.CustomTilemap;
@@ -188,6 +189,9 @@ public class WndInfoCell extends Window {
 		if (Dungeon.level.caveCollapse != null && Dungeon.level.caveCollapse.contains(cell)
 				&& Dungeon.level.map[cell] != Terrain.COLLAPSE_WALL) {
 			desc += "\n\n" + Messages.get(CaveCollapse.class, "ground_desc");
+		}
+		if (Dungeon.level.caveCollapse != null && Dungeon.level.caveCollapse.hasGold(cell)) {
+			desc += "\n\n" + Messages.get(CavesLevel.class, "wall_deco_desc");
 		}
 		
 		info.text( desc );
