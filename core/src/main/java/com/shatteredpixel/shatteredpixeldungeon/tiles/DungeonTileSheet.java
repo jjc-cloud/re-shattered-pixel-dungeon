@@ -117,6 +117,7 @@ public class DungeonTileSheet {
 
 		//special floor
 		chasmStitcheable.put( Terrain.EMPTY_SP,     CHASM_FLOOR_SP );
+		chasmStitcheable.put( Terrain.CUSTOM_DECO_SP, CHASM_FLOOR_SP );
 		chasmStitcheable.put( Terrain.STATUE_SP,    CHASM_FLOOR_SP );
 		chasmStitcheable.put( Terrain.STATUE_SP_EMBERS, CHASM_FLOOR_SP );
 
@@ -483,6 +484,7 @@ public class DungeonTileSheet {
 		directVisuals.put(Terrain.TRAP,             directVisuals.get(Terrain.EMPTY));
 		directVisuals.put(Terrain.INACTIVE_TRAP,    directVisuals.get(Terrain.EMPTY));
 		directVisuals.put(Terrain.CUSTOM_DECO,      directVisuals.get(Terrain.EMPTY));
+		directVisuals.put(Terrain.CUSTOM_DECO_SP,   directVisuals.get(Terrain.EMPTY_SP));
 		directVisuals.put(Terrain.CUSTOM_DECO_EMBERS_SP, EMBERS_SP);
 		directVisuals.put(Terrain.CUSTOM_DECO_EMPTY,directVisuals.get(Terrain.EMPTY));
 		directVisuals.put(Terrain.CUSTOM_DECO_WTR,  WATER);

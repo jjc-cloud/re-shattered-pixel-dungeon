@@ -101,7 +101,8 @@ public class VaultTokensRoom extends VaultLongRoom {
 		carpet.overrideTile(2, 0, Carpet.CITY_PEDESTAL_TR);
 		level.customTiles.add(carpet);
 
-		Painter.set(level, c.x, c.y+3, Terrain.LOCKED_DOOR);
+		// 门下保留特殊地砖，地形阻挡通行但允许视线穿过。
+		Painter.set(level, c.x, c.y+3, Terrain.CUSTOM_DECO_SP);
 		VaultTokenDoor door = new VaultTokenDoor();
 		door.pos = c.x + (c.y+3)*level.width();
 		level.mobs.add(door);

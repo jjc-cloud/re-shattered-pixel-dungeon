@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.watabou.noosa.TextureFilm;
 
@@ -54,6 +55,18 @@ public class VaultTokenDoorSprite extends MobSprite {
 	public void link(Char ch) {
 		super.link(ch);
 		renderShadow = false;
+		// 仅地图上绑定的门参与距离显形，查看窗口的预览保持完整显示。
+		alpha(0f);
+	}
+
+	@Override
+	public void update() {
+		super.update();
+		if (ch != null && Dungeon.hero != null && Dungeon.level != null) {
+			// 4 格及以上全透明，3、2、1 格分别显示 25%、50%、75%。
+			int distance = Dungeon.level.distance(ch.pos, Dungeon.hero.pos);
+			alpha(0.25f * Math.max(0, 4 - Math.max(1, distance)));
+		}
 	}
 
 }
