@@ -77,7 +77,7 @@ public class DungeonTerrainTilemap extends DungeonTilemap {
 						pos + mapWidth < size ?     map[pos + mapWidth] : -1,
 						pos % mapWidth != 0 ?       map[pos - 1] : -1
 						);
-				return tile == Terrain.COLLAPSE_WALL && wall >= 0 ? wall + collapseVisualOffset : wall;
+				return wall;
 			} else if (tile == Terrain.STATUE) {
 				return DungeonTileSheet.RAISED_STATUE;
 			} else if (tile == Terrain.STATUE_SP) {
@@ -123,10 +123,10 @@ public class DungeonTerrainTilemap extends DungeonTilemap {
 			if (tile == Terrain.SEWER_BARREL_MARKED || tile == Terrain.SEWER_BARREL_MARKED_ALT) {
 				return DungeonTileSheet.directFlatVisuals.get(tile);
 			}
-			visual = DungeonTileSheet.getVisualWithAlts(
-					DungeonTileSheet.directFlatVisuals.get(tile),
-					pos);
-			return tile == Terrain.COLLAPSE_WALL ? visual + collapseVisualOffset : visual;
+			visual = DungeonTileSheet.directFlatVisuals.get(tile);
+			if (tile == Terrain.COLLAPSE_WALL && Dungeon.level.caveCollapse != null
+					&& Dungeon.level.caveCollapse.hasGold(pos)) visual = DungeonTileSheet.FLAT_COLLAPSE_WALL_DECO;
+			return DungeonTileSheet.getVisualWithAlts(visual, pos);
 		}
 
 	}

@@ -100,7 +100,12 @@ public class TrapMechanism extends Trinket {
 			Random.popGenerator();
 		}
 
-		return mech.levelFeels.remove(0) ? Level.Feeling.TRAPS : Level.Feeling.CHASM;
+		// 仍正常消费本次轮换，避免洞穴层的限制把后续饰品类型顺序错位。
+		boolean traps = mech.levelFeels.remove(0);
+		if (Dungeon.branch == 0 && Dungeon.depth >= 11 && Dungeon.depth <= 14) {
+			return Level.Feeling.TRAPS;
+		}
+		return traps ? Level.Feeling.TRAPS : Level.Feeling.CHASM;
 	}
 
 	private static final String FEELS = "feels";

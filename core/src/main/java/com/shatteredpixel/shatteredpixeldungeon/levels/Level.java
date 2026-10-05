@@ -340,9 +340,12 @@ public abstract class Level implements Bundlable {
 			}
 			
 			if (Dungeon.depth > 1) {
-				//50% chance of getting a level feeling
-				//~7.15% chance for each feeling
-				switch (Random.Int( 14 )) {
+				// 洞穴 11～14 层不生成悬空类型，重抽仍使用本层种子的随机序列。
+				int feelingRoll;
+				do {
+					feelingRoll = Random.Int(14);
+				} while (feelingRoll == 0 && Dungeon.depth >= 11 && Dungeon.depth <= 14);
+				switch (feelingRoll) {
 					case 0:
 						feeling = Feeling.CHASM;
 						break;
