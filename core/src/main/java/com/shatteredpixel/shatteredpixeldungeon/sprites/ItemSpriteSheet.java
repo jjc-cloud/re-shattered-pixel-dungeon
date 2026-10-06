@@ -99,6 +99,12 @@ public class ItemSpriteSheet {
 	public static final int TENGU_BOMB      = UNCOLLECTIBLE+8;
 	public static final int TENGU_SHOCKER   = UNCOLLECTIBLE+9;
 	public static final int GEO_BOULDER     = UNCOLLECTIBLE+10;
+	public static final int ROUGH_RUBY      = xy(14, 2);
+	public static final int ROUGH_DIAMOND   = xy(15, 2);
+	public static final int ROUGH_TOPAZ     = xy(16, 2);
+	public static final int RUBY            = xy(14, 3);
+	public static final int DIAMOND         = xy(15, 3);
+	public static final int TOPAZ           = xy(16, 3);
 	static{
 		assignItemRect(GOLD,        15, 13);
 		assignItemRect(ENERGY,      16, 16);

@@ -2,7 +2,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
-import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
+import com.shatteredpixel.shatteredpixeldungeon.items.Gem;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
@@ -68,7 +68,8 @@ public class SuperSecretRoom extends SecretRoom {
 		for (int y = -1; y <= 1; y++) {
 			for (int x = -1; x <= 1; x++) {
 				if (x != 0 || y != 0) {
-					level.drop(new Gold().random(), level.pointToCell(new Point(pedestal.x + x, pedestal.y + y))).autoExplored = true;
+					level.drop(Gem.generateTreasure(),
+							level.pointToCell(new Point(pedestal.x + x, pedestal.y + y))).autoExplored = true;
 				}
 			}
 		}

@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.windows;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.items.Gem;
 import com.shatteredpixel.shatteredpixeldungeon.SPDAction;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
@@ -756,6 +757,8 @@ public class WndJournal extends WndTabbed {
 			if (Item.class.isAssignableFrom(itemClass)) {
 
 				Item item = (Item) Reflection.newInstance(itemClass);
+				// 图鉴展示宝石堆的通用说明，不展示默认构造的一颗原石。
+				if (item instanceof Gem) item.quantity(0);
 
 				if (seen) {
 					if (item instanceof Ring) {
@@ -785,11 +788,13 @@ public class WndJournal extends WndTabbed {
 						desc += item.info();
 					}
 
-					if (Catalog.useCount(itemClass) > 1) {
+					if (item instanceof Gem || Catalog.useCount(itemClass) > 1) {
 						if (item.isUpgradable() || item instanceof Artifact) {
 							desc += "\n\n" + Messages.get(CatalogTab.class, "upgrade_count", Catalog.useCount(itemClass));
 						} else if (item instanceof Trinket) {
 							desc += "\n\n" + Messages.get(CatalogTab.class, "trinket_count", Catalog.useCount(itemClass));
+						} else if (item instanceof Gem) {
+							desc += "\n\n" + Messages.get(CatalogTab.class, "gem_sell_count", Catalog.useCount(itemClass));
 						} else if (item instanceof Gold) {
 							desc += "\n\n" + Messages.get(CatalogTab.class, "gold_count", Catalog.useCount(itemClass));
 						} else if (item instanceof EnergyCrystal) {

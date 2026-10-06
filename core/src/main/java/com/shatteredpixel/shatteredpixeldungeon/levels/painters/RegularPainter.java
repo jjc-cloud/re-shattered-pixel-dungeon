@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
+import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.TrapMechanism;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Document;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
@@ -32,6 +33,8 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.Patch;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection.ConnectionRoom;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.RatKingRoom;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.SpecialRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.StandardRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
@@ -128,7 +131,13 @@ public abstract class RegularPainter extends Painter {
 				if (r instanceof SpecialRoom) return false;
 			}
 			placeDoors( r );
-			r.paint( level );
+			boolean previousSecretRoom = Generator.generatingSecretRoom;
+			Generator.generatingSecretRoom = r instanceof SecretRoom && !(r instanceof RatKingRoom);
+			try {
+				r.paint( level );
+			} finally {
+				Generator.generatingSecretRoom = previousSecretRoom;
+			}
 		}
 		
 		paintDoors( level, rooms );
