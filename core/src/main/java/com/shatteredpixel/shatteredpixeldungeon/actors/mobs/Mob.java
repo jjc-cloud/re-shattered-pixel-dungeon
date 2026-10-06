@@ -82,7 +82,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.stones.StoneOfAggression;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ExoticCrystals;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ShardOfOblivion;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
-import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Lucky;
@@ -98,8 +97,10 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Swiftthistle;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
+import com.watabou.noosa.tweeners.AlphaTweener;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.GameMath;
 import com.watabou.utils.PathFinder;
@@ -730,19 +731,66 @@ public abstract class Mob extends Char {
 		}
 	}
 
+	CharSprite movementShadow;
+	AlphaTweener shadowFade;
+
 	@Override
 	public void move(int step, boolean travelling) {
+		int oldPos = pos;
 		super.move(step, travelling);
-		if (usingStealthGamePlay
-				&& travelling
-				&& !sprite.visible
-				&& Dungeon.level.distance(pos, Dungeon.hero.pos) <= 6){
-			if (state == HUNTING){
-				WandOfBlastWave.BlastWave.blast(pos, 1f, 0xFF0000);
-			} else if (state == INVESTIGATING){
-				WandOfBlastWave.BlastWave.blast(pos, 1f, 0xFF8800);
+		if (travelling
+				&& previousPos == oldPos && oldPos != pos
+				&& sprite != null
+				&& sprite.parent != null
+				&& Dungeon.hero != null
+				&& !sprite.visible){
+			boolean vaultMovement = usingStealthGamePlay
+					&& Dungeon.level.distance(pos, Dungeon.hero.pos) <= 6;
+			//沿用水面波纹的八格范围和已知地形条件，离开水格才触发感知。
+			boolean waterMovement = !flying && Dungeon.level.water[previousPos]
+					&& sprite.canShowWaterRipple(previousPos);
+			if (!vaultMovement && !waterMovement){
+				return;
+			}
+
+			//宝库的声音提示可以揭示地形，普通水面感知保留已有的地图信息。
+			if (vaultMovement && !Dungeon.level.visited[pos] && !Dungeon.level.mapped[pos]){
+				//also reveal this cell in the fog of war if it's within a 6 tile path
+				PathFinder.buildDistanceMap(Dungeon.hero.pos, Dungeon.level.passable, 6);
+				if (PathFinder.distance[pos] != Integer.MAX_VALUE) {
+					Dungeon.level.visited[pos] = true;
+					GameScene.updateFog(pos, 1);
+				}
+			}
+			//if we don't have a shadow, or it was removed from the scene (e.g. from scene reset)
+			if (movementShadow == null || movementShadow.parent == null){
+				movementShadow = sprite();
+				sprite.parent.add(movementShadow);
+			}
+			movementShadow.point(DungeonTilemap.raisedTileCenterToWorld(previousPos));
+			movementShadow.x -= movementShadow.width()/2f;
+			movementShadow.y -= movementShadow.height()/2f;
+			movementShadow.move(previousPos, pos);
+			movementShadow.alpha(sprite.alpha());
+			if (shadowFade == null || shadowFade.parent == null){
+				shadowFade = new AlphaTweener( movementShadow, 0, 1 ) {
+					@Override
+					protected void updateValues(float progress) {
+						if (sprite.visible){
+							elapsed = progress = 1;
+						}
+						progress = (float)Math.pow(progress, 2); //alpha fades slowly then quickly
+						super.updateValues(progress);
+					}
+
+					@Override
+					protected void onComplete() {
+						shadowFade = null;
+					}
+				};
+				sprite.parent.add(shadowFade);
 			} else {
-				WandOfBlastWave.BlastWave.blast(pos, 1f);
+				shadowFade.elapsed = 0;
 			}
 		}
 	}

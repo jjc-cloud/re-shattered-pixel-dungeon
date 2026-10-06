@@ -70,7 +70,8 @@ public abstract class Trap implements Bundlable {
 	public boolean canBeHidden = true;
 	public boolean canBeSearched = true;
 
-	public boolean avoidsHallways = false; //whether this trap should avoid being placed in hallways
+	//whether this trap should avoid being placed in enclosed areas like hallways
+	public boolean avoidsClosedSpaces = false;
 
 	//outdated design challenge: whether this trap only takes effect the second time it is triggered
 	public boolean outdated = false;

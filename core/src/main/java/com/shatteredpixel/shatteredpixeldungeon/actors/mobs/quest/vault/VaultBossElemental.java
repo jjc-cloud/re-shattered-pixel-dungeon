@@ -179,6 +179,7 @@ public class VaultBossElemental extends Mob {
 		e.pos(sprite, 4, 4, 24, 24);
 		if (form == ElementalForm.FIRE){
 			e.burst(FlameParticle.FACTORY, 50);
+			Sample.INSTANCE.play(Assets.Sounds.BURNING, 2f);
 
 			for (Buff b : buffs()){
 				if (b instanceof Chill || b instanceof Frost){
@@ -187,6 +188,7 @@ public class VaultBossElemental extends Mob {
 			}
 		} else if (form == ElementalForm.FROST){
 			e.burst(MagicMissile.MagicParticle.FACTORY, 50);
+			Sample.INSTANCE.play(Assets.Sounds.SHATTER, 2f);
 
 			for (Buff b : buffs()){
 				if (b instanceof Burning){
@@ -195,6 +197,7 @@ public class VaultBossElemental extends Mob {
 			}
 		} else if (form == ElementalForm.SHOCK){
 			e.burst(SparkParticle.FACTORY, 50);
+			Sample.INSTANCE.play(Assets.Sounds.LIGHTNING, 2f);
 		}
 
 		//don't want to follow through now that form changed, so force a new sp attack instead
@@ -203,7 +206,7 @@ public class VaultBossElemental extends Mob {
 			spAttackCooldown = 0;
 		}
 
-		//significanlty reduce environment attack cooldown
+		//significantly reduce environment attack cooldown
 		envAttackCooldown /= 2;
 
 		sprite.flipHorizontal = wasTurned;
@@ -219,7 +222,11 @@ public class VaultBossElemental extends Mob {
 
 	@Override
 	protected boolean act() {
-		if (spTargetCell != -1 && paralysed == 0){
+		if (enemy == null){
+			chooseEnemy();
+		}
+
+		if (spTargetCell != -1 && paralysed == 0 && enemy != null){
 			if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
 				sprite.zap( spTargetCell );
 				lastEnemyPos = enemy.pos;
@@ -233,7 +240,7 @@ public class VaultBossElemental extends Mob {
 
 		spAttackCooldown--;
 		envAttackCooldown--;
-		if (state == HUNTING && paralysed == 0){
+		if (state == HUNTING && paralysed == 0  && enemy != null){
 			if (spAttackCooldown <= 0){
 				spend(GameMath.gate(attackDelay(), (int)Math.ceil(Dungeon.hero.cooldown()), 3*attackDelay()));
 				if (form == ElementalForm.FIRE){
@@ -261,7 +268,7 @@ public class VaultBossElemental extends Mob {
 				envAttackCooldown = Random.NormalIntRange( 10, 15 );
 				//shock form gets faster abilities
 				if (form == ElementalForm.SHOCK){
-					spAttackCooldown = (int) (spAttackCooldown*0.67f);
+					envAttackCooldown = (int) (envAttackCooldown*0.67f);
 				}
 
 				Dungeon.hero.interrupt();
@@ -534,7 +541,7 @@ public class VaultBossElemental extends Mob {
 		BossHealthBar.assignBoss(this);
 	}
 
-	//used to forceably remove pincushion after its applied
+	//used to forcefully remove pincushion after its applied
 	public static class PinCushionRemover extends Buff{
 
 		{
@@ -1177,7 +1184,7 @@ public class VaultBossElemental extends Mob {
 		private static String TARGET_CELL = "target_cell";
 		private static String DISTANCE = "distance";
 
-		private static String FULL_VORTEX = "full_fortex";
+		private static String FULL_VORTEX = "full_vortex";
 		private static String ALT_DIR = "alt_direction";
 
 		@Override
