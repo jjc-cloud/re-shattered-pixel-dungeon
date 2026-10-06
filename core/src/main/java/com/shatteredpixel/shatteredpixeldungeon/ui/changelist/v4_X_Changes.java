@@ -78,6 +78,17 @@ public class v4_X_Changes {
 		changes.hardlight(Window.TITLE_COLOR);
 		changeInfos.add(changes);
 
+		changes = new ChangeInfo("v4.0.1", false, null);
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+
+		changes.addButton(new ChangeButton(ChangeIcons.V40_GREATSWORD_CRYSTAL, "附魔平衡调整",
+				"\n-魔晶附魔的额外魔法伤害由25%提高至33%。\n-近战魔晶武器的平均耐久由约33次攻击调整为+0时50次，随等级递减至+6及以上时30次；魔晶灵能弓保持平均50次。\n-魔晶投掷武器的使用次数上限由50次降低至30次。\n-异质与腐化附魔的基础触发概率由20%提高至25%。\n-繁茂附魔的基础平均催生草地数量由1提高至1.5。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V33_IMP, "宝库调整",
+				"\n-听见视野外敌人移动时，会显示短暂的敌人轮廓，并揭示六格路径范围内的目标地形。\n-入口附近额外生成一瓶治疗药剂，入口相邻房间不再出现清醒的高阶敌人。\n-圆形哨兵房与激光房的攻击节奏放缓，交替火焰房增加一格安全边缘。\n-巨型元素切换形态时会播放对应音效。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V061_BUGFIX, "上游修复",
+				"\n-修复持续伤害预估未计入精英敌人与豺狼守卫减伤的问题。\n-修复宝库首领生成时与其他单位重叠，以及雷电形态技能冷却计算错误的问题。\n-返回信标不再允许返回宝库。\n-修复血之圣杯致死概率显示、无序魔典复仇卷轴的神器效果、鼠头骨影响关卡随机数的问题。\n-修复手柄移动输入丢失、快捷栏刷新及音乐加载异常问题。\n-需要宽阔空间的陷阱会避开相邻陷阱。"));
+
 		changes = new ChangeInfo(Messages.get(ChangesScene.class, "new"), false, null);
 		changes.hardlight(Window.TITLE_COLOR);
 		changeInfos.add(changes);

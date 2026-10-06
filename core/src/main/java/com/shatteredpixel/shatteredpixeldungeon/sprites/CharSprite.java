@@ -28,8 +28,8 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.DarkBlock;
 import com.shatteredpixel.shatteredpixeldungeon.effects.EmoIcon;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Flare;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
-import com.shatteredpixel.shatteredpixeldungeon.effects.IceBlock;
 import com.shatteredpixel.shatteredpixeldungeon.effects.GlowBlock;
+import com.shatteredpixel.shatteredpixeldungeon.effects.IceBlock;
 import com.shatteredpixel.shatteredpixeldungeon.effects.ShieldHalo;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
@@ -137,7 +137,7 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 	
 	@Override
 	public void play(Animation anim) {
-		//Shouldn't interrupt the dieing animation
+		//Shouldn't interrupt the dying animation
 		if (curAnim == null || curAnim != die) {
 			super.play(anim);
 		}
@@ -175,7 +175,7 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 
 	//used for just updating a sprite based on a given character, not linking them or placing in the game
 	public void linkVisuals( Char ch ){
-		//do nothin by default
+		//do nothing by default
 	}
 	
 	public PointF worldToCamera( int cell ) {
@@ -235,14 +235,14 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 		moveInterval = interval;
 	}
 
-	protected boolean canShowWaterRipple( int pos ) {
+	public boolean canShowWaterRipple( int pos ) {
 		return visible || Dungeon.hero != null
 				&& Dungeon.level.distance(Dungeon.hero.pos, pos) <= 8
 				&& (Dungeon.level.visited[pos] || Dungeon.level.mapped[pos]);
 	}
 
 	public void showWaterRipple( int pos ) {
-		if (canShowWaterRipple(pos) && Dungeon.level.water[pos] && !ch.flying) {
+		if (ch != null && canShowWaterRipple(pos) && Dungeon.level.water[pos] && !ch.flying) {
 			GameScene.ripple(pos);
 		}
 	}
@@ -867,7 +867,7 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 
 				motion.killAndErase();
 				motion = null;
-				ch.onMotionComplete();
+				if (ch != null) ch.onMotionComplete();
 
 				GameScene.sortMobSprites();
 				notifyAll();

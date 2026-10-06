@@ -67,8 +67,12 @@ public class ReShatteredChanges {
 				"\n随机一切！"));	
 		changes.addButton(new ChangeButton(ChangeIcons.V062_ROGUE_CLOTH,"搜索范围",
 				"\n现在盗贼初始搜索范围与其他英雄相同，补偿此前提升的更高概率发现地牢的秘密，广域搜索天赋增加的搜索范围调整为+1时为5*5，+2时为7*7。"));	
+		changes.addButton(new ChangeButton(ChangeIcons.V020_WAVE, "水面感知",
+				"\n感知优化，现在使用宝库内的感知怪物方式。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V061_BUGFIX,"bug修复",
 				"\n-修复了20层可破坏地形被破坏后仍使用原有的连续绘制导致的贴图错误问题。\n-修复了20层贴图缓存未释放导致背景出现贴图的问题。\n-修复了魔能超载无法超额使用暗影斗篷的问题。\n-修复了宝库入口的光源更新顺序导致的特效错误问题。\n-修复了其他端塌方闪退的问题。"));
+		
+
 		changes = new ChangeInfo("增强", false, null);
 		changes.hardlight(CharSprite.POSITIVE);
 		changeInfos.add(changes);
