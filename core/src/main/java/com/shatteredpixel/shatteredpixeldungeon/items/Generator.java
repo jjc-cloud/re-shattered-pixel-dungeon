@@ -219,6 +219,9 @@ import java.util.LinkedHashMap;
 
 public class Generator {
 
+	// 仅在隐藏房间的生成期间启用，通用奖励抽中金币时直接生成对应宝物。
+	public static boolean generatingSecretRoom;
+
 	public enum Category {
 		TRINKET ( 0, 0, Trinket.class),
 
@@ -699,6 +702,8 @@ public class Generator {
 	
 	public static Item random( Category cat ) {
 		switch (cat) {
+			case GOLD:
+				return generatingSecretRoom ? Gem.generateTreasure() : new Gold().random();
 			case ARMOR:
 				return randomArmor();
 			case WEAPON:

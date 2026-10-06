@@ -27,6 +27,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
+import com.shatteredpixel.shatteredpixeldungeon.items.Gem;
 import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -57,6 +58,8 @@ public class ItemSprite extends MovieClip {
 	private static final float DROP_INTERVAL = 0.4f;
 	
 	public Heap heap;
+	private Gem gemPile;
+	private Image[] gemLayers;
 	
 	private Glowing glowing;
 	//FIXME: a lot of this emitter functionality isn't very well implemented.
@@ -131,6 +134,7 @@ public class ItemSprite extends MovieClip {
 	@Override
 	public void copy(Image other) {
 		super.copy(other);
+		gemPile = other instanceof ItemSprite ? ((ItemSprite) other).gemPile : null;
 
 		if (other instanceof ItemSprite && ((ItemSprite) other).glowing != null){
 			glow(((ItemSprite) other).glowing);
@@ -202,6 +206,12 @@ public class ItemSprite extends MovieClip {
 
 	public ItemSprite view( Item item ){
 		view(item.image(), item.glowing());
+		if (item instanceof Gem && item.quantity() > 0 && !(this instanceof MissileSprite)
+				&& (heap == null || item.quantity() > 1)) {
+			gemPile = (Gem) item;
+			// 保留一个物品格的布局范围，各种宝石在这个范围内缩放绘制。
+			width = height = SIZE;
+		}
 		item.tintSprite(this);
 		Emitter emitter = item.emitter();
 		if (emitter != null && parent != null) {
@@ -242,6 +252,7 @@ public class ItemSprite extends MovieClip {
 	}
 	
 	public ItemSprite view( int image, Glowing glowing ) {
+		gemPile = null;
 		if (this.emitter != null) this.emitter.killAndErase();
 		emitter = null;
 		frame( image );
@@ -297,6 +308,25 @@ public class ItemSprite extends MovieClip {
 
 	@Override
 	public void draw() {
+		if (gemPile != null) {
+			if (gemLayers == null) gemLayers = new Image[Gem.Type.values().length];
+			for (int i = 0; i < gemLayers.length; i++) {
+				if (gemPile.counts[i] <= 0) continue;
+				if (gemLayers[i] == null) {
+					gemLayers[i] = new Image(Assets.Sprites.ITEMS);
+					gemLayers[i].frame(ItemSpriteSheet.film.get(Gem.Type.values()[i].image));
+				}
+				Image layer = gemLayers[i];
+				layer.camera = camera();
+				layer.scale.set(scale.x * Gem.INVENTORY_SCALE, scale.y * Gem.INVENTORY_SCALE);
+				layer.x = x + gemPile.offsetX[i] * scale.x;
+				layer.y = y + gemPile.offsetY[i] * scale.y;
+				layer.rm = rm; layer.gm = gm; layer.bm = bm; layer.am = am;
+				layer.ra = ra; layer.ga = ga; layer.ba = ba; layer.aa = aa;
+				layer.draw();
+			}
+			return;
+		}
 		if (texture == null || (!dirty && buffer == null))
 			return;
 
@@ -329,6 +359,14 @@ public class ItemSprite extends MovieClip {
 
 		super.draw();
 
+	}
+
+	@Override
+	public void destroy() {
+		if (gemLayers != null) {
+			for (Image layer : gemLayers) if (layer != null) layer.destroy();
+		}
+		super.destroy();
 	}
 
 	@Override

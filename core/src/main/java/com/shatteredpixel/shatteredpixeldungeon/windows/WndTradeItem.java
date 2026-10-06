@@ -29,6 +29,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Shopkeeper;
 import com.shatteredpixel.shatteredpixeldungeon.items.EquipableItem;
+import com.shatteredpixel.shatteredpixeldungeon.items.Gem;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -76,7 +77,7 @@ public class WndTradeItem extends WndInfoItem {
 		}
 		final Shopkeeper finalShop = shop;
 
-		if (item.quantity() == 1 || (item instanceof MissileWeapon && item.isUpgradable())) {
+		if (item instanceof Gem || item.quantity() == 1 || (item instanceof MissileWeapon && item.isUpgradable())) {
 
 			if (item instanceof MissileWeapon && ((MissileWeapon) item).extraThrownLeft){
 				RenderedTextBlock warn = PixelScene.renderTextBlock(Messages.get(WndUpgrade.class, "thrown_dust"), 6);
@@ -256,6 +257,7 @@ public class WndTradeItem extends WndInfoItem {
 		hero.spend(-hero.cooldown());
 
 		new Gold( item.value() ).doPickUp( hero );
+		if (item instanceof Gem) Catalog.countUse(Gem.class);
 
 		if (shop != null){
 			shop.buybackItems.add(item);
@@ -271,7 +273,7 @@ public class WndTradeItem extends WndInfoItem {
 
 	public static void sellOne( Item item, Shopkeeper shop ) {
 		
-		if (item.quantity() <= 1) {
+		if (item instanceof Gem || item.quantity() <= 1) {
 			sell( item, shop );
 		} else {
 			

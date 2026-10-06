@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Shopkeeper;
+import com.shatteredpixel.shatteredpixeldungeon.items.Gem;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.stones.Runestone;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.Trinket;
@@ -153,7 +154,7 @@ public class Alchemize extends Spell {
 			float pos = height;
 
 			if (Shopkeeper.canSell(item)) {
-				if (item.quantity() == 1 || (item instanceof MissileWeapon && item.isUpgradable())) {
+				if (item instanceof Gem || item.quantity() == 1 || (item instanceof MissileWeapon && item.isUpgradable())) {
 
 					if (item instanceof MissileWeapon && ((MissileWeapon) item).extraThrownLeft){
 						RenderedTextBlock warn = PixelScene.renderTextBlock(Messages.get(WndUpgrade.class, "thrown_dust"), 6);
