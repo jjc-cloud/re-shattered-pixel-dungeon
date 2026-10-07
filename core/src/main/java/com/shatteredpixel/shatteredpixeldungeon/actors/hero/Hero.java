@@ -1695,10 +1695,10 @@ public class Hero extends Char {
 			}
 			if (enemy.isAlive() && buff(HolyWeapon.HolyWepBuff.class) != null) {
 				int dmg = subClass == HeroSubClass.PALADIN ? 6 : 2;
-				enemy.damage(Math.round(dmg * Weapon.Enchantment.genericProcChanceMultiplier(this)), HolyWeapon.INSTANCE);
+				enemy.damage(Math.round(dmg * Weapon.Enchantment.genericProcChanceMultiplier(this)), HolyWeapon.INSTANCE, this);
 			}
 			if (enemy.isAlive() && buff(Smite.SmiteTracker.class) != null) {
-				enemy.damage(Smite.bonusDmg(this, enemy), Smite.INSTANCE);
+				enemy.damage(Smite.bonusDmg(this, enemy), Smite.INSTANCE, this);
 			}
 		}
 		

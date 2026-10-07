@@ -36,7 +36,7 @@ public abstract class InventoryScroll extends Scroll {
 	protected static boolean identifiedByUse = false;
 
 	@Override
-	public void doRead() {
+	protected void readEffect() {
 		
 		if (!isKnown()) {
 			identify();
@@ -119,6 +119,7 @@ public abstract class InventoryScroll extends Scroll {
 			if (!(curItem instanceof InventoryScroll)){
 				return;
 			}
+			if (!canRead(curUser)) return;
 			
 			if (item != null) {
 

@@ -254,7 +254,7 @@ public class MirrorImage extends DirectableAlly {
 			if (!wasEnemy || enemy.alignment == Alignment.ENEMY) {
 				if (hero.buff(HolyWeapon.HolyWepBuff.class) != null) {
 					int dmg = hero.subClass == HeroSubClass.PALADIN ? 6 : 2;
-					enemy.damage(Math.round(dmg * Weapon.Enchantment.genericProcChanceMultiplier(this)), HolyWeapon.INSTANCE);
+					enemy.damage(Math.round(dmg * Weapon.Enchantment.genericProcChanceMultiplier(this)), HolyWeapon.INSTANCE, this);
 				}
 			}
 			return damage;

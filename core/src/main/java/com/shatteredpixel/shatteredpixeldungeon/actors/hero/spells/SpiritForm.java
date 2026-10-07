@@ -45,6 +45,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourg
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.UnstableSpellbook;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfMight;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Blindweed;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Fadeleaf;
@@ -248,6 +249,7 @@ public class SpiritForm extends ClericSpell {
 			Dungeon.hero.spendAndNext(1f);
 
 		} else if (effect instanceof UnstableSpellbook){
+			if (!Scroll.canRead(Dungeon.hero)) return;
 			((UnstableSpellbook) effect).doReadEffect(Dungeon.hero);
 
 		} else if (effect instanceof SkeletonKey){

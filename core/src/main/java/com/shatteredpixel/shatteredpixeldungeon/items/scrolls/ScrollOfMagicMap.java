@@ -23,9 +23,9 @@ public class ScrollOfMagicMap extends ScrollOfMagicMapping {
 	}
 
 	@Override
-	public void doRead() {
+	protected void readEffect() {
 		Dungeon.revealCurrentRegion();
-		super.doRead();
+		super.readEffect();
 	}
 
 	@Override

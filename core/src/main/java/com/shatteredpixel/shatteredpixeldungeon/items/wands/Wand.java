@@ -297,7 +297,7 @@ public abstract class Wand extends Item implements ChargeItem {
 
 		if (Dungeon.hero.subClass == HeroSubClass.PRIEST && target.buff(GuidingLight.Illuminated.class) != null) {
 			target.buff(GuidingLight.Illuminated.class).detach();
-			target.damage(Dungeon.hero.lvl+5, GuidingLight.INSTANCE);
+			target.damage(Dungeon.hero.lvl+5, GuidingLight.INSTANCE, Dungeon.hero);
 		}
 
 		if (target.alignment != Char.Alignment.ALLY

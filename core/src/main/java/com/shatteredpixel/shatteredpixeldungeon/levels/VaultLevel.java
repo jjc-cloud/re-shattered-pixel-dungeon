@@ -90,6 +90,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfTransfusion;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CityPainter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.vault.VaultEntranceRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.vault.VaultFinalRoom;
@@ -163,6 +164,36 @@ public class VaultLevel extends CityLevel {
 		treasure.set(14, 0, 26, 12);
 		rooms.add(treasure);
 		VaultLayout.paint(this);
+		new CityPainter() {
+			@Override
+			public boolean paint(Level level, ArrayList<Room> rooms) {
+				EmptyRoom corridor = new EmptyRoom();
+				corridor.set(roomEntrance.left, VaultCorridorPatrols.TOP, roomEntrance.right,
+						VaultCorridorPatrols.TOP + 2 * VaultCorridorPatrols.SEGMENT_LENGTH - 1);
+				ArrayList<Room> corridorRooms = new ArrayList<>();
+				corridorRooms.add(corridor);
+				//按普通房间的顺序先生成水草，再装饰剩余地面。
+				Random.pushGenerator(Random.Long());
+				try {
+					for (Point p : corridor.waterPlaceablePoints()) {
+						int cell = level.pointToCell(p);
+						if (level.map[cell] == Terrain.EMPTY_DECO) level.map[cell] = Terrain.EMPTY;
+					}
+					paintWater(level, corridorRooms);
+					paintGrass(level, corridorRooms);
+					for (Point p : corridor.waterPlaceablePoints()) {
+						int cell = level.pointToCell(p);
+						if (level.map[cell] == Terrain.EMPTY && Random.Int(10) == 0) {
+							level.map[cell] = Terrain.EMPTY_DECO;
+						}
+					}
+				} finally {
+					Random.popGenerator();
+				}
+				return true;
+			}
+		}.setWater(feeling == Feeling.WATER ? 0.90f : 0.30f, 4)
+				.setGrass(feeling == Feeling.GRASS ? 0.80f : 0.20f, 3).paint(this, null);
 		return true;
 	}
 

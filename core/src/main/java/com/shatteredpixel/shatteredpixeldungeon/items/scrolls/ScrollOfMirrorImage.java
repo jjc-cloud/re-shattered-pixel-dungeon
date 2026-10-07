@@ -45,7 +45,7 @@ public class ScrollOfMirrorImage extends Scroll {
 	private static final int NIMAGES	= 2;
 	
 	@Override
-	public void doRead() {
+	protected void readEffect() {
 		detach(curUser.belongings.backpack);
 		if ( spawnImages(curUser, NIMAGES) > 0){
 			GLog.i(Messages.get(this, "copies"));

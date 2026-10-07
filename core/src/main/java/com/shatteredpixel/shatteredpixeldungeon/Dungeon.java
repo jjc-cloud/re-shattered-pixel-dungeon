@@ -28,9 +28,11 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Awareness;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Dread;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicalSight;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicSealDomain;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MindVision;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.RevealedArea;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Terror;
@@ -576,6 +578,10 @@ public class Dungeon {
 			ScrollOfMagicMapping.reveal(level, false);
 		}
 		hero.pos = pos;
+		if (level instanceof VaultLevel && ((VaultLevel) level).isRegularQuest()
+				&& !Imp.Quest.vaultBossesDefeated) {
+			Buff.affect(hero, MagicSealDomain.class);
+		}
 
 		if (hero.buff(AscensionChallenge.class) != null){
 			hero.buff(AscensionChallenge.class).onLevelSwitch();

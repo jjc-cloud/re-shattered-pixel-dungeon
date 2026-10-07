@@ -158,7 +158,7 @@ abstract public class Weapon extends KindOfWeapon {
 				}
 				if (defender.isAlive()) {
 					int dmg = ((Hero) attacker).subClass == HeroSubClass.PALADIN ? 6 : 2;
-					defender.damage(Math.round(dmg * Enchantment.genericProcChanceMultiplier(attacker)), HolyWeapon.INSTANCE);
+					defender.damage(Math.round(dmg * Enchantment.genericProcChanceMultiplier(attacker)), HolyWeapon.INSTANCE, attacker);
 				}
 
 			} else {
@@ -173,7 +173,7 @@ abstract public class Weapon extends KindOfWeapon {
 
 			if (attacker instanceof Hero && isEquipped((Hero) attacker) &&
 					attacker.buff(Smite.SmiteTracker.class) != null && defender.isAlive()){
-				defender.damage(Smite.bonusDmg((Hero) attacker, defender), Smite.INSTANCE);
+				defender.damage(Smite.bonusDmg((Hero) attacker, defender), Smite.INSTANCE, attacker);
 			}
 		}
 

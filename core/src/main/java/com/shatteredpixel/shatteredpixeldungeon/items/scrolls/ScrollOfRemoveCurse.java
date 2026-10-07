@@ -51,7 +51,7 @@ public class ScrollOfRemoveCurse extends InventoryScroll {
 	}
 
 	@Override
-	public void doRead() {
+	protected void readEffect() {
 
 		TormentedSpirit spirit = null;
 		for (int i : PathFinder.NEIGHBOURS8){
@@ -74,7 +74,7 @@ public class ScrollOfRemoveCurse extends InventoryScroll {
 			GLog.p(Messages.get(this, "spirit"));
 			spirit.cleanse();
 		} else {
-			super.doRead();
+			super.readEffect();
 		}
 	}
 

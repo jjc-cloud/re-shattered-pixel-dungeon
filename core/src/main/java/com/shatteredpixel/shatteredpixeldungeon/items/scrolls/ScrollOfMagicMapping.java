@@ -43,7 +43,7 @@ public class ScrollOfMagicMapping extends Scroll {
 	}
 
 	@Override
-	public void doRead() {
+	protected void readEffect() {
 
 		detach(curUser.belongings.backpack);
 		boolean noticed = reveal(Dungeon.level, true);

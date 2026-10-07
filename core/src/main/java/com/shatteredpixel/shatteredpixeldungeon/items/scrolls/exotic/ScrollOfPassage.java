@@ -37,7 +37,7 @@ public class ScrollOfPassage extends ExoticScroll {
 	}
 	
 	@Override
-	public void doRead() {
+	protected void readEffect() {
 
 		detach(curUser.belongings.backpack);
 		identify();

@@ -397,7 +397,7 @@ public class ElementalStrike extends ArmorAbility {
 		//*** no enchantment ***
 		if (ench == null) {
 			for (Char ch : affected){
-				ch.damage(Math.round(powerMulti* Hero.heroDamageIntRange(6, 12)), ElementalStrike.this);
+				ch.damage(Math.round(powerMulti* Hero.heroDamageIntRange(6, 12)), ElementalStrike.this, hero);
 			}
 
 		//*** Kinetic ***
@@ -405,7 +405,7 @@ public class ElementalStrike extends ArmorAbility {
 			if (storedKineticDamage > 0) {
 				for (Char ch : affected) {
 					if (ch != primaryTarget) {
-						ch.damage(Math.round(storedKineticDamage * 0.4f * powerMulti), ench);
+						ch.damagePhysical(Math.round(storedKineticDamage * 0.4f * powerMulti), ench, hero);
 					}
 				}
 				storedKineticDamage = 0;
@@ -481,7 +481,7 @@ public class ElementalStrike extends ArmorAbility {
 		} else if (ench instanceof Projecting){
 			for (Char ch : affected){
 				if (ch != primaryTarget) {
-					ch.damage(Math.round(hero.damageRoll() * 0.3f * powerMulti), ench);
+					ch.damage(Math.round(hero.damageRoll() * 0.3f * powerMulti), ench, hero);
 				}
 			}
 
@@ -525,7 +525,7 @@ public class ElementalStrike extends ArmorAbility {
 		} else if (ench instanceof Crystal){
 			for (Char ch : affected){
 				if (ch != primaryTarget) {
-					ch.damage(Math.round(powerMulti* Hero.heroDamageIntRange(10, 20)), ElementalStrike.this);
+					ch.damage(Math.round(powerMulti* Hero.heroDamageIntRange(10, 20)), ElementalStrike.this, hero);
 					((Crystal) ench).repair(null, false, 4f*powerMulti);
 				}
 			}
@@ -537,7 +537,7 @@ public class ElementalStrike extends ArmorAbility {
 					float hpMissing = 1f - (ch.HP / (float)ch.HT);
 					float chance = 0.06f + 0.24f*hpMissing; //6-30%
 					if (Random.Float() < chance*powerMulti){
-						ch.damage( ch.HP, Grim.class );
+						ch.damage( ch.HP, Grim.class , hero);
 						ch.sprite.emitter().burst( ShadowParticle.UP, 5 );
 					}
 				}
@@ -602,7 +602,7 @@ public class ElementalStrike extends ArmorAbility {
 		} else if (ench instanceof Polarized){
 			for (Char ch : affected){
 				if (Random.Float() < 0.5f*powerMulti){
-					ch.damage(Hero.heroDamageIntRange(24, 36), ElementalStrike.this);
+					ch.damage(Hero.heroDamageIntRange(24, 36), ElementalStrike.this, hero);
 				}
 			}
 

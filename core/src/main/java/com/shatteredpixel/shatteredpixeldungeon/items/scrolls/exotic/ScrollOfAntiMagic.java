@@ -33,7 +33,7 @@ public class ScrollOfAntiMagic extends ExoticScroll {
 	}
 	
 	@Override
-	public void doRead() {
+	protected void readEffect() {
 
 		detach(curUser.belongings.backpack);
 		Buff.affect( curUser, MagicImmune.class, MagicImmune.DURATION );

@@ -23,9 +23,9 @@ public class ScrollOfDungeonBlueprint extends ScrollOfMagicMapping {
 	}
 
 	@Override
-	public void doRead() {
+	protected void readEffect() {
 		Dungeon.revealEntireDungeon();
-		super.doRead();
+		super.readEffect();
 	}
 
 	@Override

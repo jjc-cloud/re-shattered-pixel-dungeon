@@ -186,6 +186,7 @@ public class TalentButton extends Button {
 				@Override
 				public void call() {
 					Talent replacing = ScrollOfMetamorphosis.WndMetamorphReplace.INSTANCE.replacing;
+					if (!ScrollOfMetamorphosis.canRead(Dungeon.hero)) return;
 
 							for (LinkedHashMap<Talent, Integer> tier : Dungeon.hero.talents){
 							if (tier.containsKey(replacing)){

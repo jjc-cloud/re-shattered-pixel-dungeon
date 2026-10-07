@@ -130,7 +130,7 @@ public class CrystalWisp extends Mob{
 		if (hit( this, enemy, true )) {
 
 			int dmg = Random.NormalIntRange( 5, 10 );
-			enemy.damage( dmg, new LightBeam() );
+			enemy.damage( dmg, new LightBeam() , CrystalWisp.this);
 
 			if (!enemy.isAlive() && enemy == Dungeon.hero) {
 				Badges.validateDeathFromEnemyMagic();

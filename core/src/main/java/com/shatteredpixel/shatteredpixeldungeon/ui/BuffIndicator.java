@@ -137,6 +137,10 @@ public class BuffIndicator extends Component {
 	public static final int SEAL_SHIELD = 84;
 	public static final int THROWN_WEP  = 85;
 	public static final int VOID_WALKER = 86;
+	public static final int MAGIC_SEAL_DOMAIN = 87;
+	public static final int PHYSICAL_ONLY_DOMAIN = 88;
+	public static final int MAGIC_ONLY_DOMAIN = 89;
+	public static final int PHYSICAL_MAGIC_NULL_DOMAIN = 90;
 
 	public static final int SIZE_SMALL  = 7;
 	public static final int SIZE_LARGE  = 16;

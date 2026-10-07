@@ -104,7 +104,7 @@ public class WandOfBlastWave extends DamageWand {
 
 			if (ch != null){
 				wandProc(ch, chargesPerCast());
-				if (ch.alignment != Char.Alignment.ALLY) ch.damage(damageRoll(), this);
+				if (ch.alignment != Char.Alignment.ALLY) ch.damage(damageRoll(), this, curUser);
 
 				//do not push chars that are dieing over a pit, or that move due to the damage
 				if ((ch.isAlive() || ch.flying || !Dungeon.level.pit[ch.pos])
@@ -121,7 +121,7 @@ public class WandOfBlastWave extends DamageWand {
 		Char ch = Actor.findChar(bolt.collisionPos);
 		if (ch != null){
 			wandProc(ch, chargesPerCast());
-			ch.damage(damageRoll(), this);
+			ch.damage(damageRoll(), this, curUser);
 
 			//do not push chars that are dieing over a pit, or that move due to the damage
 			if ((ch.isAlive() || ch.flying || !Dungeon.level.pit[ch.pos])
@@ -217,7 +217,7 @@ public class WandOfBlastWave extends DamageWand {
 		if (defender.buff(Paralysis.class) != null && defender.buff(BWaveOnHitTracker.class) == null){
 			defender.buff(Paralysis.class).detach();
 			int dmg = Hero.heroDamageIntRange(8+2*buffedLvl(), 12+3*buffedLvl());
-			defender.damage(Math.round(procChanceMultiplier(attacker) * dmg), this);
+			defender.damage(Math.round(procChanceMultiplier(attacker) * dmg), this, attacker);
 			BlastWave.blast(defender.pos);
 			Sample.INSTANCE.play( Assets.Sounds.BLAST );
 

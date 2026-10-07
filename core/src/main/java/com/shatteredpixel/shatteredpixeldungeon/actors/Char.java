@@ -46,6 +46,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Corrosion;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Corruption;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Daze;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.DamageDomain;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Doom;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Dread;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FireImbue;
@@ -461,7 +462,7 @@ public abstract class Char extends Actor {
 					dmg += 1 + 2*Dungeon.hero.pointsInTalent(Talent.SEARING_LIGHT);
 				}
 				if (this != Dungeon.hero && Dungeon.hero.subClass == HeroSubClass.PRIEST){
-					enemy.damage(5+Dungeon.hero.lvl, GuidingLight.INSTANCE);
+					enemy.damage(5+Dungeon.hero.lvl, GuidingLight.INSTANCE, Dungeon.hero);
 				}
 			}
 
@@ -515,13 +516,17 @@ public abstract class Char extends Actor {
 				dmg *= 0.67f;
 			}
 
-			int effectiveDamage = enemy.defenseProc( this, Math.round(dmg) );
+			boolean physicalDamageBlocked = blocksDomainDamage(this, true);
+			int effectiveDamage = enemy.defenseProc(this, physicalDamageBlocked ? 0 : Math.round(dmg));
+			//反击等命中机制照常触发，但被屏蔽的本体不消耗受击护盾。
+			//附魔仍按本次攻击的伤害计算自己的独立魔法段。
+			if (physicalDamageBlocked) effectiveDamage = Math.round(dmg);
 			//do not trigger on-hit logic if defenseProc returned a negative value
 			if (effectiveDamage >= 0) {
 				effectiveDamage = Math.max(effectiveDamage - dr, 0);
 
-				if (enemy.buff(Viscosity.ViscosityTracker.class) != null) {
-					effectiveDamage = enemy.buff(Viscosity.ViscosityTracker.class).deferDamage(effectiveDamage);
+				if (!physicalDamageBlocked && enemy.buff(Viscosity.ViscosityTracker.class) != null) {
+					effectiveDamage = enemy.buff(Viscosity.ViscosityTracker.class).deferDamage(effectiveDamage, this);
 					enemy.buff(Viscosity.ViscosityTracker.class).detach();
 				}
 
@@ -544,7 +549,20 @@ public abstract class Char extends Actor {
 				return true;
 			}
 
-			enemy.damage( effectiveDamage, this );
+			if (physicalDamageBlocked) {
+				//本体被屏蔽时，仍单独结算允许的死神魔法追加，后续刺杀机制照常执行。
+				int grimDamage = enemy.resolveGrimDamage(this);
+				if (grimDamage > 0) {
+					if (enemy.sprite != null) enemy.sprite.showStatusWithIcon(CharSprite.NEGATIVE,
+							Integer.toString(grimDamage), FloatingText.MAGIC_DMG);
+					enemy.HP = Math.max(0, enemy.HP);
+					if (!enemy.isAlive()) enemy.die(this);
+					else if (enemy.HP == 0) DeathMark.processFearTheReaper(enemy);
+				}
+				effectiveDamage = 0;
+			} else {
+				enemy.damagePhysical(effectiveDamage, this, this);
+			}
 			//按本次物理攻击的伤害积怒，护盾吸收与剩余生命值不影响积累。
 			if (berserk != null) berserk.onAttackResolved(effectiveDamage);
 
@@ -842,6 +860,64 @@ public abstract class Char extends Actor {
 		return cachedIncomingDOT;
 	}
 	
+	public static Class<?> damageSourceClass(Object source) {
+		return source instanceof Class ? (Class<?>) source : source.getClass();
+	}
+
+	public boolean blocksDomainDamage(Object source, boolean physical) {
+		if (source == null) return false;
+		Class<?> sourceClass = damageSourceClass(source);
+		boolean magic = AntiMagic.RESISTS.contains(sourceClass);
+		if (!magic && !physical) return false;
+		for (DamageDomain domain : buffs(DamageDomain.class)) {
+			if (magic ? domain.blocksMagic : domain.blocksPhysical) return true;
+		}
+		return false;
+	}
+
+	protected Char domainDamageActor;
+	protected Object domainDamageOrigin;
+	protected boolean domainPhysicalDamage;
+
+	//保留原伤害来源供抗性、死亡记录和怪物逻辑使用，另行传递实际施法者。
+	public final void damage(int dmg, Object source, Char attacker) {
+		damageWithSource(dmg, source, attacker, source, false);
+	}
+
+	public final void damagePhysical(int dmg, Object source, Char attacker) {
+		damageWithSource(dmg, source, attacker, source, true);
+	}
+
+	private void damageWithSource(int dmg, Object source, Char attacker, Object origin, boolean physical) {
+		if (dmg >= 0 && attacker != null && attacker.blocksDomainDamage(origin, physical)) return;
+		Char previousActor = domainDamageActor;
+		Object previousOrigin = domainDamageOrigin;
+		boolean previousPhysical = domainPhysicalDamage;
+		domainDamageActor = attacker;
+		domainDamageOrigin = origin;
+		domainPhysicalDamage = physical;
+		try {
+			damage(dmg, source);
+		} finally {
+			domainDamageActor = previousActor;
+			domainDamageOrigin = previousOrigin;
+			domainPhysicalDamage = previousPhysical;
+		}
+	}
+
+	private int resolveGrimDamage(Char attacker) {
+		Grim.GrimTracker grim = attacker.buff(Grim.GrimTracker.class);
+		if (HP <= 0 || grim == null || attacker.blocksDomainDamage(Grim.class, false)
+				|| isImmune(Grim.class) || isInvulnerable(Grim.class)) return 0;
+		float chance = grim.maxChance * (float) Math.pow((HT - HP) / (float) HT, 2);
+		if (Random.Float() >= chance) return 0;
+		int damage = Math.round(HP * resist(Grim.class));
+		HP -= damage;
+		if (sprite != null) sprite.emitter().burst(ShadowParticle.UP, 5);
+		if (!isAlive() && grim.qualifiesForBadge) Badges.validateGrimWeapon();
+		return damage;
+	}
+
 	public void damage( int dmg, Object src ) {
 
 		if (!isAlive() || dmg < 0) {
@@ -856,7 +932,8 @@ public abstract class Char extends Actor {
 			if (berserk != null) dmg = Math.round(berserk.damageFactor(dmg));
 		}
 
-		if(isInvulnerable(src.getClass())){
+		Class<?> srcClass = damageSourceClass(src);
+		if(isInvulnerable(srcClass)){
 			sprite.showStatus(CharSprite.POSITIVE, Messages.get(this, "invulnerable"));
 			return;
 		}
@@ -873,7 +950,8 @@ public abstract class Char extends Actor {
 			for (LifeLink link : links){
 				Char ch = (Char)Actor.findById(link.object);
 				if (ch != null) {
-					ch.damage(dmg, link);
+					ch.damageWithSource(dmg, link, domainDamageActor,
+							domainDamageOrigin != null ? domainDamageOrigin : src, domainPhysicalDamage);
 					if (!ch.isAlive()) {
 						link.detach();
 						if (ch == Dungeon.hero){
@@ -949,7 +1027,6 @@ public abstract class Char extends Actor {
 			((Char) src).buff(Vorpal.VorpalTracker.class).detach();
 		}
 
-		Class<?> srcClass = src.getClass();
 		if (isImmune( srcClass )) {
 			damage = 0;
 		} else {
@@ -965,7 +1042,7 @@ public abstract class Char extends Actor {
 		}
 		
 		//TODO improve this when I have proper damage source logic
-		if (AntiMagic.RESISTS.contains(src.getClass())){
+		if (AntiMagic.RESISTS.contains(srcClass)){
 			dmg -= AntiMagic.drRoll(this, glyphLevel(AntiMagic.class));
 			if (buff(ArcaneArmor.class) != null) {
 				dmg -= Random.NormalIntRange(0, buff(ArcaneArmor.class).level());
@@ -1037,22 +1114,7 @@ public abstract class Char extends Actor {
 
 		HP -= dmg;
 
-		if (HP > 0 && src instanceof Char && ((Char) src).buff(Grim.GrimTracker.class) != null){
-
-			float finalChance = ((Char) src).buff(Grim.GrimTracker.class).maxChance;
-			finalChance *= (float)Math.pow( ((HT - HP) / (float)HT), 2);
-
-			if (Random.Float() < finalChance) {
-				int extraDmg = Math.round(HP*resist(Grim.class));
-				dmg += extraDmg;
-				HP -= extraDmg;
-
-				sprite.emitter().burst( ShadowParticle.UP, 5 );
-				if (!isAlive() && ((Char) src).buff(Grim.GrimTracker.class).qualifiesForBadge){
-					Badges.validateGrimWeapon();
-				}
-			}
-		}
+		if (src instanceof Char) dmg += resolveGrimDamage((Char) src);
 
 		if (src instanceof Char && ((Char) src).buff(Kinetic.KineticTracker.class) != null){
 			int dmgToAdd = 0;
@@ -1073,8 +1135,8 @@ public abstract class Char extends Actor {
 		if (sprite != null) {
 			//defaults to normal damage icon if no other ones apply
 			int                                                         icon = FloatingText.PHYS_DMG;
-			if (NO_ARMOR_PHYSICAL_SOURCES.contains(src.getClass()))     icon = FloatingText.PHYS_DMG_NO_BLOCK;
-			if (AntiMagic.RESISTS.contains(src.getClass()))             icon = FloatingText.MAGIC_DMG;
+			if (NO_ARMOR_PHYSICAL_SOURCES.contains(srcClass))            icon = FloatingText.PHYS_DMG_NO_BLOCK;
+			if (AntiMagic.RESISTS.contains(srcClass))                    icon = FloatingText.MAGIC_DMG;
 			if (src instanceof Pickaxe)                                 icon = FloatingText.PICK_DMG;
 
 			//special case for sniper when using ranged attacks

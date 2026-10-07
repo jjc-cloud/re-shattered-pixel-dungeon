@@ -49,6 +49,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.SkeletonKey;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TalismanOfForesight;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.UnstableSpellbook;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfFireblast;
@@ -247,6 +248,7 @@ public class Trinity extends ArmorAbility {
 							hide();
 							return;
 						}
+						if (spiritForm instanceof UnstableSpellbook && !Scroll.canRead(Dungeon.hero)) return;
 						Invisibility.dispel();
 						//Rings and the Chalice specifically get their passive effects for 20 turns
 						if (spiritForm instanceof Ring || spiritForm instanceof ChaliceOfBlood) {

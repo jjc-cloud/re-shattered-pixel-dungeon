@@ -152,7 +152,7 @@ public abstract class YogFist extends Mob {
 		int dmgTaken = preHP - HP;
 
 		LockedFloor lock = Dungeon.hero.buff(LockedFloor.class);
-		if (dmgTaken > 0 && lock != null && !isImmune(src.getClass()) && !isInvulnerable(src.getClass())){
+		if (dmgTaken > 0 && lock != null && !isImmune(damageSourceClass(src)) && !isInvulnerable(damageSourceClass(src))){
 			if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES))   lock.addTime(dmgTaken/4f);
 			else                                                    lock.addTime(dmgTaken/2f);
 		}
@@ -316,7 +316,7 @@ public abstract class YogFist extends Mob {
 			if (grassCells > 0) dmg = Math.round(dmg * (6-grassCells)/6f);
 
 			//can be ignited, but takes no damage from burning
-			if (src.getClass() == Burning.class){
+			if (damageSourceClass(src) == Burning.class){
 				return;
 			}
 
@@ -401,10 +401,10 @@ public abstract class YogFist extends Mob {
 
 		@Override
 		public void damage(int dmg, Object src) {
-			if (!isInvulnerable(src.getClass())
+			if (!isInvulnerable(damageSourceClass(src))
 					&& !(src instanceof Bleeding)
 					&& buff(Sickle.HarvestBleedTracker.class) == null){
-				dmg = Math.round( dmg * resist( src.getClass() ));
+				dmg = Math.round( dmg * resist( damageSourceClass(src) ));
 				if (dmg < 0){
 					return;
 				}
@@ -461,10 +461,11 @@ public abstract class YogFist extends Mob {
 
 		@Override
 		public void damage(int dmg, Object src) {
-			if (!isInvulnerable(src.getClass()) && !(src instanceof Viscosity.DeferedDamage)){
-				dmg = Math.round( dmg * resist( src.getClass() ));
+			if (!isInvulnerable(damageSourceClass(src)) && !(src instanceof Viscosity.DeferedDamage)){
+				dmg = Math.round( dmg * resist( damageSourceClass(src) ));
 				if (dmg >= 0) {
-					Buff.affect(this, Viscosity.DeferedDamage.class).extend(dmg);
+					Buff.affect(this, Viscosity.DeferedDamage.class).extend(dmg, domainDamageActor,
+							domainDamageOrigin != null ? domainDamageOrigin : src, domainPhysicalDamage);
 					sprite.showStatus(CharSprite.WARNING, Messages.get(Viscosity.class, "deferred", dmg));
 				}
 			} else{
@@ -506,7 +507,7 @@ public abstract class YogFist extends Mob {
 			Char enemy = this.enemy;
 			if (hit( this, enemy, true )) {
 
-				enemy.damage( Random.NormalIntRange(10, 20), new LightBeam() );
+				enemy.damage( Random.NormalIntRange(10, 20), new LightBeam() , this);
 				Buff.prolong( enemy, Blindness.class, Blindness.DURATION/2f );
 
 				if (!enemy.isAlive() && enemy == Dungeon.hero) {
@@ -573,7 +574,7 @@ public abstract class YogFist extends Mob {
 			Char enemy = this.enemy;
 			if (hit( this, enemy, true )) {
 
-				enemy.damage( Random.NormalIntRange(10, 20), new DarkBolt() );
+				enemy.damage( Random.NormalIntRange(10, 20), new DarkBolt() , this);
 
 				Light l = enemy.buff(Light.class);
 				if (l != null){

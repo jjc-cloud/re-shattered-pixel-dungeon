@@ -494,14 +494,14 @@ public class DM300 extends Mob {
 
 		int preHP = HP;
 		super.damage(dmg, src);
-		if (isInvulnerable(src.getClass())){
+		if (isInvulnerable(damageSourceClass(src))){
 			return;
 		}
 
 		int dmgTaken = preHP - HP;
 		if (dmgTaken > 0) {
 			LockedFloor lock = Dungeon.hero.buff(LockedFloor.class);
-			if (lock != null && !isImmune(src.getClass()) && !isInvulnerable(src.getClass())){
+			if (lock != null && !isImmune(damageSourceClass(src)) && !isInvulnerable(damageSourceClass(src))){
 				if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES))   lock.addTime(dmgTaken/2f);
 				else                                                    lock.addTime(dmgTaken);
 			}
