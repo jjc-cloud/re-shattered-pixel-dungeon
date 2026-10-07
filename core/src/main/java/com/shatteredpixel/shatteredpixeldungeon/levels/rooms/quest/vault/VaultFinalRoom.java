@@ -23,10 +23,12 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.vault;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.VaultTokenDoor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.quest.vault.VaultBossElemental;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -38,6 +40,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
@@ -56,7 +59,6 @@ import com.watabou.noosa.Tilemap;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Callback;
-import com.watabou.utils.PathFinder;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
 
@@ -137,6 +139,35 @@ public class VaultFinalRoom extends SpecialRoom {
 
 	private Point entryDoor;
 	private Point lockedDoor;
+
+	private int entryDoorWidth = 1;
+
+	public void configureFixedDoors(Point entry, Point treasure, int width) {
+		entryDoor = entry;
+		lockedDoor = treasure;
+		entryDoorWidth = width;
+	}
+
+	private void setEntryDoor(int terrain) {
+		int center = Dungeon.level.pointToCell(entryDoor);
+		if (entryDoorWidth == 3) {
+			for (Mob mob : new ArrayList<>(Dungeon.level.mobs)) if (mob instanceof VaultTokenDoor && mob.pos == center) {
+				mob.destroy();
+				if (mob.sprite != null) mob.sprite.killAndErase();
+			}
+			if (terrain == Terrain.LOCKED_DOOR) {
+				VaultTokenDoor door = new VaultTokenDoor();
+				door.doorWidth = 3;
+				door.battleSeal = true;
+				door.pos = center;
+				GameScene.add(door);
+			}
+		}
+		for (int offset = -entryDoorWidth / 2; offset <= entryDoorWidth / 2; offset++) {
+			Level.set(center + offset, entryDoorWidth == 3 ? (terrain == Terrain.LOCKED_DOOR ? Terrain.CUSTOM_DECO : Terrain.EMPTY) : terrain);
+			GameScene.updateMap(center + offset);
+		}
+	}
 
 	@Override
 	public void paint(Level level) {
@@ -243,52 +274,70 @@ public class VaultFinalRoom extends SpecialRoom {
 
 	}
 
+	private boolean impWarningShown = false;
 	private int warnState = 0;
 	private boolean lockTriggered = false;
 
 	public void processHeroStep(Hero hero){
+		if (!impWarningShown && Dungeon.level instanceof VaultLevel
+				&& ((VaultLevel) Dungeon.level).isRegularQuest()) {
+			impWarningShown = true;
+			hero.interrupt();
+			ShatteredPixelDungeon.runOnRenderThread(() -> GameScene.show(new WndTitledMessage(new ImpSprite(),
+					Messages.titleCase(Messages.get(Imp.class, "name")), Messages.get(VaultFinalRoom.class, "imp_warning_battle"))));
+		}
 		if (!lockTriggered){
 			Point heroPos = Dungeon.level.cellToPoint(hero.pos);
-			int distance = Math.max(Math.abs(heroPos.x - lockedDoor.x), Math.abs(heroPos.y - lockedDoor.y));
-			//clear warned state if hero leaves
-			if (distance <= 3){
-				int bossPos = Dungeon.level.pointToCell(center());
-				//中心被占用时，沿用上游逻辑选择相邻空格；没有空格则等待。
-				if (Actor.findChar(bossPos) != null){
-					ArrayList<Integer> candidates = new ArrayList<>();
-					for (int i : PathFinder.NEIGHBOURS8){
-						if (Actor.findChar(bossPos + i) == null){
-							candidates.add(bossPos + i);
-						}
-					}
-					if (!candidates.isEmpty()){
-						bossPos = Random.element(candidates);
-					} else {
-						return;
+			// The plain floor inside the columns is safe; special floor starts the ritual.
+			boolean inRitual = VaultLayout.tile(heroPos.x, heroPos.y) == ':';
+			boolean atEdge = false;
+			for (int dy = -1; dy <= 1; dy++) {
+				for (int dx = -1; dx <= 1; dx++) {
+					atEdge |= VaultLayout.tile(heroPos.x + dx, heroPos.y + dy) == ':';
+				}
+			}
+			int distance = Dungeon.level.distance(hero.pos, Dungeon.level.pointToCell(lockedDoor));
+			if (inRitual){
+				ArrayList<Integer> bossSpots = new ArrayList<>();
+				for (CustomTilemap tile : Dungeon.level.customTiles) {
+					if (tile instanceof MarkerTiles) {
+						int cell = tile.tileX + tile.tileW / 2
+								+ (tile.tileY + tile.tileH / 2) * Dungeon.level.width();
+						if (Dungeon.level.passable[cell] && Actor.findChar(cell) == null) bossSpots.add(cell);
 					}
 				}
-
-				Level.set(Dungeon.level.pointToCell(entryDoor), Terrain.LOCKED_DOOR);
-				GameScene.updateMap(Dungeon.level.pointToCell(entryDoor));
-				VaultBossElemental boss = new VaultBossElemental();
-				boss.pos = bossPos;
-				GameScene.add(boss, 1);
-				//we add a 1 turn delay, but compute FOV to prevent an opening surprise attack
-				boss.fieldOfView = new boolean[Dungeon.level.length()];
-				Dungeon.level.updateFieldOfView( boss, boss.fieldOfView );
-				boss.aggro(Dungeon.hero);
-				boss.sprite.turnTo(boss.pos, Dungeon.hero.pos);
-				boss.setElementalForm(boss.curForm()); //re-assert default form for particle fx
+				// Wait for three free marker centers rather than spawn outside a marker.
+				if (bossSpots.size() < 3) return;
+				Random.shuffle(bossSpots);
+				ArrayList<VaultBossElemental.ElementalForm> forms = new ArrayList<>();
+				forms.add(VaultBossElemental.ElementalForm.FIRE);
+				forms.add(VaultBossElemental.ElementalForm.FROST);
+				forms.add(VaultBossElemental.ElementalForm.SHOCK);
+				Random.shuffle(forms);
+				setEntryDoor(Terrain.LOCKED_DOOR);
+				for (int i = 0; i < 3; i++) {
+					VaultBossElemental boss = new VaultBossElemental();
+					boss.pos = bossSpots.get(i);
+					boss.setElementalForm(forms.get(i));
+					GameScene.add(boss, 1);
+					// One turn of grace and initial FOV prevent an opening surprise attack.
+					boss.fieldOfView = new boolean[Dungeon.level.length()];
+					Dungeon.level.updateFieldOfView(boss, boss.fieldOfView);
+					boss.aggro(hero);
+					boss.sprite.turnTo(boss.pos, hero.pos);
+					boss.setElementalForm(boss.curForm());
+				}
 				Dungeon.level.seal();
 				lockTriggered = true;
-			} else if (distance == 4 && warnState < 2) {
+			} else if (atEdge && warnState < 2) {
 				GLog.n(Messages.get(VaultFinalRoom.class, "final_warning"));
 				Sample.INSTANCE.play(Assets.Sounds.CHARGEUP);
 				hero.interrupt();
 				warnState = 2;
-			} else if (distance >= 5 && warnState == 2){
+			} else if (!atEdge && warnState == 2){
 				warnState = 1;
-			} else if (distance <= 10 && warnState < 1){
+			} else if (distance <= 10 && warnState < 1
+					&& (!(Dungeon.level instanceof VaultLevel) || !((VaultLevel) Dungeon.level).isRegularQuest())){
 				hero.interrupt();
 				ShatteredPixelDungeon.runOnRenderThread(new Callback() {
 					@Override
@@ -345,8 +394,7 @@ public class VaultFinalRoom extends SpecialRoom {
 	}
 
 	public void unlock(){
-		Level.set(Dungeon.level.pointToCell(entryDoor), Terrain.DOOR);
-		GameScene.updateMap(Dungeon.level.pointToCell(entryDoor));
+		setEntryDoor(Terrain.DOOR);
 		Level.set(Dungeon.level.pointToCell(lockedDoor), Terrain.DOOR);
 		GameScene.updateMap(Dungeon.level.pointToCell(lockedDoor));
 		for (Heap h : Dungeon.level.heaps.valueList()){
@@ -369,12 +417,14 @@ public class VaultFinalRoom extends SpecialRoom {
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
 
+		bundle.put("entry_door_width", entryDoorWidth);
 		bundle.put(ENTRY_DOOR_X, entryDoor.x);
 		bundle.put(ENTRY_DOOR_Y, entryDoor.y);
 
 		bundle.put(LOCKED_DOOR_X, lockedDoor.x);
 		bundle.put(LOCKED_DOOR_Y, lockedDoor.y);
 
+		bundle.put("imp_warning_shown", impWarningShown);
 		bundle.put(WARN_STATE, warnState);
 		bundle.put(LOCK_TRIGGERED, lockTriggered);
 	}
@@ -383,6 +433,7 @@ public class VaultFinalRoom extends SpecialRoom {
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
 
+		entryDoorWidth = bundle.contains("entry_door_width") ? bundle.getInt("entry_door_width") : 1;
 		entryDoor = new Point();
 		entryDoor.x = bundle.getInt(ENTRY_DOOR_X);
 		entryDoor.y = bundle.getInt(ENTRY_DOOR_Y);
@@ -391,6 +442,7 @@ public class VaultFinalRoom extends SpecialRoom {
 		lockedDoor.x = bundle.getInt(LOCKED_DOOR_X);
 		lockedDoor.y = bundle.getInt(LOCKED_DOOR_Y);
 
+		impWarningShown = bundle.getBoolean("imp_warning_shown");
 		warnState = bundle.getInt(WARN_STATE);
 		lockTriggered = bundle.getBoolean(LOCK_TRIGGERED);
 	}

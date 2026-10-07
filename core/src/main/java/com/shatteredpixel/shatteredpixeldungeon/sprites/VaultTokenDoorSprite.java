@@ -25,8 +25,16 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.watabou.noosa.TextureFilm;
+import com.watabou.noosa.Game;
+import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.VaultTokenDoor;
 
 public class VaultTokenDoorSprite extends MobSprite {
+
+	private boolean wide;
+	private float fadeStart;
+	private float fadeTarget;
+	private float fadeElapsed = 1f;
 
 	public VaultTokenDoorSprite () {
 		super();
@@ -35,9 +43,14 @@ public class VaultTokenDoorSprite extends MobSprite {
 		renderShadow = false;
 		visibleOutOfFFOV = true;
 
-		texture(Assets.Sprites.VAULT_TOKENS_DOOR );
-
-		TextureFilm frames = new TextureFilm( texture, 16, 16 );
+		wide = Dungeon.level instanceof VaultLevel && ((VaultLevel) Dungeon.level).isRegularQuest();
+		texture(wide ? Assets.Environment.CITY_QUEST : Assets.Sprites.VAULT_TOKENS_DOOR);
+		TextureFilm frames;
+		if (wide) {
+			perspectiveRaise = 0;
+			frames = new TextureFilm(texture);
+			frames.add(0, texture.uvRect(0, 128, 48, 176));
+		} else frames = new TextureFilm(texture, 16, 16);
 
 		idle = new Animation( 1, false );
 		idle.frames( frames, 0 );
@@ -57,16 +70,29 @@ public class VaultTokenDoorSprite extends MobSprite {
 		renderShadow = false;
 		// 仅地图上绑定的门参与距离显形，查看窗口的预览保持完整显示。
 		alpha(0f);
+		fadeStart = fadeTarget = 0f;
+		fadeElapsed = 1f;
+		flipHorizontal = false;
 	}
 
 	@Override
 	public void update() {
 		super.update();
 		if (ch != null && Dungeon.hero != null && Dungeon.level != null) {
-			// 4 格及以上全透明，3、2、1 格分别显示 25%、50%、75%。
 			int distance = Dungeon.level.distance(ch.pos, Dungeon.hero.pos);
-			alpha(0.25f * Math.max(0, 4 - Math.max(1, distance)));
+			if (wide && ch instanceof VaultTokenDoor) {
+				for (int offset = -1; offset <= 1; offset++) distance = Math.min(distance, Dungeon.level.distance(ch.pos + offset, Dungeon.hero.pos));
+				float target = distance >= 3 ? 0f : distance == 2 ? .5f : 1f;
+				if (target != fadeTarget) {
+					fadeStart = alpha();
+					fadeTarget = target;
+					fadeElapsed = 0f;
+				}
+				fadeElapsed = Math.min(1f, fadeElapsed + Game.elapsed);
+				alpha(fadeStart + (fadeTarget - fadeStart) * fadeElapsed);
+			} else {
+				alpha(0.25f * Math.max(0, 4 - Math.max(1, distance)));
+			}
 		}
 	}
-
 }

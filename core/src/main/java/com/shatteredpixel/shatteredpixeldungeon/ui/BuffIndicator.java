@@ -142,10 +142,10 @@ public class BuffIndicator extends Component {
 	public static final int SIZE_LARGE  = 16;
 	
 	private static BuffIndicator heroInstance;
-	private static BuffIndicator bossInstance;
+	private static final ArrayList<BuffIndicator> bossInstances = new ArrayList<>();
 	
 	private LinkedHashMap<Buff, BuffButton> buffButtons = new LinkedHashMap<>();
-	private boolean needsRefresh;
+	private volatile boolean needsRefresh;
 	private Char ch;
 
 	private boolean large = false;
@@ -168,6 +168,9 @@ public class BuffIndicator extends Component {
 	@Override
 	public void destroy() {
 		super.destroy();
+		synchronized (bossInstances) {
+			bossInstances.remove(this);
+		}
 		
 		if (this == heroInstance) {
 			heroInstance = null;
@@ -185,6 +188,7 @@ public class BuffIndicator extends Component {
 
 	private boolean buffsHidden = false;
 	public int maxBuffs = 14; //by default
+	public float contentHeight;
 
 	@Override
 	protected void layout() {
@@ -239,6 +243,7 @@ public class BuffIndicator extends Component {
 		int pos = 0;
 		float lastIconRight = 0;
 		int total = 0;
+		contentHeight = 0;
 		for (BuffButton icon : buffButtons.values()){
 			if (total >= maxBuffs){
 				icon.visible = false;
@@ -253,6 +258,7 @@ public class BuffIndicator extends Component {
 			icon.setRect(x + pos * (size + 1), y + rowTop-icon.topOffset, size + 1, size + (large ? 0 : 5));
 			PixelScene.align(icon);
 			pos++;
+			contentHeight = Math.max(contentHeight, icon.bottom() - y);
 
 			lastIconRight = icon.right()-1;
 
@@ -411,12 +417,15 @@ public class BuffIndicator extends Component {
 	}
 
 	public static void refreshBoss(){
-		if (bossInstance != null) {
-			bossInstance.needsRefresh = true;
+		synchronized (bossInstances) {
+			for (BuffIndicator boss : bossInstances) boss.needsRefresh = true;
 		}
 	}
 
 	public static void setBossInstance(BuffIndicator boss){
-		bossInstance = boss;
+		synchronized (bossInstances) {
+			if (boss == null) bossInstances.clear();
+			else if (!bossInstances.contains(boss)) bossInstances.add(boss);
+		}
 	}
 }

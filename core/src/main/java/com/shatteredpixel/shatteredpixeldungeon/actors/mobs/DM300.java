@@ -152,7 +152,7 @@ public class DM300 extends Mob {
 
 		if (turnsSinceLastAbility != -1){
 			BossHealthBar.assignBoss(this);
-			if (!supercharged && pylonsActivated == totalPylonsToActivate()) BossHealthBar.bleed(true);
+			if (!supercharged && pylonsActivated == totalPylonsToActivate()) BossHealthBar.bleed(DM300.this, true);
 		}
 	}
 
@@ -353,7 +353,7 @@ public class DM300 extends Mob {
 	@Override
 	public void notice() {
 		super.notice();
-		if (!BossHealthBar.isAssigned()) {
+		if (!BossHealthBar.isAssigned(DM300.this)) {
 			BossHealthBar.assignBoss(this);
 			turnsSinceLastAbility = 0;
 			yell(Messages.get(this, "notice"));
@@ -488,7 +488,7 @@ public class DM300 extends Mob {
 
 	@Override
 	public void damage(int dmg, Object src) {
-		if (!BossHealthBar.isAssigned()){
+		if (!BossHealthBar.isAssigned(DM300.this)){
 			notice();
 		}
 
@@ -563,7 +563,7 @@ public class DM300 extends Mob {
 			yell(Messages.get(this, "charge_lost"));
 		} else {
 			yell(Messages.get(this, "pylons_destroyed"));
-			BossHealthBar.bleed(true);
+			BossHealthBar.bleed(DM300.this, true);
 			Game.runOnRenderThread(new Callback() {
 				@Override
 				public void call() {

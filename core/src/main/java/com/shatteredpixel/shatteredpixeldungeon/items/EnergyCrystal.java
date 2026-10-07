@@ -31,6 +31,8 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.watabou.noosa.audio.Sample;
 
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket;
+
 import java.util.ArrayList;
 
 public class EnergyCrystal extends Item {
@@ -55,6 +57,7 @@ public class EnergyCrystal extends Item {
 
 	@Override
 	public boolean doPickUp(Hero hero, int pos) {
+		if (isVaultLoot() && MagicPocket.isVault()) return MagicPocket.pickUp(this, hero, pos);
 
 		Catalog.setSeen(getClass());
 		Statistics.itemTypesDiscovered.add(getClass());

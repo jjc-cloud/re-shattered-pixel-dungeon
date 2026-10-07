@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.blobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -90,10 +91,12 @@ public class VaultFlameTraps extends Blob {
 						if (ch == Dungeon.hero) {
 							Sample.INSTANCE.play(Assets.Sounds.BURNING);
 							SFXLastPlayed = ShatteredPixelDungeon.realTime;
-							if (Imp.Quest.hazardFreebies > 0){
-								Imp.Quest.hazardFreebies--;
-							} else {
-								Statistics.questScores[3] -= 100;
+							if (!(Dungeon.level instanceof VaultLevel) || !((VaultLevel) Dungeon.level).isRegularQuest()) {
+								if (Imp.Quest.hazardFreebies > 0){
+									Imp.Quest.hazardFreebies--;
+								} else {
+									Statistics.questScores[3] -= 100;
+								}
 							}
 						}
 

@@ -34,6 +34,8 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Random;
 
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket;
+
 import java.util.ArrayList;
 
 public class Gold extends Item {
@@ -58,6 +60,7 @@ public class Gold extends Item {
 	
 	@Override
 	public boolean doPickUp(Hero hero, int pos) {
+		if (isVaultLoot() && MagicPocket.isVault()) return MagicPocket.pickUp(this, hero, pos);
 
 		Catalog.setSeen(getClass());
 		Statistics.itemTypesDiscovered.add(getClass());

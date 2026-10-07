@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.VaultTokenDoor;
 import com.shatteredpixel.shatteredpixeldungeon.effects.TargetedCell;
 import com.watabou.noosa.Game;
 import com.watabou.utils.Bundlable;
@@ -384,8 +385,9 @@ public abstract class Actor implements Bundlable {
 	
 	public static synchronized Char findChar( int pos ) {
 		for (Char ch : chars){
-			if (ch.pos == pos)
-				return ch;
+			if (ch.pos == pos) return ch;
+			if (ch instanceof VaultTokenDoor && ((VaultTokenDoor) ch).doorWidth == 3 && Dungeon.level != null
+					&& ch.pos / Dungeon.level.width() == pos / Dungeon.level.width() && Math.abs(ch.pos - pos) <= 1) return ch;
 		}
 		return null;
 	}

@@ -30,6 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Transmuting;
 import com.shatteredpixel.shatteredpixeldungeon.items.EquipableItem;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket;
 import com.shatteredpixel.shatteredpixeldungeon.items.KindOfWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
@@ -159,30 +160,31 @@ public class ScrollOfTransmutation extends InventoryScroll {
 	}
 
 	public static Item changeItem( Item item ){
+		Item result;
 		if (item instanceof MagesStaff) {
-			return changeStaff((MagesStaff) item);
+			result = changeStaff((MagesStaff) item);
 		}else if (item instanceof TippedDart){
-			return changeTippedDart( (TippedDart)item );
+			result = changeTippedDart( (TippedDart)item );
 		} else if (item instanceof MeleeWeapon || item instanceof MissileWeapon) {
-			return changeWeapon( (Weapon)item );
+			result = changeWeapon( (Weapon)item );
 		} else if (item instanceof Scroll) {
-			return changeScroll( (Scroll)item );
+			result = changeScroll( (Scroll)item );
 		} else if (item instanceof Potion) {
-			return changePotion( (Potion)item );
+			result = changePotion( (Potion)item );
 		} else if (item instanceof Ring) {
-			return changeRing( (Ring)item );
+			result = changeRing( (Ring)item );
 		} else if (item instanceof Wand) {
-			return changeWand( (Wand)item );
+			result = changeWand( (Wand)item );
 		} else if (item instanceof Plant.Seed) {
-			return changeSeed((Plant.Seed) item);
+			result = changeSeed((Plant.Seed) item);
 		} else if (item instanceof Runestone) {
-			return changeStone((Runestone) item);
+			result = changeStone((Runestone) item);
 		} else if (item instanceof Artifact) {
 			Artifact a = changeArtifact( (Artifact)item );
 			if (a == null){
 				//if no artifacts are left, generate a random ring with shared ID/curse state
 				//artifact and ring levels are not exactly equivalent, give the ring up to +2
-				Item result = Generator.randomUsingDefaults(Generator.Category.RING);
+				result = Generator.randomUsingDefaults(Generator.Category.RING);
 				result.levelKnown = item.levelKnown;
 				result.cursed = item.cursed;
 				result.cursedKnown = item.cursedKnown;
@@ -193,15 +195,19 @@ public class ScrollOfTransmutation extends InventoryScroll {
 				} else {
 					result.level(0);
 				}
-				return result;
 			} else {
-				return a;
+				result = a;
 			}
 		} else if (item instanceof Trinket) {
-			return changeTrinket( (Trinket)item );
+			result = changeTrinket( (Trinket)item );
 		} else {
-			return null;
+			result = null;
 		}
+		if (result != null) {
+			if (item.isVaultLoot()) result.markVaultLoot();
+			else if (MagicPocket.isVault()) result.markPlayerOwned();
+		}
+		return result;
 	}
 	
 	private static MagesStaff changeStaff( MagesStaff staff ){

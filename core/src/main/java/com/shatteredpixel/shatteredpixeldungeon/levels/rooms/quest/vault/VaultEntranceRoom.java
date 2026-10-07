@@ -170,9 +170,11 @@ public class VaultEntranceRoom extends VaultRoom {
 		@Override
 		public Tilemap create() {
 			Tilemap v = super.create();
-			v.map(mapSimpleImage(8, 1, TEX_WIDTH), 3);
+			v.map(tileData(), tileW);
 			return v;
 		}
+
+		public int[] tileData() { return mapSimpleImage(8, 1, TEX_WIDTH); }
 
 		//TODO final visuals and text for this
 

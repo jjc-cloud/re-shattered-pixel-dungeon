@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.tiles;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
 
 import java.util.HashSet;
 
@@ -71,6 +72,12 @@ public class DungeonWallsTilemap extends DungeonTilemap {
 		}
 
 		if (skipCells.contains(pos)){
+			return -1;
+		}
+
+		if (pos + mapWidth < size && Dungeon.level instanceof VaultLevel
+				&& (((VaultLevel) Dungeon.level).customDoorCell(pos + mapWidth)
+				|| ((VaultLevel) Dungeon.level).customStatueCell(pos + mapWidth))) {
 			return -1;
 		}
 

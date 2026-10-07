@@ -104,7 +104,7 @@ public class MagesStaff extends MeleeWeapon {
 	@Override
 	public ArrayList<String> actions(Hero hero) {
 		ArrayList<String> actions = super.actions( hero );
-		actions.add(AC_IMBUE);
+		if (!isVaultLoot()) actions.add(AC_IMBUE);
 		if (wand!= null && wand.curCharges > 0) {
 			actions.add( AC_ZAP );
 		}
@@ -133,6 +133,7 @@ public class MagesStaff extends MeleeWeapon {
 
 	@Override
 	public void execute(Hero hero, String action) {
+		if (AC_IMBUE.equals(action) && isVaultLoot()) return;
 
 		super.execute(hero, action);
 
@@ -258,6 +259,7 @@ public class MagesStaff extends MeleeWeapon {
 	}
 
 	public Item imbueWand(Wand wand, Char owner){
+		if (isVaultLoot() || wand.isVaultLoot()) return this;
 
 		Wand oldWand = this.wand;
 		int oldStaffcharges = oldWand != null ? oldWand.curCharges : 0;
@@ -451,7 +453,7 @@ public class MagesStaff extends MeleeWeapon {
 
 		@Override
 		public boolean itemSelectable(Item item) {
-			return item instanceof Wand;
+			return item instanceof Wand && !item.isVaultLoot();
 		}
 
 		@Override

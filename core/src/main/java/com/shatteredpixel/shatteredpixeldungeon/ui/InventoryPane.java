@@ -30,6 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Belongings;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.PotionBandolier;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.ScrollHolder;
@@ -39,6 +40,7 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndBag;
 import com.shatteredpixel.shatteredpixeldungeon.windows.ChestSession;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoItem;
@@ -258,7 +260,7 @@ public class InventoryPane extends Component {
 		add(chestSpill);
 
 		bags = new ArrayList<>();
-		for (int i = 0; i < 5; i++){
+		for (int i = 0; i < 6; i++){
 			BagButton btn = new BagButton(null, i+1);
 			bags.add(btn);
 			add(btn);
@@ -326,7 +328,7 @@ public class InventoryPane extends Component {
 		energy.y = energyTxt.y;
 
 		for (BagButton b : bags){
-			b.setRect(left, y + 14, SLOT_WIDTH, 14);
+			b.setRect(left, y + 14, Dungeon.hero.belongings.getBags().size() > 5 ? 14 : SLOT_WIDTH, 14);
 			left = b.right()+1;
 		}
 
@@ -455,6 +457,7 @@ public class InventoryPane extends Component {
 		boolean lostInvent = Dungeon.hero.belongings.lostInventory();
 		for (InventorySlot b : equipped){
 			b.enable(lastEnabled
+					&& b.item() != null
 					&& !(b.item() instanceof WndBag.Placeholder)
 					&& (selector == null || selector.itemSelectable(b.item()))
 					&& (!lostInvent || b.item().keptThroughLostInventory()));
@@ -476,7 +479,7 @@ public class InventoryPane extends Component {
 			}
 		}
 		for (BagButton b : bags){
-			b.enable(lastEnabled);
+			b.enable(lastEnabled && b.bag != null);
 		}
 
 		goldTxt.alpha( lastEnabled ? 1f : 0.3f );
@@ -588,6 +591,7 @@ public class InventoryPane extends Component {
 			boolean lostInvent = Dungeon.hero.belongings.lostInventory();
 			for (InventorySlot b : equipped){
 				b.enable(lastEnabled
+						&& b.item() != null
 						&& !(b.item() instanceof WndBag.Placeholder)
 						&& (selector == null || selector.itemSelectable(b.item()))
 						&& (!lostInvent || b.item().keptThroughLostInventory()));
@@ -600,7 +604,7 @@ public class InventoryPane extends Component {
 						&& (!lostInvent || b.item().keptThroughLostInventory()));
 			}
 			for (BagButton b : bags){
-				b.enable(lastEnabled);
+				b.enable(lastEnabled && b.bag != null);
 			}
 
 			goldTxt.alpha( lastEnabled ? 1f : 0.3f );
@@ -611,8 +615,10 @@ public class InventoryPane extends Component {
 
 	}
 
-	private Image bagIcon(Bag bag ) {
-		if (bag instanceof VelvetPouch) {
+	private Image bagIcon(Bag bag) {
+		if (bag instanceof MagicPocket) {
+			return new ItemSprite(ItemSpriteSheet.MAGIC_POCKET);
+		} else if (bag instanceof VelvetPouch) {
 			return Icons.get( Icons.SEED_POUCH );
 		} else if (bag instanceof ScrollHolder) {
 			return Icons.get( Icons.SCROLL_HOLDER );
@@ -633,6 +639,7 @@ public class InventoryPane extends Component {
 
 		@Override
 		protected void onClick() {
+			if (item == null) return;
 			if (lastBag != item && !lastBag.contains(item) && !item.isEquipped(Dungeon.hero)){
 				updateInventory();
 				return;
@@ -679,6 +686,7 @@ public class InventoryPane extends Component {
 
 		@Override
 		protected boolean onLongClick() {
+			if (item == null) return false;
 			if (chestSession != null) {
 				onClick();
 				return true;
@@ -697,6 +705,7 @@ public class InventoryPane extends Component {
 
 		@Override
 		protected void onMiddleClick() {
+			if (item == null) return;
 			if (chestSession != null) {
 				onClick();
 				return;
@@ -731,6 +740,7 @@ public class InventoryPane extends Component {
 
 		@Override
 		protected void onRightClick() {
+			if (item == null) return;
 			if (chestSession != null) {
 				onClick();
 				return;
@@ -829,6 +839,7 @@ public class InventoryPane extends Component {
 
 		@Override
 		protected void onClick() {
+			if (bag == null) return;
 			super.onClick();
 			GameScene.cancel();
 			lastBag = bag;
@@ -838,7 +849,7 @@ public class InventoryPane extends Component {
 		@Override
 		public GameAction keyAction() {
 			switch (index){
-				case 1: default:
+				case 1:
 					return SPDAction.BAG_1;
 				case 2:
 					return SPDAction.BAG_2;
@@ -848,6 +859,8 @@ public class InventoryPane extends Component {
 					return SPDAction.BAG_4;
 				case 5:
 					return SPDAction.BAG_5;
+				default:
+					return null;
 			}
 		}
 

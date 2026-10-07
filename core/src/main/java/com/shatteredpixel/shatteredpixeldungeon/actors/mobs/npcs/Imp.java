@@ -24,6 +24,8 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.items.quest.ImpStatue;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Golem;
@@ -31,7 +33,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Monk;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.PlateArmor;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.ScaleArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.DwarfToken;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
@@ -81,7 +85,7 @@ public class Imp extends NPC {
 			Quest.reward = null;
 		}
 
-		if (Quest.isCompleted() && Quest.score > 2000
+		if (Quest.isCompleted() && Quest.earnedShop()
 				&& fieldOfView != null && !fieldOfView[Dungeon.hero.pos]){
 			flee();
 		} else if (!Quest.given && Dungeon.level.visited[pos]) {
@@ -151,6 +155,7 @@ public class Imp extends NPC {
 				Quest.completed = false;
 			}
 		} else {
+			Quest.tryComplete(Dungeon.hero);
 			if (!Quest.given()){
 				Game.runOnRenderThread(new Callback() {
 					@Override
@@ -163,15 +168,15 @@ public class Imp extends NPC {
 								Quest.given = true;
 								Quest.completed = false;
 
-								tell(Messages.get(Imp.this, "quest_intro_2"));
+								tell(Messages.get(Imp.this, "quest_intro_regular"));
 							}
 						});
 					}
 				});
 			} else if (!Quest.isCompleted()) {
-				tell(Messages.get(Imp.this, "quest_in_progress"));
+				tell(Messages.get(Imp.this, "quest_in_progress_regular"));
 			} else {
-				if (Quest.score <= 2000){
+				if (!Quest.earnedShop()){
 					tell(Messages.get(Imp.this, "quest_completed_bad"));
 				} else if (Quest.score < 4000){
 					tell(Messages.get(Imp.this, "quest_completed_good"));
@@ -212,6 +217,10 @@ public class Imp extends NPC {
 		//variables shared by both quests
 		private static boolean given;
 		private static boolean completed;
+		private static boolean vaultEntered;
+		public static boolean vaultGateOpened;
+		public static boolean vaultBossesDefeated;
+		public static boolean vaultRemainsCommented;
 		public static Item reward; //just used to hold the reward if her's inventory is full in new version
 
 		//variables exclusive to new quest
@@ -224,6 +233,10 @@ public class Imp extends NPC {
 			spawned = false;
 			given = false;
 			completed = false;
+			vaultEntered = false;
+			vaultGateOpened = false;
+			vaultBossesDefeated = false;
+			vaultRemainsCommented = false;
 
 			reward = null;
 			hazardFreebies = 2;
@@ -258,6 +271,10 @@ public class Imp extends NPC {
 				node.put( OLD_QUEST, oldQuest );
 				node.put( ALTERNATIVE, alternative );
 				
+				node.put("vault_entered", vaultEntered);
+				node.put("vault_gate_opened", vaultGateOpened);
+				node.put("vault_bosses_defeated", vaultBossesDefeated);
+				node.put("vault_remains_commented", vaultRemainsCommented);
 				node.put( GIVEN, given );
 				node.put( COMPLETED, completed );
 				node.put( REWARD, reward );
@@ -295,10 +312,15 @@ public class Imp extends NPC {
 					rewardOptions = new ArrayList<>((Collection<Item>) (Collection<?>) node.getCollection( REWARD_OPTIONS ));
 				}
 
+				vaultGateOpened = node.getBoolean("vault_gate_opened");
+				vaultBossesDefeated = node.getBoolean("vault_bosses_defeated");
+				vaultRemainsCommented = node.getBoolean("vault_remains_commented");
 				reward = (Item)node.get( REWARD );
 				
 				given = node.getBoolean( GIVEN );
 				completed = node.getBoolean( COMPLETED );
+				vaultEntered = node.contains("vault_entered") ? node.getBoolean("vault_entered")
+						: completed || (Dungeon.branch == 1 && Dungeon.depth >= 16 && Dungeon.depth <= 20);
 			}
 		}
 
@@ -323,7 +345,7 @@ public class Imp extends NPC {
 				} else {
 					artif = Generator.random(Generator.Category.RING);
 					//we delay the ID on rings until the boss is defeated
-					artif.level(Random.IntRange(2, 4));
+					artif.level(Random.IntRange(3, 4));
 				}
 				rewardOptions.add(artif);
 
@@ -332,19 +354,21 @@ public class Imp extends NPC {
 					ring = Generator.random(Generator.Category.RING);
 				} while (ring.getClass() == artif.getClass()); //rare cases of the same kind of ring twice
 				//we delay the ID on rings until the boss is defeated
-				ring.level(Random.IntRange(2, 4));
+				ring.level(Random.IntRange(3, 4));
 				rewardOptions.add(ring);
 
 				if (Random.Int(2) == 0) {
-					rewardOptions.add(((Weapon)Generator.random(Generator.Category.WEP_T5)).enchant().identify(false).level(Random.IntRange(2, 4)));
-					rewardOptions.add(((Weapon)Generator.random(Generator.Category.MIS_T4)).enchant().identify(false).level(Random.IntRange(3, 5)));
+					rewardOptions.add(((Weapon)Generator.random(Generator.Category.WEP_T5)).enchant().identify(false).level(Random.IntRange(3, 4)));
+					rewardOptions.add(((Weapon)Generator.random(Generator.Category.MIS_T4)).enchant().identify(false).level(Random.IntRange(4, 5)));
 				} else {
-					rewardOptions.add(((Weapon)Generator.random(Generator.Category.MIS_T5)).enchant().identify(false).level(Random.IntRange(2, 4)));
-					rewardOptions.add(((Weapon)Generator.random(Generator.Category.WEP_T4)).enchant().identify(false).level(Random.IntRange(3, 5)));
+					rewardOptions.add(((Weapon)Generator.random(Generator.Category.MIS_T5)).enchant().identify(false).level(Random.IntRange(3, 4)));
+					rewardOptions.add(((Weapon)Generator.random(Generator.Category.WEP_T4)).enchant().identify(false).level(Random.IntRange(4, 5)));
 				}
-				rewardOptions.add(new PlateArmor().inscribe().identify(false).level(Random.IntRange(2, 4)));
+				Armor armor = Random.Int(2) == 0 ? new ScaleArmor() : new PlateArmor();
+				rewardOptions.add(armor.inscribe().identify(false).level(
+						armor.tier == 4 ? Random.IntRange(4, 5) : Random.IntRange(3, 4)));
 				Wand w = (Wand) Generator.random(Generator.Category.WAND);
-				w.identify(false).level(Random.IntRange(2, 4));
+				w.identify(false).level(Random.IntRange(3, 4));
 				w.curCharges = w.maxCharges;
 				rewardOptions.add(w);
 
@@ -355,6 +379,12 @@ public class Imp extends NPC {
 
 			return rooms;
 		}
+
+		public static boolean canEnterVault() {
+			return spawned && given && !completed && !oldQuest && !vaultEntered;
+		}
+
+		public static void startVault() { vaultEntered = true; }
 
 		public static boolean given(){
 			return given;
@@ -382,11 +412,23 @@ public class Imp extends NPC {
 			Notes.remove( Notes.Landmark.IMP );
 		}
 
+		/** Hand in the requested statue without touching any other equipment or loot. */
+		public static boolean tryComplete(Hero hero) {
+			if (oldQuest || !spawned || !given || completed) return false;
+			if (hero.belongings.getItem(com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket.class) != null) return false;
+			ImpStatue statue = hero.belongings.getItem(ImpStatue.class);
+			if (statue == null) return false;
+			statue.detachAll(hero.belongings.backpack);
+			complete(4000);
+			return true;
+		}
+
 		public static void complete( int score ){
 			completed = true;
 
 			Imp.Quest.score = score;
-			Statistics.questScores[3] += score;
+			// The regular vault awards its points at the gate and the last boss, not on return.
+			if (!vaultGateOpened) Statistics.questScores[3] += score;
 			Notes.remove( Notes.Landmark.IMP );
 		}
 		
@@ -395,7 +437,7 @@ public class Imp extends NPC {
 		}
 
 		public static boolean earnedShop() {
-			return completed && (oldQuest || score > 2000);
+			return vaultGateOpened || completed && (oldQuest || score > 2000);
 		}
 	}
 }

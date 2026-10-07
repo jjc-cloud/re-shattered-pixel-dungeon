@@ -148,7 +148,7 @@ public class DwarfKing extends Mob {
 		if (phase == 2) properties.add(Property.IMMOVABLE);
 
 		BossHealthBar.assignBoss(this);
-		if (phase == 3) BossHealthBar.bleed(true);
+		if (phase == 3) BossHealthBar.bleed(DwarfKing.this, true);
 	}
 
 	@Override
@@ -433,7 +433,7 @@ public class DwarfKing extends Mob {
 	@Override
 	public void notice() {
 		super.notice();
-		if (!BossHealthBar.isAssigned()) {
+		if (!BossHealthBar.isAssigned(DwarfKing.this)) {
 			BossHealthBar.assignBoss(this);
 			yell(Messages.get(this, "notice"));
 			for (Char ch : Actor.chars()){
@@ -523,7 +523,7 @@ public class DwarfKing extends Mob {
 			sprite.centerEmitter().start( Speck.factory( Speck.SCREAM ), 0.4f, 2 );
 			Sample.INSTANCE.play( Assets.Sounds.CHALLENGE );
 			yell(  Messages.get(this, "enraged", Dungeon.hero.name()) );
-			BossHealthBar.bleed(true);
+			BossHealthBar.bleed(DwarfKing.this, true);
 			Game.runOnRenderThread(new Callback() {
 				@Override
 				public void call() {

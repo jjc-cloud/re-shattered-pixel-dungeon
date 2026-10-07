@@ -56,6 +56,11 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Ripple;
 import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
 import com.shatteredpixel.shatteredpixeldungeon.effects.TargetedCell;
 import com.shatteredpixel.shatteredpixeldungeon.items.Ankh;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
+import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ImpSprite;
+import com.shatteredpixel.shatteredpixeldungeon.windows.WndTitledMessage;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Honeypot;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -617,6 +622,14 @@ public class GameScene extends PixelScene {
 			Dungeon.droppedItems.remove( Dungeon.depth );
 		}
 
+		if (Dungeon.level instanceof VaultLevel && ((VaultLevel) Dungeon.level).isRegularQuest()
+				&& Dungeon.hero.belongings.getItem(MagicPocket.class) != null) {
+			MagicPocket.issue(Dungeon.hero);
+			if (InterlevelScene.mode == InterlevelScene.Mode.DESCEND) {
+				show(new WndTitledMessage(new ImpSprite(), Messages.titleCase(Messages.get(Imp.class, "name")),
+						Messages.get(Imp.class, "enter_regular")));
+			}
+		}
 		Dungeon.hero.next();
 
 		switch (InterlevelScene.mode){
@@ -1848,6 +1861,11 @@ public class GameScene extends PixelScene {
 		ArrayList<Object> objects = new ArrayList<>();
 
 		Char ch = Actor.findChar(cell);
+		if (ch instanceof com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.VaultTokenDoor
+				&& ((com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.VaultTokenDoor) ch).doorWidth == 3) {
+			objects.add(ch);
+			return objects;
+		}
 		if (ch != null && ch != Dungeon.hero){
 			if (Dungeon.level.heroFOV[cell] || Char.hasProp(ch, Char.Property.OBJECT)){
 				objects.add(ch);

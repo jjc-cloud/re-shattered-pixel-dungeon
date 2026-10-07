@@ -27,6 +27,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Belongings;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.PotionBandolier;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.ScrollHolder;
@@ -293,6 +294,7 @@ public class WndBag extends WndTabbed {
 		InventorySlot slot = new InventorySlot( item ){
 			@Override
 			protected void onClick() {
+				if (item == null) return;
 				if (lastBag != item && !lastBag.contains(item) && !item.isEquipped(Dungeon.hero)){
 
 					hide();
@@ -313,6 +315,7 @@ public class WndBag extends WndTabbed {
 
 			@Override
 			protected void onRightClick() {
+				if (item == null) return;
 				if (lastBag != item && !lastBag.contains(item) && !item.isEquipped(Dungeon.hero)){
 
 					hide();
@@ -343,6 +346,7 @@ public class WndBag extends WndTabbed {
 
 			@Override
 			protected boolean onLongClick() {
+				if (item == null) return false;
 				if (selector == null && item.defaultAction() != null) {
 					hide();
 					QuickSlotButton.set( item );
@@ -390,7 +394,8 @@ public class WndBag extends WndTabbed {
 	@Override
 	protected void onClick( Tab tab ) {
 		hide();
-		Window w = new WndBag(((BagTab) tab).bag, selector);
+		Bag bag = ((BagTab) tab).bag;
+		Window w = new WndBag(bag, selector);
 		if (Game.scene() instanceof GameScene){
 			GameScene.show(w);
 		} else {
@@ -411,8 +416,10 @@ public class WndBag extends WndTabbed {
 		return 20;
 	}
 	
-	private Image icon( Bag bag ) {
-		if (bag instanceof VelvetPouch) {
+	private Image icon(Bag bag) {
+		if (bag instanceof MagicPocket) {
+			return new ItemSprite(ItemSpriteSheet.MAGIC_POCKET);
+		} else if (bag instanceof VelvetPouch) {
 			return Icons.get( Icons.SEED_POUCH );
 		} else if (bag instanceof ScrollHolder) {
 			return Icons.get( Icons.SCROLL_HOLDER );
@@ -440,7 +447,7 @@ public class WndBag extends WndTabbed {
 		@Override
 		public GameAction keyAction() {
 			switch (index){
-				case 1: default:
+				case 1:
 					return SPDAction.BAG_1;
 				case 2:
 					return SPDAction.BAG_2;
@@ -450,6 +457,8 @@ public class WndBag extends WndTabbed {
 					return SPDAction.BAG_4;
 				case 5:
 					return SPDAction.BAG_5;
+				default:
+					return null;
 			}
 		}
 

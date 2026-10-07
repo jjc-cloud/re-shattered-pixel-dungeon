@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
@@ -216,10 +217,12 @@ public class VaultSentry extends NPC {
 			}
 		}
 		if (ch == Dungeon.hero) {
-			if (Imp.Quest.hazardFreebies > 0){
-				Imp.Quest.hazardFreebies--;
-			} else {
-				Statistics.questScores[3] -= 100;
+			if (!(Dungeon.level instanceof VaultLevel) || !((VaultLevel) Dungeon.level).isRegularQuest()) {
+				if (Imp.Quest.hazardFreebies > 0){
+					Imp.Quest.hazardFreebies--;
+				} else {
+					Statistics.questScores[3] -= 100;
+				}
 			}
 			if (!ch.isAlive()) {
 				Badges.validateDeathFromEnemyMagic();

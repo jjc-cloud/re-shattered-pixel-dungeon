@@ -170,11 +170,18 @@ public abstract class Mob extends Char {
 	private static final String INVEST_TURNS = "invest_turns";
 	private static final String WANDER_POSITIONS = "wander_positions";
 	private static final String WANDER_POS_IDX = "wander_pos_idx";
+	private static final String WANDER_ON_LINE = "wander_on_line";
+	private boolean vaultCorridorGuard;
+	private boolean vaultBadgeDropped;
+	public void markVaultCorridorGuard() { vaultCorridorGuard = true; }
+	public boolean isVaultCorridorGuard() { return vaultCorridorGuard; }
 	
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		
 		super.storeInBundle( bundle );
+		bundle.put("vault_corridor_guard", vaultCorridorGuard);
+		bundle.put("vault_badge_dropped", vaultBadgeDropped);
 
 		if (state == SLEEPING) {
 			bundle.put( STATE, Sleeping.TAG );
@@ -201,6 +208,7 @@ public abstract class Mob extends Char {
 
 		bundle.put( USING_STEALTH, usingStealthGamePlay );
 		if (usingStealthGamePlay){
+			bundle.put(WANDER_ON_LINE, wanderOnLine);
 			bundle.put(INVEST_TURNS, investigatingTurns);
 			if (wanderPositions != null) {
 				bundle.put(WANDER_POSITIONS, wanderPositions);
@@ -213,9 +221,12 @@ public abstract class Mob extends Char {
 	public void restoreFromBundle( Bundle bundle ) {
 		
 		super.restoreFromBundle( bundle );
+		vaultCorridorGuard = bundle.contains("vault_corridor_guard") ? bundle.getBoolean("vault_corridor_guard") : bundle.getBoolean(WANDER_ON_LINE);
+		vaultBadgeDropped = bundle.getBoolean("vault_badge_dropped");
 
 		if (bundle.getBoolean(USING_STEALTH)) {
 			activateSteathGameplayBehaviour();
+			wanderOnLine = bundle.getBoolean(WANDER_ON_LINE);
 
 			investigatingTurns = bundle.getInt(INVEST_TURNS);
 			if (bundle.contains(WANDER_POSITIONS)) {
@@ -1120,18 +1131,28 @@ public abstract class Mob extends Char {
 	}
 	
 	public void rollToDropLoot(){
-		if (Dungeon.hero.lvl > maxLvl + 2) return;
+		if (vaultCorridorGuard && Dungeon.level instanceof VaultLevel && ((VaultLevel) Dungeon.level).isRegularQuest()) {
+			if (!vaultBadgeDropped) {
+				vaultBadgeDropped = true;
+				com.shatteredpixel.shatteredpixeldungeon.items.Heap badge = Dungeon.level.drop(
+						new com.shatteredpixel.shatteredpixeldungeon.items.quest.DwarfToken(), pos);
+				if (badge.sprite != null) badge.sprite.drop();
+			}
+		} else {
+			if (Dungeon.hero.lvl > maxLvl + 2) return;
 
-		MasterThievesArmband.StolenTracker stolen = buff(MasterThievesArmband.StolenTracker.class);
-		if (stolen == null || !stolen.itemWasStolen()) {
-			if (Random.Float() < lootChance()) {
-				Item loot = createLoot();
-				if (loot != null) {
-					Dungeon.level.drop(loot, pos).sprite.drop();
+			MasterThievesArmband.StolenTracker stolen = buff(MasterThievesArmband.StolenTracker.class);
+			if (stolen == null || !stolen.itemWasStolen()) {
+				if (Random.Float() < lootChance()) {
+					Item loot = createLoot();
+					if (loot != null) {
+						Dungeon.level.drop(loot, pos).sprite.drop();
+					}
 				}
 			}
+
 		}
-		
+
 		//ring of wealth logic
 		if (Ring.getBuffedBonus(Dungeon.hero, RingOfWealth.Wealth.class) > 0) {
 			int rolls = 1;
@@ -1624,13 +1645,60 @@ public abstract class Mob extends Char {
 	public void setupStealthGameplayWanderPositions(int[] wanderPositions, int startingIdx){
 		this.wanderPositions = wanderPositions;
 		wanderPosIdx = startingIdx;
+		wanderOnLine = false;
+	}
+
+	/** Start moving toward a line endpoint on the first turn, without an initial idle turn. */
+	public void setupStealthGameplayLinePatrol(int[] endpoints, int destinationIdx) {
+		if (endpoints.length != 2 || destinationIdx < 0 || destinationIdx > 1) {
+			throw new IllegalArgumentException("A line patrol requires two endpoints and a valid destination");
+		}
+		activateSteathGameplayBehaviour();
+		setupStealthGameplayWanderPositions(endpoints.clone(), destinationIdx);
+		wanderOnLine = true;
+		target = wanderPositions[destinationIdx];
+		state = WANDERING;
 	}
 
 	//in stealth gameplay mobs wander to more consistent pre-determined locations
 	private int wanderPosIdx = 0;
 	private int[] wanderPositions;
+	private boolean wanderOnLine;
 
 	protected class StealthGameplayWandering extends Wandering {
+
+		@Override
+		protected boolean continueWandering() {
+			// Investigating a noise or returning after combat still uses ordinary pathfinding.
+			if (!wanderOnLine || wanderPositions == null || wanderPositions.length != 2
+					|| (target != wanderPositions[0] && target != wanderPositions[1])) {
+				return super.continueWandering();
+			}
+			enemySeen = false;
+			if (pos == target) {
+				target = randomDestination();
+				spend(TICK);
+				return true;
+			}
+			int width = Dungeon.level.width();
+			int step;
+			if (wanderPositions[0] % width == wanderPositions[1] % width && pos % width == target % width) {
+				step = pos + (target > pos ? width : -width);
+			} else if (wanderPositions[0] / width == wanderPositions[1] / width && pos / width == target / width) {
+				step = pos + (target > pos ? 1 : -1);
+			} else {
+				return super.continueWandering();
+			}
+			// Wait for occupied cells instead of detouring into another lane or patrol area.
+			if (rooted || !Dungeon.level.insideMap(step) || !cellIsPathable(step)) {
+				spend(TICK);
+				return true;
+			}
+			int oldPos = pos;
+			move(step);
+			spend(1 / speed());
+			return moveSprite(oldPos, pos);
+		}
 
 		@Override
 		public boolean act(boolean enemyInFOV, boolean justAlerted) {

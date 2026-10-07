@@ -35,6 +35,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.Dart;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.TippedDart;
@@ -59,6 +60,12 @@ import java.util.Collections;
 import java.util.Comparator;
 
 public class Item implements Bundlable {
+
+	private int vaultOrigin; // 0: unassigned, 1: player's belongings, 2: vault loan
+	public boolean isVaultLoot() { return vaultOrigin == 2; }
+	public void markPlayerOwned() { vaultOrigin = 1; }
+	public void markVaultLoot() { if (vaultOrigin == 0) vaultOrigin = 2; }
+
 
 	protected static final String TXT_TO_STRING_LVL		= "%s %+d";
 	protected static final String TXT_TO_STRING_X		= "%s x%d";
@@ -123,7 +130,7 @@ public class Item implements Bundlable {
 	}
 
 	public final boolean doPickUp( Hero hero ) {
-		return doPickUp( hero, hero.pos );
+		return MagicPocket.pickUp(this, hero, hero.pos);
 	}
 
 	public boolean doPickUp(Hero hero, int pos) {
@@ -210,6 +217,15 @@ public class Item implements Bundlable {
 	public boolean collect( Bag container ) {
 		Item identity = identityItem();
 		if (identity != this) return identity.collect(container);
+		if (container instanceof MagicPocket) markVaultLoot();
+		else if (!Belongings.bundleRestoring && container.owner == Dungeon.hero && !(this instanceof MagicPocket)) {
+			if (MagicPocket.isVault()) markVaultLoot();
+			if (isVaultLoot()) {
+				MagicPocket pocket = Dungeon.hero.belongings.getItem(MagicPocket.class);
+				return pocket != null && collect(pocket);
+			}
+		}
+
 
 		if (quantity <= 0){
 			return true;
@@ -388,7 +404,7 @@ public class Item implements Bundlable {
 	}
 	
 	public boolean isSimilar( Item item ) {
-		return getClass() == item.getClass();
+		return getClass() == item.getClass() && isVaultLoot() == item.isVaultLoot();
 	}
 
 	/**
@@ -631,6 +647,7 @@ public class Item implements Bundlable {
 
 	@Override
 	public void storeInBundle( Bundle bundle ) {
+		if (vaultOrigin != 0) bundle.put("vault_origin", vaultOrigin);
 		bundle.put( QUANTITY, quantity );
 		bundle.put( LEVEL, level );
 		bundle.put( LEVEL_KNOWN, levelKnown );
@@ -647,6 +664,7 @@ public class Item implements Bundlable {
 	
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
+		vaultOrigin = bundle.getInt("vault_origin");
 		quantity	= bundle.getInt( QUANTITY );
 		levelKnown	= bundle.getBoolean( LEVEL_KNOWN );
 		cursedKnown	= bundle.getBoolean( CURSED_KNOWN );
