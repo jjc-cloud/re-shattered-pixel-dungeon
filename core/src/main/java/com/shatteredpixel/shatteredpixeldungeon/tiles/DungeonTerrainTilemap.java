@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.tiles;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.MiningLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
 import com.watabou.noosa.Image;
 import com.watabou.utils.PathFinder;
 
@@ -41,6 +42,13 @@ public class DungeonTerrainTilemap extends DungeonTilemap {
 
 	@Override
 	protected int getTileVisual(int pos, int tile, boolean flat) {
+		if (!flat && DungeonTileSheet.doorTile(tile) && Dungeon.level instanceof VaultLevel
+				&& ((VaultLevel) Dungeon.level).customDoorCell(pos)) {
+			return DungeonTileSheet.getVisualWithAlts(DungeonTileSheet.FLOOR, pos);
+		}
+		if (!flat && Dungeon.level instanceof VaultLevel && ((VaultLevel) Dungeon.level).customStatueCell(pos)) {
+			return DungeonTileSheet.getVisualWithAlts(DungeonTileSheet.FLOOR, pos);
+		}
 		int visual = DungeonTileSheet.directVisuals.get(tile, -1);
 		if (visual != -1) {
 			if (visual == DungeonTileSheet.FLOOR_DECO && Dungeon.level instanceof MiningLevel) {

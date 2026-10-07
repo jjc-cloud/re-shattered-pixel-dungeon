@@ -23,12 +23,16 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Statistics;
+import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket;
+import com.watabou.utils.Bundle;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.DwarfToken;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicMapping;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
@@ -43,6 +47,37 @@ import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Callback;
 
 public class VaultTokenDoor extends NPC {
+
+	public int doorWidth = 1;
+	public boolean battleSeal;
+
+	@Override
+	public boolean canInteract(Char c) {
+		for (int offset = -doorWidth / 2; offset <= doorWidth / 2; offset++) {
+			if (Dungeon.level.adjacent(pos + offset, c.pos)) return true;
+		}
+		return super.canInteract(c);
+	}
+
+	@Override
+	public String description() {
+		return doorWidth == 3 ? Messages.get(this, battleSeal ? "sealed_wide" : "desc_wide") : super.description();
+	}
+
+	@Override
+	public void storeInBundle(Bundle bundle) {
+		super.storeInBundle(bundle);
+		bundle.put("door_width", doorWidth);
+		bundle.put("battle_seal", battleSeal);
+	}
+
+	@Override
+	public void restoreFromBundle(Bundle bundle) {
+		super.restoreFromBundle(bundle);
+		doorWidth = bundle.contains("door_width") ? bundle.getInt("door_width") : 1;
+		battleSeal = bundle.getBoolean("battle_seal");
+	}
+
 
 	{
 		spriteClass = VaultTokenDoorSprite.class;
@@ -64,15 +99,21 @@ public class VaultTokenDoor extends NPC {
 		if (c instanceof Hero){
 			Hero h = (Hero) c;
 
-			Item tokens = h.belongings.getItem(DwarfToken.class);
+			int required = doorWidth == 3 ? 6 : 10;
+			MagicPocket pocket = h.belongings.getItem(MagicPocket.class);
+			Item tokens = doorWidth == 3 ? (pocket == null ? null : pocket.items.stream()
+					.filter(item -> item instanceof DwarfToken && item.isVaultLoot()).findFirst().orElse(null))
+					: h.belongings.getItem(DwarfToken.class);
 
 			String descText = description();
-			if (tokens == null){
-				descText += "\n\n" + Messages.get(this, "no_tokens");
-			} else if (tokens.quantity() < 10){
-				descText += "\n\n" + Messages.get(this, "too_few_tokens");
-			} else {
-				descText += "\n\n" + Messages.get(this, "enough_tokens");
+			if (!battleSeal) {
+				if (tokens == null){
+					descText += "\n\n" + Messages.get(this, "no_tokens");
+				} else if (tokens.quantity() < required){
+					descText += "\n\n" + Messages.get(this, "too_few_tokens");
+				} else {
+					descText += "\n\n" + Messages.get(this, "enough_tokens");
+				}
 			}
 
 			String finalDescText = descText;
@@ -80,7 +121,7 @@ public class VaultTokenDoor extends NPC {
 			ShatteredPixelDungeon.runOnRenderThread(new Callback() {
 				@Override
 				public void call() {
-					if (tokens != null && tokens.quantity() >= 10) {
+					if (tokens != null && !battleSeal && tokens.quantity() >= required) {
 						GameScene.show(new WndOptions(sprite(),
 								Messages.titleCase(name()),
 								finalDescText,
@@ -90,16 +131,26 @@ public class VaultTokenDoor extends NPC {
 							protected void onSelect(int index) {
 								super.onSelect(index);
 								if (index == 0){
+									if (!Dungeon.level.mobs.contains(VaultTokenDoor.this) || battleSeal || tokens.quantity() < required) return;
 									c.sprite.operate(pos);
 									Sample.INSTANCE.play(Assets.Sounds.TELEPORT);
 									Sample.INSTANCE.playDelayed(Assets.Sounds.UNLOCK, 0.25f);
-									GLog.p(Messages.get(VaultTokenDoor.class, "unlocked"));
+									GLog.p(Messages.get(VaultTokenDoor.class, doorWidth == 3 ? "unlocked_wide" : "unlocked"));
 									VaultTokenDoor.this.destroy();
-									Level.set(pos, Terrain.EMPTY_SP);
-									GameScene.updateMap(pos);
-									ScrollOfMagicMapping.discover(pos);
+									if (doorWidth == 3 && Dungeon.level instanceof VaultLevel
+											&& ((VaultLevel) Dungeon.level).isRegularQuest() && !Imp.Quest.vaultGateOpened) {
+										Imp.Quest.vaultGateOpened = true;
+										Statistics.questScores[3] += 2000;
+									}
+									for (int offset = -doorWidth / 2; offset <= doorWidth / 2; offset++) {
+										Level.set(pos + offset, doorWidth == 3 ? Terrain.EMPTY : Terrain.EMPTY_SP);
+										GameScene.updateMap(pos + offset);
+										ScrollOfMagicMapping.discover(pos + offset);
+									}
 									sprite.killAndErase();
-									tokens.detachAll(h.belongings.backpack);
+									if (doorWidth == 3 && tokens.quantity() > required) tokens.quantity(tokens.quantity() - required);
+									else tokens.detachAll(h.belongings.backpack);
+									Item.updateQuickslot();
 								}
 							}
 						});

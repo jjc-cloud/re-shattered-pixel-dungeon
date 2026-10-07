@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.quest.vault.VaultBossElemental;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.SacrificialFire;
@@ -1765,6 +1766,8 @@ public abstract class Level implements Bundlable {
 
 			float viewDist = c.viewDistance;
 			if (c instanceof Hero){
+				// Only cap the vault's natural radius, before vision modifiers are applied.
+				if (this instanceof VaultLevel) viewDist = Math.min(8, viewDist);
 				viewDist *= 1f + 0.25f*((Hero) c).pointsInTalent(Talent.FARSIGHT);
 				viewDist *= EyeOfNewt.visionRangeMultiplier();
 			}
@@ -1964,6 +1967,7 @@ public abstract class Level implements Bundlable {
 	//what keeps this off the per-cell hot path. Levels with their own light blobs register them.
 	protected void registerEnvironmentalLightBlobs( ArrayList<Class<? extends Blob>> types ) {
 		types.add(Fire.class);
+		types.add(VaultBossElemental.ElementalFire.class);
 		types.add(MagicalFireRoom.EternalFire.class);
 		types.add(VaultFlameTraps.class);
 	}

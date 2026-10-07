@@ -692,14 +692,7 @@ if (error != null) {
 			Level level = Dungeon.newLevel();
 			Dungeon.switchLevel( level, -1 );
 		} else {
-			if (curTransition.destBranch != Dungeon.branch
-					&& (curTransition.destBranch == 1 || Dungeon.branch == 1)
-					&& Dungeon.depth >= 16 && Dungeon.depth <= 20) {
-				//FIXME avoids holding allies when entering city quest area, this is very sloppy though
-				// perhaps holding allies could be a property of the transition?
-			} else {
-				Mob.holdAllies(Dungeon.level);
-			}
+			Mob.holdAllies(Dungeon.level);
 			Dungeon.saveAll();
 
 			Level level;
@@ -738,14 +731,7 @@ if (error != null) {
 	}
 
 	private void ascend() throws IOException {
-		if (curTransition.destBranch != Dungeon.branch
-				&& (curTransition.destBranch == 1 || Dungeon.branch == 1)
-				&& Dungeon.depth >= 16 && Dungeon.depth <= 20) {
-			//FIXME avoids holding allies when entering city quest area, this is very sloppy though
-			// perhaps holding allies could be a property of the transition?
-		} else {
-			Mob.holdAllies(Dungeon.level);
-		}
+		Mob.holdAllies(Dungeon.level);
 		Dungeon.saveAll();
 
 		Level level;

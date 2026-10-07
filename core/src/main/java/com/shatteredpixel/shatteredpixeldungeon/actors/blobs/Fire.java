@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.quest.vault.VaultBossElemental;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.effects.BlobEmitter;
@@ -105,7 +106,7 @@ public class Fire extends Blob {
 						continue;
 					}
 
-					burn( cell );
+					burn( cell, this instanceof VaultBossElemental.ElementalFire );
 
 					fire = cur[cell] - 1;
 					if (fire <= 0) {
@@ -120,7 +121,7 @@ public class Fire extends Blob {
 							|| cur[cell-Dungeon.level.width()] > 0
 							|| cur[cell+Dungeon.level.width()] > 0)) {
 						fire = 4;
-						burn( cell );
+						burn( cell, this instanceof VaultBossElemental.ElementalFire );
 						area.union(i, j);
 					} else {
 						fire = 0;
@@ -139,9 +140,10 @@ public class Fire extends Blob {
 		}
 	}
 	
-	public static void burn( int pos ) {
+	public static void burn( int pos, boolean... excludeVaultBosses ) {
 		Char ch = Actor.findChar( pos );
-		if (ch != null && !ch.isImmune(Fire.class)) {
+		if (ch != null && !ch.isImmune(Fire.class)
+				&& !(excludeVaultBosses.length > 0 && excludeVaultBosses[0] && ch instanceof VaultBossElemental)) {
 			Buff.affect( ch, Burning.class ).reignite( ch );
 		}
 		

@@ -231,7 +231,6 @@ public class Armor extends EquipableItem {
 
 	@Override
 	public boolean doEquip( Hero hero ) {
-
 		detach(hero.belongings.backpack);
 
 		Armor oldArmor = hero.belongings.armor;

@@ -817,6 +817,7 @@ public class ItemSpriteSheet {
 	public static final int BANDOLIER   = BAGS+4;
 	public static final int HOLSTER     = BAGS+5;
 	public static final int VIAL        = BAGS+6;
+	public static final int MAGIC_POCKET = VIAL+1; // the cell immediately right of the dew vial
 	static{
 		assignItemRect(WATERSKIN,   16, 14);
 		assignItemRect(BACKPACK,    16, 16);
@@ -825,6 +826,7 @@ public class ItemSpriteSheet {
 		assignItemRect(BANDOLIER,   15, 16);
 		assignItemRect(HOLSTER,     15, 16);
 		assignItemRect(VIAL,        12, 12);
+		assignItemRect(MAGIC_POCKET, 16, 16);
 	}
 
 	private static final int DOCUMENTS  =                                   xy(1, 33);  //16 slots

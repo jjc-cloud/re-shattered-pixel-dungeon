@@ -28,9 +28,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LostInventory;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ElmoParticle;
-import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClothArmor;
-import com.shatteredpixel.shatteredpixeldungeon.items.quest.EscapeCrystal;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CityPainter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
@@ -54,15 +53,11 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WarpingTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WeakeningTrap;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.ImpSprite;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
-import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
-import com.watabou.noosa.Game;
 import com.watabou.noosa.Group;
 import com.watabou.noosa.audio.Music;
 import com.watabou.noosa.particles.Emitter;
 import com.watabou.noosa.particles.PixelParticle;
-import com.watabou.utils.Callback;
 import com.watabou.utils.PointF;
 import com.watabou.utils.Random;
 
@@ -145,52 +140,12 @@ public class CityLevel extends RegularLevel {
 	@Override
 	public boolean activateTransition(Hero hero, LevelTransition transition) {
 		if (transition.type == LevelTransition.Type.BRANCH_EXIT && transition.destBranch == 1) {
-
-			if ( Imp.Quest.isOld() || Imp.Quest.isCompleted() || !Imp.Quest.given()
-					|| hero.buff(AscensionChallenge.class) != null
-					|| hero.buff(LostInventory.class) != null){
-				return false;
-			}
-
-			Game.runOnRenderThread(new Callback() {
-				@Override
-				public void call() {
-					GameScene.show( new WndOptions( new ImpSprite(),
-							Messages.titleCase(Messages.get(Imp.class, "name")),
-							Messages.get(Imp.class, "enter_text"),
-							Messages.get(Imp.class, "enter_yes"),
-							Messages.get(Imp.class, "enter_no")){
-						@Override
-						protected void onSelect(int index) {
-							if (index == 0){
-
-								Dungeon.hero.live(); //clears all non-persist buffs, resets hunger/regen
-								hero.HP = hero.HT; //full heal
-
-								EscapeCrystal crystal = hero.belongings.getItem(EscapeCrystal.class);
-								if (crystal == null) {
-									crystal = new EscapeCrystal();
-								} else {
-									crystal.detachAll(Dungeon.hero.belongings.backpack);
-								}
-								if (crystal.storedItems == null){
-									crystal.storeHeroBelongings(Dungeon.hero);
-								}
-								crystal.collect();
-								hero.belongings.armor = new ClothArmor();
-								hero.belongings.armor.identify();
-								hero.updateHT( false );
-								CityLevel.super.activateTransition(hero, transition);
-							}
-						}
-					} );
-				}
-			});
-			return false;
-
-		} else {
-			return super.activateTransition(hero, transition);
+			if (locked || !Imp.Quest.canEnterVault() || hero.buff(AscensionChallenge.class) != null
+					|| hero.buff(LostInventory.class) != null) return false;
+			if (MagicPocket.issue(hero) == null) return false;
+			Imp.Quest.startVault();
 		}
+		return super.activateTransition(hero, transition);
 	}
 
 	@Override

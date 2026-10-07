@@ -254,6 +254,8 @@ public class Dungeon {
 	
 	public static void init() {
 
+		// 发放新角色的初始物品前清除上一局地图，避免沿用旧宝库的物品归属规则。
+		level = null;
 		RealityWarp.reset();
 
 		initialVersion = version = Game.versionCode;
@@ -598,7 +600,8 @@ public class Dungeon {
 		}
 		
 		Light light = hero.buff( Light.class );
-		hero.viewDistance = light == null ? level.viewDistance : Math.max( Light.DISTANCE, level.viewDistance );
+		hero.viewDistance = light == null ? level.viewDistance
+				: level instanceof VaultLevel ? 8 : Math.max( Light.DISTANCE, level.viewDistance );
 		
 		hero.curAction = hero.lastAction = null;
 

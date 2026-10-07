@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.blobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.quest.vault.VaultBossElemental;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
@@ -42,6 +43,7 @@ public class Freezing extends Blob {
 		int cell;
 		
 		Fire fire = (Fire)Dungeon.level.blobs.get( Fire.class );
+		Fire elementalFire = (Fire)Dungeon.level.blobs.get(VaultBossElemental.ElementalFire.class);
 		SteamCarrier steam = (SteamCarrier)Dungeon.level.blobs.get( SteamCarrier.class );
 
 		for (int i = area.left-1; i <= area.right; i++) {
@@ -49,8 +51,10 @@ public class Freezing extends Blob {
 				cell = i + j*Dungeon.level.width();
 				if (cur[cell] > 0) {
 
-					if (fire != null && fire.volume > 0 && fire.cur[cell] > 0){
-						fire.clear(cell);
+					if ((fire != null && fire.volume > 0 && fire.cur[cell] > 0)
+							|| (elementalFire != null && elementalFire.volume > 0 && elementalFire.cur[cell] > 0)){
+						if (fire != null) fire.clear(cell);
+						if (elementalFire != null) elementalFire.clear(cell);
 						off[cell] = cur[cell] = 0;
 						continue;
 					}
@@ -125,9 +129,8 @@ public class Freezing extends Blob {
 			}
 		}
 
-		Fire fire = (Fire) Dungeon.level.blobs.get(Fire.class);
-		if (fire != null && fire.volume > 0) {
-			fire.clear( cell );
+		for (Blob blob : Dungeon.level.blobs.values()) {
+			if (blob instanceof Fire && blob.volume > 0) blob.clear(cell);
 		}
 
 		SteamCarrier steam = (SteamCarrier) Dungeon.level.blobs.get(SteamCarrier.class);

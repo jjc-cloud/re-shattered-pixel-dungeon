@@ -184,7 +184,7 @@ public class Tengu extends Mob {
 			HP = (HT/2);
 			yell(Messages.get(this, "interesting"));
 			((PrisonBossLevel)Dungeon.level).progress();
-			BossHealthBar.bleed(true);
+			BossHealthBar.bleed(Tengu.this, true);
 
 		//if tengu has lost a certain amount of hp, jump
 		} else if (newBracket != curbracket) {
@@ -334,9 +334,9 @@ public class Tengu extends Mob {
 	@Override
 	public void notice() {
 		super.notice();
-		if (!BossHealthBar.isAssigned()) {
+		if (!BossHealthBar.isAssigned(Tengu.this)) {
 			BossHealthBar.assignBoss(this);
-			if (HP <= HT/2) BossHealthBar.bleed(true);
+			if (HP <= HT/2) BossHealthBar.bleed(Tengu.this, true);
 			if (HP == HT) {
 				yell(Messages.get(this, "notice_gotcha", Dungeon.hero.name()));
 				for (Char ch : Actor.chars()){
@@ -382,7 +382,7 @@ public class Tengu extends Mob {
 		abilityCooldown = bundle.getInt( ABILITY_COOLDOWN );
 		
 		BossHealthBar.assignBoss(this);
-		if (HP <= HT/2) BossHealthBar.bleed(true);
+		if (HP <= HT/2) BossHealthBar.bleed(Tengu.this, true);
 	}
 
 	//tengu is always hunting, and can use simpler rules because he never moves

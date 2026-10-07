@@ -24,175 +24,329 @@ package com.shatteredpixel.shatteredpixeldungeon.ui;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
-import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.BloodParticle;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoMob;
 import com.watabou.noosa.BitmapText;
+import com.watabou.noosa.Camera;
+import com.watabou.noosa.Game;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.particles.Emitter;
 import com.watabou.noosa.ui.Component;
-import com.watabou.utils.Callback;
+import com.watabou.utils.Point;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class BossHealthBar extends Component {
 
-	private Image bar;
 
-	private Image shieldHP;
-	private Image hp;
-	private Image Dot; //a visual darkening over HP and shield that shows total incoming DOT
-	private BitmapText hpText;
+	private static final String asset = Assets.Interfaces.BOSSHP;
+	private static final LinkedHashMap<Mob, BossState> bosses = new LinkedHashMap<>();
+	private final LinkedHashMap<Mob, BossBar> rows = new LinkedHashMap<>();
+	private Camera contentCamera;
 
-	private Button bossInfo;
-	private BuffIndicator buffs;
-
-	private static Mob boss;
-
-	private Image skull;
-	private Emitter blood;
-
-	private static String asset = Assets.Interfaces.BOSSHP;
-
-	private static BossHealthBar instance;
-	private static boolean bleeding;
-
-	private boolean large;
+	private static class BossState {
+		private volatile boolean bleeding;
+		private boolean refreshSprite;
+	}
 
 	public BossHealthBar() {
 		super();
-		visible = active = (boss != null);
-		instance = this;
+		syncRows();
+	}
+
+	@Override
+	protected void createChildren() {
+		width = SPDSettings.interfaceSize() != 0 ? 128 : 64;
+		contentCamera = Camera.add(Camera.createFullscreen(PixelScene.uiCamera.zoom));
 	}
 
 	@Override
 	public synchronized void destroy() {
 		super.destroy();
-		if (instance == this) instance = null;
-		if (buffs != null) BuffIndicator.setBossInstance(null);
-	}
-
-	@Override
-	protected void createChildren() {
-		this.large = SPDSettings.interfaceSize() != 0;
-
-		bar = large ? new Image(asset, 0, 16, 128, 30) : new Image(asset, 0, 0, 64, 16);
-		add(bar);
-
-		width = bar.width;
-		height = bar.height;
-
-		shieldHP = large ? new Image(asset, 0, 55, 96, 9) : new Image(asset, 71, 5, 47, 4);
-		add(shieldHP);
-
-		hp = large ? new Image(asset, 0, 46, 96, 9) : new Image(asset, 71, 0, 47, 4);
-		add(hp);
-
-		Dot = large ? new Image(asset, 0, 46, 96, 9) : new Image(asset, 71, 0, 47, 4);
-		Dot.hardlight(0, 0, 0);
-		Dot.alpha(0.25f);
-		add(Dot);
-
-		hpText = new BitmapText(PixelScene.pixelFont);
-		hpText.alpha(0.6f);
-		add(hpText);
-
-		bossInfo = new Button(){
-			@Override
-			protected void onClick() {
-				super.onClick();
-				if (boss != null){
-					GameScene.show(new WndInfoMob(boss));
-				}
-			}
-
-			@Override
-			protected String hoverText() {
-				if (boss != null){
-					return boss.name();
-				}
-				return super.hoverText();
-			}
-		};
-		add(bossInfo);
-
-		if (boss != null) {
-			buffs = new BuffIndicator(boss, large);
-			BuffIndicator.setBossInstance(buffs);
-			add(buffs);
-		}
-
-		if (boss != null && large) {
-			skull = boss.sprite();
-		} else {
-			skull = new Image(asset, 64, 0, 6, 6);
-		}
-		add(skull);
-
-		blood = new Emitter();
-		blood.pos(skull);
-		blood.pour(BloodParticle.FACTORY, 0.3f);
-		blood.autoKill = false;
-		blood.on = false;
-		add( blood );
-	}
-
-	@Override
-	protected void layout() {
-		bar.x = x;
-		bar.y = y;
-
-		hp.x = shieldHP.x = Dot.x = bar.x+(large ? 30 : 15);
-		hp.y = shieldHP.y = Dot.y = bar.y+(large ? 2 : 3);
-
-		if (!large) hpText.scale.set(PixelScene.align(0.5f));
-		hpText.x = hp.x + (large ? (96-hpText.width())/2f : 1);
-		hpText.y = hp.y + (hp.height - (hpText.baseLine()+hpText.scale.y))/2f;
-		hpText.y -= 0.001f; //prefer to be slightly higher
-		PixelScene.align(hpText);
-
-		bossInfo.setRect(x, y, bar.width, bar.height);
-
-		if (buffs != null) {
-			buffs.maxBuffs = 12;
-			if (large) {
-				//little extra width here for a 6th column
-				buffs.setRect(hp.x+1, hp.y + 12, 102, 34);
-			} else {
-				buffs.setRect(hp.x, hp.y + 5, 47, 16);
-			}
-		}
-
-		int paneSize = large ? 30 : 16;
-
-		if (skull.height() > 24 || skull.width() > 24){
-			skull.scale.set(skull.scale.x * PixelScene.align(24f/Math.max(skull.width(), skull.height())));
-		}
-
-		skull.x = bar.x + (paneSize - skull.width())/2f;
-		skull.y = bar.y + (paneSize - skull.height())/2f;
+		rows.clear();
+		Camera.remove(contentCamera);
+		contentCamera.destroy();
 	}
 
 	@Override
 	public void update() {
+		syncRows();
 		super.update();
-		if (boss != null){
-			if (!boss.isAlive() || !Dungeon.level.mobs.contains(boss)){
-				boss = null;
-				visible = active = false;
-				if (buffs != null) {
-					BuffIndicator.setBossInstance(null);
-					remove(buffs);
-					buffs.destroy();
-					buffs = null;
-				}
-			} else {
+		layout();
+	}
 
+	private void syncRows() {
+		synchronized (bosses) {
+			bosses.entrySet().removeIf(entry -> !entry.getKey().isAlive()
+					|| Dungeon.level == null || !Dungeon.level.mobs.contains(entry.getKey()));
+			Iterator<Map.Entry<Mob, BossBar>> iterator = rows.entrySet().iterator();
+			while (iterator.hasNext()) {
+				Map.Entry<Mob, BossBar> entry = iterator.next();
+				if (!bosses.containsKey(entry.getKey())) {
+					remove(entry.getValue());
+					entry.getValue().destroy();
+					iterator.remove();
+				}
+			}
+			for (Map.Entry<Mob, BossState> entry : bosses.entrySet()) {
+				BossBar row = rows.get(entry.getKey());
+				if (row == null) {
+					row = new BossBar(entry.getKey(), entry.getValue());
+					row.camera = contentCamera;
+					rows.put(entry.getKey(), row);
+					add(row);
+				} else if (entry.getValue().refreshSprite) {
+					row.refreshSprite();
+				}
+				entry.getValue().refreshSprite = false;
+			}
+		}
+		visible = !rows.isEmpty();
+		// 隐藏时仍同步登记表，下一只 Boss 出现后可以立即显示。
+		active = true;
+		layout();
+	}
+
+	@Override
+	protected void layout() {
+		float rowY = 0;
+		float maxRowHeight = 0;
+		for (BossBar row : rows.values()) {
+			row.setPos(0, rowY);
+			maxRowHeight = Math.max(maxRowHeight, row.height());
+			rowY += row.height() + 2;
+		}
+		float contentHeight = rows.isEmpty() ? 0 : rowY - 2;
+		Camera ui = PixelScene.uiCamera;
+		float scale = 1f;
+		if (rows.size() > 1) {
+			// 使用统一的空间预算：至多约两条血条高，同时不超过屏幕高度的 24%。
+			float availableHeight = Math.max(1f, Math.min(ui.height - y - 4f,
+					Math.min(ui.height * 0.24f, maxRowHeight * 2f + 2f)));
+			float availableWidth = Math.max(1f, Math.min(ui.width * 0.5f,
+					2f * Math.min(x + width/2f, ui.width - x - width/2f) - 4f));
+			scale = Math.min(1f, Math.min(availableWidth/width, availableHeight/contentHeight));
+		}
+		height = contentHeight * scale;
+
+		// 内容使用独立摄像机，绘制和点击一起缩放；保留父界面分配的中心锚点。
+		Point origin = ui.cameraToScreen(x + width * (1f - scale)/2f, y);
+		float zoom = ui.zoom * scale;
+		if (contentCamera.zoom != zoom) contentCamera.zoom(zoom);
+		contentCamera.x = contentCamera.y = 0;
+		contentCamera.resize((int)Math.ceil(Game.width/zoom), (int)Math.ceil(Game.height/zoom));
+		contentCamera.scroll.set(-origin.x/zoom, -origin.y/zoom);
+		contentCamera.update();
+	}
+
+	public static void assignBoss(Mob boss) {
+		assignBoss(boss, false);
+	}
+
+	public static void assignBoss(Mob boss, boolean forceSpriteRefresh) {
+		synchronized (bosses) {
+			if (boss == null) {
+				bosses.clear();
+				return;
+			}
+			BossState state = bosses.get(boss);
+			if (state == null) {
+				state = new BossState();
+				bosses.put(boss, state);
+			}
+			state.refreshSprite |= forceSpriteRefresh;
+		}
+	}
+
+	public static boolean isAssigned() {
+		synchronized (bosses) {
+			for (Mob boss : bosses.keySet()) {
+				if (boss.isAlive() && Dungeon.level != null && Dungeon.level.mobs.contains(boss)) return true;
+			}
+		}
+		return false;
+	}
+
+	public static boolean isAssigned(Mob boss) {
+		synchronized (bosses) {
+			return boss != null && bosses.containsKey(boss) && boss.isAlive()
+					&& Dungeon.level != null && Dungeon.level.mobs.contains(boss);
+		}
+	}
+
+	public static void bleed(boolean value) {
+		synchronized (bosses) {
+			for (BossState state : bosses.values()) state.bleeding = value;
+		}
+	}
+
+	public static void bleed(Mob boss, boolean value) {
+		synchronized (bosses) {
+			BossState state = bosses.get(boss);
+			if (state != null) state.bleeding = value;
+		}
+	}
+
+	public static boolean isBleeding() {
+		synchronized (bosses) {
+			for (Map.Entry<Mob, BossState> entry : bosses.entrySet()) {
+				if (entry.getValue().bleeding && isAssigned(entry.getKey())) return true;
+			}
+		}
+		return false;
+	}
+
+	public static boolean isBleeding(Mob boss) {
+		synchronized (bosses) {
+			BossState state = bosses.get(boss);
+			return state != null && state.bleeding && isAssigned(boss);
+		}
+	}
+
+	private static class BossBar extends Component {
+		private Image bar;
+
+		private Image shieldHP;
+		private Image hp;
+		private Image Dot; //a visual darkening over HP and shield that shows total incoming DOT
+		private BitmapText hpText;
+
+		private Button bossInfo;
+		private BuffIndicator buffs;
+
+		private final Mob boss;
+		private final BossState state;
+
+		private Image skull;
+		private Emitter blood;
+
+		private boolean large;
+
+		public BossBar(Mob boss, BossState state) {
+			super();
+			this.boss = boss;
+			this.state = state;
+			buffs = new BuffIndicator(boss, large);
+			BuffIndicator.setBossInstance(buffs);
+			add(buffs);
+			refreshSprite();
+		}
+
+		private void refreshSprite() {
+			remove(skull);
+			skull.destroy();
+			skull = boss.sprite();
+			add(skull);
+			// 新头像立即接上本 Boss 的阶段状态，避免首帧颜色或粒子串用。
+			if (state.bleeding) skull.tint(0xcc0000, large ? 0.3f : 0.6f);
+			blood.on = state.bleeding;
+			layout();
+		}
+
+		@Override
+		protected void createChildren() {
+			this.large = SPDSettings.interfaceSize() != 0;
+
+			bar = large ? new Image(asset, 0, 16, 128, 30) : new Image(asset, 0, 0, 64, 16);
+			add(bar);
+
+			width = bar.width;
+			height = bar.height;
+
+			shieldHP = large ? new Image(asset, 0, 55, 96, 9) : new Image(asset, 71, 5, 47, 4);
+			add(shieldHP);
+
+			hp = large ? new Image(asset, 0, 46, 96, 9) : new Image(asset, 71, 0, 47, 4);
+			add(hp);
+
+			Dot = large ? new Image(asset, 0, 46, 96, 9) : new Image(asset, 71, 0, 47, 4);
+			Dot.hardlight(0, 0, 0);
+			Dot.alpha(0.25f);
+			add(Dot);
+
+			hpText = new BitmapText(PixelScene.pixelFont);
+			hpText.alpha(0.6f);
+			add(hpText);
+
+			bossInfo = new Button(){
+				@Override
+				protected void onClick() {
+					super.onClick();
+					if (boss != null){
+						GameScene.show(new WndInfoMob(boss));
+					}
+				}
+
+				@Override
+				protected String hoverText() {
+					if (boss != null){
+						return boss.name();
+					}
+					return super.hoverText();
+				}
+			};
+			add(bossInfo);
+
+			skull = new Image(asset, 64, 0, 6, 6);
+			add(skull);
+
+			blood = new Emitter();
+			blood.pos(skull);
+			blood.pour(BloodParticle.FACTORY, 0.3f);
+			blood.autoKill = false;
+			blood.on = false;
+			add( blood );
+		}
+
+		@Override
+		protected void layout() {
+			bar.x = x;
+			bar.y = y;
+
+			hp.x = shieldHP.x = Dot.x = bar.x+(large ? 30 : 15);
+			hp.y = shieldHP.y = Dot.y = bar.y+(large ? 2 : 3);
+
+			if (!large) hpText.scale.set(PixelScene.align(0.5f));
+			hpText.x = hp.x + (large ? (96-hpText.width())/2f : 1);
+			hpText.y = hp.y + (hp.height - (hpText.baseLine()+hpText.scale.y))/2f;
+			hpText.y -= 0.001f; //prefer to be slightly higher
+			PixelScene.align(hpText);
+
+			bossInfo.setRect(x, y, bar.width, bar.height);
+
+			if (buffs != null) {
+				buffs.maxBuffs = 12;
+				if (large) {
+					//little extra width here for a 6th column
+					buffs.setRect(hp.x+1, hp.y + 12, 102, 34);
+				} else {
+					buffs.setRect(hp.x, hp.y + 5, 47, 16);
+				}
+			}
+
+			int paneSize = large ? 30 : 16;
+
+			skull.scale.set(Math.min(1f, (large ? 24f : 12f)/Math.max(skull.width, skull.height)));
+			skull.x = bar.x + (paneSize - skull.width())/2f;
+			skull.y = bar.y + (paneSize - skull.height())/2f;
+			PixelScene.align(skull);
+			blood.pos(skull);
+
+			height = Math.max(bar.height, buffs.top() - y + buffs.contentHeight);
+		}
+
+		@Override
+		public void update() {
+			super.update();
+			if (boss.isAlive()) {
 				int health = boss.HP;
 				int shield = boss.shielding();
 				int incomingDOT = boss.incomingDOT();
-				int max = boss.HT;
+				int max = Math.max(1, boss.HT);
 
 				float healthPercent = health/(float)max;
 				float shieldPercent = shield/(float)max;
@@ -210,12 +364,12 @@ public class BossHealthBar extends Component {
 				Dot.scale.x = Math.min(DOTPercent, shieldHP.scale.x);
 				Dot.x = shieldHP.x + shieldHP.width() - Dot.width();
 
-				if (bleeding != blood.on){
-					if (bleeding)   skull.tint( 0xcc0000, large ? 0.3f : 0.6f );
+				if (state.bleeding != blood.on){
+					if (state.bleeding)   skull.tint( 0xcc0000, large ? 0.3f : 0.6f );
 					else            skull.resetColor();
 					bringToFront(blood);
 					blood.pos(skull);
-					blood.on = bleeding;
+					blood.on = state.bleeding;
 				}
 
 				if (shield <= 0){
@@ -229,68 +383,4 @@ public class BossHealthBar extends Component {
 			}
 		}
 	}
-
-	public static void assignBoss(Mob boss){
-		assignBoss(boss, false);
-	}
-
-	public static void assignBoss(Mob boss, boolean forceSpriteRefresh){
-		if (BossHealthBar.boss == boss && instance != null) {
-			//re-assign sprite if it has changed
-			if (forceSpriteRefresh && instance.large){
-				ShatteredPixelDungeon.runOnRenderThread(new Callback() {
-					@Override
-					public void call() {
-						instance.remove(instance.skull);
-						instance.skull.destroy();
-						instance.skull = boss.sprite();
-						instance.add(instance.skull);
-						instance.layout();
-					}
-				});
-			}
-			return;
-		}
-		BossHealthBar.boss = boss;
-		bleed(false);
-		if (instance != null) {
-			ShatteredPixelDungeon.runOnRenderThread(new Callback() {
-				@Override
-				public void call() {
-					instance.visible = instance.active = true;
-					if (boss != null){
-						if (instance.large){
-							if (instance.skull != null){
-								instance.remove(instance.skull);
-								instance.skull.destroy();
-							}
-							instance.skull = boss.sprite();
-							instance.add(instance.skull);
-						}
-						if (instance.buffs != null){
-							instance.remove(instance.buffs);
-							instance.buffs.destroy();
-						}
-						instance.buffs = new BuffIndicator(boss, instance.large);
-						BuffIndicator.setBossInstance(instance.buffs);
-						instance.add(instance.buffs);
-						instance.layout();
-					}
-				}
-			});
-		}
-	}
-	
-	public static boolean isAssigned(){
-		return boss != null && boss.isAlive() && Dungeon.level.mobs.contains(boss);
-	}
-
-	public static void bleed(boolean value){
-		bleeding = value;
-	}
-
-	public static boolean isBleeding(){
-		return isAssigned() && bleeding;
-	}
-
 }

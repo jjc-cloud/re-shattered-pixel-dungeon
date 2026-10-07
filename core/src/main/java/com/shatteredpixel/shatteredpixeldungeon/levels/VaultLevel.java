@@ -31,30 +31,31 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.VaultFlameTraps;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.quest.vault.VaultDM100;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.quest.vault.VaultDM200;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.quest.vault.VaultElemental;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.quest.vault.VaultGhoul;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.quest.vault.VaultGolem;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.quest.vault.VaultShaman;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.quest.vault.VaultSkeleton;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.VaultTokenDoor;
+import com.shatteredpixel.shatteredpixeldungeon.items.quest.EscapeCrystal;
+import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.quest.vault.VaultMobPool;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket;
 import com.shatteredpixel.shatteredpixeldungeon.items.Torch;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.LeatherArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.MailArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.PlateArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ScaleArmor;
+import com.shatteredpixel.shatteredpixeldungeon.items.food.Food;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfExperience;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfFrost;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHaste;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfInvisibility;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfLevitation;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfLiquidFlame;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfMindVision;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfParalyticGas;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfPurity;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfToxicGas;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfForce;
@@ -64,6 +65,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfLullaby;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicMapping;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMirrorImage;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRecharging;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRage;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRetribution;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTerror;
@@ -80,22 +82,22 @@ import com.shatteredpixel.shatteredpixeldungeon.items.stones.StoneOfFlock;
 import com.shatteredpixel.shatteredpixeldungeon.items.stones.StoneOfShock;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfCorruption;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfPetrification;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfRegrowth;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfTransfusion;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.Dart;
-import com.shatteredpixel.shatteredpixeldungeon.levels.builders.Builder;
-import com.shatteredpixel.shatteredpixeldungeon.levels.builders.GridBuilder;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
-import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CityPainter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.vault.VaultEntranceRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.vault.VaultFinalRoom;
-import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.vault.VaultRoom;
-import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.vault.VaultSimpleEnemyTreasureRoom;
-import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.vault.VaultTokensRoom;
-import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.vault.treasure.VaultTreasureRoom;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.vault.VaultLayout;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.vault.VaultCorridorPatrols;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.VaultTiles;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.Carpet;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.CustomTilemap;
+import com.watabou.utils.Bundle;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.EmptyRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Blindweed;
@@ -108,11 +110,13 @@ import com.shatteredpixel.shatteredpixeldungeon.plants.Starflower;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Stormvine;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Sungrass;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Swiftthistle;
-import com.shatteredpixel.shatteredpixeldungeon.scenes.InterlevelScene;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.audio.Music;
 import com.watabou.utils.Callback;
+import com.watabou.utils.Point;
 import com.watabou.utils.Random;
+import com.watabou.noosa.Group;
 import com.watabou.utils.Reflection;
 
 import java.util.ArrayList;
@@ -130,44 +134,34 @@ public class VaultLevel extends CityLevel {
 	@Override
 	protected boolean build() {
 		itemsToSpawn.clear();
-
-		for (int i = 0; i < 4; i++){
-			addItemToSpawn(createEquipment(0));
-		}
-		addItemToSpawn(new Dart());
-		for (int i = 0; i < 5; i++){
-			addItemToSpawn(createConsumabe(0));
-		}
-		addItemToSpawn(Generator.randomUsingDefaults(Generator.Category.FOOD));
-		addItemToSpawn(Generator.randomUsingDefaults(Generator.Category.FOOD));
-		addItemToSpawn(Generator.randomUsingDefaults(Generator.Category.FOOD));
-
-		return super.build();
-	}
-
-	@Override
-	protected ArrayList<Room> initRooms() {
-		ArrayList<Room> initRooms = new ArrayList<>();
-
-		initRooms.add(roomEntrance = new VaultEntranceRoom());
-		VaultRoom.setupChances();
-
-		int i = 0;
-		while (i < 9){
-			VaultRoom r = VaultRoom.createRoom();
-			i += r.sizeFactor();
-			initRooms.add(r);
-		}
-		initRooms.add( new VaultTokensRoom() );
-		initRooms.add( new VaultSimpleEnemyTreasureRoom() );
-
-		VaultTreasureRoom.generateRoomList();
-		for (i = 0; i < 7; i++){
-			initRooms.add(VaultTreasureRoom.nextRoom());
+		addItemToSpawn(Reflection.newInstance(Random.oneOf(PotionOfParalyticGas.class, PotionOfToxicGas.class)));
+		addItemToSpawn(Reflection.newInstance(Random.oneOf(PotionOfPurity.class, PotionOfInvisibility.class)));
+		addItemToSpawn(new PotionOfHealing());
+		addItemToSpawn(new PotionOfHealing());
+		addItemToSpawn(new PotionOfHaste());
+		addItemToSpawn(Reflection.newInstance(Random.oneOf(ScrollOfTransmutation.class, ScrollOfRetribution.class)));
+		addItemToSpawn(Reflection.newInstance(Random.oneOf(ScrollOfRage.class, ScrollOfLullaby.class)));
+		ArrayList<Class<?>> stoneTypes = new ArrayList<>(Arrays.asList(Generator.Category.STONE.classes));
+		stoneTypes.remove(StoneOfEnchantment.class);
+		for (int i = 0; i < 3; i++) {
+			addItemToSpawn((Item) Reflection.newInstance(Random.element(stoneTypes)));
 		}
 
-		initRooms.add(new VaultFinalRoom());
-		return initRooms;
+		rooms = new ArrayList<>();
+		roomEntrance = new VaultEntranceRoom();
+		roomEntrance.set(8, 44, 32, 73);
+		rooms.add(roomEntrance);
+		VaultFinalRoom arena = new VaultFinalRoom();
+		arena.set(2, 12, 38, 44);
+		arena.configureFixedDoors(new Point(VaultLayout.GATE_X + 1, VaultLayout.GATE_Y),
+				new Point(VaultLayout.TREASURE_DOOR_X, VaultLayout.TREASURE_DOOR_Y), VaultLayout.GATE_WIDTH);
+		roomExit = arena;
+		rooms.add(arena);
+		Room treasure = new EmptyRoom();
+		treasure.set(14, 0, 26, 12);
+		rooms.add(treasure);
+		VaultLayout.paint(this);
+		return true;
 	}
 
 	@Override
@@ -182,30 +176,38 @@ public class VaultLevel extends CityLevel {
 	}
 
 	@Override
-	protected Builder builder() {
-		return new GridBuilder();
-	}
-
-	@Override
-	public Painter painter() {
-		return new CityPainter(){
-			public float hiddenDoorChance( Level l ){
-				return 0; //no hidden doors in the vault
-			}
-		}.setWater(0.15f, 12) //water is less common and more clustered (a few leaks with lack of maintenance)
-				.setGrass(0.30f, 3) //grass is a little more common (overgrowth over time)
-				.setTraps(nTraps(), trapClasses(), trapChances());
-	}
-
-	@Override
-	protected int nTraps() {
-		return 0;
-	}
-
-	@Override
 	public boolean activateTransition(Hero hero, LevelTransition transition) {
-		//walking onto transitions does nothing, need to use crystal
-		return false;
+		if (isRegularQuest() && transition.type == LevelTransition.Type.BRANCH_ENTRANCE) {
+			boolean gateClosed = false;
+			for (Mob mob : mobs) {
+				if (mob instanceof VaultTokenDoor && !((VaultTokenDoor) mob).battleSeal) gateClosed = true;
+			}
+			if (locked || gateClosed) {
+				String message = Messages.get(EscapeCrystal.class, locked ? "blocked_battle" : "blocked_gate");
+				hero.interrupt();
+				GLog.n(message);
+				return false;
+			}
+			MagicPocket pocket = hero.belongings.getItem(MagicPocket.class);
+			if (pocket != null) {
+				pocket.requestReturn(hero, this, () -> finishVaultExit(hero, transition));
+				return false;
+			}
+		}
+		return super.activateTransition(hero, transition);
+	}
+
+	public boolean finishVaultExit(Hero hero, LevelTransition transition) {
+		if (locked || hero.belongings.getItem(MagicPocket.class) != null) return false;
+		EscapeCrystal crystal = hero.belongings.getItem(EscapeCrystal.class);
+		if (crystal != null) crystal.detachAll(hero.belongings.backpack);
+		return super.activateTransition(hero, transition);
+	}
+
+	@Override
+	public Heap drop(Item item, int cell) {
+		if (item != null && isRegularQuest()) item.markVaultLoot();
+		return super.drop(item, cell);
 	}
 
 	//only occurs in levelgen, no need to bundle these
@@ -525,22 +527,11 @@ public class VaultLevel extends CityLevel {
 		return findT3SolveItem();
 	}
 
-	public static Class<?extends Mob>[] T1Mobs = new Class[]{
-			VaultSkeleton.class,
-			VaultDM100.class
-	};
+	public static Class<?extends Mob>[] T1Mobs = VaultMobPool.TIER_1;
 
-	public static Class<?extends Mob>[] T2Mobs = new Class[]{
-			VaultShaman.class,
-			VaultDM200.class,
-			VaultGhoul.class //only if solo
-	};
+	public static Class<?extends Mob>[] T2Mobs = VaultMobPool.TIER_2;
 
-	public static Class<?extends Mob>[] T3Mobs = new Class[]{
-			//vault ghoul if more than one
-			VaultElemental.class,
-			VaultGolem.class
-	};
+	public static Class<?extends Mob>[] T3Mobs = VaultMobPool.TIER_3;
 
 	private ArrayList<Class<?extends Mob>> mobsToSpawn = new ArrayList<>();
 
@@ -556,10 +547,7 @@ public class VaultLevel extends CityLevel {
 			Random.shuffle(mobsToSpawn);
 		}
 		Class<? extends Mob> cls = mobsToSpawn.remove(0);
-		if (cls == VaultElemental.class){
-			cls = VaultElemental.random();
-		}
-		return Reflection.newInstance(cls);
+		return VaultMobPool.create(cls);
 	}
 
 	//important to try and preserve mobs that can't spawn in a certain place (e.g. corridors)
@@ -569,29 +557,19 @@ public class VaultLevel extends CityLevel {
 
 	@Override
 	protected void createMobs() {
-		//mob creation handled by individual rooms
+		if (fixedLayout()) VaultCorridorPatrols.createMobs(this);
 	}
 
 	@Override
 	public void occupyCell(Char ch) {
 		super.occupyCell(ch);
-		//extra check to ensure vault is left if quest is completed
-		if (ch == Dungeon.hero && (Imp.Quest.isCompleted() && !Imp.Quest.isOld())){
-			beforeTransition();
-			InterlevelScene.curTransition = new LevelTransition(Dungeon.level,
-					Dungeon.hero.pos,
-					LevelTransition.Type.BRANCH_ENTRANCE,
-					Dungeon.depth,
-					0,
-					LevelTransition.Type.BRANCH_EXIT);
-			InterlevelScene.mode = InterlevelScene.Mode.ASCEND;
-			Game.switchScene( InterlevelScene.class );
-		} else if (ch == Dungeon.hero) {
+		if (ch == Dungeon.hero) {
 			Room r = room(ch.pos);
-			if (r instanceof VaultFinalRoom){
+			if (r instanceof VaultFinalRoom) {
 				((VaultFinalRoom) r).processHeroStep((Hero) ch);
 			}
 		}
+
 	}
 
 	public Actor addRespawner() {
@@ -600,53 +578,159 @@ public class VaultLevel extends CityLevel {
 
 	@Override
 	protected void createItems() {
-		//copypasta from super.createItems
 		for (Item item : itemsToSpawn) {
-			int cell = randomDropCell();
-			drop( item, cell ).type = Heap.Type.HEAP;
-			if (map[cell] == Terrain.HIGH_GRASS || map[cell] == Terrain.FURROWED_GRASS) {
-				map[cell] = Terrain.GRASS;
-				losBlocking[cell] = false;
+			drop(item, randomDropCell()).type = Heap.Type.HEAP;
+		}
+
+		// 八堆骷髅各放一份奖励，四种类型各两份。
+		for (int i = 0; i < 8; i++) {
+			Item reward;
+			switch (i / 2) {
+				case 0:
+					do {
+						reward = Generator.randomUsingDefaults(Generator.Category.WAND);
+					} while (reward instanceof WandOfCorruption || reward instanceof WandOfTransfusion
+							|| reward instanceof WandOfRegrowth || reward instanceof WandOfPetrification);
+					break;
+				case 1:
+					reward = Generator.randomUsingDefaults(Generator.Category.RING);
+					break;
+				case 2:
+					reward = Generator.randomUsingDefaults(Random.oneOf(Generator.Category.WEP_T4, Generator.Category.WEP_T5));
+					break;
+				default:
+					reward = Generator.randomUsingDefaults(Random.oneOf(Generator.Category.MIS_T4, Generator.Category.MIS_T5));
+					break;
 			}
-		}
-
-		//also generate 2 torches if into darkness is enabled. Separate seed to avoid affecting other parts of levelgen
-		if (Dungeon.isChallenged(Challenges.DARKNESS)){
-			Random.pushGenerator(Random.Long());
-			for (int i = 0; i < 2; i++){
-				int cell = randomDropCell();
-				drop( new Torch(), cell ).type = Heap.Type.HEAP;
-				if (map[cell] == Terrain.HIGH_GRASS || map[cell] == Terrain.FURROWED_GRASS) {
-					map[cell] = Terrain.GRASS;
-					losBlocking[cell] = false;
-				}
+			reward.level(Random.IntRange(2, 3));
+			reward.cursed = false;
+			if (reward instanceof Weapon && ((Weapon) reward).hasCurseEnchant()) {
+				((Weapon) reward).enchant(null);
 			}
-			Random.popGenerator();
+			if (reward instanceof Wand) {
+				((Wand) reward).curCharges = ((Wand) reward).maxCharges;
+			}
+			reward.identify(false);
+			drop(reward, randomDropCell()).type = Heap.Type.SKELETON;
 		}
 
-		//generate one extra healing potion that is (almost)guaranteed to be in a room adjacent to the entrance
-		int tries = 1000;
-		int cell;
-		Room r;
-		do {
-			cell = randomDropCell();
-			r = room(cell);
-			tries--;
-		} while (!r.connected.containsKey(roomEntrance) && tries > 0);
-		drop( new PotionOfHealing(), cell ).type = Heap.Type.HEAP;
-		if (map[cell] == Terrain.HIGH_GRASS || map[cell] == Terrain.FURROWED_GRASS) {
-			map[cell] = Terrain.GRASS;
-			losBlocking[cell] = false;
+		// 入口补给与走廊散落物资分开放置，只在生成地图时给予一次。
+		drop(new StoneOfBlink().quantity(2), VaultLayout.ENTRANCE_X - 1 + (VaultLayout.ENTRANCE_Y + 1) * width());
+		drop(new Food(), VaultLayout.ENTRANCE_X + 1 + (VaultLayout.ENTRANCE_Y + 1) * width());
+		if (Dungeon.isChallenged(Challenges.DARKNESS)) {
+			drop(new Torch().quantity(2), VaultLayout.ENTRANCE_X + (VaultLayout.ENTRANCE_Y + 2) * width());
 		}
-
 	}
 
+	private boolean fixedLayout() {
+		return width() == VaultLayout.WIDTH && height() == VaultLayout.HEIGHT
+				&& transitions.size() == 1
+				&& entrance() == VaultLayout.ENTRANCE_X + VaultLayout.ENTRANCE_Y * width();
+	}
+
+	public boolean customDoorCell(int cell) {
+		if (!fixedLayout()) return false;
+		int x = cell % width(), y = cell / width();
+		return x == VaultLayout.TREASURE_DOOR_X && y == VaultLayout.TREASURE_DOOR_Y;
+	}
+
+	public boolean isRegularQuest() {
+		return fixedLayout();
+	}
+
+	@Override
+	public void restoreFromBundle(Bundle bundle) {
+		super.restoreFromBundle(bundle);
+		if (!isRegularQuest()) return;
+		for (Heap heap : heaps.valueList()) for (Item item : heap.items) item.markVaultLoot();
+		for (int cell = 0; cell < length(); cell++) {
+			char layout = VaultLayout.tile(cell % width(), cell / width());
+			if (map[cell] == Terrain.CUSTOM_DECO && (layout == 's' || layout == 'o')) {
+				Level.set(cell, layout == 's' ? Terrain.STATUE : Terrain.REGION_DECO, this);
+			}
+			if (cell / width() == 72 && map[cell] == Terrain.CUSTOM_DECO_EMPTY) Level.set(cell, Terrain.EMPTY, this);
+		}
+		customTerrain.removeIf(tile -> tile instanceof VaultTiles.EntranceColumns);
+		VaultTiles.EntranceCarpet carpet = null;
+		boolean rug = false;
+		for (CustomTilemap tile : customTiles) {
+			if (tile instanceof VaultTiles.EntranceCarpet) carpet = (VaultTiles.EntranceCarpet) tile;
+			if (tile instanceof VaultTiles.EntranceRug) rug = true;
+		}
+		if (carpet == null) {
+			carpet = new VaultTiles.EntranceCarpet();
+			for (int i = customTiles.size() - 1; i >= 0; i--) {
+				CustomTilemap tile = customTiles.get(i);
+				if (tile instanceof Carpet && tile.tileX == 18 && tile.tileY == 45
+						&& tile.tileW == 5 && tile.tileH == 28) {
+					Bundle pattern = new Bundle();
+					tile.storeInBundle(pattern);
+					carpet.restoreFromBundle(pattern);
+					customTiles.remove(i);
+				}
+			}
+			customTiles.add(0, carpet);
+		}
+		if (!rug) {
+			customTiles.removeIf(tile -> tile instanceof VaultEntranceRoom.QuestEntranceInternal);
+			customTiles.add(new VaultTiles.EntranceRug());
+		}
+	}
+
+	public boolean customStatueCell(int cell) {
+		return fixedLayout() && VaultLayout.tile(cell % width(), cell / width()) == 's'
+				&& (map[cell] == Terrain.STATUE || map[cell] == Terrain.STATUE_EMBERS);
+	}
+
+	@Override
+	public String tileName(int tile) {
+		if (tile == Terrain.REGION_DECO || tile == Terrain.REGION_DECO_ALT) return Messages.get(CityLevel.class, "region_deco_name");
+		return super.tileName(tile);
+	}
+
+	@Override
+	public String tileDesc(int tile) {
+		if (tile == Terrain.STATUE || tile == Terrain.STATUE_SP || tile == Terrain.STATUE_EMBERS || tile == Terrain.STATUE_SP_EMBERS) {
+			return Messages.get(CityLevel.class, "statue_desc");
+		}
+		if (tile == Terrain.REGION_DECO || tile == Terrain.REGION_DECO_ALT) return Messages.get(CityLevel.class, "region_deco_desc");
+		return super.tileDesc(tile);
+	}
+
+	@Override
+	protected int staticEnvironmentalLightRadius(int cell) {
+		return map[cell] == Terrain.REGION_DECO || map[cell] == Terrain.REGION_DECO_ALT ? 2 : super.staticEnvironmentalLightRadius(cell);
+	}
+
+	@Override
+	public Group addWallVisuals() {
+		super.addWallVisuals();
+		CityLevel.addCityWallVisuals(this, wallVisuals);
+		return wallVisuals;
+	}
+
+	@Override
+	protected int randomDropCell() {
+		if (!fixedLayout()) return super.randomDropCell();
+		ArrayList<Integer> candidates = new ArrayList<>();
+		for (int y = 45; y <= 66; y++) {
+			for (int x = 9; x <= 31; x++) {
+				int cell = x + y * width();
+				if (passable[cell] && !solid[cell] && heaps.get(cell) == null && findMob(cell) == null) {
+					candidates.add(cell);
+				}
+			}
+		}
+		return candidates.isEmpty() ? -1 : Random.element(candidates);
+	}
+
+	/** The three cells share one gate, including occupancy checks before it closes. */
 	@Override
 	public void seal() {
 		if (!locked) {
 			locked = true;
 			//don't apply locked floor buff here
-			// no need to restrict regen and the player IS able to leave
+			// Keep regeneration; battle seals still block every vault exit.
 		}
 	}
 

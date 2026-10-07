@@ -76,6 +76,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.HolyWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.Smite;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.quest.vault.VaultBossElemental;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Monk;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Snake;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
@@ -122,7 +123,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfMi
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.PotionOfDivineInspiration;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.DarkGold;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.DwarfToken;
-import com.shatteredpixel.shatteredpixeldungeon.items.quest.EscapeCrystal;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.Pickaxe;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfAccuracy;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfEvasion;
@@ -169,10 +170,8 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.AlchemyScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
-import com.shatteredpixel.shatteredpixeldungeon.scenes.WelcomeScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.HeroSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.ImpSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ActionIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
@@ -258,6 +257,11 @@ public class Hero extends Char {
 	}
 
 	public boolean ready = false;
+
+	// Shared frost/shock damage budget until the hero next gets an actionable turn.
+	public boolean vaultElementalControlled;
+	public int vaultElementalControlHits;
+	public transient boolean vaultElementalDamage;
 	public boolean damageInterrupt = true;
 	public HeroAction curAction = null;
 	public HeroAction lastAction = null;
@@ -369,6 +373,8 @@ public class Hero extends Char {
 		bundle.put( EXPERIENCE, exp );
 		
 		bundle.put( HTBOOST, HTBoost );
+		bundle.put("vault_elemental_controlled", vaultElementalControlled);
+		bundle.put("vault_elemental_control_hits", vaultElementalControlHits);
 
 		belongings.storeInBundle( bundle );
 	}
@@ -380,6 +386,8 @@ public class Hero extends Char {
 		exp = bundle.getInt( EXPERIENCE );
 
 		HTBoost = bundle.getInt(HTBOOST);
+		vaultElementalControlled = bundle.getBoolean("vault_elemental_controlled");
+		vaultElementalControlHits = bundle.getInt("vault_elemental_control_hits");
 
 		super.restoreFromBundle( bundle );
 
@@ -930,7 +938,7 @@ public class Hero extends Char {
 	public boolean pickUpFromChest(Item item, int chestPos) {
 		chestPickup = true;
 		try {
-			return item.doPickUp(this, chestPos);
+			return MagicPocket.pickUp(item, this, chestPos);
 		} finally {
 			chestPickup = false;
 		}
@@ -969,6 +977,11 @@ public class Hero extends Char {
 			return false;
 		}
 		
+		// Preserve the budget through brief gaps between frost and paralysis effects.
+		// Reset only once this turn is able to accept or execute a hero action.
+		vaultElementalControlled = false;
+		vaultElementalControlHits = 0;
+
 		boolean actResult;
 		if (curAction == null) {
 			
@@ -1056,41 +1069,7 @@ public class Hero extends Char {
 		AttackIndicator.updateState();
 		
 		GameScene.ready();
-		//check statistics to see if vault warned?
-		//or just used shared prefs?
-		if (Dungeon.level instanceof VaultLevel
-				&& HP < HT*0.334f
-				&& !Statistics.vaultInjureWarned
-				&& SPDSettings.vaultInjureWarns() < 3){
-			SPDSettings.vaultInjureWarns(SPDSettings.vaultInjureWarns()+1);
-			Statistics.vaultInjureWarned = true;
-			ShatteredPixelDungeon.runOnRenderThread(new Callback() {
-				@Override
-				public void call() {
-					String text = Messages.get(EscapeCrystal.class, "injure_warning_1");
-					if (!Dungeon.level.locked) {
-						text += "\n\n" + Messages.get(EscapeCrystal.class, "injure_warning_2");
-					}
-					text += "\n\n" + Messages.get(EscapeCrystal.class, "injure_warning_3");
-					GameScene.show(new WndOptions(new ImpSprite(),
-							Messages.titleCase(Messages.get(Imp.class, "name")),
-							text,
-							//recycling this one
-							Messages.get(WelcomeScene.class, "controller_okay")){
 
-						@Override
-						protected void onSelect(int index) {
-							super.onSelect(index);
-						}
-
-						@Override
-						public void onBackPressed() {
-							//do nothing, must close via button
-						}
-					});
-				}
-			});
-		}
 	}
 	
 	public void interrupt() {
@@ -1231,7 +1210,7 @@ public class Hero extends Char {
 			Heap heap = Dungeon.level.heaps.get( pos );
 			if (heap != null) {
 				Item item = heap.peek();
-				if (item.doPickUp( this )) {
+				if (MagicPocket.pickUp(item, this, pos)) {
 					heap.pickUp();
 
 					//TODO this statement is getting silly, might be better to handle this as a propery of items
@@ -1282,7 +1261,8 @@ public class Hero extends Char {
 							|| item instanceof DriedRose.Petal
 							|| item instanceof Key) {
 						//Do Nothing
-					} else {
+					} else if (!(item.isVaultLoot() && MagicPocket.isVault()
+							&& belongings.getItem(MagicPocket.class) != null)) {
 						GLog.newLine();
 						GLog.n(Messages.capitalize(Messages.get(this, "you_cant_have", item.name())));
 					}
@@ -1507,7 +1487,7 @@ public class Hero extends Char {
 						//1 hunger spent total
 						if (Dungeon.level.map[action.dst] == Terrain.WALL_DECO){
 							DarkGold gold = new DarkGold();
-							if (gold.doPickUp( Dungeon.hero )) {
+							if (MagicPocket.pickUp(gold, Dungeon.hero, pos)) {
 								DarkGold existing = Dungeon.hero.belongings.getItem(DarkGold.class);
 								if (existing != null && existing.quantity()%5 == 0){
 									if (existing.quantity() >= 40) {
@@ -1806,6 +1786,14 @@ public class Hero extends Char {
 
 	@Override
 	public void damage( int dmg, Object src ) {
+		boolean elementalDamage = vaultElementalDamage
+				|| (src instanceof VaultBossElemental
+				&& (((VaultBossElemental)src).curForm() == VaultBossElemental.ElementalForm.FROST
+				|| ((VaultBossElemental)src).curForm() == VaultBossElemental.ElementalForm.SHOCK));
+		// Consume the skill source marker before any damage callbacks can run.
+		vaultElementalDamage = false;
+		if (elementalDamage && vaultElementalControlled && vaultElementalControlHits >= 3) return;
+
 		if (buff(TimekeepersHourglass.timeStasis.class) != null
 				|| buff(TimeStasis.class) != null) {
 			return;
@@ -1859,7 +1847,9 @@ public class Hero extends Char {
 		//we ceil this one to avoid letting the player easily take 0 dmg from tenacity early
 		dmg = (int)Math.ceil(dmg * RingOfTenacity.damageMultiplier( this ));
 
-		int preHP = HP + shielding();
+		int elementalHealthBefore = HP;
+		int elementalShieldBefore = shielding();
+		int preHP = HP + elementalShieldBefore;
 		if (src instanceof Hunger) preHP -= shielding();
 		try {
 			super.damage( dmg, src );
@@ -1870,6 +1860,10 @@ public class Hero extends Char {
 		if (src instanceof Hunger) postHP -= shielding();
 		int effectiveDamage = preHP - postHP;
 
+		if (elementalDamage && vaultElementalControlled
+				&& (HP < elementalHealthBefore || shielding() < elementalShieldBefore)) {
+			vaultElementalControlHits++;
+		}
 		if (effectiveDamage <= 0) return;
 
 		if (buff(Challenge.DuelParticipant.class) != null){

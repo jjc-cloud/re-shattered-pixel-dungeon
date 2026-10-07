@@ -34,7 +34,6 @@ public class Blizzard extends Blob {
 		
 		int cell;
 		
-		Fire fire = (Fire)Dungeon.level.blobs.get( Fire.class );
 		Freezing freeze = (Freezing)Dungeon.level.blobs.get( Freezing.class );
 		
 		Inferno inf = (Inferno)Dungeon.level.blobs.get( Inferno.class );
@@ -45,7 +44,9 @@ public class Blizzard extends Blob {
 				cell = i + j * Dungeon.level.width();
 				if (cur[cell] > 0) {
 					
-					if (fire != null)   fire.clear(cell);
+					for (Blob blob : Dungeon.level.blobs.values()) {
+						if (blob instanceof Fire) blob.clear(cell);
+					}
 					if (freeze != null) freeze.clear(cell);
 					
 					if (inf != null && inf.volume > 0 && inf.cur[cell] > 0){

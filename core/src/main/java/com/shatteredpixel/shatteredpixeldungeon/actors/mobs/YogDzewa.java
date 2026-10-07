@@ -363,7 +363,7 @@ public class YogDzewa extends Mob {
 			yell(Messages.get(this, "hope"));
 			summonCooldown = -15; //summon a burst of minions!
 			phase = 5;
-			BossHealthBar.bleed(true);
+			BossHealthBar.bleed(YogDzewa.this, true);
 			Game.runOnRenderThread(new Callback() {
 				@Override
 				public void call() {
@@ -551,7 +551,7 @@ public class YogDzewa extends Mob {
 
 	@Override
 	public void notice() {
-		if (!BossHealthBar.isAssigned()) {
+		if (!BossHealthBar.isAssigned(YogDzewa.this)) {
 			BossHealthBar.assignBoss(this);
 			yell(Messages.get(this, "notice"));
 			for (Char ch : Actor.chars()){
@@ -620,7 +620,7 @@ public class YogDzewa extends Mob {
 		phase = bundle.getInt(PHASE);
 		if (phase != 0) {
 			BossHealthBar.assignBoss(this);
-			if (phase == 5) BossHealthBar.bleed(true);
+			if (phase == 5) BossHealthBar.bleed(YogDzewa.this, true);
 		}
 
 		abilityCooldown = bundle.getFloat(ABILITY_CD);

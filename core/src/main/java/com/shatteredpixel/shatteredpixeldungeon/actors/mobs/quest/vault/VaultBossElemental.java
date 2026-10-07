@@ -27,12 +27,17 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
+import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Electricity;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Dread;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Terror;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.duelist.Feint;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Chill;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Frost;
@@ -79,11 +84,14 @@ import com.watabou.utils.Random;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class VaultBossElemental extends Mob {
 
 	{
-		HP = HT = 600;
+		HP = HT = 200;
 		spriteClass = VaultBossElementalSprite.class;
 
 		EXP = 30;
@@ -95,7 +103,6 @@ public class VaultBossElemental extends Mob {
 	public VaultBossElemental(){
 		super();
 		form = ElementalForm.values()[Random.Int(3)];
-		formChances[form.ordinal()]--;
 	}
 
 	@Override
@@ -143,29 +150,27 @@ public class VaultBossElemental extends Mob {
 		UNSTABLE //currently unused
 	}
 	private ElementalForm form = null; //only initially
-	private float[] formChances = new float[]{2, 2, 2}; //up to 2 uses of each form per fight
 
 	protected int envAttackCooldown = Random.NormalIntRange( 10, 15 );
 	protected int spAttackCooldown = Random.NormalIntRange( 6, 10 );
 	protected int spTargetCell = -1;
 
-	protected int lastEnemyPos = -1; //used for tracking targeting on some attacks
+	private boolean coordinating;
+	private int orbitDirection = Random.Int(2) == 0 ? 1 : -1;
+	private float orbitRadius = -1;
 
-	public void changeForm(){
-		ElementalForm newForm;
-		do {
-			newForm = ElementalForm.values()[Random.chances(formChances)];
-		} while (newForm == form);
-		formChances[newForm.ordinal()]--;
-		setElementalForm(newForm);
-	}
+	protected int lastEnemyPos = -1; //used for tracking targeting on some attacks
 
 	public ElementalForm curForm(){
 		return form;
 	}
 
 	public void setElementalForm( ElementalForm form ){
-		//always remove pincushion as we're either leaving or entering frost form
+		if (sprite == null) {
+			this.form = form;
+			return;
+		}
+		// Initialize the fixed element and its particle effects.
 		Buff.affect(this, PinCushionRemover.class).preferGrouping = this.form == ElementalForm.FIRE;
 
 		this.form = form;
@@ -211,7 +216,7 @@ public class VaultBossElemental extends Mob {
 
 		sprite.flipHorizontal = wasTurned;
 		BossHealthBar.assignBoss(this, true);
-		weakAnnounced = false;
+		BossHealthBar.bleed(this, HP < HT/2);
 	}
 
 	@Override
@@ -222,25 +227,67 @@ public class VaultBossElemental extends Mob {
 
 	@Override
 	protected boolean act() {
-		if (enemy == null){
-			chooseEnemy();
+		BossHealthBar.assignBoss(this);
+		BossHealthBar.bleed(this, HP < HT/2);
+		if (fieldOfView == null || fieldOfView.length != Dungeon.level.length()){
+			fieldOfView = new boolean[Dungeon.level.length()];
+		}
+		Dungeon.level.updateFieldOfView( this, fieldOfView );
+
+		ArrayList<VaultBossElemental> partners = new ArrayList<>();
+		for (Mob mob : Dungeon.level.mobs) {
+			if (mob != this && mob instanceof VaultBossElemental && mob.isAlive()) {
+				partners.add((VaultBossElemental) mob);
+			}
+		}
+		boolean coordinate = !partners.isEmpty() && alignment == Alignment.ENEMY;
+		if (coordinating && !coordinate) {
+			// Discard global tracking when the last elemental returns to normal perception.
+			enemy = null;
+			enemySeen = false;
+			target = -1;
+			path = null;
+			state = WANDERING;
+			orbitRadius = -1;
+		}
+		coordinating = coordinate;
+		if (paralysed > 0 || buff(Terror.class) != null || buff(Dread.class) != null
+				|| buff(Feint.AfterImage.FeintConfusion.class) != null) {
+			return super.act();
+		}
+		if (coordinate && Dungeon.hero.isAlive() && Dungeon.hero.invisible <= 0
+				&& !isCharmedBy(Dungeon.hero) && state != FLEEING) {
+			// Like DM300's beckoning, position tracking does not grant line of sight.
+			enemy = Dungeon.hero;
+			target = enemy.pos;
+			state = HUNTING;
+		} else {
+			enemy = chooseEnemy();
+		}
+		boolean enemyVisible = enemy != null && enemy.isAlive() && fieldOfView[enemy.pos]
+				&& enemy.invisible <= 0 && !isCharmedBy(enemy);
+		enemySeen = enemyVisible;
+		if (coordinate && enemyVisible && (orbitRadius <= 0 || lastEnemyPos != enemy.pos)) {
+			// Circle immediately at the observed range, rather than first closing to four tiles.
+			orbitRadius = Math.max(4, Dungeon.level.trueDistance(pos, enemy.pos));
 		}
 
-		if (spTargetCell != -1 && paralysed == 0 && enemy != null){
-			if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
-				sprite.zap( spTargetCell );
-				lastEnemyPos = enemy.pos;
+		// Once telegraphed, the attack remains committed to its original warning cells.
+		if (spTargetCell != -1 && paralysed == 0){
+			lastEnemyPos = enemyVisible ? enemy.pos : -1;
+			if (sprite != null && (sprite.visible
+					|| (enemy != null && enemy.sprite != null && enemy.sprite.visible))) {
+				sprite.zap(spTargetCell);
 				return false;
 			} else {
 				zap();
-				lastEnemyPos = enemy.pos;
 				return true;
 			}
 		}
 
 		spAttackCooldown--;
 		envAttackCooldown--;
-		if (state == HUNTING && paralysed == 0  && enemy != null){
+		if (state == HUNTING && paralysed == 0 && enemyVisible){
 			if (spAttackCooldown <= 0){
 				spend(GameMath.gate(attackDelay(), (int)Math.ceil(Dungeon.hero.cooldown()), 3*attackDelay()));
 				if (form == ElementalForm.FIRE){
@@ -275,6 +322,93 @@ public class VaultBossElemental extends Mob {
 				lastEnemyPos = enemy.pos;
 				return true;
 			}
+		}
+
+		// Ready skills above always take precedence over spacing movement.
+		if (coordinate && state == HUNTING && enemy == Dungeon.hero
+				&& Dungeon.hero.isAlive() && Dungeon.hero.invisible <= 0 && paralysed == 0
+				&& !isCharmedBy(enemy)) {
+			boolean[] spacingPassable = Dungeon.level.passable.clone();
+			int heroDistance = Dungeon.level.distance(pos, enemy.pos);
+			for (int cell = 0; cell < spacingPassable.length; cell++) {
+				if (!spacingPassable[cell]) continue;
+				// Do not tighten an existing gap; allow gradual escape if already too close.
+				if (Dungeon.level.distance(cell, enemy.pos) < Math.min(4, heroDistance)) {
+					spacingPassable[cell] = false;
+					continue;
+				}
+				for (VaultBossElemental partner : partners) {
+					if (Dungeon.level.distance(cell, partner.pos)
+							< Math.min(3, Dungeon.level.distance(pos, partner.pos))) {
+						spacingPassable[cell] = false;
+						break;
+					}
+				}
+			}
+			for (Char ch : Actor.chars()) spacingPassable[ch.pos] = false;
+			PathFinder.buildDistanceMap(pos, spacingPassable);
+			int destination = pos;
+			boolean orbiting = enemyVisible && heroDistance >= 4;
+			if (orbiting) {
+				Point heroPos = Dungeon.level.cellToPoint(enemy.pos);
+				float currentAngle = PointF.angle(heroPos, Dungeon.level.cellToPoint(pos));
+				float advance = 1.5f / orbitRadius;
+				// If terrain or a partner blocks this direction, try the other direction.
+				for (int attempt = 0; attempt < 2 && destination == pos; attempt++) {
+					float bestScore = Float.POSITIVE_INFINITY;
+					for (int cell = 0; cell < spacingPassable.length; cell++) {
+						if (!spacingPassable[cell] || PathFinder.distance[cell] == Integer.MAX_VALUE) continue;
+						float turn = PointF.angle(heroPos, Dungeon.level.cellToPoint(cell)) - currentAngle;
+						if (turn > PointF.PI) turn -= PointF.PI2;
+						if (turn < -PointF.PI) turn += PointF.PI2;
+						turn *= orbitDirection;
+						if (turn <= 0 || turn > PointF.PI / 2) continue;
+						float score = Math.abs(turn - advance) * orbitRadius
+								+ 2 * Math.abs(Dungeon.level.trueDistance(cell, enemy.pos) - orbitRadius)
+								+ 0.25f * PathFinder.distance[cell];
+						for (VaultBossElemental partner : partners) {
+							score += 10 * Math.max(0, 3 - Dungeon.level.distance(cell, partner.pos));
+						}
+						if (score < bestScore) {
+							destination = cell;
+							bestScore = score;
+						}
+					}
+					if (destination == pos) orbitDirection = -orbitDirection;
+				}
+			} else {
+				// Too close: retreat first. Unseen: follow the known position until sight returns.
+				int bestPenalty = Math.abs(heroDistance - 4);
+				for (VaultBossElemental partner : partners) {
+					bestPenalty += Math.max(0, 3 - Dungeon.level.distance(pos, partner.pos));
+				}
+				int bestTravel = 0;
+				for (int cell = 0; cell < spacingPassable.length; cell++) {
+					if (!spacingPassable[cell] || PathFinder.distance[cell] == Integer.MAX_VALUE) continue;
+					int penalty = Math.abs(Dungeon.level.distance(cell, enemy.pos) - 4);
+					for (VaultBossElemental partner : partners) {
+						penalty += Math.max(0, 3 - Dungeon.level.distance(cell, partner.pos));
+					}
+					if (penalty < bestPenalty || (penalty == bestPenalty && PathFinder.distance[cell] < bestTravel)) {
+						destination = cell;
+						bestPenalty = penalty;
+						bestTravel = PathFinder.distance[cell];
+					}
+				}
+			}
+
+			lastEnemyPos = enemyVisible ? enemy.pos : -1;
+			if (!rooted && destination != pos) {
+				int step = Dungeon.findStep(this, destination, spacingPassable, fieldOfView, true);
+				if (step != -1 && Actor.findChar(step) == null) {
+					int oldPos = pos;
+					move(step);
+					spend(1 / speed());
+					return moveSprite(oldPos, pos);
+				}
+			}
+			spend(TICK);
+			return true;
 		}
 
 
@@ -324,6 +458,11 @@ public class VaultBossElemental extends Mob {
 			enemy.sprite.parent.addToFront( new Lightning( sprite.center(), enemy.sprite.center(), null ) );
 			TerrainPropagation.point(Dungeon.level, TerrainInteractions.Source.ELECTRIC, enemy.pos,
 					enemy, this, target -> {
+				if (target instanceof VaultBossElemental) return;
+				if (target == Dungeon.hero) {
+					if (Dungeon.hero.vaultElementalControlled && Dungeon.hero.vaultElementalControlHits >= 3) return;
+					Dungeon.hero.vaultElementalDamage = true;
+				}
 				target.damage( Random.IntRange(5, 10), new Shocking() );
 				Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);
 				PixelScene.shake( 2, 0.3f );
@@ -360,7 +499,7 @@ public class VaultBossElemental extends Mob {
 					weakAnnounced = true;
 				}
 				Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
-				dmg += 10;
+				dmg += 5;
 			}
 		//frost form is resistant to thrown weapons and weak to melee (only from the hero though!)
 		} else if ( form == ElementalForm.FROST ){
@@ -374,7 +513,7 @@ public class VaultBossElemental extends Mob {
 					weakAnnounced = true;
 				}
 				Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
-				dmg += 10;
+				dmg += 5;
 			}
 		//shock form is resistant to melee and weak to magic
 		} else if ( form == ElementalForm.SHOCK ){
@@ -388,53 +527,51 @@ public class VaultBossElemental extends Mob {
 					Dungeon.hero.belongings.charge(0.2f);
 				}
 				Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
-				dmg += 10;
+				dmg += 5;
 			} else if (src instanceof Char && !(src == Dungeon.hero && Dungeon.hero.belongings.attackingWeapon() instanceof MissileWeapon)){
 				//resisted text already in defenseproc, as well as shock penalty (only for the hero)
 				dmg /= 4;
 			}
 		}
 
-		int hpBracket = HT / 5; //120 HP
-		int curbracket = (int) Math.ceil(HP / (float)hpBracket);
-
 		int preHP = HP;
 		super.damage(dmg, src);
-
+		BossHealthBar.bleed(this, HP < HT/2);
 		int dmgTaken = preHP - HP;
 		if (dmgTaken > 0) {
 			envAttackCooldown -= dmgTaken/24f;
 			spAttackCooldown -= dmgTaken/12f;
-		}
-
-		if (HP <= (curbracket-1)*hpBracket){
-
-			if (isAlive()) {
-				//cannot be hit through multiple brackets at a time
-				HP = Math.max(HP, (curbracket-2)*hpBracket);
-
-				//changes forms!
-				ElementalForm newForm;
-				do {
-					newForm = ElementalForm.values()[Random.Int(3)];
-				} while (newForm == form);
-				changeForm();
-				spend(TICK);
-			}
 		}
 	}
 
 	@Override
 	public void die(Object cause) {
 		super.die(cause);
+		for (Mob mob : Dungeon.level.mobs) {
+			if (mob instanceof VaultBossElemental && mob.isAlive()) {
+				BossHealthBar.assignBoss(mob);
+				return;
+			}
+		}
+		boolean remindStatue = false;
+		if (Dungeon.level instanceof VaultLevel && ((VaultLevel) Dungeon.level).isRegularQuest()
+				&& !Imp.Quest.vaultBossesDefeated) {
+			remindStatue = true;
+			Imp.Quest.vaultBossesDefeated = true;
+			Statistics.questScores[3] += 2000;
+		}
 		Dungeon.level.unseal();
 		GameScene.bossSlain();
+		if (remindStatue && Dungeon.hero.isAlive()) {
+			Dungeon.hero.interrupt();
+			GLog.n(Messages.get(Imp.class, "vault_bosses_defeated"));
+		}
 	}
 
 	@Override
 	public CharSprite sprite() {
 		if (form == null){
-			changeForm();
+			form = ElementalForm.FIRE;
 		}
 		CharSprite sprite = super.sprite();
 		if (form != null) {
@@ -517,6 +654,9 @@ public class VaultBossElemental extends Mob {
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
 		bundle.put(FORM, form);
+		bundle.put("coordinating", coordinating);
+		bundle.put("orbit_direction", orbitDirection);
+		bundle.put("orbit_radius", orbitRadius);
 
 		bundle.put(ENV_ATK_COOLDOWN, envAttackCooldown);
 		bundle.put(SP_ATK_COOLDOWN, spAttackCooldown);
@@ -530,6 +670,9 @@ public class VaultBossElemental extends Mob {
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
 		form = bundle.getEnum(FORM, ElementalForm.class);
+		coordinating = bundle.getBoolean("coordinating");
+		if (bundle.contains("orbit_direction")) orbitDirection = bundle.getInt("orbit_direction");
+		orbitRadius = bundle.getFloat("orbit_radius");
 
 		envAttackCooldown = bundle.getInt(ENV_ATK_COOLDOWN);
 		spAttackCooldown = bundle.getInt(SP_ATK_COOLDOWN);
@@ -539,6 +682,7 @@ public class VaultBossElemental extends Mob {
 		lightningOfs = bundle.getInt(LIGHTNING_OFS);
 
 		BossHealthBar.assignBoss(this);
+		BossHealthBar.bleed(this, HP < HT/2);
 	}
 
 	//used to forcefully remove pincushion after its applied
@@ -651,6 +795,9 @@ public class VaultBossElemental extends Mob {
 		}
 	}
 
+	// Reuse Fire's evolution and persistence, with a distinct source for friendly fire.
+	public static class ElementalFire extends Fire {}
+
 	public void doFireBall( int cell ){
 
 		Sample.INSTANCE.play(Assets.Sounds.BURNING);
@@ -660,7 +807,7 @@ public class VaultBossElemental extends Mob {
 			}
 
 			CellEmitter.get(cell+i).burst(FlameParticle.FACTORY, 10);
-			GameScene.add(Blob.seed(cell+i, 2, Fire.class));
+			GameScene.add(Blob.seed(cell+i, 2, ElementalFire.class));
 
 			Char ch = Actor.findChar(cell+i);
 			if (ch != null && !(ch instanceof VaultBossElemental)){
@@ -676,19 +823,19 @@ public class VaultBossElemental extends Mob {
 
 	public void setupFireWall(){
 		FireWall wall = Buff.append(this, FireWall.class);
-		wall.cells = new int[10];
 		Room r = ((RegularLevel)Dungeon.level).room(pos);
-		Point c = r.center();
+		int minX = r.left + 1, maxX = r.right - 1;
+		int minY = r.top + 1, maxY = r.bottom - 1;
 		int i = 0;
 
 		ArrayList<Integer> wallDistances = new ArrayList<>();
 
 		//0,1,2,3 for left,top,right,bottom
 		Point heroPos = Dungeon.level.cellToPoint(Dungeon.hero.pos);
-		wallDistances.add(0, heroPos.x - (c.x-6));
-		wallDistances.add(1, heroPos.y - (c.y-6));
-		wallDistances.add(2, (c.x+6) - heroPos.x);
-		wallDistances.add(3, (c.y+6) - heroPos.y);
+		wallDistances.add(0, heroPos.x - minX);
+		wallDistances.add(1, heroPos.y - minY);
+		wallDistances.add(2, maxX - heroPos.x);
+		wallDistances.add(3, maxY - heroPos.y);
 
 		ArrayList<Integer> sortedDistances = (ArrayList<Integer>) wallDistances.clone();
 		Collections.shuffle(sortedDistances);
@@ -697,8 +844,8 @@ public class VaultBossElemental extends Mob {
 		int wallFrom = 0;
 		int minSkipDist, maxSkipDist;
 
-		//always pick the furthest wall when above half HP
-		if (HP > HT/2){
+		// Keep the original directions and gaps, sized for the entire fixed arena.
+		if (HP >= HT/2){
 			minSkipDist = 1;
 			maxSkipDist = 3;
 			do {
@@ -715,43 +862,47 @@ public class VaultBossElemental extends Mob {
 			} else{
 				do {
 					wallFrom = Random.Int(4);
-				} while (wallDistances.get(wallFrom).equals(sortedDistances.get(0))
-						|| wallDistances.get(wallFrom).equals(sortedDistances.get(3)));
+				} while (wallDistances.get(wallFrom) < sortedDistances.get(1)
+						|| wallDistances.get(wallFrom) > sortedDistances.get(2));
 			}
 		}
 
 		if (wallFrom == 1 || wallFrom == 3){
+			wall.cells = new int[maxX - minX];
+			wall.left = maxY - minY - 1;
 			int y;
 			if (wallFrom == 1){
-				y = c.y - 6;
+				y = minY;
 				wall.direction = Dungeon.level.width();
 			} else {
-				y = c.y + 6;
+				y = maxY;
 				wall.direction = -Dungeon.level.width();
 			}
 			int skip;
 			do {
-				skip = Random.IntRange(c.x-5, c.x+5);
+				skip = Random.IntRange(minX, maxX);
 			} while (Math.abs(skip - heroPos.x) > maxSkipDist || Math.abs(skip - heroPos.x) < minSkipDist);
-			for (int x = c.x-5; x <= c.x+5; x++){
+			for (int x = minX; x <= maxX; x++){
 				if (x == skip) continue;
 				wall.cells[i] = x + (y*Dungeon.level.width());
 				i++;
 			}
 		} else {
+			wall.cells = new int[maxY - minY];
+			wall.left = maxX - minX - 1;
 			int x;
 			if (wallFrom == 0){
-				x = c.x - 6;
+				x = minX;
 				wall.direction = 1;
 			} else {
-				x = c.x + 6;
+				x = maxX;
 				wall.direction = -1;
 			}
 			int skip;
 			do {
-				skip = Random.IntRange(c.y-5, c.y+5);
+				skip = Random.IntRange(minY, maxY);
 			} while (Math.abs(skip - heroPos.y) > maxSkipDist || Math.abs(skip - heroPos.y) < minSkipDist);
-			for (int y = c.y-5; y <= c.y+5; y++){
+			for (int y = minY; y <= maxY; y++){
 				if (y == skip) continue;
 				wall.cells[i] = x + (y*Dungeon.level.width());
 				i++;
@@ -763,68 +914,87 @@ public class VaultBossElemental extends Mob {
 
 		private int[] cells = new int[0];
 		private int direction;
+		private boolean[] entered = new boolean[0];
 
-		private int left = 11; //always the same amount
+		private int left; //travel distance set from the arena bounds
 
 		private ArrayList<Emitter> emitters = new ArrayList<>();
 
 		@Override
 		public boolean act() {
-
+			if (entered.length != cells.length) entered = new boolean[cells.length];
+			boolean active = false;
 			for (int i = 0; i < cells.length; i++){
-
+				if (cells[i] == -1) continue;
 				for (int j = 0; j < 2; j++) {
-					if (Dungeon.level.insideMap(cells[i]+j*direction) && !Dungeon.level.solid[cells[i]+j*direction]) {
-						CellEmitter.get(cells[i]+j*direction).burst(FlameParticle.FACTORY, 10);
-						Char ch = Actor.findChar(cells[i]+j*direction);
-						if (ch != null && !(ch instanceof VaultBossElemental)){
-							Buff.affect(ch, Burning.class).reignite(ch, 5); //~20 effective damage
-							if (ch == Dungeon.hero){
-								Sample.INSTANCE.play(Assets.Sounds.BURNING);
-								Statistics.questScores[3] -= 100;
-							}
+					int cell = cells[i] + j * direction;
+					if (!Dungeon.level.insideMap(cell)) {
+						cells[i] = -1;
+						break;
+					}
+					if (Dungeon.level.solid[cell]) {
+						// The bounding rectangle starts outside the curved arena floor.
+						// Once a lane enters the floor, every solid tile stops it permanently.
+						if (entered[i]) {
+							cells[i] = -1;
+							break;
+						}
+						continue;
+					}
+					entered[i] = true;
+					CellEmitter.get(cell).burst(FlameParticle.FACTORY, 10);
+					Char ch = Actor.findChar(cell);
+					if (ch != null && !(ch instanceof VaultBossElemental)){
+						Buff.affect(ch, Burning.class).reignite(ch, 5); //~20 effective damage
+						if (ch == Dungeon.hero){
+							Sample.INSTANCE.play(Assets.Sounds.BURNING);
+							Statistics.questScores[3] -= 100;
 						}
 					}
 				}
-
-				cells[i] += direction;
+				if (cells[i] != -1) {
+					cells[i] += direction;
+					active = true;
+				}
 			}
 
 			Sample.INSTANCE.play(Assets.Sounds.BURNING, 0.5f);
-
-			if (left-- <= 0){
+			if (left-- <= 0 || !active){
 				detach();
 			} else {
 				updateFX();
 			}
-
-			spend( TICK );
+			spend(TICK);
 			return true;
 		}
 
 		private void updateFX(){
-			for (Emitter e : emitters){
-				e.on = false;
-			}
+			for (Emitter e : emitters) e.on = false;
 			emitters.clear();
-
-			for (int cell : cells) {
+			if (entered.length != cells.length) entered = new boolean[cells.length];
+			for (int i = 0; i < cells.length; i++) {
+				int cell = cells[i];
+				if (cell == -1) continue;
 				boolean oneOpen = false;
 				for (int j = 0; j < 2; j++) {
-					if (Dungeon.level.insideMap(cell + j * direction) && !Dungeon.level.solid[cell + j * direction]) {
-						Emitter pour = CellEmitter.get(cell + j * direction);
-						pour.pour(FlameParticle.FACTORY, 0.1f);
-
-						emitters.add(pour);
-						oneOpen = true;
+					int next = cell + j * direction;
+					if (!Dungeon.level.insideMap(next)) break;
+					if (Dungeon.level.solid[next]) {
+						if (entered[i] || oneOpen) break;
+						continue;
 					}
+					Emitter pour = CellEmitter.get(next);
+					pour.pour(FlameParticle.FACTORY, 0.1f);
+					emitters.add(pour);
+					oneOpen = true;
 				}
-
-				if (!oneOpen) {
-					//do a tiny flame further ahead to show player the entire wall pattern
+				if (!oneOpen && !entered[i]) {
+					// Show the first floor tile where this lane will enter the arena.
 					for (int j = 1; j <= left; j++) {
-						if (Dungeon.level.insideMap(cell + j * direction) && !Dungeon.level.solid[cell + direction * j]) {
-							Emitter pour = CellEmitter.center(cell + direction * j);
+						int next = cell + j * direction;
+						if (!Dungeon.level.insideMap(next)) break;
+						if (!Dungeon.level.solid[next]) {
+							Emitter pour = CellEmitter.center(next);
 							pour.pour(FlameParticle.FACTORY, 0.5f);
 							emitters.add(pour);
 							break;
@@ -832,7 +1002,6 @@ public class VaultBossElemental extends Mob {
 					}
 				}
 			}
-
 		}
 
 		@Override
@@ -855,6 +1024,7 @@ public class VaultBossElemental extends Mob {
 		public void storeInBundle(Bundle bundle) {
 			super.storeInBundle(bundle);
 			bundle.put(CELLS, cells);
+			bundle.put("entered", entered);
 			bundle.put(DIRECTION, direction);
 			bundle.put(LEFT, left);
 		}
@@ -863,6 +1033,7 @@ public class VaultBossElemental extends Mob {
 		public void restoreFromBundle(Bundle bundle) {
 			super.restoreFromBundle(bundle);
 			cells = bundle.getIntArray( CELLS );
+			entered = bundle.contains("entered") ? bundle.getBooleanArray("entered") : new boolean[cells.length];
 			direction = bundle.getInt( DIRECTION );
 			left = bundle.getInt(LEFT);
 		}
@@ -877,7 +1048,9 @@ public class VaultBossElemental extends Mob {
 		spTargetCell = enemy.pos;
 		Ballistica core = new Ballistica(pos, enemy.pos, Ballistica.WONT_STOP);
 
-		ConeAOE cone = new ConeAOE(core, 10, 50, Ballistica.STOP_SOLID);
+		Room room = ((RegularLevel)Dungeon.level).room(pos);
+		float range = (float)Math.hypot(room.width() - 2, room.height() - 2);
+		ConeAOE cone = new ConeAOE(core, range, 50, Ballistica.STOP_SOLID);
 		for (int cell : cone.cells){
 			if (Dungeon.level.trueDistance(cell, pos) <= 2){
 				GameScene.targetedCell(cell, cooldown());
@@ -891,7 +1064,9 @@ public class VaultBossElemental extends Mob {
 		FrostCone cone = Buff.append(this, FrostCone.class);
 
 		Ballistica core = new Ballistica(pos, cell, Ballistica.WONT_STOP);
-		cone.cells = new ConeAOE(core, 10, 50, Ballistica.STOP_SOLID).cells;
+		Room room = ((RegularLevel)Dungeon.level).room(pos);
+		float range = (float)Math.hypot(room.width() - 2, room.height() - 2);
+		cone.cells = new ConeAOE(core, range, 50, Ballistica.STOP_SOLID).cells;
 		cone.startPos = pos;
 
 	}
@@ -930,10 +1105,23 @@ public class VaultBossElemental extends Mob {
 				if (Dungeon.level.trueDistance(cell, startPos) <= distance){
 					CellEmitter.get(cell).burst(MagicMissile.WhiteParticle.FACTORY, 10);
 					Char ch = Actor.findChar(cell);
-					if (ch != null && !(ch instanceof VaultBossElemental) && ch.buff(FrostResist.class) == null){
+					if (ch != null && !(ch instanceof VaultBossElemental) && ch.buff(FrostResist.class) == null
+							&& (ch != Dungeon.hero || !Dungeon.hero.vaultElementalControlled
+							|| Dungeon.hero.vaultElementalControlHits < 3)){
+						int healthBefore = ch.HP;
+						int shieldBefore = ch.shielding();
+						if (ch == Dungeon.hero) Dungeon.hero.vaultElementalDamage = true;
 						ch.damage(Random.NormalIntRange(10, 15), new Frost());
-						Buff.affect(ch, Frost.class, 5f);
-						Buff.affect(ch, FrostResist.class);
+						if (ch != Dungeon.hero || !Dungeon.hero.vaultElementalControlled
+								|| Dungeon.hero.vaultElementalControlHits < 3) {
+							Buff.affect(ch, Frost.class, 5f);
+							Buff.affect(ch, FrostResist.class);
+							if (ch == Dungeon.hero && ch.buff(Frost.class) != null
+									&& !Dungeon.hero.vaultElementalControlled) {
+								Dungeon.hero.vaultElementalControlled = true;
+								Dungeon.hero.vaultElementalControlHits = (healthBefore > ch.HP || shieldBefore > ch.shielding()) ? 1 : 0;
+							}
+						}
 						if (ch == Dungeon.hero){
 							Statistics.questScores[3] -= 100;
 							Sample.INSTANCE.play(Assets.Sounds.SHATTER);
@@ -1034,6 +1222,9 @@ public class VaultBossElemental extends Mob {
 
 		private int targetCell = -1;
 		private int distance = -1000;
+		private HashMap<Integer, Integer> shadowDirections = new HashMap<>();
+		private static final int[] DIR_X = {-1, -1, 1, 1};
+		private static final int[] DIR_Y = {-1, 1, 1, -1};
 
 		private boolean fullVortex = false;
 		private boolean altDirection = false;
@@ -1043,20 +1234,38 @@ public class VaultBossElemental extends Mob {
 		@Override
 		public boolean act() {
 			if (distance == -1000){
-				int furthestDist = 0;
-				boolean valid = true;
-				int dist = getFurthestValid(targetCell, -1, -1);
-				if (dist > furthestDist) furthestDist = dist;
-				dist = getFurthestValid(targetCell, -1, 1);
-				if (dist > furthestDist) furthestDist = dist;
-				dist = getFurthestValid(targetCell, 1, 1);
-				if (dist > furthestDist) furthestDist = dist;
-				dist = getFurthestValid(targetCell, 1, -1);
-				if (dist > furthestDist) furthestDist = dist;
-				distance = Math.min(furthestDist, 5); //won't it always be 4 now?
-
-				fullVortex = target.HP <= target.HT/2;
+				fullVortex = target.HP < target.HT/2;
 				altDirection = Random.Int(2) == 0;
+				Room room = ((RegularLevel)Dungeon.level).room(targetCell);
+				Point center = Dungeon.level.cellToPoint(targetCell);
+				distance = 0;
+				for (int y = room.top + 1; y < room.bottom; y++) {
+					for (int x = room.left + 1; x < room.right; x++) {
+						int cell = x + y * Dungeon.level.width();
+						if (Dungeon.level.solid[cell]) continue;
+						for (int i = 0; i < DIR_X.length; i++) {
+							boolean enabled = fullVortex || (altDirection ? i % 2 == 0 : i % 2 != 0);
+							if (enabled) distance = Math.max(distance, (x - center.x) * DIR_X[i] + (y - center.y) * DIR_Y[i]);
+						}
+					}
+				}
+				for (int y = room.top + 1; y < room.bottom; y++) {
+					for (int x = room.left + 1; x < room.right; x++) {
+						int cell = x + y * Dungeon.level.width();
+						if (!Dungeon.level.solid[cell]) continue;
+						int width = Dungeon.level.width();
+						boolean interiorObstacle = !Dungeon.level.solid[cell - 1] && !Dungeon.level.solid[cell + 1]
+								|| !Dungeon.level.solid[cell - width] && !Dungeon.level.solid[cell + width];
+						if (!interiorObstacle) continue;
+						int directions = 0;
+						for (int i = 0; i < DIR_X.length; i++) {
+							boolean enabled = fullVortex || (altDirection ? i % 2 == 0 : i % 2 != 0);
+							int frontDistance = (x - center.x) * DIR_X[i] + (y - center.y) * DIR_Y[i];
+							if (enabled && frontDistance > 0 && frontDistance <= distance) directions |= 1 << i;
+						}
+						if (directions != 0) shadowDirections.put(cell, directions);
+					}
+				}
 			}
 
 			HashSet<Integer> cells = new HashSet<>();
@@ -1075,20 +1284,51 @@ public class VaultBossElemental extends Mob {
 				}
 			}
 
-			distance--;
+			boolean frontExists = !cells.isEmpty();
+			for (Iterator<Integer> iterator = cells.iterator(); iterator.hasNext();) {
+				int cell = iterator.next();
+				boolean sheltered = false;
+				for (Map.Entry<Integer, Integer> shadow : shadowDirections.entrySet()) {
+					int dx = cell % Dungeon.level.width() - shadow.getKey() % Dungeon.level.width();
+					int dy = cell / Dungeon.level.width() - shadow.getKey() / Dungeon.level.width();
+					for (int i = 0; i < DIR_X.length; i++) {
+						if ((shadow.getValue() & (1 << i)) == 0) continue;
+						// A widening wedge behind the actual obstacle, along the incoming front's direction.
+						int forward = -dx * DIR_X[i] - dy * DIR_Y[i];
+						int sideways = dx * DIR_Y[i] - dy * DIR_X[i];
+						if (forward > 0 && Math.abs(sideways) <= forward) {
+							sheltered = true;
+							break;
+						}
+					}
+					if (sheltered) break;
+				}
+				if (sheltered) {
+					iterator.remove();
+				}
+			}
 
+			// The wave keeps advancing, while obstacle shadows remain protected.
+			distance--;
 			updateFX();
 
-			if (cells.isEmpty()){
+			if (!frontExists){
 				detach();
 				return true;
 			} else {
 				for (Integer cell : cells){
 					CellEmitter.get(cell).burst(MagicMissile.WhiteParticle.FACTORY, 10);
 					Char ch = Actor.findChar(cell);
-					if (ch != null && !(ch instanceof VaultBossElemental) && ch.buff(FrostResist.class) == null){
+					if (ch != null && !(ch instanceof VaultBossElemental) && ch.buff(FrostResist.class) == null
+							&& (ch != Dungeon.hero || !Dungeon.hero.vaultElementalControlled
+							|| Dungeon.hero.vaultElementalControlHits < 3)){
 						Buff.affect(ch, Frost.class, 5f);
 						Buff.affect(ch, FrostResist.class);
+						if (ch == Dungeon.hero && ch.buff(Frost.class) != null
+								&& !Dungeon.hero.vaultElementalControlled) {
+							Dungeon.hero.vaultElementalControlled = true;
+							Dungeon.hero.vaultElementalControlHits = 0;
+						}
 						if (ch == Dungeon.hero){
 							Sample.INSTANCE.play(Assets.Sounds.SHATTER);
 							Statistics.questScores[3] -= 100;
@@ -1124,6 +1364,26 @@ public class VaultBossElemental extends Mob {
 					}
 				}
 
+				for (Iterator<Integer> iterator = cells.iterator(); iterator.hasNext();) {
+					int cell = iterator.next();
+					boolean sheltered = false;
+					for (Map.Entry<Integer, Integer> shadow : shadowDirections.entrySet()) {
+						int dx = cell % Dungeon.level.width() - shadow.getKey() % Dungeon.level.width();
+						int dy = cell / Dungeon.level.width() - shadow.getKey() / Dungeon.level.width();
+						for (int i = 0; i < DIR_X.length; i++) {
+							if ((shadow.getValue() & (1 << i)) == 0) continue;
+							int forward = -dx * DIR_X[i] - dy * DIR_Y[i];
+							int sideways = dx * DIR_Y[i] - dy * DIR_X[i];
+							if (forward > 0 && Math.abs(sideways) <= forward) {
+								sheltered = true;
+								break;
+							}
+						}
+						if (sheltered) break;
+					}
+					if (sheltered) iterator.remove();
+				}
+
 				for (Integer cell : cells) {
 					Emitter pour = CellEmitter.get(cell);
 					pour.pour(SnowParticle.FACTORY, 0.1f);
@@ -1144,40 +1404,19 @@ public class VaultBossElemental extends Mob {
 			}
 		}
 
-		private int getFurthestValid(int start, int dirX, int dirY){
-			int dist = 0;
-			if (Dungeon.level.solid[start]) return dist;
-			do {
-				if (dist % 2 == 0){
-					start += dirX;
-				} else {
-					start += dirY*Dungeon.level.width();
-				}
-				dist++;
-			} while (Dungeon.level.insideMap(start) && !Dungeon.level.solid[start]);
-			return dist;
-		}
-
 		private HashSet<Integer> getCells(int start, int dist, int dirX, int dirY){
 			dist = Math.abs(dist);
-			if (getFurthestValid(start, dirX, dirY) < dist){
-				return new HashSet<>();
-			}
-			int xOfs = (dirX*(dist+1)/2);
-			int yOfs = (dirY*dist/2)*Dungeon.level.width();
-			int initialOfsCell = start + xOfs + yOfs;
 			HashSet<Integer> cells = new HashSet<>();
-			int cell = initialOfsCell;
-			do {
-				cells.add(cell);
-				cell += -dirX + dirY*Dungeon.level.width();
-			} while (Dungeon.level.insideMap(cell) && !Dungeon.level.solid[cell]);
-			cell = initialOfsCell;
-			do {
-				cells.add(cell);
-				cell += +dirX - dirY*Dungeon.level.width();
-			} while (Dungeon.level.insideMap(cell) && !Dungeon.level.solid[cell]);
-
+			Room room = ((RegularLevel)Dungeon.level).room(start);
+			Point center = Dungeon.level.cellToPoint(start);
+			// Both flanks continue past a column; its forward shadow remains blocked.
+			for (int y = room.top + 1; y < room.bottom; y++) {
+				for (int x = room.left + 1; x < room.right; x++) {
+					if ((x - center.x) * dirX + (y - center.y) * dirY != dist) continue;
+					int cell = x + y * Dungeon.level.width();
+					if (Dungeon.level.insideMap(cell) && !Dungeon.level.solid[cell]) cells.add(cell);
+				}
+			}
 			return cells;
 		}
 
@@ -1192,6 +1431,15 @@ public class VaultBossElemental extends Mob {
 			super.storeInBundle(bundle);
 			bundle.put(TARGET_CELL, targetCell);
 			bundle.put(DISTANCE, distance);
+			int[] obstacles = new int[shadowDirections.size()];
+			int[] directions = new int[shadowDirections.size()];
+			int shadowIndex = 0;
+			for (Map.Entry<Integer, Integer> shadow : shadowDirections.entrySet()) {
+				obstacles[shadowIndex] = shadow.getKey();
+				directions[shadowIndex++] = shadow.getValue();
+			}
+			bundle.put("shadow_obstacles", obstacles);
+			bundle.put("shadow_directions", directions);
 			bundle.put(FULL_VORTEX, fullVortex);
 			bundle.put(ALT_DIR, altDirection);
 		}
@@ -1201,6 +1449,11 @@ public class VaultBossElemental extends Mob {
 			super.restoreFromBundle(bundle);
 			targetCell = bundle.getInt(TARGET_CELL);
 			distance = bundle.getInt(DISTANCE);
+			if (bundle.contains("shadow_obstacles")) {
+				int[] obstacles = bundle.getIntArray("shadow_obstacles");
+				int[] directions = bundle.getIntArray("shadow_directions");
+				for (int i = 0; i < obstacles.length; i++) shadowDirections.put(obstacles[i], directions[i]);
+			}
 			fullVortex = bundle.getBoolean(FULL_VORTEX);
 			altDirection = bundle.getBoolean(ALT_DIR);
 		}
@@ -1249,10 +1502,23 @@ public class VaultBossElemental extends Mob {
 
 		for (int c : affectedCells){
 			Char ch = Actor.findChar(c);
-			if (ch != null && !(ch instanceof VaultBossElemental) && ch.buff(ShockResist.class) == null){
+			if (ch != null && !(ch instanceof VaultBossElemental) && ch.buff(ShockResist.class) == null
+					&& (ch != Dungeon.hero || !Dungeon.hero.vaultElementalControlled
+					|| Dungeon.hero.vaultElementalControlHits < 3)){
+				int healthBefore = ch.HP;
+				int shieldBefore = ch.shielding();
+				if (ch == Dungeon.hero) Dungeon.hero.vaultElementalDamage = true;
 				ch.damage(Random.NormalIntRange(20, 30), new Electricity());
-				Buff.prolong(ch, Paralysis.class, 1f);
-				Buff.affect(ch, ShockResist.class);
+				if (ch != Dungeon.hero || !Dungeon.hero.vaultElementalControlled
+						|| Dungeon.hero.vaultElementalControlHits < 3) {
+					Buff.prolong(ch, Paralysis.class, 1f);
+					Buff.affect(ch, ShockResist.class);
+					if (ch == Dungeon.hero && ch.buff(Paralysis.class) != null
+							&& !Dungeon.hero.vaultElementalControlled) {
+						Dungeon.hero.vaultElementalControlled = true;
+						Dungeon.hero.vaultElementalControlHits = (healthBefore > ch.HP || shieldBefore > ch.shielding()) ? 1 : 0;
+					}
+				}
 				ch.sprite.centerEmitter().burst(SparkParticle.FACTORY, 3);
 				ch.sprite.flash();
 				if (ch == Dungeon.hero){
@@ -1295,27 +1561,32 @@ public class VaultBossElemental extends Mob {
 
 	//TODO these aren't working great atm, perhaps it's better to use more but always go straight?
 	public void setupLightningChase(){
-		Room r = ((RegularLevel)Dungeon.level).room(pos);
-		Point c = r.center();
-
-		boolean alt = Random.Int(2) == 0;
-
-		if (alt || HP <= HT/2) {
-			LightningChase chase = Buff.append(this, LightningChase.class);
-			chase.curCell = c.x + (c.y - 5) * Dungeon.level.width();
-
-			chase = Buff.append(this, LightningChase.class);
-			chase.curCell = c.x + (c.y + 5) * Dungeon.level.width();
+		Room room = ((RegularLevel)Dungeon.level).room(pos);
+		Point center = room.center();
+		int width = Dungeon.level.width();
+		int north = -1, south = -1, west = -1, east = -1;
+		for (int y = room.top + 1; y < room.bottom; y++) {
+			int cell = center.x + y * width;
+			if (!Dungeon.level.solid[cell] && Dungeon.level.passable[cell]) {
+				if (north == -1) north = cell;
+				south = cell;
+			}
 		}
-
-		if (!alt || HP <= HT/2) {
-
-			LightningChase chase = Buff.append(this, LightningChase.class);
-			chase.curCell = c.x - 5 + (c.y) * Dungeon.level.width();
-
-			chase = Buff.append(this, LightningChase.class);
-			chase.curCell = c.x + 5 + (c.y) * Dungeon.level.width();
-
+		for (int x = room.left + 1; x < room.right; x++) {
+			int cell = x + center.y * width;
+			if (!Dungeon.level.solid[cell] && Dungeon.level.passable[cell]) {
+				if (west == -1) west = cell;
+				east = cell;
+			}
+		}
+		boolean alt = Random.Int(2) == 0;
+		if (alt || HP < HT/2) {
+			if (north != -1) Buff.append(this, LightningChase.class).curCell = north;
+			if (south != -1) Buff.append(this, LightningChase.class).curCell = south;
+		}
+		if (!alt || HP < HT/2) {
+			if (west != -1) Buff.append(this, LightningChase.class).curCell = west;
+			if (east != -1) Buff.append(this, LightningChase.class).curCell = east;
 		}
 	}
 
@@ -1430,9 +1701,22 @@ public class VaultBossElemental extends Mob {
 		}
 
 		private void shockChar(Char ch){
+			if (ch == Dungeon.hero && Dungeon.hero.vaultElementalControlled
+					&& Dungeon.hero.vaultElementalControlHits >= 3) return;
+			int healthBefore = ch.HP;
+			int shieldBefore = ch.shielding();
+			if (ch == Dungeon.hero) Dungeon.hero.vaultElementalDamage = true;
 			ch.damage(Random.NormalIntRange(10, 15), new Electricity());
-			Buff.prolong(ch, Paralysis.class, 1f);
-			Buff.affect(ch, ShockResist.class);
+			if (ch != Dungeon.hero || !Dungeon.hero.vaultElementalControlled
+					|| Dungeon.hero.vaultElementalControlHits < 3) {
+				Buff.prolong(ch, Paralysis.class, 1f);
+				Buff.affect(ch, ShockResist.class);
+				if (ch == Dungeon.hero && ch.buff(Paralysis.class) != null
+						&& !Dungeon.hero.vaultElementalControlled) {
+					Dungeon.hero.vaultElementalControlled = true;
+					Dungeon.hero.vaultElementalControlHits = (healthBefore > ch.HP || shieldBefore > ch.shielding()) ? 1 : 0;
+				}
+			}
 			ch.sprite.centerEmitter().burst(SparkParticle.FACTORY, 3);
 			ch.sprite.flash();
 			if (ch == Dungeon.hero){
