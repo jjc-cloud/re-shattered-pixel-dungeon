@@ -22,7 +22,7 @@ public abstract class DamageDomain extends Buff {
 		}
 		if (!super.attachTo(target)) return false;
 
-		//沿用魔法免疫的状态清除方式，不关闭法杖、戒指和神器。
+		//按 Char.isImmune 的方向清除免疫类及其子类，不关闭法杖、戒指和神器。
 		if (blocksMagic) {
 			for (Buff buff : target.buffs()) {
 				for (Class immunity : immunities) {

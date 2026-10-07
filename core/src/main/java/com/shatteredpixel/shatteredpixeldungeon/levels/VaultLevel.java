@@ -126,6 +126,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 
 public class VaultLevel extends CityLevel {
 
@@ -687,7 +688,10 @@ public class VaultLevel extends CityLevel {
 			}
 			if (cell / width() == 72 && map[cell] == Terrain.CUSTOM_DECO_EMPTY) Level.set(cell, Terrain.EMPTY, this);
 		}
-		customTerrain.removeIf(tile -> tile instanceof VaultTiles.EntranceColumns);
+		Iterator<CustomTilemap> terrainIterator = customTerrain.iterator();
+		while (terrainIterator.hasNext()) {
+			if (terrainIterator.next() instanceof VaultTiles.EntranceColumns) terrainIterator.remove();
+		}
 		VaultTiles.EntranceCarpet carpet = null;
 		boolean rug = false;
 		for (CustomTilemap tile : customTiles) {
@@ -709,7 +713,10 @@ public class VaultLevel extends CityLevel {
 			customTiles.add(0, carpet);
 		}
 		if (!rug) {
-			customTiles.removeIf(tile -> tile instanceof VaultEntranceRoom.QuestEntranceInternal);
+			Iterator<CustomTilemap> tileIterator = customTiles.iterator();
+			while (tileIterator.hasNext()) {
+				if (tileIterator.next() instanceof VaultEntranceRoom.QuestEntranceInternal) tileIterator.remove();
+			}
 			customTiles.add(new VaultTiles.EntranceRug());
 		}
 	}
