@@ -40,7 +40,7 @@ public class ScrollOfPrismaticImage extends ExoticScroll {
 	}
 	
 	@Override
-	public void doRead() {
+	protected void readEffect() {
 
 		detach(curUser.belongings.backpack);
 		boolean found = false;

@@ -527,7 +527,7 @@ public abstract class Elemental extends Mob {
 			}
 			
 			for (Char ch : affected) {
-				ch.damage( Math.round( damage * 0.4f ), new Shocking() );
+				ch.damage( Math.round( damage * 0.4f ), new Shocking() , this);
 				if (ch == Dungeon.hero && !ch.isAlive()){
 					Badges.validateDeathFromEnemyMagic();
 					Dungeon.fail(this);

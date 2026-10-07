@@ -27,6 +27,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicImmune;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicSealDomain;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
@@ -177,6 +178,7 @@ public abstract class Scroll extends Item {
 		super.execute( hero, action );
 
 		if (action.equals( AC_READ )) {
+			if (!canRead(hero)) return;
 			
 			if (hero.buff(MagicImmune.class) != null){
 				GLog.w( Messages.get(this, "no_magic") );
@@ -196,7 +198,20 @@ public abstract class Scroll extends Item {
 		}
 	}
 	
-	public abstract void doRead();
+	public static boolean canRead(Hero hero) {
+		if (hero == null) return false;
+		if (hero.buff(MagicSealDomain.class) != null) {
+			GLog.w(Messages.get(Scroll.class, "sealed"));
+			return false;
+		}
+		return true;
+	}
+
+	public final void doRead() {
+		if (canRead(curUser)) readEffect();
+	}
+
+	protected abstract void readEffect();
 
 	public Scroll effectOf(Scroll source) {
 		effectSource = source;
@@ -357,7 +372,7 @@ public abstract class Scroll extends Item {
 		}
 		
 		@Override
-		public void doRead() {}
+		protected void readEffect() {}
 		
 		@Override
 		public String info() {

@@ -190,7 +190,7 @@ public class Berserk extends Buff implements ActionIndicator.Action {
 			if (pendingDamageSource != source) queueDamageRage(0f, source);
 		} else if (source instanceof Hunger) {
 			queueDamageRage(rawDamage * 0.01f, source);
-		} else if (indirectEnemyDamage && !AntiMagic.RESISTS.contains(source.getClass())) {
+		} else if (indirectEnemyDamage && !AntiMagic.RESISTS.contains(Char.damageSourceClass(source))) {
 			queueDamageRage(rawDamage * 0.01f, source);
 		} else {
 			queueDamageRage(0f, source);

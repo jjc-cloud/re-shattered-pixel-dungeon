@@ -433,6 +433,7 @@ public class WndUpgrade extends Window {
 			protected void onClick() {
 				super.onClick();
 
+				if (upgrader instanceof ScrollOfUpgrade && !ScrollOfUpgrade.canRead(Dungeon.hero)) return;
 				ScrollOfUpgrade.upgrade(Dungeon.hero);
 
 				Item upgraded = toUpgrade;

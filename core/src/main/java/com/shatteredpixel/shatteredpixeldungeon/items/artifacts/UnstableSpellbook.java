@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicImmune;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicSealDomain;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Regeneration;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
@@ -107,7 +108,8 @@ public class UnstableSpellbook extends ChargedArtifact {
 	@Override
 	public ArrayList<String> actions( Hero hero ) {
 		ArrayList<String> actions = super.actions( hero );
-		if (isEquipped( hero ) && canSpendCharge(hero, 1) && !cursed && hero.buff(MagicImmune.class) == null) {
+		if (isEquipped( hero ) && canSpendCharge(hero, 1) && !cursed
+				&& hero.buff(MagicImmune.class) == null && hero.buff(MagicSealDomain.class) == null) {
 			actions.add(AC_READ);
 		}
 		if (isEquipped( hero ) && level() < levelCap && !cursed && hero.buff(MagicImmune.class) == null) {
@@ -139,6 +141,7 @@ public class UnstableSpellbook extends ChargedArtifact {
 	}
 
 	public void doReadEffect(Hero hero){
+		if (!Scroll.canRead(hero)) return;
 		spendCharge(1);
 
 		Scroll scroll;
@@ -172,6 +175,7 @@ public class UnstableSpellbook extends ChargedArtifact {
 					Messages.get(ExoticScroll.regToExo.get(scroll.getClass()), "name")){
 				@Override
 				protected void onSelect(int index) {
+					if (!Scroll.canRead(curUser)) return;
 					handler.detach();
 					if (index == 1){
 						Scroll scroll = Reflection.newInstance(ExoticScroll.regToExo.get(fScroll.getClass()));
@@ -228,6 +232,10 @@ public class UnstableSpellbook extends ChargedArtifact {
 
 		@Override
 		public boolean act() {
+			if (Dungeon.hero.buff(MagicSealDomain.class) != null) {
+				spend(TICK);
+				return true;
+			}
 			curUser = Dungeon.hero;
 			curItem = scroll;
 			scroll.anonymize();

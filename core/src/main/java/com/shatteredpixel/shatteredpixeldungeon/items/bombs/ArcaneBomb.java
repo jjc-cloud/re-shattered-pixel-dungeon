@@ -78,7 +78,7 @@ public class ArcaneBomb extends Bomb {
 		for (Char ch : affected){
 			//pierces armor, and damage in 5x5 instead of 3x3
 			int damage = Math.round(Random.NormalIntRange( 4 + Dungeon.scalingDepth(), 12 + 3*Dungeon.scalingDepth() ));
-			ch.damage(damage, this);
+			ch.damage(damage, this, damageSource());
 			if (ch == Dungeon.hero && !ch.isAlive()){
 				Badges.validateDeathFromFriendlyMagic();
 				Dungeon.fail(this);

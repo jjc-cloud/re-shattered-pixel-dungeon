@@ -91,6 +91,7 @@ public class UnstableSpell extends Spell {
 	
 	@Override
 	protected void onCast(Hero hero) {
+		if (!Scroll.canRead(hero)) return;
 		
 		detach( curUser.belongings.backpack );
 		updateQuickslot();

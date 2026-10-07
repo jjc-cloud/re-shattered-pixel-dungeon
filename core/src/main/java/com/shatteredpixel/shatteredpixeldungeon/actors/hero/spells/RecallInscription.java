@@ -67,6 +67,7 @@ public class RecallInscription extends ClericSpell {
 		}
 
 		Item item = Reflection.newInstance(hero.buff(UsedItemTracker.class).item);
+		if (item instanceof Scroll && !Scroll.canRead(hero)) return;
 
 		item.setCurrent(hero);
 

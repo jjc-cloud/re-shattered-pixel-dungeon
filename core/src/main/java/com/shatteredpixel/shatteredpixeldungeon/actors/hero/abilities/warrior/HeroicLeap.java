@@ -104,7 +104,7 @@ public class HeroicLeap extends ArmorAbility {
 								damage -= mob.drRoll();
 								com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Berserk rage = hero.buff(com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Berserk.class);
 								if (rage != null) damage = Math.round(rage.damageFactor(damage));
-								mob.damage(damage, hero);
+								mob.damagePhysical(damage, hero, hero);
 							}
 							if (mob.pos == hero.pos + i && hero.hasTalent(Talent.IMPACT_WAVE)){
 								Ballistica trajectory = new Ballistica(mob.pos, mob.pos + i, Ballistica.MAGIC_BOLT);

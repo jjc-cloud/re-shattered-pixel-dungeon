@@ -101,7 +101,7 @@ public class DM100 extends Mob {
 						enemy, this, target -> {
 					int dmg = Random.NormalIntRange(3, 10);
 					dmg = Math.round(dmg * AscensionChallenge.statModifier(this));
-					target.damage( dmg, new LightningBolt() );
+					target.damage( dmg, new LightningBolt() , DM100.this);
 
 					if (target.sprite.visible) {
 						target.sprite.centerEmitter().burst(SparkParticle.FACTORY, 3);

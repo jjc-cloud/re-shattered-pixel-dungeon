@@ -73,7 +73,7 @@ public class Judgement extends ClericSpell {
 
 				for (Char ch : Actor.chars()){
 					if (ch.alignment != hero.alignment && Dungeon.level.heroFOV[ch.pos]){
-						ch.damage( Hero.heroDamageIntRange(damageBase, 2*damageBase), Judgement.this);
+						ch.damage( Hero.heroDamageIntRange(damageBase, 2*damageBase), Judgement.this, hero);
 						if (hero.subClass == HeroSubClass.PRIEST){
 							Buff.affect(ch, GuidingLight.Illuminated.class);
 						}

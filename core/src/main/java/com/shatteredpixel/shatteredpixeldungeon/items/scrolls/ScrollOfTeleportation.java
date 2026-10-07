@@ -57,7 +57,7 @@ public class ScrollOfTeleportation extends Scroll {
 	}
 
 	@Override
-	public void doRead() {
+	protected void readEffect() {
 
 		detach(curUser.belongings.backpack);
 		Sample.INSTANCE.play( Assets.Sounds.READ );

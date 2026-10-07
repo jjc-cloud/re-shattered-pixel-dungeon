@@ -40,7 +40,7 @@ public class ScrollOfRage extends Scroll {
 	}
 
 	@Override
-	public void doRead() {
+	protected void readEffect() {
 
 		detach(curUser.belongings.backpack);
 		for (Mob mob : Dungeon.level.mobs.toArray( new Mob[0] )) {

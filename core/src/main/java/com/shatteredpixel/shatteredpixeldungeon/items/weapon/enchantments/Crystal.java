@@ -116,7 +116,7 @@ public class Crystal extends Weapon.Enchantment {
 		}
 
 		int magicDmg = (int)Math.ceil(damage * 0.33f * genericProcChanceMultiplier(attacker));
-		defender.damage(magicDmg, this);
+		defender.damage(magicDmg, this, attacker);
 
 		return damage;
 	}

@@ -405,9 +405,9 @@ public class Combo extends Buff implements ActionIndicator.Action {
 							if (ch.buff(Vulnerable.class) != null) aoeHit *= 1.33f;
 							if (ch instanceof DwarfKing){
 								//change damage type for DK so that crush AOE doesn't count for DK's challenge badge
-								ch.damage(aoeHit, this);
+								ch.damagePhysical(aoeHit, this, hero);
 							} else {
-								ch.damage(aoeHit, target);
+								ch.damagePhysical(aoeHit, target, hero);
 							}
 							ch.sprite.bloodBurstA(target.sprite.center(), aoeHit);
 							ch.sprite.flash();

@@ -327,7 +327,7 @@ public class CrystalSpire extends Mob {
 					//we pretend the spire is the owner here so that properties like hero str or or other equipment do not factor in
 					int dmg = p.damageRoll(CrystalSpire.this);
 
-					damage(dmg, p);
+					damagePhysical(dmg, p, Dungeon.hero);
 					abilityCooldown -= dmg/10f;
 					sprite.bloodBurstA(Dungeon.hero.sprite.center(), dmg);
 					sprite.flash();

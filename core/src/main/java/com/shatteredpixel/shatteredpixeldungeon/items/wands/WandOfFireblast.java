@@ -137,7 +137,7 @@ public class WandOfFireblast extends DamageWand {
 
 		for ( Char ch : affectedChars ){
 			wandProc(ch, chargesPerCast());
-			ch.damage(damageRoll(), this);
+			ch.damage(damageRoll(), this, curUser);
 			if (ch.isActive()) {
 				Buff.affect(ch, Burning.class).reignite(ch);
 				switch (chargesPerCast()) {
@@ -200,7 +200,7 @@ public class WandOfFireblast extends DamageWand {
 						}
 						if (ch.alignment == Char.Alignment.ENEMY) {
 							//damage of a 2-charge zap
-							ch.damage(Math.round(powerMulti*Hero.heroDamageIntRange(2 + 2*buffedLvl(), 8 + 4*buffedLvl())), this);
+							ch.damage(Math.round(powerMulti*Hero.heroDamageIntRange(2 + 2*buffedLvl(), 8 + 4*buffedLvl())), this, attacker);
 						}
 					}
 				}

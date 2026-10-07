@@ -199,9 +199,9 @@ public class VaultSentry extends NPC {
 
 	private void shockTarget(Char ch, ArrayList<Integer> curZaps) {
 		if (recentZaps.contains(ch.id())) {
-			ch.damage(Random.NormalIntRange(3, 6), new DM100.LightningBolt());
+			ch.damage(Random.NormalIntRange(3, 6), new DM100.LightningBolt(), VaultSentry.this);
 		} else {
-			ch.damage(Random.NormalIntRange(6, 12), new DM100.LightningBolt());
+			ch.damage(Random.NormalIntRange(6, 12), new DM100.LightningBolt(), VaultSentry.this);
 		}
 		curZaps.add(ch.id());
 		if (ch.sprite.visible || sprite.visible) {

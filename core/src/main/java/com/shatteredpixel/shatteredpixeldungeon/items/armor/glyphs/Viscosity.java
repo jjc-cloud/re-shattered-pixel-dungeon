@@ -36,6 +36,9 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite.Glowing;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
+import com.watabou.utils.Bundlable;
+
+import java.util.ArrayList;
 
 public class Viscosity extends Glyph {
 	
@@ -64,7 +67,7 @@ public class Viscosity extends Glyph {
 
 		private int level = 0;
 
-		public int deferDamage(int dmg){
+		public int deferDamage(int dmg, Char attacker){
 			//account for icon stomach (just skip the glyph)
 			if (target.buff(Talent.WarriorFoodImmunity.class) != null){
 				return dmg;
@@ -85,7 +88,7 @@ public class Viscosity extends Glyph {
 
 			if (amount > 0){
 				DeferedDamage deferred = Buff.affect( target, DeferedDamage.class );
-				deferred.extend( amount );
+				deferred.extend(amount, attacker, attacker, true);
 
 				target.sprite.showStatus( CharSprite.WARNING, Messages.get(Viscosity.class, "deferred", amount) );
 			}
@@ -107,13 +110,16 @@ public class Viscosity extends Glyph {
 		}
 		
 		protected int damage = 0;
+		private final ArrayList<SourceDebt> sources = new ArrayList<>();
 		
 		private static final String DAMAGE	= "damage";
+		private static final String SOURCES = "sources";
 		
 		@Override
 		public void storeInBundle( Bundle bundle ) {
 			super.storeInBundle( bundle );
 			bundle.put( DAMAGE, damage );
+			bundle.put(SOURCES, sources);
 			
 		}
 		
@@ -121,6 +127,8 @@ public class Viscosity extends Glyph {
 		public void restoreFromBundle( Bundle bundle ) {
 			super.restoreFromBundle( bundle );
 			damage = bundle.getInt( DAMAGE );
+			sources.clear();
+			for (Bundlable source : bundle.getCollection(SOURCES)) sources.add((SourceDebt) source);
 		}
 		
 		public void extend( float damage ) {
@@ -130,6 +138,46 @@ public class Viscosity extends Glyph {
 			}
 			this.damage += damage;
 			if (target != null) target.needsIncomingDOTUpdate = true;
+		}
+
+		public void extend(float damage, Char attacker, Object origin, boolean physical) {
+			int previousDamage = this.damage;
+			extend(damage);
+			int amount = this.damage - previousDamage;
+			if (attacker == null || origin == null || amount <= 0) return;
+			Class<?> effect = Char.damageSourceClass(origin);
+			for (SourceDebt debt : sources) {
+				if (debt.actor == attacker.id() && debt.effect == effect && debt.physical == physical) {
+					debt.damage += amount;
+					return;
+				}
+			}
+			SourceDebt debt = new SourceDebt();
+			debt.actor = attacker.id();
+			debt.effect = effect;
+			debt.physical = physical;
+			debt.damage = amount;
+			sources.add(debt);
+		}
+
+		private int resolveSourceDamage(int tickDamage) {
+			int remainingDamage = damage;
+			int remainingTick = tickDamage;
+			int allowed = 0;
+			for (SourceDebt debt : sources) {
+				int share = (int) ((long) remainingTick * debt.damage / remainingDamage);
+				remainingDamage -= debt.damage;
+				remainingTick -= share;
+				debt.damage -= share;
+				Actor actor = Actor.findById(debt.actor);
+				if (!(actor instanceof Char) || !((Char) actor).blocksDomainDamage(debt.effect, debt.physical)) {
+					allowed += share;
+				}
+			}
+			for (int i = sources.size() - 1; i >= 0; i--) {
+				if (sources.get(i).damage <= 0) sources.remove(i);
+			}
+			return allowed + remainingTick;
 		}
 		
 		@Override
@@ -147,7 +195,8 @@ public class Viscosity extends Glyph {
 			if (target.isAlive()) {
 
 				int damageThisTick = Math.max(1, (int)(damage*0.1f));
-				target.damage( damageThisTick, this );
+				int allowedDamage = resolveSourceDamage(damageThisTick);
+				if (allowedDamage > 0) target.damage(allowedDamage, this);
 				if (target == Dungeon.hero && !target.isAlive()) {
 
 					Badges.validateDeathFromFriendlyMagic();
@@ -186,6 +235,29 @@ public class Viscosity extends Glyph {
 		@Override
 		public int totalIncomingDMG() {
 			return damage;
+		}
+	}
+
+	public static class SourceDebt implements Bundlable {
+		private int actor;
+		private Class effect;
+		private boolean physical;
+		private int damage;
+
+		@Override
+		public void storeInBundle(Bundle bundle) {
+			bundle.put("actor", actor);
+			bundle.put("effect", effect);
+			bundle.put("physical", physical);
+			bundle.put("damage", damage);
+		}
+
+		@Override
+		public void restoreFromBundle(Bundle bundle) {
+			actor = bundle.getInt("actor");
+			effect = bundle.getClass("effect");
+			physical = bundle.getBoolean("physical");
+			damage = bundle.getInt("damage");
 		}
 	}
 }

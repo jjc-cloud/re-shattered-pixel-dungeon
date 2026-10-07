@@ -58,7 +58,7 @@ public class ScrollOfMetamorphosis extends ExoticScroll {
 	protected static boolean identifiedByUse = false;
 	
 	@Override
-	public void doRead() {
+	protected void readEffect() {
 		if (!isKnown()) {
 			identify();
 			curItem = detach(curUser.belongings.backpack);

@@ -39,7 +39,7 @@ public class ScrollOfDread extends ExoticScroll {
 	}
 	
 	@Override
-	public void doRead() {
+	protected void readEffect() {
 
 		detach(curUser.belongings.backpack);
 		new Flare( 5, 32 ).color( 0xFF0000, true ).show( curUser.sprite, 2f );

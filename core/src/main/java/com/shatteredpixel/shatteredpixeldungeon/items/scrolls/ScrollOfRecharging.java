@@ -40,7 +40,7 @@ public class ScrollOfRecharging extends Scroll {
 	}
 
 	@Override
-	public void doRead() {
+	protected void readEffect() {
 
 		detach(curUser.belongings.backpack);
 		Buff.affect(curUser, Recharging.class, Recharging.DURATION);

@@ -36,7 +36,7 @@ public class Grim extends Weapon.Enchantment {
 	@Override
 	public int proc( Weapon weapon, Char attacker, Char defender, int damage ) {
 
-		if (defender.isImmune(Grim.class)) {
+		if (defender.isImmune(Grim.class) || attacker.blocksDomainDamage(Grim.class, false)) {
 			return damage;
 		}
 

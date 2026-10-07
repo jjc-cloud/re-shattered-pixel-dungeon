@@ -42,6 +42,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Chill;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Frost;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicSealDomain;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Paralysis;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.PinCushion;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
@@ -469,7 +470,7 @@ public class VaultBossElemental extends Mob {
 					if (Dungeon.hero.vaultElementalControlled && Dungeon.hero.vaultElementalControlHits >= 3) return;
 					Dungeon.hero.vaultElementalDamage = true;
 				}
-				target.damage( Random.IntRange(5, 10), new Shocking() );
+				target.damage( Random.IntRange(5, 10), new Shocking() , VaultBossElemental.this);
 				Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);
 				PixelScene.shake( 2, 0.3f );
 				target.sprite.centerEmitter().burst(SparkParticle.FACTORY, 3);
@@ -491,7 +492,7 @@ public class VaultBossElemental extends Mob {
 	public void damage(int dmg, Object src) {
 		//fire form is resistant to magic and weak to thrown weapons
 		if (form == ElementalForm.FIRE){
-			if (AntiMagic.RESISTS.contains(src.getClass())){
+			if (AntiMagic.RESISTS.contains(damageSourceClass(src))){
 				dmg /= 4;
 				//prompts faster attacks, only do this if it's from the hero
 				if (src instanceof Wand || src instanceof ClericSpell){
@@ -523,7 +524,7 @@ public class VaultBossElemental extends Mob {
 			}
 		//shock form is resistant to melee and weak to magic
 		} else if ( form == ElementalForm.SHOCK ){
-			if (AntiMagic.RESISTS.contains(src.getClass())){
+			if (AntiMagic.RESISTS.contains(damageSourceClass(src))){
 				if (!weakAnnounced){
 					GLog.p(Messages.get(this, "shock_weak"));
 					weakAnnounced = true;
@@ -560,6 +561,9 @@ public class VaultBossElemental extends Mob {
 			}
 		}
 		boolean remindStatue = false;
+		if (Dungeon.level instanceof VaultLevel && ((VaultLevel) Dungeon.level).isRegularQuest()) {
+			Buff.detach(Dungeon.hero, MagicSealDomain.class);
+		}
 		if (Dungeon.level instanceof VaultLevel && ((VaultLevel) Dungeon.level).isRegularQuest()
 				&& !Imp.Quest.vaultBossesDefeated) {
 			remindStatue = true;

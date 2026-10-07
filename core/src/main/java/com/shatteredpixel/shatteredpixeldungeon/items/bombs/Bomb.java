@@ -82,6 +82,7 @@ public class Bomb extends Item {
 	}
 
 	public Fuse fuse;
+	private int damageSourceId = -1;
 
 	//FIXME using a static variable for this is kinda gross, should be a better way
 	private static boolean lightingFuse = false;
@@ -126,6 +127,7 @@ public class Bomb extends Item {
 
 	@Override
 	protected void onThrow( int cell ) {
+		damageSourceId = curUser.id();
 		if (!Dungeon.level.pit[ cell ] && lightingFuse) {
 			Actor.addDelayed(fuse = createFuse().ignite(this), 2);
 		}
@@ -241,7 +243,7 @@ public class Bomb extends Item {
 				dmg -= ch.drRoll();
 
 				if (dmg > 0) {
-					ch.damage(dmg, this);
+					ch.damage(dmg, this, damageSource());
 				}
 				
 				if (ch == Dungeon.hero && !ch.isAlive()) {
@@ -305,16 +307,24 @@ public class Bomb extends Item {
 	}
 
 	private static final String FUSE = "fuse";
+	private static final String DAMAGE_SOURCE = "damage_source";
+
+	protected Char damageSource() {
+		Actor source = Actor.findById(damageSourceId);
+		return source instanceof Char ? (Char) source : null;
+	}
 
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
 		bundle.put( FUSE, fuse );
+		bundle.put(DAMAGE_SOURCE, damageSourceId);
 	}
 
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
+		damageSourceId = bundle.getInt(DAMAGE_SOURCE);
 		if (bundle.contains( FUSE ))
 			Actor.add( fuse = ((Fuse)bundle.get(FUSE)).ignite(this) );
 	}

@@ -48,7 +48,7 @@ public class ScrollOfSirensSong extends ExoticScroll {
 	protected static boolean identifiedByUse = false;
 	
 	@Override
-	public void doRead() {
+	protected void readEffect() {
 		if (!isKnown()) {
 			identify();
 			curItem = detach(curUser.belongings.backpack);
@@ -63,6 +63,7 @@ public class ScrollOfSirensSong extends ExoticScroll {
 
 		@Override
 		public void onSelect(Integer cell) {
+			if (!canRead(curUser)) return;
 			if (cell == null && isKnown()){
 				return;
 			}

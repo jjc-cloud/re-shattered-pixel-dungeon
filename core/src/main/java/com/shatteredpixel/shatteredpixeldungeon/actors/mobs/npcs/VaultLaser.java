@@ -92,7 +92,7 @@ public class VaultLaser extends NPC {
 				observe |= Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.DISINTEGRATION);
 				Char ch = Actor.findChar(cell);
 				if (ch != null && ch.alignment == Alignment.ALLY){
-					ch.damage(Random.NormalIntRange(10, 20), new Eye.DeathGaze());
+					ch.damage(Random.NormalIntRange(10, 20), new Eye.DeathGaze(), VaultLaser.this);
 					if (ch.sprite.visible){
 						ch.sprite.flash();
 						CellEmitter.center( pos ).burst( PurpleParticle.BURST, Random.IntRange( 1, 2 ) );

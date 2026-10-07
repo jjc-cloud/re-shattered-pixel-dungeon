@@ -55,7 +55,7 @@ public class ScrollOfEnchantment extends ExoticScroll {
 	protected static boolean identifiedByUse = false;
 	
 	@Override
-	public void doRead() {
+	protected void readEffect() {
 		if (!isKnown()) {
 			identify();
 			curItem = detach(curUser.belongings.backpack);
@@ -112,6 +112,7 @@ public class ScrollOfEnchantment extends ExoticScroll {
 
 		@Override
 		public void onSelect(final Item item) {
+			if (!canRead(curUser)) return;
 			
 			if (item instanceof Weapon){
 				if (!identifiedByUse) {
@@ -178,6 +179,7 @@ public class ScrollOfEnchantment extends ExoticScroll {
 
 		@Override
 		protected void onSelect(int index) {
+			if (!canRead(curUser)) return;
 			if (index < 3) {
 				wep.enchant(enchantments[index]);
 				GLog.p(Messages.get(StoneOfEnchantment.class, "weapon"));
@@ -240,6 +242,7 @@ public class ScrollOfEnchantment extends ExoticScroll {
 
 		@Override
 		protected void onSelect(int index) {
+			if (!canRead(curUser)) return;
 			if (index < 3) {
 				arm.inscribeFromEffect(glyphs[index]);
 				GLog.p(Messages.get(StoneOfEnchantment.class, "armor"));

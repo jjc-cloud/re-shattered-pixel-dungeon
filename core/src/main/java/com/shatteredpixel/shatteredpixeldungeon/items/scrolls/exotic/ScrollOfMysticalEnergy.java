@@ -36,7 +36,7 @@ public class ScrollOfMysticalEnergy extends ExoticScroll {
 	}
 	
 	@Override
-	public void doRead() {
+	protected void readEffect() {
 
 		detach(curUser.belongings.backpack);
 		//append buff
