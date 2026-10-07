@@ -1062,8 +1062,14 @@ public class VaultBossElemental extends Mob {
 		float range = (float)Math.hypot(room.width() - 2, room.height() - 2);
 		ConeAOE cone = new ConeAOE(core, range, 50, Ballistica.STOP_SOLID);
 		// A grazing cone ray must not include cells sheltered from the cast origin.
-		cone.cells.removeIf(candidate -> Dungeon.level.solid[candidate]
-				|| new Ballistica(pos, candidate, Ballistica.STOP_TARGET | Ballistica.STOP_SOLID).collisionPos.intValue() != candidate.intValue());
+		Iterator<Integer> cellIterator = cone.cells.iterator();
+		while (cellIterator.hasNext()) {
+			int candidate = cellIterator.next();
+			if (Dungeon.level.solid[candidate]
+					|| new Ballistica(pos, candidate, Ballistica.STOP_TARGET | Ballistica.STOP_SOLID).collisionPos != candidate) {
+				cellIterator.remove();
+			}
+		}
 		for (int cell : cone.cells){
 			if (Dungeon.level.trueDistance(cell, pos) <= 2){
 				GameScene.targetedCell(cell, cooldown());
@@ -1081,8 +1087,14 @@ public class VaultBossElemental extends Mob {
 		float range = (float)Math.hypot(room.width() - 2, room.height() - 2);
 		cone.cells = new ConeAOE(core, range, 50, Ballistica.STOP_SOLID).cells;
 		cone.startPos = pos;
-		cone.cells.removeIf(candidate -> Dungeon.level.solid[candidate]
-				|| new Ballistica(cone.startPos, candidate, Ballistica.STOP_TARGET | Ballistica.STOP_SOLID).collisionPos.intValue() != candidate.intValue());
+		Iterator<Integer> cellIterator = cone.cells.iterator();
+		while (cellIterator.hasNext()) {
+			int candidate = cellIterator.next();
+			if (Dungeon.level.solid[candidate]
+					|| new Ballistica(cone.startPos, candidate, Ballistica.STOP_TARGET | Ballistica.STOP_SOLID).collisionPos != candidate) {
+				cellIterator.remove();
+			}
+		}
 
 	}
 
@@ -1177,8 +1189,14 @@ public class VaultBossElemental extends Mob {
 			}
 			emitters.clear();
 
-			cells.removeIf(candidate -> Dungeon.level.solid[candidate]
-					|| new Ballistica(startPos, candidate, Ballistica.STOP_TARGET | Ballistica.STOP_SOLID).collisionPos.intValue() != candidate.intValue());
+			Iterator<Integer> cellIterator = cells.iterator();
+			while (cellIterator.hasNext()) {
+				int candidate = cellIterator.next();
+				if (Dungeon.level.solid[candidate]
+						|| new Ballistica(startPos, candidate, Ballistica.STOP_TARGET | Ballistica.STOP_SOLID).collisionPos != candidate) {
+					cellIterator.remove();
+				}
+			}
 			for (int cell : cells) {
 				if (Dungeon.level.trueDistance(cell, startPos) <= distance){
 						Emitter e = CellEmitter.get(cell);

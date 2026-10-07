@@ -81,8 +81,14 @@ public class BossHealthBar extends Component {
 
 	private void syncRows() {
 		synchronized (bosses) {
-			bosses.entrySet().removeIf(entry -> !entry.getKey().isAlive()
-					|| Dungeon.level == null || !Dungeon.level.mobs.contains(entry.getKey()));
+			// iOS 类库没有 Predicate/removeIf；无 Boss 时也会经过这个入口。
+			Iterator<Map.Entry<Mob, BossState>> bossIterator = bosses.entrySet().iterator();
+			while (bossIterator.hasNext()) {
+				Mob boss = bossIterator.next().getKey();
+				if (!boss.isAlive() || Dungeon.level == null || !Dungeon.level.mobs.contains(boss)) {
+					bossIterator.remove();
+				}
+			}
 			Iterator<Map.Entry<Mob, BossBar>> iterator = rows.entrySet().iterator();
 			while (iterator.hasNext()) {
 				Map.Entry<Mob, BossBar> entry = iterator.next();

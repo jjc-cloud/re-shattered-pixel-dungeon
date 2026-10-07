@@ -101,9 +101,16 @@ public class VaultTokenDoor extends NPC {
 
 			int required = doorWidth == 3 ? 6 : 10;
 			MagicPocket pocket = h.belongings.getItem(MagicPocket.class);
-			Item tokens = doorWidth == 3 ? (pocket == null ? null : pocket.items.stream()
-					.filter(item -> item instanceof DwarfToken && item.isVaultLoot()).findFirst().orElse(null))
-					: h.belongings.getItem(DwarfToken.class);
+			Item loanTokens = null;
+			if (doorWidth == 3 && pocket != null) {
+				for (Item item : pocket.items) {
+					if (item instanceof DwarfToken && item.isVaultLoot()) {
+						loanTokens = item;
+						break;
+					}
+				}
+			}
+			Item tokens = doorWidth == 3 ? loanTokens : h.belongings.getItem(DwarfToken.class);
 
 			String descText = description();
 			if (!battleSeal) {
