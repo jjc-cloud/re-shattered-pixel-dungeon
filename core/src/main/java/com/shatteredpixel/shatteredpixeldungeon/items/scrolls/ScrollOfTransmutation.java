@@ -30,7 +30,6 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Transmuting;
 import com.shatteredpixel.shatteredpixeldungeon.items.EquipableItem;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
-import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket;
 import com.shatteredpixel.shatteredpixeldungeon.items.KindOfWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
@@ -203,10 +202,7 @@ public class ScrollOfTransmutation extends InventoryScroll {
 		} else {
 			result = null;
 		}
-		if (result != null) {
-			if (item.isVaultLoot()) result.markVaultLoot();
-			else if (MagicPocket.isVault()) result.markPlayerOwned();
-		}
+		if (result != null && item.isVaultLoot()) result.markVaultLoot();
 		return result;
 	}
 	

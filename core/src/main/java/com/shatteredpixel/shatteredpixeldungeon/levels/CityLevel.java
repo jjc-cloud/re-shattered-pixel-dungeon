@@ -25,6 +25,8 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Hunger;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LostInventory;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
@@ -53,7 +55,10 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WarpingTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WeakeningTrap;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ImpSprite;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
+import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
+import com.watabou.noosa.Game;
 import com.watabou.noosa.Group;
 import com.watabou.noosa.audio.Music;
 import com.watabou.noosa.particles.Emitter;
@@ -142,8 +147,24 @@ public class CityLevel extends RegularLevel {
 		if (transition.type == LevelTransition.Type.BRANCH_EXIT && transition.destBranch == 1) {
 			if (locked || !Imp.Quest.canEnterVault() || hero.buff(AscensionChallenge.class) != null
 					|| hero.buff(LostInventory.class) != null) return false;
-			if (MagicPocket.issue(hero) == null) return false;
-			Imp.Quest.startVault();
+			Game.runOnRenderThread(() -> GameScene.show(new WndOptions(new ImpSprite(),
+					Messages.get(CityLevel.class, "vault_enter_title"),
+					Messages.get(CityLevel.class, "vault_enter_confirm"),
+					Messages.get(CityLevel.class, "vault_enter_yes"),
+					Messages.get(CityLevel.class, "vault_enter_no")) {
+				@Override
+				protected void onSelect(int index) {
+					if (index != 0 || Dungeon.level != CityLevel.this || locked || !Imp.Quest.canEnterVault()
+							|| hero.buff(AscensionChallenge.class) != null
+							|| hero.buff(LostInventory.class) != null) return;
+					if (MagicPocket.issue(hero) == null) return;
+					Imp.Quest.startVault();
+					hero.HP = hero.HT;
+					Buff.affect(hero, Hunger.class).satisfy(Hunger.STARVING);
+					CityLevel.super.activateTransition(hero, transition);
+				}
+			}));
+			return false;
 		}
 		return super.activateTransition(hero, transition);
 	}

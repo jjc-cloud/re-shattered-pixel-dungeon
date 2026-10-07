@@ -1134,8 +1134,9 @@ public abstract class Mob extends Char {
 		if (vaultCorridorGuard && Dungeon.level instanceof VaultLevel && ((VaultLevel) Dungeon.level).isRegularQuest()) {
 			if (!vaultBadgeDropped) {
 				vaultBadgeDropped = true;
-				com.shatteredpixel.shatteredpixeldungeon.items.Heap badge = Dungeon.level.drop(
-						new com.shatteredpixel.shatteredpixeldungeon.items.quest.DwarfToken(), pos);
+				Item token = new com.shatteredpixel.shatteredpixeldungeon.items.quest.DwarfToken();
+				token.markVaultLoot();
+				com.shatteredpixel.shatteredpixeldungeon.items.Heap badge = Dungeon.level.drop(token, pos);
 				if (badge.sprite != null) badge.sprite.drop();
 			}
 		} else {

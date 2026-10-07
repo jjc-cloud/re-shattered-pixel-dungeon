@@ -267,6 +267,12 @@ public class VaultBossElemental extends Mob {
 		boolean enemyVisible = enemy != null && enemy.isAlive() && fieldOfView[enemy.pos]
 				&& enemy.invisible <= 0 && !isCharmedBy(enemy);
 		enemySeen = enemyVisible;
+		// Greater elementals always detect visible targets, including the last surviving elemental.
+		if (enemyVisible && (state == WANDERING || state == SLEEPING || state == INVESTIGATING)) {
+			aggro(enemy);
+			target = enemy.pos;
+			notice();
+		}
 		if (coordinate && enemyVisible && (orbitRadius <= 0 || lastEnemyPos != enemy.pos)) {
 			// Circle immediately at the observed range, rather than first closing to four tiles.
 			orbitRadius = Math.max(4, Dungeon.level.trueDistance(pos, enemy.pos));
@@ -1051,6 +1057,9 @@ public class VaultBossElemental extends Mob {
 		Room room = ((RegularLevel)Dungeon.level).room(pos);
 		float range = (float)Math.hypot(room.width() - 2, room.height() - 2);
 		ConeAOE cone = new ConeAOE(core, range, 50, Ballistica.STOP_SOLID);
+		// A grazing cone ray must not include cells sheltered from the cast origin.
+		cone.cells.removeIf(candidate -> Dungeon.level.solid[candidate]
+				|| new Ballistica(pos, candidate, Ballistica.STOP_TARGET | Ballistica.STOP_SOLID).collisionPos.intValue() != candidate.intValue());
 		for (int cell : cone.cells){
 			if (Dungeon.level.trueDistance(cell, pos) <= 2){
 				GameScene.targetedCell(cell, cooldown());
@@ -1068,6 +1077,8 @@ public class VaultBossElemental extends Mob {
 		float range = (float)Math.hypot(room.width() - 2, room.height() - 2);
 		cone.cells = new ConeAOE(core, range, 50, Ballistica.STOP_SOLID).cells;
 		cone.startPos = pos;
+		cone.cells.removeIf(candidate -> Dungeon.level.solid[candidate]
+				|| new Ballistica(cone.startPos, candidate, Ballistica.STOP_TARGET | Ballistica.STOP_SOLID).collisionPos.intValue() != candidate.intValue());
 
 	}
 
@@ -1101,6 +1112,8 @@ public class VaultBossElemental extends Mob {
 		@Override
 		public boolean act() {
 
+			// Recheck cover before both visual effects and damage as the cold front advances.
+			updateFX();
 			for (int cell : cells.toArray(new Integer[0])){
 				if (Dungeon.level.trueDistance(cell, startPos) <= distance){
 					CellEmitter.get(cell).burst(MagicMissile.WhiteParticle.FACTORY, 10);
@@ -1137,7 +1150,6 @@ public class VaultBossElemental extends Mob {
 				}
 			}
 
-			updateFX();
 			distance += 2;
 
 			if (cells.isEmpty()){
@@ -1161,6 +1173,8 @@ public class VaultBossElemental extends Mob {
 			}
 			emitters.clear();
 
+			cells.removeIf(candidate -> Dungeon.level.solid[candidate]
+					|| new Ballistica(startPos, candidate, Ballistica.STOP_TARGET | Ballistica.STOP_SOLID).collisionPos.intValue() != candidate.intValue());
 			for (int cell : cells) {
 				if (Dungeon.level.trueDistance(cell, startPos) <= distance){
 						Emitter e = CellEmitter.get(cell);

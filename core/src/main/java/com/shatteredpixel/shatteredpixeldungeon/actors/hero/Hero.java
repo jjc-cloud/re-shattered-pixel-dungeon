@@ -2367,6 +2367,8 @@ public class Hero extends Char {
 
 		//look for ankhs in player inventory, prioritize ones which are blessed.
 		for (Ankh i : belongings.getAllItems(Ankh.class)){
+			// Only blessed ankhs can revive the hero inside the vault.
+			if (Dungeon.level instanceof VaultLevel && !i.isBlessed()) continue;
 			if (ankh == null || i.isBlessed()) {
 				ankh = i;
 			}
