@@ -156,9 +156,12 @@ public final class VaultLayout {
 		// 雕像固定在宝库中央的台座，其余奖励随机分配到外围台座。
 		int statueCell = 20 + 6 * WIDTH;
 		treasureSpots.remove(Integer.valueOf(statueCell));
-		level.drop(new ImpStatue(), statueCell);
+		Item statue = new ImpStatue();
+		statue.markVaultLoot();
+		level.drop(statue, statueCell);
 		Random.shuffle(treasureSpots);
 		for (Item reward : Imp.Quest.rewardOptions) {
+			reward.markVaultLoot();
 			level.drop(reward, treasureSpots.remove(0));
 		}
 		Imp.Quest.rewardOptions.clear();

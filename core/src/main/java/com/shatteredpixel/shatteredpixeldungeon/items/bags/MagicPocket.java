@@ -46,6 +46,7 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndBag;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
+import com.watabou.noosa.Game;
 import com.watabou.noosa.audio.Sample;
 
 import java.util.ArrayList;
@@ -82,12 +83,6 @@ public class MagicPocket extends Bag {
 	public static MagicPocket issue(Hero hero) {
 		MagicPocket pocket = hero.belongings.getItem(MagicPocket.class);
 		if (pocket == null) {
-			for (Item item : hero.belongings) if (!item.isVaultLoot()) {
-				item.markPlayerOwned();
-				if (item instanceof Armor && ((Armor) item).checkSeal() != null) {
-					((Armor) item).checkSeal().markPlayerOwned();
-				}
-			}
 			pocket = new MagicPocket();
 			if (!pocket.collect(hero.belongings.backpack)) return null;
 		}
@@ -141,7 +136,8 @@ public class MagicPocket extends Bag {
 	}
 
 	public boolean rewardAllowed(Item item, int score) {
-		if (item == null || (!contains(item) && !item.isEquipped(Dungeon.hero)) || !item.isVaultLoot() || item.unique || item instanceof Bag) return false;
+		if (item == null || !item.isVaultLoot() || item.unique || item instanceof Bag
+				|| !Dungeon.hero.belongings.contains(item)) return false;
 		return score > 0 && (score >= 4000 || item.level() < 1);
 	}
 
@@ -155,6 +151,12 @@ public class MagicPocket extends Bag {
 			try { ((EquipableItem) item).doUnequip(hero, false, false); }
 			finally { item.cursed = cursed; }
 			// Exit-only staging: equipped loans are returned immediately, even if all slots are occupied.
+			if (!item.collect(this)) items.add(item);
+		}
+		// Also recover marked loans misplaced in the backpack or another bag.
+		for (Item item : loanItems(hero)) {
+			if (contains(item)) continue;
+			item.detachAll(hero.belongings.backpack);
 			if (!item.collect(this)) items.add(item);
 		}
 	}
@@ -174,9 +176,10 @@ public class MagicPocket extends Bag {
 				playerSeals.add(seal);
 			}
 		}
+		// Detach the pocket first so clearing it cannot grab more items from the backpack.
+		detachAll(hero.belongings.backpack);
 		Item kept = reward == null ? null : reward.detachAll(this);
 		clearLoans(this);
-		detachAll(hero.belongings.backpack);
 		for (BrokenSeal seal : playerSeals) {
 			Armor playerArmor = null;
 			for (Item item : hero.belongings) if (item instanceof Armor && !item.isVaultLoot()
@@ -209,43 +212,46 @@ public class MagicPocket extends Bag {
 		ArrayList<Item> result = new ArrayList<>();
 		for (Item item : this) result.add(item);
 		for (Item item : hero.belongings) {
-			if (item.isVaultLoot() && item.isEquipped(hero) && !result.contains(item)) result.add(item);
+			if (item.isVaultLoot() && !result.contains(item)) result.add(item);
 		}
 		return result;
 	}
 
 	public void requestReturn(Hero hero, VaultLevel level, Runnable leave) {
-		int score = completionScore(level);
-		boolean eligible = false;
-		for (Item item : loanItems(hero)) eligible |= rewardAllowed(item, score);
-		final boolean hasReward = eligible;
-		GameScene.show(new WndOptions(name(), Messages.get(EscapeCrystal.class, "prompt"),
-				hasReward ? new String[]{Messages.get(this, "choose"), Messages.get(this, "leave_empty"), Messages.get(this, "stay")}
-						: new String[]{Messages.get(this, "leave_empty"), Messages.get(this, "stay")}) {
-			@Override
-			protected void onSelect(int index) {
-				if (index == (hasReward ? 2 : 1)) return;
-				if (!hasReward || index == 1) {
-					if (returnToImp(hero, null, score)) leave.run();
-					return;
-				}
-				GameScene.selectItem(new WndBag.ItemSelector() {
-					@Override public Class<? extends Bag> preferredBag() { return Belongings.Backpack.class; }
-					@Override public String textPrompt() { return Messages.get(EscapeCrystal.class, "prompt"); }
-					@Override public boolean itemSelectable(Item item) { return rewardAllowed(item, score); }
-					@Override public void onSelect(Item item) {
-						if (item == null || !rewardAllowed(item, score)) return;
-						GameScene.show(new WndOptions(new ItemSprite(item), Messages.titleCase(item.title()),
-								Messages.get(EscapeCrystal.class, "leaving_item"),
-								Messages.get(EscapeCrystal.class, "leaving_yes"),
-								Messages.get(EscapeCrystal.class, "leaving_no")) {
-							@Override protected void onSelect(int index) {
-								if (index == 0 && returnToImp(hero, item, score)) leave.run();
-							}
-						});
+		Game.runOnRenderThread(() -> {
+			if (Dungeon.level != level || hero.belongings.getItem(MagicPocket.class) != this) return;
+			int score = completionScore(level);
+			boolean eligible = false;
+			for (Item item : loanItems(hero)) eligible |= rewardAllowed(item, score);
+			final boolean hasReward = eligible;
+			GameScene.show(new WndOptions(name(), Messages.get(EscapeCrystal.class, "prompt"),
+					hasReward ? new String[]{Messages.get(this, "choose"), Messages.get(this, "leave_empty"), Messages.get(this, "stay")}
+							: new String[]{Messages.get(this, "leave_empty"), Messages.get(this, "stay")}) {
+				@Override
+				protected void onSelect(int index) {
+					if (index == (hasReward ? 2 : 1)) return;
+					if (!hasReward || index == 1) {
+						if (returnToImp(hero, null, score)) leave.run();
+						return;
 					}
-				});
-			}
+					GameScene.selectItem(new WndBag.ItemSelector() {
+						@Override public Class<? extends Bag> preferredBag() { return Belongings.Backpack.class; }
+						@Override public String textPrompt() { return Messages.get(EscapeCrystal.class, "prompt"); }
+						@Override public boolean itemSelectable(Item item) { return rewardAllowed(item, score); }
+						@Override public void onSelect(Item item) {
+							if (item == null || !rewardAllowed(item, score)) return;
+							GameScene.show(new WndOptions(new ItemSprite(item), Messages.titleCase(item.title()),
+									Messages.get(EscapeCrystal.class, "leaving_item"),
+									Messages.get(EscapeCrystal.class, "leaving_yes"),
+									Messages.get(EscapeCrystal.class, "leaving_no")) {
+								@Override protected void onSelect(int index) {
+									if (index == 0 && returnToImp(hero, item, score)) leave.run();
+								}
+							});
+						}
+					});
+				}
+			});
 		});
 	}
 }

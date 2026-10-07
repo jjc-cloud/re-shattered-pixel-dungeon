@@ -28,6 +28,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.VaultFlameTraps;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Hunger;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
@@ -193,6 +195,7 @@ public class VaultLevel extends CityLevel {
 				pocket.requestReturn(hero, this, () -> finishVaultExit(hero, transition));
 				return false;
 			}
+			return finishVaultExit(hero, transition);
 		}
 		return super.activateTransition(hero, transition);
 	}
@@ -201,13 +204,9 @@ public class VaultLevel extends CityLevel {
 		if (locked || hero.belongings.getItem(MagicPocket.class) != null) return false;
 		EscapeCrystal crystal = hero.belongings.getItem(EscapeCrystal.class);
 		if (crystal != null) crystal.detachAll(hero.belongings.backpack);
+		hero.HP = hero.HT;
+		Buff.affect(hero, Hunger.class).satisfy(Hunger.STARVING);
 		return super.activateTransition(hero, transition);
-	}
-
-	@Override
-	public Heap drop(Item item, int cell) {
-		if (item != null && isRegularQuest()) item.markVaultLoot();
-		return super.drop(item, cell);
 	}
 
 	//only occurs in levelgen, no need to bundle these
@@ -579,6 +578,7 @@ public class VaultLevel extends CityLevel {
 	@Override
 	protected void createItems() {
 		for (Item item : itemsToSpawn) {
+			item.markVaultLoot();
 			drop(item, randomDropCell()).type = Heap.Type.HEAP;
 		}
 
@@ -611,14 +611,21 @@ public class VaultLevel extends CityLevel {
 				((Wand) reward).curCharges = ((Wand) reward).maxCharges;
 			}
 			reward.identify(false);
+			reward.markVaultLoot();
 			drop(reward, randomDropCell()).type = Heap.Type.SKELETON;
 		}
 
 		// 入口补给与走廊散落物资分开放置，只在生成地图时给予一次。
-		drop(new StoneOfBlink().quantity(2), VaultLayout.ENTRANCE_X - 1 + (VaultLayout.ENTRANCE_Y + 1) * width());
-		drop(new Food(), VaultLayout.ENTRANCE_X + 1 + (VaultLayout.ENTRANCE_Y + 1) * width());
+		Item blink = new StoneOfBlink().quantity(2);
+		blink.markVaultLoot();
+		drop(blink, VaultLayout.ENTRANCE_X - 1 + (VaultLayout.ENTRANCE_Y + 1) * width());
+		Item food = new Food();
+		food.markVaultLoot();
+		drop(food, VaultLayout.ENTRANCE_X + 1 + (VaultLayout.ENTRANCE_Y + 1) * width());
 		if (Dungeon.isChallenged(Challenges.DARKNESS)) {
-			drop(new Torch().quantity(2), VaultLayout.ENTRANCE_X + (VaultLayout.ENTRANCE_Y + 2) * width());
+			Item torches = new Torch().quantity(2);
+			torches.markVaultLoot();
+			drop(torches, VaultLayout.ENTRANCE_X + (VaultLayout.ENTRANCE_Y + 2) * width());
 		}
 	}
 
@@ -642,7 +649,6 @@ public class VaultLevel extends CityLevel {
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
 		if (!isRegularQuest()) return;
-		for (Heap heap : heaps.valueList()) for (Item item : heap.items) item.markVaultLoot();
 		for (int cell = 0; cell < length(); cell++) {
 			char layout = VaultLayout.tile(cell % width(), cell / width());
 			if (map[cell] == Terrain.CUSTOM_DECO && (layout == 's' || layout == 'o')) {

@@ -217,13 +217,11 @@ public class Item implements Bundlable {
 	public boolean collect( Bag container ) {
 		Item identity = identityItem();
 		if (identity != this) return identity.collect(container);
-		if (container instanceof MagicPocket) markVaultLoot();
-		else if (!Belongings.bundleRestoring && container.owner == Dungeon.hero && !(this instanceof MagicPocket)) {
-			if (MagicPocket.isVault()) markVaultLoot();
-			if (isVaultLoot()) {
-				MagicPocket pocket = Dungeon.hero.belongings.getItem(MagicPocket.class);
-				return pocket != null && collect(pocket);
-			}
+		// Only explicitly marked loans belong in the pocket; location does not determine ownership.
+		if (isVaultLoot() && !(container instanceof MagicPocket)
+				&& !Belongings.bundleRestoring && Dungeon.hero != null && container.owner == Dungeon.hero) {
+			MagicPocket pocket = Dungeon.hero.belongings.getItem(MagicPocket.class);
+			return pocket != null && collect(pocket);
 		}
 
 
