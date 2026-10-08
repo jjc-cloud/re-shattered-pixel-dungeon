@@ -31,7 +31,9 @@ import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClassArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HolyTome;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.WondrousResin;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.CursedWand;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.DamageWand;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -122,7 +124,14 @@ public class MindForm extends ClericSpell {
 				if (wand.tryToZap(Dungeon.hero, target)) {
 
 					final Ballistica shot = new Ballistica( Dungeon.hero.pos, target, wand.collisionProperties(target));
-					int cell = shot.collisionPos;
+					int surface = wand.targetingPos(Dungeon.hero, target);
+					if (!wand.cursed && wand instanceof DamageWand && Dungeon.level.insideMap(surface)
+							&& Dungeon.level.terrainInteractions != null
+							&& Dungeon.level.terrainInteractions.ruleAt(surface).allows(TerrainInteractions.Source.WAND)) {
+						shot.collisionPos = surface;
+						shot.dist = shot.path.indexOf(surface);
+					}
+					final int cell = shot.collisionPos;
 
 					if (target == Dungeon.hero.pos || cell == Dungeon.hero.pos) {
 						GLog.i( Messages.get(Wand.class, "self_target") );
@@ -139,7 +148,7 @@ public class MindForm extends ClericSpell {
 
 					wand.fx(shot, new Callback() {
 						public void call() {
-							wand.onZap(shot);
+							if (!wand.zapTerrain(Dungeon.hero, target)) wand.onZap(shot);
 							if (Random.Float() < WondrousResin.extraCurseEffectChance()){
 								WondrousResin.forcePositive = true;
 								CursedWand.cursedZap(wand,

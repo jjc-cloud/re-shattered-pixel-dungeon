@@ -60,7 +60,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ShardOfOblivion;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.WondrousResin;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
-import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -136,11 +135,12 @@ public abstract class Wand extends Item implements ChargeItem {
 	@Override
 	public int targetingPos(Hero user, int dst) {
 		Ballistica bolt = new Ballistica(user.pos, dst, cursed && !cursedKnown ? collisionProperties : collisionProperties(dst));
-		if (!cursed && !(this instanceof WandOfFireblast) && !(this instanceof WandOfCorrosion)) {
+		if (!cursed && this instanceof DamageWand && !(this instanceof WandOfFireblast)) {
 			if (this instanceof WandOfDisintegration) {
 				int range = Math.min(bolt.dist, ((WandOfDisintegration)this).distance());
 				for (int cell : bolt.subPath(1, range)) {
-					if (Dungeon.level.map[cell] == Terrain.COLLAPSE_WALL) return cell;
+					if (Dungeon.level.terrainInteractions != null
+							&& Dungeon.level.terrainInteractions.ruleAt(cell).allows(TerrainInteractions.Source.WAND)) return cell;
 				}
 			} else {
 				// 使用实际弹道的停止规则，补充实体墙面接触，不依赖点击格的地形。
@@ -149,11 +149,8 @@ public abstract class Wand extends Item implements ChargeItem {
 				int surface = (contact.collisionProperties & Ballistica.STOP_TARGET) != 0
 						&& contact.collisionPos == dst && !Dungeon.level.solid[dst] ? contact.collisionPos
 						: TerrainPropagation.impactCell(Dungeon.level, contact, TerrainInteractions.Source.WAND);
-				if (this instanceof WandOfRegrowth && contact.path.indexOf(surface) > 2 + 2 * chargesPerCast()) {
-					return contact.path.get(Math.min(contact.dist, 2 + 2 * chargesPerCast()));
-				}
-				if (Dungeon.level.map[surface] == Terrain.COLLAPSE_WALL
-						|| (Dungeon.level.insideMap(dst) && Dungeon.level.map[dst] == Terrain.COLLAPSE_WALL)) return surface;
+				if (Dungeon.level.terrainInteractions != null
+						&& Dungeon.level.terrainInteractions.ruleAt(surface).allows(TerrainInteractions.Source.WAND)) return surface;
 			}
 		}
 		if (this instanceof WandOfDisintegration && (!cursed || !cursedKnown)) return dst;
@@ -162,12 +159,14 @@ public abstract class Wand extends Item implements ChargeItem {
 
 	public abstract void onZap(Ballistica attack);
 
-	/** 普通法杖接管主弹道的第一格塌方墙；冲击波交给自身范围结算。 */
+	/** 伤害法杖接管主弹道可破坏的表面；冲击波与焰浪沿用自身范围结算。 */
 	public final boolean zapTerrain(Hero owner, int target) {
-		if (cursed || this instanceof WandOfFireblast || this instanceof WandOfCorrosion || this instanceof WandOfBlastWave
+		if (cursed || !(this instanceof DamageWand) || this instanceof WandOfFireblast || this instanceof WandOfBlastWave
 				|| !Dungeon.level.insideMap(target)) return false;
 		int impact = targetingPos(owner, target);
-		if (!Dungeon.level.insideMap(impact) || Dungeon.level.map[impact] != Terrain.COLLAPSE_WALL) return false;
+		if (!Dungeon.level.insideMap(impact) || Dungeon.level.terrainInteractions == null
+				|| !Dungeon.level.terrainInteractions.ruleAt(impact).allows(TerrainInteractions.Source.WAND)
+				|| Actor.findChar(impact) != null) return false;
 		if (this instanceof WandOfDisintegration) {
 			// 解离仍可贯穿遮挡，只接管自身射程内最先接触到的塌方墙。
 			Ballistica beam = new Ballistica(owner.pos, target, collisionProperties(target));
@@ -757,9 +756,10 @@ public abstract class Wand extends Item implements ChargeItem {
 
 				final Ballistica shot = new Ballistica( curUser.pos, target, curWand.collisionProperties(target));
 				int cell = shot.collisionPos;
-				if (!curWand.cursed) {
+				if (!curWand.cursed && curWand instanceof DamageWand) {
 					int surface = curWand.targetingPos(curUser, target);
-					if (Dungeon.level.insideMap(surface) && Dungeon.level.map[surface] == Terrain.COLLAPSE_WALL) {
+					if (Dungeon.level.insideMap(surface) && Dungeon.level.terrainInteractions != null
+							&& Dungeon.level.terrainInteractions.ruleAt(surface).allows(TerrainInteractions.Source.WAND)) {
 						cell = surface;
 						shot.collisionPos = surface;
 						shot.dist = shot.path.indexOf(surface);

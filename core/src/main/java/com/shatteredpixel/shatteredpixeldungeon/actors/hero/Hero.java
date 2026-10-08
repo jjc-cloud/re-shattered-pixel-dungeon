@@ -1411,8 +1411,12 @@ public class Hero extends Char {
 
 	private boolean canInteractTerrain(int cell) {
 		KindOfWeapon weapon = belongings.weapon();
+		// 遗物找回前允许徒手清理相邻或脚下的岩壁，不依赖被封存的装备。
+		if (Dungeon.level.map[cell] == Terrain.COLLAPSE_WALL && belongings.lostInventory()
+				&& !(weapon instanceof MeleeWeapon)) {
+			return cell == pos || Dungeon.level.adjacent(pos, cell);
+		}
 		if (weapon == null) return false;
-		if (Dungeon.level.map[cell] != Terrain.COLLAPSE_WALL) return Dungeon.level.adjacent(pos, cell);
 		if (!(weapon instanceof MeleeWeapon)) return false;
 		// 复活后可能身处塌方墙内，允许打掉脚下墙体脱困。
 		return (cell == pos && Dungeon.level.map[cell] == Terrain.COLLAPSE_WALL)
@@ -1424,8 +1428,8 @@ public class Hero extends Char {
 				|| action.level.map[action.dst] != action.terrain
 				|| action.level.terrainInteractions == null
 				|| !action.level.terrainInteractions.ruleAt(action.dst).allows(TerrainInteractions.Source.CLICK)
-				|| belongings.weapon() == null
-				|| (action.terrain == Terrain.COLLAPSE_WALL && !(belongings.weapon() instanceof MeleeWeapon))
+				|| (!(belongings.weapon() instanceof MeleeWeapon)
+						&& !(action.terrain == Terrain.COLLAPSE_WALL && belongings.lostInventory()))
 				|| (Actor.findChar(action.dst) != null && !(action.dst == pos && action.terrain == Terrain.COLLAPSE_WALL))) {
 			ready();
 			return false;
@@ -1449,7 +1453,6 @@ public class Hero extends Char {
 				if (action.level.map[action.dst] == action.terrain
 						&& canInteractTerrain(action.dst)
 						&& (Actor.findChar(action.dst) == null || (action.dst == pos && action.terrain == Terrain.COLLAPSE_WALL))
-						&& belongings.weapon() != null
 						&& action.level.terrainInteractions != null
 						&& action.level.terrainInteractions.interact(action.dst, TerrainInteractions.Source.CLICK)
 						== TerrainInteractions.Result.CHANGED) {
@@ -2188,7 +2191,8 @@ public class Hero extends Char {
 			curAction = new HeroAction.LvlTransition( cell );
 
 		} else if (Dungeon.level.terrainInteractions != null
-				&& belongings.weapon() != null
+				&& (belongings.weapon() instanceof MeleeWeapon
+						|| (Dungeon.level.map[cell] == Terrain.COLLAPSE_WALL && belongings.lostInventory()))
 				&& (fieldOfView[cell] || Dungeon.level.visited[cell] || Dungeon.level.mapped[cell])
 				&& Dungeon.level.terrainInteractions.ruleAt(cell).allows(TerrainInteractions.Source.CLICK)) {
 			curAction = new HeroAction.InteractTerrain(cell);

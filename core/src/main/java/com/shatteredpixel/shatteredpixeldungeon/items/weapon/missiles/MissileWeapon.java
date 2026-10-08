@@ -48,7 +48,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Projec
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.Dart;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
-import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -215,7 +214,7 @@ abstract public class MissileWeapon extends Weapon {
 			Ballistica shot = new Ballistica(user.pos, dst, Ballistica.PROJECTILE);
 			int surface = shot.collisionPos == dst && !Dungeon.level.solid[dst] ? shot.collisionPos
 					: TerrainPropagation.impactCell(Dungeon.level, shot, TerrainInteractions.Source.MISSILE);
-			return Dungeon.level.map[surface] == Terrain.COLLAPSE_WALL ? surface : shot.collisionPos;
+			return surface;
 		}
 	}
 
@@ -278,7 +277,8 @@ abstract public class MissileWeapon extends Weapon {
 
 	@Override
 	protected void onThrow( int cell ) {
-		if (Dungeon.level.map[cell] == Terrain.COLLAPSE_WALL) {
+		if (Dungeon.level.terrainInteractions != null && Actor.findChar(cell) == null
+				&& Dungeon.level.terrainInteractions.ruleAt(cell).allows(TerrainInteractions.Source.MISSILE)) {
 			if (Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.MISSILE)) Dungeon.observe();
 			parent = null;
 			if (!spawnedForEffect) super.onThrow(cell);

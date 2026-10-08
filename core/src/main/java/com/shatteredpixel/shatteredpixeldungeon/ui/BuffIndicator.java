@@ -141,6 +141,7 @@ public class BuffIndicator extends Component {
 	public static final int PHYSICAL_ONLY_DOMAIN = 88;
 	public static final int MAGIC_ONLY_DOMAIN = 89;
 	public static final int PHYSICAL_MAGIC_NULL_DOMAIN = 90;
+	public static final int COLLAPSE_DANGER = 91;
 
 	public static final int SIZE_SMALL  = 7;
 	public static final int SIZE_LARGE  = 16;
@@ -151,6 +152,7 @@ public class BuffIndicator extends Component {
 	private LinkedHashMap<Buff, BuffButton> buffButtons = new LinkedHashMap<>();
 	private volatile boolean needsRefresh;
 	private Char ch;
+	private BuffIcon collapseIcon;
 
 	private boolean large = false;
 
@@ -166,6 +168,11 @@ public class BuffIndicator extends Component {
 		this.large = large;
 		if (ch == Dungeon.hero) {
 			heroInstance = this;
+			// 环境提示只显示图标，按当前位置计算，不挂载 Buff 或保存状态。
+			collapseIcon = new BuffIcon(COLLAPSE_DANGER, large);
+			collapseIcon.visible = false;
+			collapseIcon.active = false;
+			add(collapseIcon);
 		}
 	}
 	
@@ -184,6 +191,11 @@ public class BuffIndicator extends Component {
 	@Override
 	public synchronized void update() {
 		super.update();
+		if (collapseIcon != null) {
+			boolean danger = ch == Dungeon.hero && Dungeon.level != null
+					&& Dungeon.level.caveCollapse != null && Dungeon.level.caveCollapse.isDangerous(ch.pos);
+			if (collapseIcon.visible != danger) needsRefresh = true;
+		}
 		if (needsRefresh){
 			needsRefresh = false;
 			layout();
@@ -196,6 +208,10 @@ public class BuffIndicator extends Component {
 
 	@Override
 	protected void layout() {
+		if (collapseIcon != null) {
+			collapseIcon.visible = ch == Dungeon.hero && Dungeon.level != null
+					&& Dungeon.level.caveCollapse != null && Dungeon.level.caveCollapse.isDangerous(ch.pos);
+		}
 
 		ArrayList<Buff> newBuffs = new ArrayList<>();
 		for (Buff buff : ch.buffs()) {
@@ -248,6 +264,21 @@ public class BuffIndicator extends Component {
 		float lastIconRight = 0;
 		int total = 0;
 		contentHeight = 0;
+		// 为危险提示保留第一格，普通状态过多时也不会把它挤出显示范围。
+		if (collapseIcon != null && collapseIcon.visible) {
+			collapseIcon.x = x + (large ? 0 : 1);
+			collapseIcon.y = y + (large ? 0 : 2);
+			PixelScene.align(collapseIcon);
+			pos = total = 1;
+			lastIconRight = x + size;
+			contentHeight = size + (large ? 0 : 5);
+			if ((rowTop+2*size+2 <= height && (pos * (size + 1) + size > width))
+					|| (rowWidthLimits[row] != 0 && pos * (size + 1) + size > rowWidthLimits[row])) {
+				row++;
+				rowTop += size+1 + rowHeightAdjusts[row];
+				pos = 0;
+			}
+		}
 		for (BuffButton icon : buffButtons.values()){
 			if (total >= maxBuffs){
 				icon.visible = false;
@@ -276,7 +307,7 @@ public class BuffIndicator extends Component {
 			total++;
 		}
 
-		buffsHidden = false;
+		buffsHidden = buffButtons.size() + (collapseIcon != null && collapseIcon.visible ? 1 : 0) > maxBuffs;
 		//squish buff icons together if there isn't enough room
 		float excessWidth = lastIconRight - right();
 
@@ -284,7 +315,7 @@ public class BuffIndicator extends Component {
 			//if multiple rows, only compress last row
 			ArrayList<BuffButton> buttons = new ArrayList<>();
 			float lastRowY = PixelScene.align(y + rowTop);
-			int i = 1;
+			int i = collapseIcon != null && collapseIcon.visible ? 2 : 1;
 			for (BuffButton button : buffButtons.values()){
 				if (i > maxBuffs){
 					button.visible = false;
