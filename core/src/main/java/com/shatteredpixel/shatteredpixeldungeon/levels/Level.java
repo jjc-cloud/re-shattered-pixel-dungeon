@@ -75,7 +75,6 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SacrificialPar
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.WindParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
-import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gem;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.Stylus;
@@ -187,7 +186,31 @@ public abstract class Level implements Bundlable {
 
 	/** 只在生成器或测试场景显式配置交互时创建。运行时查询应直接检查可空字段。 */
 	public TerrainInteractions interactions() {
-		if (terrainInteractions == null) terrainInteractions = new TerrainInteractions(this);
+		if (terrainInteractions == null) {
+			terrainInteractions = new TerrainInteractions(this);
+			int region = Dungeon.depth >= 1 ? (Dungeon.depth - 1) / 5 : -1;
+			if (region == 0) {
+				TerrainInteractions.Rule barrel = TerrainInteractions.Rule.LEGACY
+						.on(TerrainInteractions.Source.CLICK, TerrainInteractions.Response.DESTROY)
+						.on(TerrainInteractions.Source.MISSILE, TerrainInteractions.Response.DESTROY)
+						.on(TerrainInteractions.Source.WAND, TerrainInteractions.Response.DESTROY)
+						.on(TerrainInteractions.Source.SHOCKWAVE, TerrainInteractions.Response.DESTROY);
+				terrainInteractions.setDefault(Terrain.REGION_DECO, barrel);
+				terrainInteractions.setDefault(Terrain.REGION_DECO_ALT, barrel);
+				terrainInteractions.setDefault(Terrain.SEWER_BARREL_MARKED, barrel);
+				terrainInteractions.setDefault(Terrain.SEWER_BARREL_MARKED_ALT, barrel);
+			} else if (region == 4) {
+				TerrainInteractions.Rule rubble = TerrainInteractions.Rule.LEGACY
+						.on(TerrainInteractions.Source.CLICK, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
+						.on(TerrainInteractions.Source.MISSILE, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
+						.on(TerrainInteractions.Source.WAND, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
+						.on(TerrainInteractions.Source.SHOCKWAVE, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
+						.on(TerrainInteractions.Source.EXPLOSION, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
+						.on(TerrainInteractions.Source.DISINTEGRATION, TerrainInteractions.Response.replaceWith(Terrain.EMPTY));
+				terrainInteractions.setDefault(Terrain.REGION_DECO, rubble);
+				terrainInteractions.setDefault(Terrain.REGION_DECO_ALT, rubble);
+			}
+		}
 		return terrainInteractions;
 	}
 
@@ -432,26 +455,11 @@ public abstract class Level implements Bundlable {
 					TerrainInteractions.Source.EXPLOSION,
 					TerrainInteractions.Response.replaceWith(Terrain.EMBERS)));
 		}
-		if (region == 0) {
-			TerrainInteractions.Rule barrel = TerrainInteractions.Rule.LEGACY.on(
-					TerrainInteractions.Source.CLICK, TerrainInteractions.Response.DESTROY);
-			interactions().setDefault(Terrain.REGION_DECO, barrel);
-			interactions().setDefault(Terrain.REGION_DECO_ALT, barrel);
-			interactions().setDefault(Terrain.SEWER_BARREL_MARKED, barrel);
-			interactions().setDefault(Terrain.SEWER_BARREL_MARKED_ALT, barrel);
-		} else if (region == 1 || region == 2) {
+		if (region == 1 || region == 2) {
 			TerrainInteractions.Rule metal = TerrainInteractions.Rule.LEGACY.on(
 					TerrainInteractions.Source.ELECTRIC, TerrainInteractions.Response.CONDUCT);
 			interactions().setDefault(Terrain.REGION_DECO, metal);
 			interactions().setDefault(Terrain.REGION_DECO_ALT, metal);
-		} else if (region == 4) {
-			//岩石瓦砾：武器攻击、爆炸、解离射线都能摧毁，都还原成普通空地
-			TerrainInteractions.Rule rubble = TerrainInteractions.Rule.LEGACY
-					.on(TerrainInteractions.Source.CLICK, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
-					.on(TerrainInteractions.Source.EXPLOSION, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
-					.on(TerrainInteractions.Source.DISINTEGRATION, TerrainInteractions.Response.replaceWith(Terrain.EMPTY));
-			interactions().setDefault(Terrain.REGION_DECO, rubble);
-			interactions().setDefault(Terrain.REGION_DECO_ALT, rubble);
 		}
 		cleanWalls();
 		
@@ -545,6 +553,9 @@ public abstract class Level implements Bundlable {
 		hiddenEntranceGrass = bundle.getBoolean(HIDDEN_ENTRANCE_GRASS);
 		if (bundle.contains("terrain_interactions")) {
 			interactions().restoreFromBundle(bundle.getBundle("terrain_interactions"));
+		} else if (Dungeon.depth >= 1 && ((Dungeon.depth - 1) / 5 == 0 || (Dungeon.depth - 1) / 5 == 4)) {
+			// 更早的存档没有规则组件；复用初始化入口，不重抽木桶标记与战利品。
+			interactions();
 		}
 
 		visited	= bundle.getBooleanArray( VISITED );
@@ -1143,7 +1154,7 @@ public abstract class Level implements Bundlable {
 				Splash.at(pos, 0xFF8A5A2E, 8);
 			}
 			if (terr == Terrain.SEWER_BARREL_MARKED || terr == Terrain.SEWER_BARREL_MARKED_ALT) {
-				Heap heap = drop(Random.Int(4) == 0 ? Generator.random() : new Gold().random(), pos);
+				Heap heap = drop(Random.Int(4) == 0 ? Generator.random() : Gem.generateTreasure(), pos);
 				//砸桶是可选收获，掉出来的东西不计入探索
 				heap.autoExplored = true;
 				if (heap.sprite != null) heap.sprite.drop();

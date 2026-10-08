@@ -34,9 +34,10 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClassArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.WondrousResin;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.CursedWand;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.DamageWand;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
-import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HeroIcon;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
@@ -140,7 +141,9 @@ public class WildMagic extends ArmorAbility {
 
 		Ballistica aim = new Ballistica(hero.pos, cell, cur.collisionProperties(cell));
 		int impact = cur.targetingPos(hero, cell);
-		if (!cur.cursed && Dungeon.level.insideMap(impact) && Dungeon.level.map[impact] == Terrain.COLLAPSE_WALL) {
+		if (!cur.cursed && cur instanceof DamageWand && Dungeon.level.insideMap(impact)
+				&& Dungeon.level.terrainInteractions != null
+				&& Dungeon.level.terrainInteractions.ruleAt(impact).allows(TerrainInteractions.Source.WAND)) {
 			aim.collisionPos = impact;
 			aim.dist = aim.path.indexOf(impact);
 		}

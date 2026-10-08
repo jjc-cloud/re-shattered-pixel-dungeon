@@ -63,6 +63,11 @@ public final class CaveCollapse implements Hero.Doom {
 		return cell >= 0 && cell < regionAt.length && regionAt[cell] >= 0;
 	}
 
+	/** 单格岩壁只允许挖开；只有多格区域存在塌方危险。 */
+	public boolean isDangerous(int cell) {
+		return contains(cell) && regions.get(regionAt[cell]).length > 1;
+	}
+
 	public boolean hasGold(int cell) {
 		return contains(cell) && level.map[cell] == Terrain.COLLAPSE_WALL && goldVeins.contains(cell);
 	}

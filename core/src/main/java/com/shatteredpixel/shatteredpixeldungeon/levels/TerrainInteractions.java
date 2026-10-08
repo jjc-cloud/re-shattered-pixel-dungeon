@@ -2,6 +2,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels;
 
 import com.badlogic.gdx.utils.IntArray;
 import com.badlogic.gdx.utils.IntSet;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
@@ -187,10 +188,13 @@ public final class TerrainInteractions {
 	}
 
 	public void restoreFromBundle(Bundle bundle) {
+		// 保留当前区域默认值，用于补齐尚未配置区域装饰规则的早期存档。
+		Rule[] currentDefaults = new Rule[defaults.length];
+		for (int i = 0; i < defaults.length; i++) currentDefaults[i] = rules.get(defaults[i]);
 		rules.clear();
 		for (int i = 0; i < bundle.getInt("rule_count"); i++) {
 			Bundle entry = bundle.getBundle("rule_" + i);
-			Rule rule = Rule.NONE;
+			Rule rule = i == 0 ? Rule.LEGACY : Rule.NONE;
 			for (Source source : Source.values()) {
 				if (entry.contains(source.name())) rule = rule.on(source,
 						new Response(entry.getEnum(source.name(), Action.class), entry.getInt(source.name() + "_terrain")));
@@ -198,7 +202,8 @@ public final class TerrainInteractions {
 			rules.add(rule);
 		}
 		int[] saved = bundle.getIntArray("defaults");
-		System.arraycopy(saved, 0, defaults, 0, defaults.length);
+		Arrays.fill(defaults, 0);
+		System.arraycopy(saved, 0, defaults, 0, Math.min(saved.length, defaults.length));
 		overrides = bundle.contains("overrides") ? bundle.getIntArray("overrides") : null;
 		Arrays.fill(conductorRules, 0);
 		Arrays.fill(effectRules, 0);
@@ -206,6 +211,30 @@ public final class TerrainInteractions {
 		if (overrides != null) {
 			if (overrides.length != level.length()) throw new IllegalArgumentException("地形规则尺寸不符");
 			for (int id : overrides) if (id >= 0) countConductors(rules.get(id), 1);
+		}
+		// 只补齐旧区域默认规则的攻击来源；自定义响应和逐格覆盖继续按存档生效。
+		int region = Dungeon.depth >= 1 ? (Dungeon.depth - 1) / 5 : -1;
+		if (region == 0 || region == 4) {
+			int[] terrainTypes = region == 0
+					? new int[]{Terrain.REGION_DECO, Terrain.REGION_DECO_ALT, Terrain.SEWER_BARREL_MARKED, Terrain.SEWER_BARREL_MARKED_ALT}
+					: new int[]{Terrain.REGION_DECO, Terrain.REGION_DECO_ALT};
+			for (int terrain : terrainTypes) {
+				int id = defaults[terrain];
+				Rule rule = rules.get(id);
+				Response click = rule.response(Source.CLICK);
+				if (id == 0) {
+					setDefault(terrain, currentDefaults[terrain]);
+				} else if ((region == 0 && click.action == Action.DESTROY)
+						|| (region == 4 && click.action == Action.REPLACE && click.terrain == Terrain.EMPTY)) {
+					Bundle entry = bundle.getBundle("rule_" + id);
+					for (Source source : new Source[]{Source.MISSILE, Source.WAND, Source.SHOCKWAVE}) {
+						if (!entry.contains(source.name()) || rule.response(source).action == Action.LEGACY) {
+							rule = rule.on(source, click);
+						}
+					}
+					if (rule != rules.get(id)) setDefault(terrain, rule);
+				}
+			}
 		}
 	}
 }

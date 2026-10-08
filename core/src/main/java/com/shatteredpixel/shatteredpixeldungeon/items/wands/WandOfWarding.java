@@ -24,7 +24,6 @@ package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AllyBuff;
@@ -80,8 +79,6 @@ public class WandOfWarding extends Wand {
 	
 	@Override
 	public boolean tryToZap(Hero owner, int target) {
-		int impact = targetingPos(owner, target);
-		if (Dungeon.level.insideMap(impact) && Dungeon.level.map[impact] == Terrain.COLLAPSE_WALL) return super.tryToZap(owner, target);
 		
 		int currentWardEnergy = 0;
 		for (Char ch : Actor.chars()){
