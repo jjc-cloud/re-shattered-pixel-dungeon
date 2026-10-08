@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barrier;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Berserk;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
@@ -46,6 +47,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.mage.WildMagic;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.DivineSense;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.GuidingLight;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Flare;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
@@ -190,6 +192,23 @@ public abstract class Wand extends Item implements ChargeItem {
 	// Start a committed cast only after all wand-specific validation succeeds.
 	public final boolean beginZap(Hero owner, int target) {
 		if (!tryToZap(owner, target)) return false;
+		Char enemy = Actor.findChar(targetingPos(owner, target));
+		if (owner == Dungeon.hero && enemy instanceof Mob && enemy.isAlive()
+				&& enemy.alignment == Char.Alignment.ENEMY && enemy.invisible <= 0) {
+			//通过施放校验后，沿用已有仇恨接口通知能够攻击该目标的哨位。
+			for (Mob mob : Dungeon.level.mobs) {
+				if (mob instanceof WandOfWarding.Ward && mob.alignment == Char.Alignment.ALLY
+						&& mob.buff(Amok.class) == null && mob.isAlive()
+						&& !mob.isCharmedBy(enemy) && !enemy.isInvulnerable(mob.getClass())
+						&& ((WandOfWarding.Ward) mob).canAttack(enemy)) {
+					if (mob.fieldOfView == null || mob.fieldOfView.length != Dungeon.level.length()) {
+						mob.fieldOfView = new boolean[Dungeon.level.length()];
+					}
+					Dungeon.level.updateFieldOfView(mob, mob.fieldOfView);
+					if (mob.fieldOfView[enemy.pos]) mob.aggro(enemy);
+				}
+			}
+		}
 		if (owner.hasTalent(Talent.LIQUID_WILLPOWER)) {
 			Buff.affect(owner, HoldFast.class).pos = owner.pos;
 		}
