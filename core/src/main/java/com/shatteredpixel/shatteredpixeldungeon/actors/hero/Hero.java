@@ -265,6 +265,8 @@ public class Hero extends Char {
 	public boolean damageInterrupt = true;
 	public HeroAction curAction = null;
 	public HeroAction lastAction = null;
+	//成功移动后尚未消耗的手里剑瞬发资格，由所有手里剑共享。
+	public boolean justMoved = false;
 
 	//reference to the enemy the hero is currently in the process of attacking
 	private Char attackTarget;
@@ -346,6 +348,7 @@ public class Hero extends Char {
 	private static final String LEVEL		= "lvl";
 	private static final String EXPERIENCE	= "exp";
 	private static final String HTBOOST     = "htboost";
+	private static final String JUST_MOVED  = "just_moved";
 	
 	@Override
 	public void storeInBundle( Bundle bundle ) {
@@ -373,6 +376,7 @@ public class Hero extends Char {
 		bundle.put( EXPERIENCE, exp );
 		
 		bundle.put( HTBOOST, HTBoost );
+		bundle.put( JUST_MOVED, justMoved );
 		bundle.put("vault_elemental_controlled", vaultElementalControlled);
 		bundle.put("vault_elemental_control_hits", vaultElementalControlHits);
 
@@ -416,6 +420,7 @@ public class Hero extends Char {
 			if (buff(Berserk.class) == null) Buff.affect(this, Berserk.class);
 			if (buff(Berserk.DeathDefianceIndicator.class) == null) Buff.affect(this, Berserk.DeathDefianceIndicator.class);
 		}
+		justMoved = bundle.getBoolean(JUST_MOVED);
 	}
 	
 	public static void preview( GamesInProgress.Info info, Bundle bundle ) {
@@ -916,6 +921,7 @@ public class Hero extends Char {
 	@Override
 	public void spendConstant(float time) {
 		if (chestPickup) return;
+		justMoved = false;
 		super.spendConstant(time);
 	}
 
@@ -2081,10 +2087,12 @@ public class Hero extends Char {
 				Buff.affect(this, Momentum.class).gainStack();
 			}
 			
+			int oldPos = pos;
 			sprite.move(pos, step);
 			move(step);
 
 			spend( delay / speed() );
+			justMoved = pos != oldPos;
 			
 			search(false);
 

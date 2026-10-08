@@ -1119,6 +1119,8 @@ public class VaultBossElemental extends Mob {
 
 	public static class FrostCone extends Buff {
 
+		private static final float SHELTER_SPREAD = (float) Math.tan(Math.toRadians(15));
+
 		private int startPos;
 		private HashSet<Integer> cells = new HashSet<>();
 		private int distance = 2;
@@ -1188,6 +1190,25 @@ public class VaultBossElemental extends Mob {
 				e.on = false;
 			}
 			emitters.clear();
+			if (cells.isEmpty()) return;
+
+			int width = Dungeon.level.width();
+			Room room = ((RegularLevel) Dungeon.level).room(startPos);
+			HashMap<Integer, PointF> columnDirections = new HashMap<>();
+			for (int y = room.top + 1; y < room.bottom; y++) {
+				for (int x = room.left + 1; x < room.right; x++) {
+					int cell = x + y * width;
+					if (!Dungeon.level.solid[cell]) continue;
+					boolean interiorObstacle = (!Dungeon.level.solid[cell - 1] && !Dungeon.level.solid[cell + 1])
+							|| (!Dungeon.level.solid[cell - width] && !Dungeon.level.solid[cell + width]);
+					if (!interiorObstacle) continue;
+
+					float dx = x - startPos % width;
+					float dy = y - startPos / width;
+					float length = (float) Math.hypot(dx, dy);
+					if (length > 0) columnDirections.put(cell, new PointF(dx / length, dy / length));
+				}
+			}
 
 			Iterator<Integer> cellIterator = cells.iterator();
 			while (cellIterator.hasNext()) {
@@ -1195,16 +1216,29 @@ public class VaultBossElemental extends Mob {
 				if (Dungeon.level.solid[candidate]
 						|| new Ballistica(startPos, candidate, Ballistica.STOP_TARGET | Ballistica.STOP_SOLID).collisionPos != candidate) {
 					cellIterator.remove();
+					continue;
+				}
+				for (Map.Entry<Integer, PointF> column : columnDirections.entrySet()) {
+					int dx = candidate % width - column.getKey() % width;
+					int dy = candidate / width - column.getKey() / width;
+					PointF direction = column.getValue();
+					float forward = dx * direction.x + dy * direction.y;
+					float sideways = dx * direction.y - dy * direction.x;
+					// Behind each column, shelter opens by 30 degrees inside the 50-degree cold front.
+					if (forward > 0 && Math.abs(sideways) <= 0.5f + forward * SHELTER_SPREAD) {
+						cellIterator.remove();
+						break;
+					}
 				}
 			}
 			for (int cell : cells) {
 				if (Dungeon.level.trueDistance(cell, startPos) <= distance){
-						Emitter e = CellEmitter.get(cell);
-						e.pour(SnowParticle.FACTORY, 0.1f);
-						emitters.add(e);
-					}
+					Emitter e = CellEmitter.get(cell);
+					e.pour(SnowParticle.FACTORY, 0.1f);
+					emitters.add(e);
 				}
 			}
+		}
 
 		@Override
 		public void fx(boolean on) {

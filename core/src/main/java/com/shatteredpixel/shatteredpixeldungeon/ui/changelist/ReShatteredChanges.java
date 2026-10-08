@@ -88,6 +88,8 @@ public class ReShatteredChanges {
 				"\n阴阳调和返还的内力上升至10%/20%/30%。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V061_SPELLBOOK, "无序魔典",
 				"\n阅读无序魔典可以触发天赋效果。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V071_SHURIKEN, "手里剑",
+				"\n恢复移动后不消耗回合地投掷一次手里剑的机制，移除20回合冷却，并随存档保存。"));
 
 		changes = new ChangeInfo("削弱", false, null);
 		changes.hardlight(CharSprite.NEGATIVE);
