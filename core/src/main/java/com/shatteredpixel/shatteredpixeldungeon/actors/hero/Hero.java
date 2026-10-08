@@ -35,6 +35,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.SacrificialFire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AdrenalineSurge;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Awareness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barkskin;
@@ -138,6 +139,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfCha
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ThirteenLeafClover;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLivingEarth;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfWarding;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Crossbow;
@@ -593,6 +595,22 @@ public class Hero extends Char {
 	
 	@Override
 	public boolean attack(Char enemy, float dmgMulti, float dmgBonus, float accMulti) {
+		if (this == Dungeon.hero && enemy instanceof Mob && enemy.isAlive()
+				&& enemy.alignment == Alignment.ENEMY && enemy.invisible <= 0) {
+			//沿用灵壤泥人的仇恨指定；实际攻击动作才通知哨位，未命中也算攻击。
+			for (Mob mob : Dungeon.level.mobs) {
+				if (mob instanceof WandOfWarding.Ward && mob.alignment == Alignment.ALLY
+						&& mob.buff(Amok.class) == null && mob.isAlive()
+						&& !mob.isCharmedBy(enemy) && !enemy.isInvulnerable(mob.getClass())
+						&& ((WandOfWarding.Ward) mob).canAttack(enemy)) {
+					if (mob.fieldOfView == null || mob.fieldOfView.length != Dungeon.level.length()) {
+						mob.fieldOfView = new boolean[Dungeon.level.length()];
+					}
+					Dungeon.level.updateFieldOfView(mob, mob.fieldOfView);
+					if (mob.fieldOfView[enemy.pos]) mob.aggro(enemy);
+				}
+			}
+		}
 		if (enemy != null && hasTalent(Talent.LIQUID_WILLPOWER)) {
 			Buff.affect(this, HoldFast.class).pos = pos;
 		}

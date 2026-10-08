@@ -423,11 +423,8 @@ abstract public class MissileWeapon extends Weapon {
 				&& ((Hero)user).hasTalent(Talent.FIREPOWER_BARRAGE)){
 			return 0;
 		}
-		if (Actor.findChar(cell) != null && Actor.findChar(cell) != user){
-			return delayFactor( user );
-		} else {
-			return super.castDelay(user, cell);
-		}
+		//投掷武器始终按攻击耗时结算，空地投掷也受力量与攻速影响。
+		return delayFactor( user );
 	}
 	
 	protected void rangedHit( Char enemy, int cell ){

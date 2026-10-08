@@ -52,13 +52,13 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V020_STAIR, "新隐藏类型",
 				"\n-新增隐藏楼层。隐藏楼层不会被探地效果所揭示，只有经过隐藏楼层的入口时，会发出特殊的声音暗示，摧毁入口的表面即可打开隐藏的入口。\n-新增超级隐藏房。超级隐藏房不会生成常规的门，它的墙面与普通的墙壁别无二致，但可被爆炸、冲击所摧毁。首次看见超级隐藏房的入口时，会生成一枚炸弹告知其存在。超级隐藏房可以生成在任何位置，即便是走廊，处于第一层。\n-这两种特殊隐藏不计入探索分数。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V020_COLLAPSE_WALL, "塌方",
-				"\n-矿洞新增不稳定塌方区域，区域内无任何支撑物时会导致整片区域塌方，活埋区域内的所有单位。\n-矿洞区域不同房间之间的墙壁若小于2格宽度，则会生成为可摧毁的松动墙壁。"));
+				"\n-矿洞新增不稳定塌方区域，区域内无任何支撑物时会导致整片区域塌方，活埋区域内的所有单位。\n-矿洞区域不同房间之间的墙壁若小于2格宽度，则会生成为可摧毁的松动墙壁。\n-玩家处于塌方格时状态栏会显示特殊的标志符"));
 		changes.addButton(new ChangeButton(ChangeIcons.V061_BADGE, "新徽章",
 				"\n-混沌终局！：在开启所有挑战，且所有选择全随机的的情况下通关随机模式。\n-不堪一击：摧毁一个石化雕像。\n-夺命一击：在不触发光耀之拳或暗影之拳闪现的情况下击杀其中之一。\n-倒戈：死于友方单位。\n-速通玩家：在8000回合内通关。\n-绝食：不食用任何食物的情况下通关。\n-孱弱之躯：通关时基础力量为10。\n-炼金麻瓜：通关时没有炼制任何物品。\n-一无所长：通关时没有投入任何天赋点数。\n-天启之人：投入至少37点天赋点数。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V020_RUBY, "宝石",
 				"\n新增宝石类财宝，偶尔替换金币奖励出现，卖出获得金币。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V33_IMP, "宝库突袭",
-				"\n重构四区小恶魔任务。新任务中玩家需直接迎战三元素BOSS，巨型元素的AI做出了一些调整，现在更加智能。首次引入多BOSS战。"));
+				"\n重构四区小恶魔任务。新任务中玩家需直接迎战三元素BOSS，巨型元素的AI调整，现在更加智能。首次引入多BOSS战。"));
 		
 		changes = new ChangeInfo("改动", false, null);
 		changes.hardlight(CharSprite.WARNING);
@@ -72,6 +72,10 @@ public class ReShatteredChanges {
 				"\n现在盗贼初始搜索范围与其他英雄相同，补偿此前提升的更高概率发现地牢的秘密，广域搜索天赋增加的搜索范围调整为+1时为5*5，+2时为7*7。"));	
 		changes.addButton(new ChangeButton(ChangeIcons.V020_WAVE, "水面感知",
 				"\n感知优化，现在使用宝库内的感知怪物方式。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V071_SHURIKEN, "投掷武器",
+				"\n-手里剑在移动后即可免费掷出。\n-投掷武器只要投出即消耗攻击回合。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V074_WARDING, "哨位法杖",
+				"\n哨位现在会优先攻击玩家攻击的目标。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V061_BUGFIX,"bug修复",
 				"\n-修复了20层可破坏地形被破坏后仍使用原有的连续绘制导致的贴图错误问题。\n-修复了20层贴图缓存未释放导致背景出现贴图的问题。\n-修复了魔能超载无法超额使用暗影斗篷的问题。\n-修复了宝库入口的光源更新顺序导致的特效错误问题。\n-修复了其他端塌方闪退的问题。"));
 		
@@ -88,8 +92,6 @@ public class ReShatteredChanges {
 				"\n阴阳调和返还的内力上升至10%/20%/30%。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V061_SPELLBOOK, "无序魔典",
 				"\n阅读无序魔典可以触发天赋效果。"));
-		changes.addButton(new ChangeButton(ChangeIcons.V071_SHURIKEN, "手里剑",
-				"\n恢复移动后不消耗回合地投掷一次手里剑的机制，移除20回合冷却，并随存档保存。"));
 
 		changes = new ChangeInfo("削弱", false, null);
 		changes.hardlight(CharSprite.NEGATIVE);
