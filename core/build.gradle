@@ -9,18 +9,10 @@ dependencies {
     testRuntimeOnly "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
 }
 
-//TestStart 的开关由构建决定，省得打包前手改源码、测试时又改回来。
-//打包/发布类任务(assembleXxx、createIPA、portableZip、jpackage…)一律关闭，
-//本地运行和地形回归任务自动开启；回归编译后直接从 IDE 运行也能沿用测试开局。
-//其余情况(含 IDE 同步、无任务名)关闭。
-//需要时可以用 -PtestStart=true/false 强制指定。
-def testStartLocalRunTasks = ['debug', 'run', 'installdebug',
-                             'launchiphonesimulator', 'launchipadsimulator',
-                             'launchiosdevice', 'launchiossimulator',
-                             'terraininteractionregression']
-def requestedTaskNames = gradle.startParameter.taskNames.collect { it.tokenize(':').last().toLowerCase(Locale.ROOT) }
+//编译开关只控制“测试时间”挑战是否可用，测试开局由游戏内勾选决定。
+//默认显示；使用 -PtestStart=false 或在 gradle.properties 中设为 false 可屏蔽。
 def testStartEnabled = providers.gradleProperty('testStart').map { it.toBoolean() }
-        .getOrElse(requestedTaskNames.any { testStartLocalRunTasks.contains(it) })
+        .getOrElse(true)
 
 def testStartConfigDir = layout.buildDirectory.dir('generated/testStart')
 
@@ -32,7 +24,7 @@ def generateTestStartConfig = tasks.register('generateTestStartConfig') {
     inputs.property('testStartEnabled', enabled)
     outputs.dir(outputDir)
     doLast {
-        logger.lifecycle("TestStart.ENABLED = ${enabled} (requested tasks: ${requestedTaskNames})")
+        logger.lifecycle("测试时间挑战可用: ${enabled}")
         def generated = outputDir.get().file('com/shatteredpixel/shatteredpixeldungeon/TestStartConfig.java').asFile
         generated.parentFile.mkdirs()
         generated.text =
