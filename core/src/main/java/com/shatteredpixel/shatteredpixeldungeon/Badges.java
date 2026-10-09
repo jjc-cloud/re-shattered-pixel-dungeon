@@ -1056,7 +1056,7 @@ public class Badges {
 				&& Dungeon.hero.armorAbility != null){
 			badge = Badge.VICTORY_RANDOM;
 			local.add( badge );
-			if (Challenges.activeChallenges() == Challenges.MASKS.length){
+			if (Challenges.activeChallenges() == Challenges.MAX_CHALS){
 				unlock(badge);
 				badge = Badge.VICTORY_CHAOS;
 				local.add(badge);

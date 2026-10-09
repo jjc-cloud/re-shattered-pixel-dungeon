@@ -24,6 +24,8 @@ package com.shatteredpixel.shatteredpixeldungeon;
 import com.shatteredpixel.shatteredpixeldungeon.items.Dewdrop;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 
+import java.util.Arrays;
+
 public class Challenges {
 
 	//Some of these internal IDs are outdated and don't represent what these challenges do
@@ -37,26 +39,41 @@ public class Challenges {
 	public static final int CHAMPION_ENEMIES	= 128;
 	public static final int STRONGER_BOSSES 	= 256;
 	public static final int OUTDATED_DESIGN	= 512;
+	public static final int TEST_TIME		= 1024;
 
-	public static final int MAX_VALUE           = 1023;
+	public static final int MAX_VALUE           = TestStart.ENABLED ? 2047 : 1023;
+	// 测试时间不参与难度计数和随机挑战。
 	public static final int MAX_CHALS           = 10;
 
-	public static final String[] NAME_IDS = {
-			"champion_enemies",
-			"stronger_bosses",
-			"no_food",
-			"no_armor",
-			"no_healing",
-			"no_herbalism",
-			"swarm_intelligence",
-			"darkness",
-			"no_scrolls",
-			"outdated_design"
-	};
+	public static final String[] NAME_IDS;
+	public static final int[] MASKS;
 
-	public static final int[] MASKS = {
-			CHAMPION_ENEMIES, STRONGER_BOSSES, NO_FOOD, NO_ARMOR, NO_HEALING, NO_HERBALISM, SWARM_INTELLIGENCE, DARKNESS, NO_SCROLLS, OUTDATED_DESIGN
-	};
+	static {
+		String[] names = {
+				"champion_enemies",
+				"stronger_bosses",
+				"no_food",
+				"no_armor",
+				"no_healing",
+				"no_herbalism",
+				"swarm_intelligence",
+				"darkness",
+				"no_scrolls",
+				"outdated_design"
+		};
+
+		int[] masks = {
+				CHAMPION_ENEMIES, STRONGER_BOSSES, NO_FOOD, NO_ARMOR, NO_HEALING, NO_HERBALISM, SWARM_INTELLIGENCE, DARKNESS, NO_SCROLLS, OUTDATED_DESIGN
+		};
+		if (TestStart.ENABLED) {
+			names = Arrays.copyOf(names, names.length + 1);
+			names[names.length - 1] = "test_time";
+			masks = Arrays.copyOf(masks, masks.length + 1);
+			masks[masks.length - 1] = TEST_TIME;
+		}
+		NAME_IDS = names;
+		MASKS = masks;
+	}
 
 	public static int activeChallenges(){
 		return activeChallenges(Dungeon.challenges);
@@ -65,7 +82,7 @@ public class Challenges {
 	public static int activeChallenges(int mask){
 		int chCount = 0;
 		for (int ch : Challenges.MASKS){
-			if ((mask & ch) != 0) chCount++;
+			if (ch != TEST_TIME && (mask & ch) != 0) chCount++;
 		}
 		return chCount;
 	}

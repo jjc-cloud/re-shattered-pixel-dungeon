@@ -247,11 +247,12 @@ public class SPDSettings extends GameSettings {
 	}
 	
 	public static void challenges( int value ) {
-		put( KEY_CHALLENGES, value );
+		put( KEY_CHALLENGES, value & Challenges.MAX_VALUE );
 	}
 	
 	public static int challenges() {
-		return getInt( KEY_CHALLENGES, 0, 0, Challenges.MAX_VALUE );
+		// 先读取完整掩码再过滤，避免关闭测试时间后把旧设置截成全挑战。
+		return getInt( KEY_CHALLENGES, 0, 0, 2047 ) & Challenges.MAX_VALUE;
 	}
 
 	public static void customSeed( String value ){

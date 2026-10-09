@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.scenes;
 import com.shatteredpixel.shatteredpixeldungeon.TestStart;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Chrome;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.GamesInProgress;
@@ -674,7 +675,7 @@ if (error != null) {
 			//When debugging, we may start a game at a later depth to quickly test something
 			// if this happens, the games quickly generates all prior levels on branch 0 first,
 			// which ensures levelgen consistency with a regular game that was played to that depth.
-			if (DeviceCompat.isDebug() || TestStart.ENABLED){
+			if (DeviceCompat.isDebug() || (TestStart.ENABLED && Dungeon.isChallenged(Challenges.TEST_TIME))){
 				int trueDepth = Dungeon.depth;
 				int trueBranch = Dungeon.branch;
 				for (int i = 1; i < trueDepth + (trueBranch == 0 ? 0 : 1); i++){

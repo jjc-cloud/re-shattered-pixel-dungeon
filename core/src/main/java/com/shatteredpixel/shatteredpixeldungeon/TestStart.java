@@ -40,20 +40,14 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Torturer;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WornDartTrap;
 
 /**
- * Test start configuration.
- * <p>
- * When {@link #ENABLED} is true, new games use the configured depth and stats
- * and receive a reusable, categorized test-supplies generator.
- * </p>
+ * 测试开局配置。编译开关允许且本局勾选“测试时间”挑战时，
+ * 使用指定的深度与属性，并发放可重复使用的分类测试物资生成器。
  */
 public class TestStart {
 
 	/**
-	 * Whether the test start point is enabled. Decided by the build instead of
-	 * being edited by hand: it is false for every packaging task (assemble*,
-	 * createIPA, portableZip, jpackage, ...) and true for local run tasks such
-	 * as desktop:debug and the ios launch* tasks. Pass -PtestStart=true/false to
-	 * force a value. See core/build.gradle.
+	 * 编译开关只控制“测试时间”挑战是否可用，不会自动启用测试开局。
+	 * 在 gradle.properties 中设置 testStart，或用 -PtestStart=true/false 指定。
 	 */
 	public static final boolean ENABLED = TestStartConfig.enabled();
 	/**
@@ -74,7 +68,7 @@ public class TestStart {
 	public static final boolean TERRAIN_INTERACTION_DEMO = false;
 
 	public static void apply() {
-		if (!ENABLED) return;
+		if (!ENABLED || !Dungeon.isChallenged(Challenges.TEST_TIME)) return;
 		Hero hero = Dungeon.hero;
 		if (hero == null) {
 			return;
@@ -111,7 +105,7 @@ public class TestStart {
 	 * Saved floors are loaded normally, so revisiting does not add duplicates.
 	 */
 	public static void applyToLevel(Level level) {
-		if (!ENABLED || Dungeon.branch != 0) return;
+		if (!ENABLED || !Dungeon.isChallenged(Challenges.TEST_TIME) || Dungeon.branch != 0) return;
 		if (TERRAIN_INTERACTION_DEMO) applyTerrainInteractions(level);
 
 		// Add spawnMobs(...) and spawnTraps(...) calls here.
@@ -159,7 +153,7 @@ public class TestStart {
 
 	/** Returns the number placed; stops when no suitable empty floor remains. */
 	public static int spawnMobs(Level level, int depth, Factory<? extends Mob> factory, int count) {
-		if (!ENABLED || Dungeon.branch != 0 || Dungeon.depth != depth) return 0;
+		if (!ENABLED || !Dungeon.isChallenged(Challenges.TEST_TIME) || Dungeon.branch != 0 || Dungeon.depth != depth) return 0;
 		int placed = 0;
 		for (; placed < count; placed++) {
 			Mob mob = factory.create();
@@ -174,7 +168,7 @@ public class TestStart {
 	/** Returns the number placed; traps that cannot be hidden remain visible. */
 	public static int spawnTraps(Level level, int depth, Factory<? extends Trap> factory,
 	                             int count, boolean hidden) {
-		if (!ENABLED || Dungeon.branch != 0 || Dungeon.depth != depth) return 0;
+		if (!ENABLED || !Dungeon.isChallenged(Challenges.TEST_TIME) || Dungeon.branch != 0 || Dungeon.depth != depth) return 0;
 		int placed = 0;
 		for (; placed < count; placed++) {
 			int cell = emptyCell(level, false);
