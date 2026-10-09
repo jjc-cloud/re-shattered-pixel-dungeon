@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Chrome;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.GamesInProgress;
+import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -99,6 +100,7 @@ public class InterlevelScene extends PixelScene {
 	}
 	private Phase phase;
 	private float timeLeft;
+	private boolean skipStairAnimation;
 
 	public Image background;
 
@@ -124,6 +126,10 @@ public class InterlevelScene extends PixelScene {
 	@Override
 	public void create() {
 		super.create();
+		// 新开局尚未初始化 Dungeon，使用选择界面保存的挑战设置。
+		skipStairAnimation = TestStart.ENABLED && (mode == Mode.DESCEND || mode == Mode.ASCEND)
+				&& (Dungeon.hero == null ? (SPDSettings.challenges() & Challenges.TEST_TIME) != 0
+						: Dungeon.isChallenged(Challenges.TEST_TIME));
 		
 		String loadingAsset;
 		int loadingDepth;
@@ -218,7 +224,7 @@ public class InterlevelScene extends PixelScene {
 			}
 		Random.popGenerator();
 		
-		if (DeviceCompat.isDebug()){
+		if (DeviceCompat.isDebug() || skipStairAnimation){
 			fadeTime = 0f;
 		}
 
@@ -280,7 +286,7 @@ public class InterlevelScene extends PixelScene {
 		align(loadingText);
 		add(loadingText);
 
-		if (mode == Mode.DESCEND && lastRegion <= 5 && !DeviceCompat.isDebug()){
+		if (mode == Mode.DESCEND && lastRegion <= 5 && !DeviceCompat.isDebug() && !skipStairAnimation){
 			if (Dungeon.hero == null || (loadingDepth > Statistics.deepestFloor && loadingDepth % 5 == 1)){
 					storyMessage = PixelScene.renderTextBlock(Document.INTROS.pageBody(region), 6);
 					storyMessage.maxWidth( PixelScene.landscape() ? 180 : 125);
@@ -476,7 +482,7 @@ public class InterlevelScene extends PixelScene {
 			waitingTime += Game.elapsed;
 		}
 
-		if (mode != Mode.FALL && dots != Math.ceil(waitingTime / ((2*fadeTime)/3f))) {
+		if (fadeTime > 0 && mode != Mode.FALL && dots != Math.ceil(waitingTime / ((2*fadeTime)/3f))) {
 			String text = Messages.get(Mode.class, mode.name());
 			dots = (int)Math.ceil(waitingTime / ((2*fadeTime)/3f))%3;
 			switch (dots){
@@ -524,7 +530,11 @@ public class InterlevelScene extends PixelScene {
 			}
 			
 			if ((timeLeft -= Game.elapsed) <= 0) {
-				Game.switchScene( GameScene.class );
+				if (skipStairAnimation) {
+					ShatteredPixelDungeon.switchNoFade(GameScene.class);
+				} else {
+					Game.switchScene( GameScene.class );
+				}
 				KeyEvent.clearListeners(); //removes potential listener for continue
 				thread = null;
 				error = null;
