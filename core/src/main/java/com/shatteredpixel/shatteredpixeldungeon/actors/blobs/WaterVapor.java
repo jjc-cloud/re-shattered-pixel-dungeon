@@ -49,7 +49,6 @@ public class WaterVapor extends Blob implements Hero.Doom {
 				volume += (off[cell] = duration);
 			}
 		}
-		Dungeon.observe();
 	}
 
 	@Override

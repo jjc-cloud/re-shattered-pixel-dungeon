@@ -74,20 +74,6 @@ import java.util.ArrayList;
 
 public class CavesBossLevel extends Level {
 
-	@Override
-	protected int staticEnvironmentalLightRadius( int cell ) {
-		if (map[cell] == Terrain.GRASS
-				|| map[cell] == Terrain.HIGH_GRASS
-				|| map[cell] == Terrain.FURROWED_GRASS) return 0;
-		return -1;
-	}
-
-	@Override
-	protected void registerEnvironmentalLightBlobs( ArrayList<Class<? extends Blob>> types ) {
-		super.registerEnvironmentalLightBlobs( types );
-		types.add( PylonEnergy.class );
-	}
-
 	{
 		color1 = 0x534f3e;
 		color2 = 0xb9d661;
@@ -902,6 +888,11 @@ public class CavesBossLevel extends Level {
 	}
 
 	public static class PylonEnergy extends Blob {
+
+		@Override
+		public int lightRadius() {
+			return 0;
+		}
 
 		@Override
 		protected void evolve() {

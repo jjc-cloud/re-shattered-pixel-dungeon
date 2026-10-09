@@ -45,10 +45,6 @@ import java.util.ArrayList;
 
 public class LastShopLevel extends RegularLevel {
 
-	@Override
-	protected int staticEnvironmentalLightRadius( int cell ) {
-		return (map[cell] == Terrain.REGION_DECO || map[cell] == Terrain.REGION_DECO_ALT) ? 2 : -1;
-	}
 	
 	{
 		color1 = 0x4b6636;

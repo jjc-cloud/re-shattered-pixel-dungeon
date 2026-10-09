@@ -70,10 +70,6 @@ import java.util.ArrayList;
 
 public class PrisonBossLevel extends Level {
 
-	@Override
-	protected int staticEnvironmentalLightRadius( int cell ) {
-		return map[cell] == Terrain.WALL_DECO ? 1 : -1;
-	}
 	
 	{
 		color1 = 0x6a723d;

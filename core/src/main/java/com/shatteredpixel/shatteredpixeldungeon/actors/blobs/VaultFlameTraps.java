@@ -46,6 +46,11 @@ import java.util.Arrays;
 //contains both blob logic and logic for seeding itself
 public class VaultFlameTraps extends Blob {
 
+	@Override
+	public int lightRadius() {
+		return 0;
+	}
+
 	public int[] afterTriggerCooldowns;
 	public int[] curCooldowns;
 	public int[] triggersAfterCooldown;

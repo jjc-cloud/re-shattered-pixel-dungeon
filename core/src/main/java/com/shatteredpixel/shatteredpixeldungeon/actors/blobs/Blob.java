@@ -31,6 +31,7 @@ import com.watabou.utils.Rect;
 import com.watabou.utils.Reflection;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 
 public class Blob extends Actor {
 
@@ -107,6 +108,15 @@ public class Blob extends Actor {
 	}
 
 	protected ArrayList<Integer> cellsToFlagUpdate = new ArrayList<>();
+	private BitSet visualBefore;
+	private Level level;
+	private boolean evolving;
+	protected boolean observeAfterAct;
+
+	/** 默认不发光；发光 Blob 自己声明范围，子类自然继承。 */
+	public int lightRadius() {
+		return -1;
+	}
 	
 	@Override
 	public boolean act() {
@@ -118,17 +128,61 @@ public class Blob extends Actor {
 			if (area.isEmpty())
 				setupArea();
 
+			Level level = Dungeon.level;
+			this.level = level;
+			boolean visual = lightRadius() >= 0 || this instanceof SmokeScreen || this instanceof WaterVapor;
+			int left = Math.max(0, area.left - 1), top = Math.max(0, area.top - 1);
+			int right = Math.min(level.width(), area.right + 1), bottom = Math.min(level.height(), area.bottom + 1);
+			if (visual) {
+				if (visualBefore == null) visualBefore = new BitSet(cur.length);
+				visualBefore.clear();
+				for (int y = top; y < bottom; y++) {
+					for (int x = left; x < right; x++) {
+						int cell = x + y * level.width();
+						if (cur[cell] > 0) visualBefore.set(cell);
+					}
+				}
+			}
+
 			volume = 0;
 
-			evolve();
+			evolving = true;
+			try {
+				evolve();
+			} finally {
+				evolving = false;
+			}
 			int[] tmp = off;
 			off = cur;
 			cur = tmp;
+
+			if (visual) {
+				if (!area.isEmpty()) {
+					left = Math.max(0, Math.min(left, area.left - 1));
+					top = Math.max(0, Math.min(top, area.top - 1));
+					right = Math.min(level.width(), Math.max(right, area.right + 1));
+					bottom = Math.min(level.height(), Math.max(bottom, area.bottom + 1));
+				}
+				for (int y = top; y < bottom; y++) {
+					for (int x = left; x < right; x++) {
+						int cell = x + y * level.width();
+						if (visualBefore.get(cell) != (cur[cell] > 0)) {
+							level.updateBlobLighting(this, cell);
+							observeAfterAct = true;
+							// 同时处理演化中途曾触发观察、缓存读过临时 cur 的情况。
+						}
+					}
+				}
+			}
 
 			for (int i : cellsToFlagUpdate){
 				Dungeon.level.updateCellFlags(i);
 			}
 			cellsToFlagUpdate.clear();
+			if (observeAfterAct) {
+				observeAfterAct = false;
+				Dungeon.observe();
+			}
 			
 		} else {
 			if (!area.isEmpty()) {
@@ -207,26 +261,34 @@ public class Blob extends Actor {
 	}
 
 	public void seed( Level level, int cell, int amount ) {
+		this.level = level;
 		if (cur == null) cur = new int[level.length()];
 		if (off == null) off = new int[cur.length];
 
+		boolean wasActive = cur[cell] > 0;
 		cur[cell] += amount;
 		volume += amount;
 
 		area.union(cell%level.width(), cell/level.width());
+		if (wasActive != (cur[cell] > 0)) level.updateBlobLighting(this, cell);
 	}
 	
 	public void clear( int cell ) {
-		if (volume == 0) return;
-		volume -= cur[cell];
+		if (cur == null || cur[cell] == 0) return;
+		// 演化时 volume 已改为累计下一状态，不能扣减旧 cur 的剩余时长。
+		if (!evolving) volume -= cur[cell];
 		cur[cell] = 0;
+		Level owner = level != null ? level : Dungeon.level;
+		if (owner != null) owner.updateBlobLighting(this, cell);
 	}
 
 	public void fullyClear(){
+		Level owner = level != null ? level : Dungeon.level;
+		if (owner != null) owner.updateBlobLighting(this);
 		volume = 0;
 		area.setEmpty();
-		cur = new int[Dungeon.level.length()];
-		off = new int[Dungeon.level.length()];
+		cur = new int[owner.length()];
+		off = new int[owner.length()];
 	}
 
 	public void onBuildFlagMaps( Level l ){

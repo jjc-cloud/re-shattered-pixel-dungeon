@@ -32,7 +32,6 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Hunger;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.VaultTokenDoor;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.EscapeCrystal;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
@@ -113,7 +112,6 @@ import com.shatteredpixel.shatteredpixeldungeon.plants.Starflower;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Stormvine;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Sungrass;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Swiftthistle;
-import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.audio.Music;
 import com.watabou.utils.Callback;
@@ -739,11 +737,6 @@ public class VaultLevel extends CityLevel {
 		}
 		if (tile == Terrain.REGION_DECO || tile == Terrain.REGION_DECO_ALT) return Messages.get(CityLevel.class, "region_deco_desc");
 		return super.tileDesc(tile);
-	}
-
-	@Override
-	protected int staticEnvironmentalLightRadius(int cell) {
-		return map[cell] == Terrain.REGION_DECO || map[cell] == Terrain.REGION_DECO_ALT ? 2 : super.staticEnvironmentalLightRadius(cell);
 	}
 
 	@Override
