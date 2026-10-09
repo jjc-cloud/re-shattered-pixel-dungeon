@@ -1474,6 +1474,7 @@ public class Hero extends Char {
 						&& action.level.terrainInteractions != null
 						&& action.level.terrainInteractions.interact(action.dst, TerrainInteractions.Source.CLICK)
 						== TerrainInteractions.Result.CHANGED) {
+					hitSound(Random.Float(0.87f, 1.15f));
 					if (!isAlive()) { next(); return; }
 				if (Dungeon.depth >= 1 && (Dungeon.depth - 1) / 5 == 4
 						&& (action.terrain == Terrain.REGION_DECO || action.terrain == Terrain.REGION_DECO_ALT)) {

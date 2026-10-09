@@ -279,7 +279,10 @@ abstract public class MissileWeapon extends Weapon {
 	protected void onThrow( int cell ) {
 		if (Dungeon.level.terrainInteractions != null && Actor.findChar(cell) == null
 				&& Dungeon.level.terrainInteractions.ruleAt(cell).allows(TerrainInteractions.Source.MISSILE)) {
-			if (Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.MISSILE)) Dungeon.observe();
+			if (Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.MISSILE)) {
+				hitSound(Random.Float(0.87f, 1.15f));
+				Dungeon.observe();
+			}
 			parent = null;
 			if (!spawnedForEffect) super.onThrow(cell);
 			return;

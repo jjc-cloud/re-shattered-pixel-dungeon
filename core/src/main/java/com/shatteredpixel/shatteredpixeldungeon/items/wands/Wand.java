@@ -175,7 +175,11 @@ public abstract class Wand extends Item implements ChargeItem {
 			int distance = beam.path.indexOf(impact);
 			if (distance < 1 || distance > ((WandOfDisintegration)this).distance()) return false;
 		}
-		if (Dungeon.level.affectTerrain(impact, TerrainInteractions.Source.WAND)) Dungeon.observe();
+		if (Dungeon.level.affectTerrain(impact, TerrainInteractions.Source.WAND)) {
+			float pitch = this instanceof WandOfFrost ? 1.1f : this instanceof WandOfLivingEarth ? 0.9f : 1f;
+			Sample.INSTANCE.play(Assets.Sounds.HIT_MAGIC, 1, pitch * Random.Float(0.87f, 1.15f));
+			Dungeon.observe();
+		}
 		return true;
 	}
 
