@@ -19,6 +19,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.items;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
 import com.watabou.utils.Bundle;
@@ -97,9 +98,12 @@ public class ShopOrder {
 		return deliveredSeq != 0 && remaining > stolen && deliveredShopDepth == Dungeon.depth;
 	}
 
-	//取走小恶魔“代管货物”说明的播报标记：店内还有实物且从未播过时返回true（只播一次）
+	// 首次说明代管货物；只交付雕像且没有订购时，也说明商店价格优惠。
 	public static boolean takeImpNote() {
-		if (impHoldingGoods() && !impNoteShown) {
+		boolean statueOnlyWithoutOrder = Dungeon.depth == 21 && deliveredShopDepth != 21
+				&& Imp.Quest.earnedShop() && Imp.Quest.vaultBossesDefeated
+				&& Imp.Quest.returnOutcome == Imp.Quest.RETURN_STATUE;
+		if (!impNoteShown && (impHoldingGoods() || statueOnlyWithoutOrder)) {
 			impNoteShown = true;
 			return true;
 		}
@@ -188,6 +192,11 @@ public class ShopOrder {
 		if (pending.isEmpty()) return new ArrayList<>();
 
 		ArrayList<Item> delivery = pending;
+		if (Dungeon.depth == 21 && pendingPlacedDepth == 16
+				&& Imp.Quest.earnedShop() && Imp.Quest.vaultBossesDefeated
+				&& Imp.Quest.returnOutcome == Imp.Quest.RETURN_STATUE) {
+			for (Item item : delivery) item.shopOrderFree = true;
+		}
 		deliveredSeq = pendingSeq;
 		deliveredPlacedDepth = pendingPlacedDepth;
 		deliveredShopDepth = Dungeon.depth;
@@ -210,6 +219,9 @@ public class ShopOrder {
 				doneDialogPending = true;
 				doneDialogStolen = true;
 			}
+			// 已领到的物品不再属于待交付订单，转卖后不能重复免费领取或重复计数。
+			item.shopOrderTag = 0;
+			item.shopOrderFree = false;
 		}
 	}
 
@@ -222,6 +234,8 @@ public class ShopOrder {
 				doneDialogPending = true;
 				doneDialogStolen = true;
 			}
+			item.shopOrderTag = 0;
+			item.shopOrderFree = false;
 		}
 	}
 

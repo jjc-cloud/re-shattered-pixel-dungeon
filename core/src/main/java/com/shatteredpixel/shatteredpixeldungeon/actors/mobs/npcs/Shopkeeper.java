@@ -202,7 +202,11 @@ public class Shopkeeper extends NPC {
 
 	//shopkeepers are greedy!
 	public static int sellPrice(Item item){
-		int price = item.value() * 5 * (Dungeon.depth / 5 + 1);
+		if (item.shopOrderTag != 0 && item.shopOrderFree) return 0;
+		int multiplier = Dungeon.depth / 5 + 1;
+		if (Dungeon.depth == 21 && Imp.Quest.earnedShop() && Imp.Quest.vaultBossesDefeated
+				&& Imp.Quest.returnOutcome == Imp.Quest.RETURN_STATUE) multiplier = 4;
+		int price = item.value() * 5 * multiplier;
 		//订购物品按标价的1.5倍出售
 		if (item.shopOrderTag != 0) {
 			price = price * 3 / 2;

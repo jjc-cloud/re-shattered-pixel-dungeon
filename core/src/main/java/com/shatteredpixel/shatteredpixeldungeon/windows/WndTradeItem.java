@@ -146,7 +146,7 @@ public class WndTradeItem extends WndInfoItem {
 
 		final int price = Shopkeeper.sellPrice( item );
 
-		RedButton btnBuy = new RedButton( Messages.get(this, "buy", price) ) {
+		RedButton btnBuy = new RedButton( price == 0 ? Messages.get(this, "claim_free") : Messages.get(this, "buy", price) ) {
 			@Override
 			protected void onClick() {
 				hide();
@@ -161,7 +161,7 @@ public class WndTradeItem extends WndInfoItem {
 		pos = btnBuy.bottom();
 
 		final MasterThievesArmband.Thievery thievery = Dungeon.hero.buff(MasterThievesArmband.Thievery.class);
-		if (thievery != null && !thievery.isCursed() && thievery.chargesToUse(item) > 0) {
+		if (price > 0 && thievery != null && !thievery.isCursed() && thievery.chargesToUse(item) > 0) {
 			final float chance = thievery.stealChance(item);
 			final int chargesToUse = thievery.chargesToUse(item);
 			RedButton btnSteal = new RedButton(Messages.get(this, "steal", Math.min(100, (int) (chance * 100)), chargesToUse), 6) {
