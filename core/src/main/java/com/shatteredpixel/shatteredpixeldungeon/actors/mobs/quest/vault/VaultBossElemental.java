@@ -1292,7 +1292,6 @@ public class VaultBossElemental extends Mob {
 
 		private int targetCell = -1;
 		private int distance = -1000;
-		private HashMap<Integer, Integer> shadowDirections = new HashMap<>();
 		private static final int[] DIR_X = {-1, -1, 1, 1};
 		private static final int[] DIR_Y = {-1, 1, 1, -1};
 
@@ -1319,23 +1318,7 @@ public class VaultBossElemental extends Mob {
 						}
 					}
 				}
-				for (int y = room.top + 1; y < room.bottom; y++) {
-					for (int x = room.left + 1; x < room.right; x++) {
-						int cell = x + y * Dungeon.level.width();
-						if (!Dungeon.level.solid[cell]) continue;
-						int width = Dungeon.level.width();
-						boolean interiorObstacle = !Dungeon.level.solid[cell - 1] && !Dungeon.level.solid[cell + 1]
-								|| !Dungeon.level.solid[cell - width] && !Dungeon.level.solid[cell + width];
-						if (!interiorObstacle) continue;
-						int directions = 0;
-						for (int i = 0; i < DIR_X.length; i++) {
-							boolean enabled = fullVortex || (altDirection ? i % 2 == 0 : i % 2 != 0);
-							int frontDistance = (x - center.x) * DIR_X[i] + (y - center.y) * DIR_Y[i];
-							if (enabled && frontDistance > 0 && frontDistance <= distance) directions |= 1 << i;
-						}
-						if (directions != 0) shadowDirections.put(cell, directions);
-					}
-				}
+
 			}
 
 			HashSet<Integer> cells = new HashSet<>();
@@ -1355,30 +1338,8 @@ public class VaultBossElemental extends Mob {
 			}
 
 			boolean frontExists = !cells.isEmpty();
-			for (Iterator<Integer> iterator = cells.iterator(); iterator.hasNext();) {
-				int cell = iterator.next();
-				boolean sheltered = false;
-				for (Map.Entry<Integer, Integer> shadow : shadowDirections.entrySet()) {
-					int dx = cell % Dungeon.level.width() - shadow.getKey() % Dungeon.level.width();
-					int dy = cell / Dungeon.level.width() - shadow.getKey() / Dungeon.level.width();
-					for (int i = 0; i < DIR_X.length; i++) {
-						if ((shadow.getValue() & (1 << i)) == 0) continue;
-						// A widening wedge behind the actual obstacle, along the incoming front's direction.
-						int forward = -dx * DIR_X[i] - dy * DIR_Y[i];
-						int sideways = dx * DIR_Y[i] - dy * DIR_X[i];
-						if (forward > 0 && Math.abs(sideways) <= forward) {
-							sheltered = true;
-							break;
-						}
-					}
-					if (sheltered) break;
-				}
-				if (sheltered) {
-					iterator.remove();
-				}
-			}
 
-			// The wave keeps advancing, while obstacle shadows remain protected.
+			// 冰线跨过柱子继续推进，不生成柱后保护区。
 			distance--;
 			updateFX();
 
@@ -1434,26 +1395,6 @@ public class VaultBossElemental extends Mob {
 					}
 				}
 
-				for (Iterator<Integer> iterator = cells.iterator(); iterator.hasNext();) {
-					int cell = iterator.next();
-					boolean sheltered = false;
-					for (Map.Entry<Integer, Integer> shadow : shadowDirections.entrySet()) {
-						int dx = cell % Dungeon.level.width() - shadow.getKey() % Dungeon.level.width();
-						int dy = cell / Dungeon.level.width() - shadow.getKey() / Dungeon.level.width();
-						for (int i = 0; i < DIR_X.length; i++) {
-							if ((shadow.getValue() & (1 << i)) == 0) continue;
-							int forward = -dx * DIR_X[i] - dy * DIR_Y[i];
-							int sideways = dx * DIR_Y[i] - dy * DIR_X[i];
-							if (forward > 0 && Math.abs(sideways) <= forward) {
-								sheltered = true;
-								break;
-							}
-						}
-						if (sheltered) break;
-					}
-					if (sheltered) iterator.remove();
-				}
-
 				for (Integer cell : cells) {
 					Emitter pour = CellEmitter.get(cell);
 					pour.pour(SnowParticle.FACTORY, 0.1f);
@@ -1475,16 +1416,18 @@ public class VaultBossElemental extends Mob {
 		}
 
 		private HashSet<Integer> getCells(int start, int dist, int dirX, int dirY){
-			dist = Math.abs(dist);
 			HashSet<Integer> cells = new HashSet<>();
 			Room room = ((RegularLevel)Dungeon.level).room(start);
 			Point center = Dungeon.level.cellToPoint(start);
-			// Both flanks continue past a column; its forward shadow remains blocked.
+			int width = Dungeon.level.width();
+			// 保留有符号距离，使波前越过中心后继续前进，而不是折返。
 			for (int y = room.top + 1; y < room.bottom; y++) {
 				for (int x = room.left + 1; x < room.right; x++) {
 					if ((x - center.x) * dirX + (y - center.y) * dirY != dist) continue;
-					int cell = x + y * Dungeon.level.width();
-					if (Dungeon.level.insideMap(cell) && !Dungeon.level.solid[cell]) cells.add(cell);
+					int cell = x + y * width;
+					if (!Dungeon.level.insideMap(cell) || Dungeon.level.solid[cell]) continue;
+					// 仅跳过柱体所在的实体格，不删去其后方或两翼的地面。
+					cells.add(cell);
 				}
 			}
 			return cells;
@@ -1501,15 +1444,6 @@ public class VaultBossElemental extends Mob {
 			super.storeInBundle(bundle);
 			bundle.put(TARGET_CELL, targetCell);
 			bundle.put(DISTANCE, distance);
-			int[] obstacles = new int[shadowDirections.size()];
-			int[] directions = new int[shadowDirections.size()];
-			int shadowIndex = 0;
-			for (Map.Entry<Integer, Integer> shadow : shadowDirections.entrySet()) {
-				obstacles[shadowIndex] = shadow.getKey();
-				directions[shadowIndex++] = shadow.getValue();
-			}
-			bundle.put("shadow_obstacles", obstacles);
-			bundle.put("shadow_directions", directions);
 			bundle.put(FULL_VORTEX, fullVortex);
 			bundle.put(ALT_DIR, altDirection);
 		}
@@ -1519,11 +1453,6 @@ public class VaultBossElemental extends Mob {
 			super.restoreFromBundle(bundle);
 			targetCell = bundle.getInt(TARGET_CELL);
 			distance = bundle.getInt(DISTANCE);
-			if (bundle.contains("shadow_obstacles")) {
-				int[] obstacles = bundle.getIntArray("shadow_obstacles");
-				int[] directions = bundle.getIntArray("shadow_directions");
-				for (int i = 0; i < obstacles.length; i++) shadowDirections.put(obstacles[i], directions[i]);
-			}
 			fullVortex = bundle.getBoolean(FULL_VORTEX);
 			altDirection = bundle.getBoolean(ALT_DIR);
 		}

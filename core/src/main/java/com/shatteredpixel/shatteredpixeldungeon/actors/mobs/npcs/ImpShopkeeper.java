@@ -58,12 +58,14 @@ public class ImpShopkeeper extends Shopkeeper {
 	@Override
 	protected String orderDoneText() {
 		//小恶魔有专属的订购买完台词，但依旧不参与订购
-		return Messages.get(ImpShopkeeper.class, "order_done");
+		return Messages.get(ImpShopkeeper.class, Imp.Quest.vaultBossesDefeated && Imp.Quest.returnOutcome == Imp.Quest.RETURN_STATUE
+				? "order_done_free" : "order_done");
 	}
 
 	@Override
 	protected String orderDoneTheftText() {
-		return Messages.get(ImpShopkeeper.class, "order_done_theft");
+		return Messages.get(ImpShopkeeper.class, Imp.Quest.vaultBossesDefeated && Imp.Quest.returnOutcome == Imp.Quest.RETURN_STATUE
+				? "order_done_free_theft" : "order_done_theft");
 	}
 
 	@Override
@@ -71,13 +73,14 @@ public class ImpShopkeeper extends Shopkeeper {
 		if (c != Dungeon.hero) {
 			return true;
 		}
-		//首次点击且店内还有代管货物时，先说明情况（只播一次）
+		// 首次点击时说明代管货物或只交付雕像获得的价格优惠（只播一次）。
 		if (ShopOrder.takeImpNote()) {
 			Game.runOnRenderThread(new Callback() {
 				@Override
 				public void call() {
 					GameScene.show(new WndOptions(sprite(), Messages.titleCase(name()),
-							Messages.get(ImpShopkeeper.class, "order_note"),
+							Messages.get(ImpShopkeeper.class, Imp.Quest.vaultBossesDefeated && Imp.Quest.returnOutcome == Imp.Quest.RETURN_STATUE
+									? (ShopOrder.impHoldingGoods() ? "order_note_free" : "order_note_none") : "order_note"),
 							Messages.get(ImpShopkeeper.class, "order_note_continue")) {
 						@Override
 						protected void onSelect(int index) {

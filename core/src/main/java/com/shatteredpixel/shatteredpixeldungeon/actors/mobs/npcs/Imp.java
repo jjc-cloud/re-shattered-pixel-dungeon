@@ -176,7 +176,13 @@ public class Imp extends NPC {
 			} else if (!Quest.isCompleted()) {
 				tell(Messages.get(Imp.this, "quest_in_progress_regular"));
 			} else {
-				if (!Quest.earnedShop()){
+				if (Quest.vaultBossesDefeated && Quest.returnOutcome == Quest.RETURN_EMPTY) {
+					tell(Messages.get(Imp.this, "quest_completed_empty"));
+				} else if (Quest.vaultBossesDefeated && Quest.returnOutcome == Quest.RETURN_ITEM) {
+					tell(Messages.get(Imp.this, "quest_completed_item"));
+				} else if (Quest.vaultBossesDefeated && Quest.returnOutcome == Quest.RETURN_STATUE) {
+					tell(Messages.get(Imp.this, "quest_completed_statue_only"));
+				} else if (!Quest.earnedShop()){
 					tell(Messages.get(Imp.this, "quest_completed_bad"));
 				} else if (Quest.score < 4000){
 					tell(Messages.get(Imp.this, "quest_completed_good"));
@@ -221,6 +227,12 @@ public class Imp extends NPC {
 		public static boolean vaultGateOpened;
 		public static boolean vaultBossesDefeated;
 		public static boolean vaultRemainsCommented;
+		public static final int RETURN_EMPTY = 1;
+		public static final int RETURN_ITEM = 2;
+		public static final int RETURN_STATUE = 3;
+		public static final int RETURN_STATUE_ITEM = 4;
+		// 记录实际交付和携出结果，独立于宝库战斗得分。
+		public static int returnOutcome;
 		public static Item reward; //just used to hold the reward if her's inventory is full in new version
 
 		//variables exclusive to new quest
@@ -237,6 +249,7 @@ public class Imp extends NPC {
 			vaultGateOpened = false;
 			vaultBossesDefeated = false;
 			vaultRemainsCommented = false;
+			returnOutcome = 0;
 
 			reward = null;
 			hazardFreebies = 2;
@@ -275,6 +288,7 @@ public class Imp extends NPC {
 				node.put("vault_gate_opened", vaultGateOpened);
 				node.put("vault_bosses_defeated", vaultBossesDefeated);
 				node.put("vault_remains_commented", vaultRemainsCommented);
+				node.put("return_outcome", returnOutcome);
 				node.put( GIVEN, given );
 				node.put( COMPLETED, completed );
 				node.put( REWARD, reward );
@@ -315,6 +329,7 @@ public class Imp extends NPC {
 				vaultGateOpened = node.getBoolean("vault_gate_opened");
 				vaultBossesDefeated = node.getBoolean("vault_bosses_defeated");
 				vaultRemainsCommented = node.getBoolean("vault_remains_commented");
+				returnOutcome = node.getInt("return_outcome");
 				reward = (Item)node.get( REWARD );
 				
 				given = node.getBoolean( GIVEN );
@@ -437,7 +452,7 @@ public class Imp extends NPC {
 		}
 
 		public static boolean earnedShop() {
-			return vaultGateOpened || completed && (oldQuest || score > 2000);
+			return completed && (oldQuest || score > 2000);
 		}
 	}
 }

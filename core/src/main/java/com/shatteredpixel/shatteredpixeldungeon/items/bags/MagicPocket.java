@@ -129,9 +129,9 @@ public class MagicPocket extends Bag {
 		VaultFinalRoom room = (VaultFinalRoom) level.room(VaultFinalRoom.class);
 		if (room != null && room.elementalWasSummoned()) {
 			for (Char mob : level.mobs) if (mob instanceof VaultBossElemental && mob.isAlive()) return 0;
-			for (Item item : this) if (item instanceof ImpStatue) return 4000;
+			return 4000;
 		}
-		// Opening the vault gate earns the shop and one reward below +1.
+		// 打开大门可以带走一件低于 +1 的物品，开店仍需实际交付雕像。
 		return 2000;
 	}
 
@@ -161,12 +161,21 @@ public class MagicPocket extends Bag {
 		}
 	}
 
-	/** Return all loans, retaining at most one selected item; never reset the hero's inventory. */
+	/** 归还借用物资，自动交付雕像并携出至多一件选中的普通奖励。 */
 	public boolean returnToImp(Hero hero, Item reward, int score) {
 		if (hero.belongings.getItem(MagicPocket.class) != this) return false;
 		if (isVault() && (score <= 0 || score != completionScore((VaultLevel) Dungeon.level))) return false;
 		if (reward != null && !rewardAllowed(reward, score)) return false;
 		gatherEquippedLoans(hero);
+		ImpStatue statue = null;
+		for (Item item : this) {
+			if (item instanceof ImpStatue) {
+				statue = (ImpStatue) item;
+				break;
+			}
+		}
+		// 雕像自动交付，不占普通奖励的位置；放弃普通奖励也会完成交付。
+		if (statue != null) statue.detachAll(this);
 		ArrayList<BrokenSeal> playerSeals = new ArrayList<>();
 		for (Item item : this) if (item instanceof Armor && item != reward) {
 			Armor armor = (Armor) item;
@@ -196,7 +205,13 @@ public class MagicPocket extends Bag {
 			else if (kept instanceof EnergyCrystal) Dungeon.energy += kept.quantity();
 			else if (!kept.collect(hero.belongings.backpack)) Imp.Quest.reward = kept;
 		}
-		if (!Imp.Quest.isCompleted()) Imp.Quest.complete(score);
+		if (!Imp.Quest.isCompleted()) {
+			Imp.Quest.returnOutcome = statue == null
+					? (kept == null ? Imp.Quest.RETURN_EMPTY : Imp.Quest.RETURN_ITEM)
+					: (kept == null ? Imp.Quest.RETURN_STATUE : Imp.Quest.RETURN_STATUE_ITEM);
+			// 战斗得分已在开门和击败元素时结算，空手返回不撤销这些分数。
+			Imp.Quest.complete(statue == null ? 0 : 4000);
+		}
 		Item.updateQuickslot();
 		return true;
 	}
