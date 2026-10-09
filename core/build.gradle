@@ -73,3 +73,11 @@ tasks.register('achievementRegression', JavaExec) {
     workingDir = projectDir.parentFile
     mainClass = 'com.shatteredpixel.shatteredpixeldungeon.AchievementRegression'
 }
+
+tasks.register('damageDomainRegression', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    workingDir = projectDir.parentFile
+    jvmArgs '-Dfile.encoding=UTF-8', '-Dstdout.encoding=UTF-8', '-Dstderr.encoding=UTF-8'
+    mainClass = 'com.shatteredpixel.shatteredpixeldungeon.DamageDomainRegression'
+}
