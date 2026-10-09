@@ -28,13 +28,8 @@ import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.quest.vault.VaultBossElemental;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
-import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.SacrificialFire;
-import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.SmokeScreen;
-import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.VaultFlameTraps;
-import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.WaterVapor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Web;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.WellWater;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Awareness;
@@ -43,6 +38,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ChampionEnemy;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LockedFloor;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicalSight;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MindVision;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Ooze;
@@ -99,7 +95,6 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.HighGrass;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
-import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MagicalFireRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.ShadowCaster;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -122,6 +117,7 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
 import com.watabou.utils.Reflection;
+import com.watabou.utils.Rect;
 import com.watabou.utils.SparseArray;
 
 import java.util.ArrayList;
@@ -490,6 +486,9 @@ public abstract class Level implements Bundlable {
 		mapped      = new boolean[length];
 		
 		heroFOV     = new boolean[length];
+		heroFOVBuffer = heroMindFov = null;
+		lighting = null;
+		fieldOfViewChanges.setEmpty();
 		
 		passable	= new boolean[length];
 		losBlocking	= new boolean[length];
@@ -1058,8 +1057,8 @@ public abstract class Level implements Bundlable {
 
 	public void buildFlagMaps() {
 
-		//terrain may have changed without going through Level.set(), so rebuild the light cache
-		environmentalLightCacheDirty = true;
+		// 整体重建也可能绕过 Level.set，照明与遮挡缓存随标记一起重建。
+		lighting = null;
 
 		for (int i=0; i < length(); i++) {
 			int flags = Terrain.flags[map[i]];
@@ -1293,7 +1292,7 @@ public abstract class Level implements Bundlable {
 
 		updateOpenSpace(cell);
 
-		refreshStaticEnvironmentalLight(cell);
+		if (lighting != null) lighting.terrainChanged(cell);
 	}
 	
 	public Heap drop( Item item, int cell ) {
@@ -1681,25 +1680,43 @@ public abstract class Level implements Bundlable {
 		return false;
 	}
 
-	private static boolean[] heroMindFov;
+	private boolean[] heroMindFov;
 	private boolean[] heroFOVBuffer;
+	private LevelLighting lighting;
+	private final Rect fieldOfViewChanges = new Rect();
 
-	private static boolean[] modifiableBlocking;
-	private static boolean[] environmentalFOV;
-	private int environmentalViewDistance;
+	public LevelLighting lighting() {
+		if (lighting == null) lighting = new LevelLighting(this);
+		return lighting;
+	}
 
-	//environmental light baked into the terrain (torches, deco, glowing grass, ...) is cached:
-	//it only changes when a cell's terrain does, so it must not be re-derived per cell for every
-	//field of view update of every creature. See updateCellFlags()/buildFlagMaps() for upkeep.
-	private int[] cachedEnvironmentalLightRadius;      //per cell, -1 if the cell isn't a light source
-	private int[] cachedEnvironmentalLightCells;       //packed list of static light source cells
-	private int[] cachedEnvironmentalLightCellIndex;   //cell -> index into that list, -1 if absent
-	private int cachedEnvironmentalLightCount = 0;
-	private boolean environmentalLightCacheDirty = true;
+	/** 光源更新不强制创建缓存，生成和读档后的首次观察会读取完整状态。 */
+	public void updateBlobLighting(Blob blob) {
+		if (lighting != null) lighting.blobChanged(blob);
+	}
 
-	//dynamic light sources are blobs, which are queried directly so that they never have to be
-	//looked for by scanning the map. Levels may register additional blob types.
-	private ArrayList<Class<? extends Blob>> environmentalLightBlobs;
+	public void updateBlobLighting(Blob blob, int cell) {
+		if (lighting != null) lighting.blobChanged(blob, cell);
+	}
+
+	/** 自然视距与 Light 在此收口，天赋修正只用于本次视觉投射。 */
+	public int visionDistance(Char viewer) {
+		float distance = viewer.viewDistance;
+		if (viewer == Dungeon.hero) {
+			distance = this instanceof VaultLevel ? Math.min(8, viewDistance) : viewDistance;
+			if (viewer.buff(Light.class) != null) {
+				distance = Math.max(distance, this instanceof VaultLevel ? 8 : Light.DISTANCE);
+			}
+			viewer.viewDistance = Math.round(distance);
+		} else if (viewer.buff(Light.class) != null) {
+			distance = Math.max(distance, Light.DISTANCE);
+		}
+		if (viewer instanceof Hero) {
+			distance *= 1f + 0.25f * ((Hero) viewer).pointsInTalent(Talent.FARSIGHT);
+			distance *= EyeOfNewt.visionRangeMultiplier();
+		}
+		return Math.max(0, Math.min(ShadowCaster.MAX_DISTANCE, Math.round(distance)));
+	}
 
 	public void updateFieldOfView( Char c, boolean[] fieldOfView ) {
 		// 渲染线程只读取完成的英雄视野，避免普通视野清空后、扩展视野补回前闪烁。
@@ -1713,87 +1730,18 @@ public abstract class Level implements Bundlable {
 
 		int cx = c.pos % width();
 		int cy = c.pos / width();
-		if (c == Dungeon.hero) environmentalViewDistance = 0;
+		int viewDist = visionDistance(c);
 		
 		boolean sighted = c.buff( Blindness.class ) == null && c.buff( Shadows.class ) == null
 						&& c.isAlive();
 		if (sighted) {
-			boolean[] blocking = null;
-
-			if (modifiableBlocking == null || modifiableBlocking.length != Dungeon.level.losBlocking.length){
-				modifiableBlocking = new boolean[Dungeon.level.losBlocking.length];
-			}
-
-			//grass is see-through by some specific entities, but not during the fungi quest
-			if (!(Dungeon.level instanceof  MiningLevel) || Blacksmith.Quest.Type() != Blacksmith.Quest.FUNGI){
-				if ((c instanceof Hero && ((Hero) c).subClass == HeroSubClass.WARDEN)
-						|| c instanceof YogFist.SoiledFist || c instanceof GnollGeomancer) {
-					if (blocking == null) {
-						System.arraycopy(Dungeon.level.losBlocking, 0, modifiableBlocking, 0, modifiableBlocking.length);
-						blocking = modifiableBlocking;
-					}
-					for (int i = 0; i < blocking.length; i++) {
-						if (blocking[i] && (Dungeon.level.map[i] == Terrain.HIGH_GRASS || Dungeon.level.map[i] == Terrain.FURROWED_GRASS)) {
-							blocking[i] = false;
-						}
-					}
-				}
-			}
-
-			//allies and specific enemies can see through shrouding fog
-			if ((c.alignment != Char.Alignment.ALLY && !(c instanceof GnollGeomancer))
-					&& Dungeon.level.blobs.containsKey(SmokeScreen.class)
-					&& Dungeon.level.blobs.get(SmokeScreen.class).volume > 0) {
-				if (blocking == null) {
-					System.arraycopy(Dungeon.level.losBlocking, 0, modifiableBlocking, 0, modifiableBlocking.length);
-					blocking = modifiableBlocking;
-				}
-				Blob s = Dungeon.level.blobs.get(SmokeScreen.class);
-				for (int i = 0; i < blocking.length; i++){
-					if (!blocking[i] && s.cur[i] > 0){
-						blocking[i] = true;
-					}
-				}
-			}
-
-			//Water vapor blocks sight for everyone while it persists.
-			if (Dungeon.level.blobs.containsKey(WaterVapor.class)
-					&& Dungeon.level.blobs.get(WaterVapor.class).volume > 0) {
-				if (blocking == null) {
-					System.arraycopy(Dungeon.level.losBlocking, 0, modifiableBlocking, 0, modifiableBlocking.length);
-					blocking = modifiableBlocking;
-				}
-				Blob vapor = Dungeon.level.blobs.get(WaterVapor.class);
-				for (int i = 0; i < blocking.length; i++){
-					if (!blocking[i] && vapor.cur[i] > 0){
-						blocking[i] = true;
-					}
-				}
-			}
-
-			if (blocking == null){
-				blocking = Dungeon.level.losBlocking;
-			}
-
-			float viewDist = c.viewDistance;
-			if (c instanceof Hero){
-				// Only cap the vault's natural radius, before vision modifiers are applied.
-				if (this instanceof VaultLevel) viewDist = Math.min(8, viewDist);
-				viewDist *= 1f + 0.25f*((Hero) c).pointsInTalent(Talent.FARSIGHT);
-				viewDist *= EyeOfNewt.visionRangeMultiplier();
-			}
-			
-			ShadowCaster.castShadow( cx, cy, width(), fieldOfView, blocking, Math.round(viewDist) );
-
-			//environmental light is seen by every sighted creature, not just the hero
-			if (hasEnvironmentalLights()) {
-				if (environmentalFOV == null || environmentalFOV.length != length()) {
-					environmentalFOV = new boolean[length()];
-				}
-				int mapDiagonal = (int)Math.ceil(Math.hypot(width(), height()));
-				ShadowCaster.castShadow(cx, cy, width(), environmentalFOV, blocking, mapDiagonal);
-				addEnvironmentalLighting(c, fieldOfView, environmentalFOV);
-			}
+			boolean seeGrass = (!(this instanceof MiningLevel) || Blacksmith.Quest.Type() != Blacksmith.Quest.FUNGI)
+					&& ((c instanceof Hero && ((Hero) c).subClass == HeroSubClass.WARDEN)
+					|| c instanceof YogFist.SoiledFist || c instanceof GnollGeomancer);
+			boolean seeSmoke = c.alignment == Char.Alignment.ALLY || c instanceof GnollGeomancer;
+			LevelLighting light = lighting();
+			ShadowCaster.castShadow(cx, cy, width(), fieldOfView, light.blocking(seeGrass, seeSmoke),
+					viewDist, light.visibleLights(c.pos));
 		} else {
 			BArray.setFalse(fieldOfView);
 		}
@@ -1960,166 +1908,41 @@ public abstract class Level implements Bundlable {
 			for (Heap heap : heaps.valueList())
 				if (!heap.seen && fieldOfView[heap.pos])
 					heap.seen = true;
-			System.arraycopy(fieldOfView, 0, destination, 0, fieldOfView.length);
-		}
-
-	}
-
-	//Static environmental light is baked into the terrain (prison torches, city deco, glowing
-	//grass in the caves, ...). It returns the radius the cell lights up, or -1 if it emits no
-	//light. Because it only depends on the terrain it is cached and refreshed per cell, see
-	//updateCellFlags(). Levels with their own light decor override this.
-	protected int staticEnvironmentalLightRadius( int cell ) {
-		return -1;
-	}
-
-	//Dynamic environmental light lives in blobs, which change from turn to turn and so are never
-	//cached. Registering the blob types (rather than looking for lit cells all over the map) is
-	//what keeps this off the per-cell hot path. Levels with their own light blobs register them.
-	protected void registerEnvironmentalLightBlobs( ArrayList<Class<? extends Blob>> types ) {
-		types.add(Fire.class);
-		types.add(VaultBossElemental.ElementalFire.class);
-		types.add(MagicalFireRoom.EternalFire.class);
-		types.add(VaultFlameTraps.class);
-	}
-
-	private ArrayList<Class<? extends Blob>> environmentalLightBlobs() {
-		if (environmentalLightBlobs == null) {
-			environmentalLightBlobs = new ArrayList<>();
-			registerEnvironmentalLightBlobs(environmentalLightBlobs);
-		}
-		return environmentalLightBlobs;
-	}
-
-	//whether anything on this level could currently light up a cell. When nothing can, the whole
-	//environmental lighting pass (including its shadow cast) is skipped.
-	private boolean hasEnvironmentalLights() {
-		updateEnvironmentalLightCache();
-		if (cachedEnvironmentalLightCount > 0) return true;
-		for (Class<? extends Blob> type : environmentalLightBlobs()) {
-			Blob blob = blobs.get(type);
-			if (blob != null && blob.volume > 0 && blob.cur != null) return true;
-		}
-		return false;
-	}
-
-	private void updateEnvironmentalLightCache() {
-		if (cachedEnvironmentalLightRadius == null || cachedEnvironmentalLightRadius.length != length()) {
-			cachedEnvironmentalLightRadius = new int[length()];
-			cachedEnvironmentalLightCells = new int[length()];
-			cachedEnvironmentalLightCellIndex = new int[length()];
-			environmentalLightCacheDirty = true;
-		}
-		if (!environmentalLightCacheDirty) return;
-
-		Arrays.fill(cachedEnvironmentalLightRadius, -1);
-		Arrays.fill(cachedEnvironmentalLightCellIndex, -1);
-		cachedEnvironmentalLightCount = 0;
-		for (int cell = 0; cell < length(); cell++) {
-			int radius = staticEnvironmentalLightRadius(cell);
-			if (radius >= 0) addStaticEnvironmentalLight(cell, radius);
-		}
-		environmentalLightCacheDirty = false;
-	}
-
-	private void addStaticEnvironmentalLight( int cell, int radius ) {
-		cachedEnvironmentalLightRadius[cell] = radius;
-		cachedEnvironmentalLightCellIndex[cell] = cachedEnvironmentalLightCount;
-		cachedEnvironmentalLightCells[cachedEnvironmentalLightCount++] = cell;
-	}
-
-	private void removeStaticEnvironmentalLight( int cell ) {
-		int index = cachedEnvironmentalLightCellIndex[cell];
-		if (index < 0) return;
-		int last = cachedEnvironmentalLightCells[--cachedEnvironmentalLightCount];
-		cachedEnvironmentalLightCells[index] = last;
-		cachedEnvironmentalLightCellIndex[last] = index;
-		cachedEnvironmentalLightCellIndex[cell] = -1;
-		cachedEnvironmentalLightRadius[cell] = -1;
-	}
-
-	//keeps the cached light sources in sync when a single cell's terrain changes
-	private void refreshStaticEnvironmentalLight( int cell ) {
-		//a pending full rebuild picks up this change anyway
-		if (environmentalLightCacheDirty) return;
-		if (cachedEnvironmentalLightRadius == null || cachedEnvironmentalLightRadius.length != length()) return;
-
-		int radius = staticEnvironmentalLightRadius(cell);
-		if (radius == cachedEnvironmentalLightRadius[cell]) return;
-
-		removeStaticEnvironmentalLight(cell);
-		if (radius >= 0) addStaticEnvironmentalLight(cell, radius);
-	}
-
-	//an environmental light source lights up the area around itself. The viewer does not need
-	//to be able to see the source itself, only the lit cell has to be in their line of sight.
-	private void addEnvironmentalLighting( Char viewer, boolean[] fieldOfView, boolean[] lineOfSight ) {
-		updateEnvironmentalLightCache();
-
-		boolean anyBlobLight = false;
-		for (Class<? extends Blob> type : environmentalLightBlobs()) {
-			Blob blob = blobs.get(type);
-			if (blob != null && blob.volume > 0 && blob.cur != null) {
-				anyBlobLight = true;
-				break;
-			}
-		}
-
-		for (int i = 0; i < cachedEnvironmentalLightCount; i++) {
-			int source = cachedEnvironmentalLightCells[i];
-			//a blob lighting the same cell takes precedence over the terrain under it
-			if (anyBlobLight && isBlobEnvironmentalLight(source)) continue;
-			lightEnvironmentalArea(source, cachedEnvironmentalLightRadius[source], viewer, fieldOfView, lineOfSight);
-		}
-
-		if (!anyBlobLight) return;
-
-		//blobs are only checked within the bounding box of the cells they occupy, so this never
-		//scans the whole map. They are read live, so lit cells appear and disappear immediately.
-		for (Class<? extends Blob> type : environmentalLightBlobs()) {
-			Blob blob = blobs.get(type);
-			if (blob == null || blob.volume <= 0 || blob.cur == null) continue;
-			//a blob loaded from a save has no bounding box until it next acts
-			if (blob.area.isEmpty()) blob.setupArea();
-			for (int y = Math.max(0, blob.area.top); y <= Math.min(height()-1, blob.area.bottom); y++) {
-				for (int x = Math.max(0, blob.area.left); x <= Math.min(width()-1, blob.area.right); x++) {
-					int cell = x + y * width();
-					if (blob.cur[cell] > 0) {
-						lightEnvironmentalArea(cell, 0, viewer, fieldOfView, lineOfSight);
-					}
+			// 同一次扫描发布完成的结果，并记录新增、消失及尚未探索的可见格。
+			for (int cell = 0; cell < length(); cell++) {
+				if (destination[cell] != fieldOfView[cell] || (fieldOfView[cell] && !visited[cell])) {
+					fieldOfViewChanges.union(cell % width(), cell / width());
 				}
+				destination[cell] = fieldOfView[cell];
 			}
 		}
+
 	}
 
-	private boolean isBlobEnvironmentalLight( int cell ) {
-		for (Class<? extends Blob> type : environmentalLightBlobs()) {
-			Blob blob = blobs.get(type);
-			if (blob != null && blob.volume > 0 && blob.cur != null && blob.cur[cell] > 0) return true;
-		}
-		return false;
+	/** 默认光源按当前楼层环境复用，特殊楼层只补充自己的来源。 */
+	protected int staticEnvironmentalLightRadius(int cell) {
+		return lighting().terrainRadius(map[cell]);
 	}
 
-	private void lightEnvironmentalArea( int source, int radius, Char viewer, boolean[] fieldOfView, boolean[] lineOfSight ) {
-		boolean heroViewer = viewer == Dungeon.hero;
-		int sourceX = source % width();
-		int sourceY = source / width();
-		for (int y = Math.max(0, sourceY - radius); y <= Math.min(height() - 1, sourceY + radius); y++) {
-			for (int x = Math.max(0, sourceX - radius); x <= Math.min(width() - 1, sourceX + radius); x++) {
-				int cell = x + y * width();
-				if (lineOfSight[cell]) {
-					fieldOfView[cell] = true;
-					//only the hero's own view distance feeds the camera/fog range
-					if (heroViewer) {
-						environmentalViewDistance = Math.max(environmentalViewDistance, distance(viewer.pos, cell));
-					}
-				}
+	/** 最终视野驱动探索和迷雾，熄灯及远处感知消失也会进入更新范围。 */
+	public void updateFog() {
+		for (int offset : PathFinder.NEIGHBOURS9) {
+			int cell = Dungeon.hero.pos + offset;
+			if (!visited[cell]) {
+				visited[cell] = true;
+				fieldOfViewChanges.union(cell % width(), cell / width());
 			}
 		}
-	}
-
-	public int environmentalViewDistance() {
-		return environmentalViewDistance;
+		if (fieldOfViewChanges.isEmpty()) return;
+		int left = Math.max(0, fieldOfViewChanges.left - 1);
+		int top = Math.max(0, fieldOfViewChanges.top - 1);
+		int right = Math.min(width(), fieldOfViewChanges.right + 1);
+		int bottom = Math.min(height(), fieldOfViewChanges.bottom + 1);
+		for (int y = top; y < bottom; y++) {
+			BArray.or(visited, heroFOV, left + y * width(), right - left, visited);
+		}
+		GameScene.updateFog(left, top, right - left, bottom - top);
+		fieldOfViewChanges.setEmpty();
 	}
 
 	public float levelExplorePercent( int depth ){

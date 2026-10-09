@@ -2,7 +2,6 @@ package com.shatteredpixel.shatteredpixeldungeon.levels;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -322,30 +321,7 @@ public class HiddenLevel extends Level {
 
 	@Override
 	protected int staticEnvironmentalLightRadius(int cell) {
-		return map[cell] == Terrain.PEDESTAL
-				|| (Dungeon.depth >= 6 && Dungeon.depth <= 10 && map[cell] == Terrain.WALL_DECO) ? 1 : -1;
-	}
-
-	@Override
-	public void updateFieldOfView(Char ch, boolean[] fieldOfView) {
-		super.updateFieldOfView(ch, fieldOfView);
-		if (ch != Dungeon.hero) return;
-		int[] lightSources = new int[length()];
-		int count = 0;
-		for (int cell = 0; cell < length(); cell++) {
-			if (staticEnvironmentalLightRadius(cell) >= 0) lightSources[count++] = cell;
-		}
-		for (int cell = 0; cell < length(); cell++) {
-			if (distance(ch.pos, cell) <= 1) continue;
-			boolean lit = false;
-			for (int i = 0; i < count; i++) {
-				if (distance(lightSources[i], cell) <= 1) {
-					lit = true;
-					break;
-				}
-			}
-			if (!lit) fieldOfView[cell] = false;
-		}
+		return map[cell] == Terrain.PEDESTAL ? 1 : super.staticEnvironmentalLightRadius(cell);
 	}
 
 	@Override

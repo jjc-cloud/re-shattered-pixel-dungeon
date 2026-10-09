@@ -22,7 +22,6 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
@@ -40,7 +39,6 @@ public class Light extends FlavourBuff {
 	public boolean attachTo( Char target ) {
 		if (super.attachTo( target )) {
 			if (Dungeon.level != null) {
-				target.viewDistance = Dungeon.level instanceof VaultLevel ? 8 : Math.max( Dungeon.level.viewDistance, DISTANCE );
 				Dungeon.observe();
 			}
 			return true;
@@ -51,9 +49,8 @@ public class Light extends FlavourBuff {
 	
 	@Override
 	public void detach() {
-		target.viewDistance = Dungeon.level.viewDistance;
-		Dungeon.observe();
 		super.detach();
+		if (Dungeon.level != null) Dungeon.observe();
 	}
 
 	public void weaken( int amount ){

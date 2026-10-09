@@ -60,11 +60,6 @@ import java.util.ArrayList;
 
 public class PrisonLevel extends RegularLevel {
 
-	@Override
-	protected int staticEnvironmentalLightRadius( int cell ) {
-		return map[cell] == Terrain.WALL_DECO ? 1 : -1;
-	}
-
 	{
 		color1 = 0x6a723d;
 		color2 = 0x88924c;

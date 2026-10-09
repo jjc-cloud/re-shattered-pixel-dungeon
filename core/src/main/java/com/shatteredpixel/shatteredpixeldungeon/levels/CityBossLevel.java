@@ -59,11 +59,6 @@ import java.util.HashSet;
 
 public class CityBossLevel extends Level {
 
-	@Override
-	protected int staticEnvironmentalLightRadius( int cell ) {
-		return (map[cell] == Terrain.REGION_DECO || map[cell] == Terrain.REGION_DECO_ALT) ? 2 : -1;
-	}
-
 	{
 		color1 = 0x4b6636;
 		color2 = 0xf2f2f2;

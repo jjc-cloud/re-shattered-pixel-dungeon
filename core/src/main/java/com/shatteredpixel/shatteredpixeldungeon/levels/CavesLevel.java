@@ -76,14 +76,6 @@ public class CavesLevel extends RegularLevel {
 		return true;
 	}
 
-	@Override
-	protected int staticEnvironmentalLightRadius( int cell ) {
-		if (map[cell] == Terrain.GRASS
-				|| map[cell] == Terrain.HIGH_GRASS
-				|| map[cell] == Terrain.FURROWED_GRASS) return 0;
-		return -1;
-	}
-
 	{
 		color1 = 0x534f3e;
 		color2 = 0xb9d661;

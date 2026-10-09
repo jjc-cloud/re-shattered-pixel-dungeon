@@ -27,42 +27,28 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Awareness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Dread;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicalSight;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicSealDomain;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MindVision;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.RevealedArea;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Terror;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.cleric.PowerOfMany;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.huntress.SpiritHawk;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.DivineSense;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.MirrorImage;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Wandmaker;
 import com.shatteredpixel.shatteredpixeldungeon.items.Amulet;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
-import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.Recipe;
 import com.shatteredpixel.shatteredpixeldungeon.items.RealityWarp;
 import com.shatteredpixel.shatteredpixeldungeon.items.ShopOrder;
-import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TalismanOfForesight;
 import com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicMapping;
-import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfRegrowth;
-import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfWarding;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Journal;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CavesBossLevel;
@@ -605,9 +591,7 @@ public class Dungeon {
 			}
 		}
 		
-		Light light = hero.buff( Light.class );
-		hero.viewDistance = light == null ? level.viewDistance
-				: level instanceof VaultLevel ? 8 : Math.max( Light.DISTANCE, level.viewDistance );
+		level.visionDistance(hero);
 		
 		hero.curAction = hero.lastAction = null;
 
@@ -1024,25 +1008,8 @@ public class Dungeon {
 		}
 	}
 
-	//default to recomputing based on max hero vision, in case vision just shrank/grew
-	public static void observe(){
-		int dist = Math.max(Dungeon.hero.viewDistance, 8);
-		dist *= 1f + 0.25f*Dungeon.hero.pointsInTalent(Talent.FARSIGHT);
-
-		if (Dungeon.hero.buff(MagicalSight.class) != null){
-			dist = Math.max( dist, MagicalSight.DISTANCE );
-		}
-
-		observe( dist+1 );
-	}
-	
-	public static void observe( int dist ) {
-
-		if (level == null) {
-			return;
-		}
-
-		int previousEnvironmentalViewDistance = level.environmentalViewDistance();
+	public static void observe() {
+		if (level == null || hero == null) return;
 		level.updateFieldOfView(hero, level.heroFOV);
 
 		if (branch == 0 && level instanceof RegularLevel
@@ -1062,124 +1029,7 @@ public class Dungeon {
 				}
 			}
 		}
-		dist = Math.max(dist, Math.max(previousEnvironmentalViewDistance,
-				level.environmentalViewDistance()) + 1);
-
-		int x = hero.pos % level.width();
-		int y = hero.pos / level.width();
-	
-		//left, right, top, bottom
-		int l = Math.max( 0, x - dist );
-		int r = Math.min( x + dist, level.width() - 1 );
-		int t = Math.max( 0, y - dist );
-		int b = Math.min( y + dist, level.height() - 1 );
-	
-		int width = r - l + 1;
-		int height = b - t + 1;
-		
-		int pos = l + t * level.width();
-	
-		for (int i = t; i <= b; i++) {
-			BArray.or( level.visited, level.heroFOV, pos, width, level.visited );
-			pos+=level.width();
-		}
-
-		//always visit adjacent tiles, even if they aren't seen
-		for (int i : PathFinder.NEIGHBOURS9){
-			level.visited[hero.pos+i] = true;
-		}
-	
-		GameScene.updateFog(l, t, width, height);
-
-		if (hero.buff(MindVision.class) != null || hero.buff(DivineSense.DivineSenseTracker.class) != null){
-			for (Mob m : level.mobs.toArray(new Mob[0])){
-				if (m instanceof Mimic && m.alignment == Char.Alignment.NEUTRAL && ((Mimic) m).stealthy()){
-					continue;
-				}
-				if (Char.hasProp(m, Char.Property.OBJECT)){
-					continue;
-				}
-
-				BArray.or( level.visited, level.heroFOV, m.pos - 1 - level.width(), 3, level.visited );
-				BArray.or( level.visited, level.heroFOV, m.pos - 1, 3, level.visited );
-				BArray.or( level.visited, level.heroFOV, m.pos - 1 + level.width(), 3, level.visited );
-				//updates adjacent cells too
-				GameScene.updateFog(m.pos, 2);
-			}
-		}
-
-		if (hero.buff(Awareness.class) != null){
-			for (Heap h : level.heaps.valueList()){
-				BArray.or( level.visited, level.heroFOV, h.pos - 1 - level.width(), 3, level.visited );
-				BArray.or( level.visited, level.heroFOV, h.pos - 1, 3, level.visited );
-				BArray.or( level.visited, level.heroFOV, h.pos - 1 + level.width(), 3, level.visited );
-				GameScene.updateFog(h.pos, 2);
-			}
-		}
-
-		for (TalismanOfForesight.CharAwareness c : hero.buffs(TalismanOfForesight.CharAwareness.class)){
-			Char ch = (Char) Actor.findById(c.charID);
-			if (ch == null || !ch.isAlive() || Char.hasProp(ch, Char.Property.OBJECT)) continue;
-			BArray.or( level.visited, level.heroFOV, ch.pos - 1 - level.width(), 3, level.visited );
-			BArray.or( level.visited, level.heroFOV, ch.pos - 1, 3, level.visited );
-			BArray.or( level.visited, level.heroFOV, ch.pos - 1 + level.width(), 3, level.visited );
-			GameScene.updateFog(ch.pos, 2);
-		}
-
-		for (TalismanOfForesight.HeapAwareness h : hero.buffs(TalismanOfForesight.HeapAwareness.class)){
-			if (Dungeon.depth != h.depth || Dungeon.branch != h.branch) continue;
-			BArray.or( level.visited, level.heroFOV, h.pos - 1 - level.width(), 3, level.visited );
-			BArray.or( level.visited, level.heroFOV, h.pos - 1, 3, level.visited );
-			BArray.or( level.visited, level.heroFOV, h.pos - 1 + level.width(), 3, level.visited );
-			GameScene.updateFog(h.pos, 2);
-		}
-
-		for (RevealedArea a : hero.buffs(RevealedArea.class)){
-			if (Dungeon.depth != a.depth || Dungeon.branch != a.branch) continue;
-			BArray.or( level.visited, level.heroFOV, a.pos - 1 - level.width(), 3, level.visited );
-			BArray.or( level.visited, level.heroFOV, a.pos - 1, 3, level.visited );
-			BArray.or( level.visited, level.heroFOV, a.pos - 1 + level.width(), 3, level.visited );
-			GameScene.updateFog(a.pos, 2);
-		}
-
-		for (Char ch : Actor.chars()){
-			if (ch instanceof WandOfWarding.Ward
-					|| ch instanceof WandOfRegrowth.Lotus
-					|| ch instanceof SpiritHawk.HawkAlly
-					|| ch.buff(PowerOfMany.PowerBuff.class) != null){
-				x = ch.pos % level.width();
-				y = ch.pos / level.width();
-
-				//left, right, top, bottom
-				dist = ch.viewDistance+1;
-				l = Math.max( 0, x - dist );
-				r = Math.min( x + dist, level.width() - 1 );
-				t = Math.max( 0, y - dist );
-				b = Math.min( y + dist, level.height() - 1 );
-
-				width = r - l + 1;
-				height = b - t + 1;
-
-				pos = l + t * level.width();
-
-				for (int i = t; i <= b; i++) {
-					BArray.or( level.visited, level.heroFOV, pos, width, level.visited );
-					pos+=level.width();
-				}
-				GameScene.updateFog(ch.pos, dist);
-			}
-		}
-
-		if (hero.pointsInTalent(Talent.MULTIPLE_EXISTENCE) >= 2){
-			for (Mob mob : level.mobs){
-				if (mob instanceof MirrorImage){
-					BArray.or(level.visited, level.heroFOV, mob.pos - 1 - level.width(), 3, level.visited);
-					BArray.or(level.visited, level.heroFOV, mob.pos - 1, 3, level.visited);
-					BArray.or(level.visited, level.heroFOV, mob.pos - 1 + level.width(), 3, level.visited);
-					GameScene.updateFog(mob.pos, 2);
-				}
-			}
-		}
+		level.updateFog();
 
 		GameScene.afterObserve();
 	}

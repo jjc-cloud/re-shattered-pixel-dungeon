@@ -42,6 +42,11 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 public class Fire extends Blob {
 
 	@Override
+	public int lightRadius() {
+		return 0;
+	}
+
+	@Override
 	public void seed( Level level, int cell, int amount ) {
 		Freezing freezing = (Freezing)level.blobs.get(Freezing.class);
 		Blizzard blizzard = (Blizzard)level.blobs.get(Blizzard.class);
@@ -102,7 +107,8 @@ public class Fire extends Blob {
 					
 					if (freeze != null && freeze.volume > 0 && freeze.cur[cell] > 0){
 						freeze.clear(cell);
-						off[cell] = cur[cell] = 0;
+						clear(cell);
+						off[cell] = 0;
 						continue;
 					}
 
@@ -136,7 +142,7 @@ public class Fire extends Blob {
 		}
 
 		if (observe) {
-			Dungeon.observe();
+			observeAfterAct = true;
 		}
 	}
 	

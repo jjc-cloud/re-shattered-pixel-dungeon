@@ -156,6 +156,11 @@ public class MagicalFireRoom extends SpecialRoom {
 	public static class EternalFire extends Blob {
 
 		@Override
+		public int lightRadius() {
+			return 0;
+		}
+
+		@Override
 		protected void evolve() {
 
 			int cell;
@@ -179,7 +184,7 @@ public class MagicalFireRoom extends SpecialRoom {
 						//this blob is not considered interchangeable with fire, so those blobs do not interact with it otherwise
 						//potion of purity can cleanse it though
 						if (l.water[cell]){
-							cur[cell] = 0;
+							clear(cell);
 							clearAll = true;
 						}
 						//overrides fire
@@ -191,12 +196,12 @@ public class MagicalFireRoom extends SpecialRoom {
 						for (int k : PathFinder.NEIGHBOURS9) {
 							if (freeze != null && freeze.volume > 0 && freeze.cur[cell+k] > 0) {
 								freeze.clear(cell);
-								cur[cell] = 0;
+								clear(cell);
 								clearAll = true;
 							}
 							if (bliz != null && bliz.volume > 0 && bliz.cur[cell+k] > 0) {
 								bliz.clear(cell);
-								cur[cell] = 0;
+								clear(cell);
 								clearAll = true;
 							}
 						}
