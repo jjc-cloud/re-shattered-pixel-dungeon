@@ -28,6 +28,8 @@
 		</resource>
 	</resources>
 	<forceLinkClasses>
+		<!-- 宝库地块存档时会反射查询外部类，需保留 VaultTiles 及其内部类。 -->
+		<pattern>com.shatteredpixel.shatteredpixeldungeon.tiles.custom.VaultTiles*</pattern>
 		<pattern>com.badlogic.gdx.scenes.scene2d.ui.*</pattern>
 		<pattern>com.badlogic.gdx.graphics.g3d.particles.**</pattern>
 		<pattern>com.badlogic.gdx.controllers.IosControllerManager</pattern>
