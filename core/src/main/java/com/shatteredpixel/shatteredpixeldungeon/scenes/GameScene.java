@@ -34,6 +34,7 @@ import com.shatteredpixel.shatteredpixeldungeon.SPDAction;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
+import com.shatteredpixel.shatteredpixeldungeon.TestStart;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
@@ -632,17 +633,22 @@ public class GameScene extends PixelScene {
 		}
 		Dungeon.hero.next();
 
-		switch (InterlevelScene.mode){
-			case FALL: case DESCEND: case CONTINUE:
-				Camera.main.snapTo(hero.center().x, hero.center().y - DungeonTilemap.SIZE * (defaultZoom/Camera.main.zoom));
-				break;
-			case ASCEND:
-				Camera.main.snapTo(hero.center().x, hero.center().y + DungeonTilemap.SIZE * (defaultZoom/Camera.main.zoom));
-				break;
-			default:
-				Camera.main.snapTo(hero.center().x, hero.center().y);
+		if (TestStart.ENABLED && Dungeon.isChallenged(Challenges.TEST_TIME)
+				&& (InterlevelScene.mode == InterlevelScene.Mode.DESCEND || InterlevelScene.mode == InterlevelScene.Mode.ASCEND)) {
+			Camera.main.snapTo(hero.center().x, hero.center().y);
+		} else {
+			switch (InterlevelScene.mode){
+				case FALL: case DESCEND: case CONTINUE:
+					Camera.main.snapTo(hero.center().x, hero.center().y - DungeonTilemap.SIZE * (defaultZoom/Camera.main.zoom));
+					break;
+				case ASCEND:
+					Camera.main.snapTo(hero.center().x, hero.center().y + DungeonTilemap.SIZE * (defaultZoom/Camera.main.zoom));
+					break;
+				default:
+					Camera.main.snapTo(hero.center().x, hero.center().y);
+			}
+			Camera.main.panTo(hero.center(), 2.5f);
 		}
-		Camera.main.panTo(hero.center(), 2.5f);
 
 		if (InterlevelScene.mode != InterlevelScene.Mode.NONE) {
 			if (Dungeon.depth == Statistics.deepestFloor
