@@ -42,6 +42,7 @@ public class Berry extends Food {
 	@Override
 	protected float eatingTime(){
 		if (Dungeon.hero.hasTalent(Talent.IRON_STOMACH)
+				|| Dungeon.hero.hasTalent(Talent.UPLIFTING_MEAL)
 				|| Dungeon.hero.hasTalent(Talent.ENERGIZING_MEAL)
 				|| Dungeon.hero.hasTalent(Talent.MYSTICAL_MEAL)
 				|| Dungeon.hero.hasTalent(Talent.INVIGORATING_MEAL)

@@ -634,7 +634,8 @@ public class GameScene extends PixelScene {
 		Dungeon.hero.next();
 
 		if (TestStart.ENABLED && Dungeon.isChallenged(Challenges.TEST_TIME)
-				&& (InterlevelScene.mode == InterlevelScene.Mode.DESCEND || InterlevelScene.mode == InterlevelScene.Mode.ASCEND)) {
+				&& (InterlevelScene.mode == InterlevelScene.Mode.DESCEND || InterlevelScene.mode == InterlevelScene.Mode.ASCEND
+						|| InterlevelScene.mode == InterlevelScene.Mode.RETURN)) {
 			Camera.main.snapTo(hero.center().x, hero.center().y);
 		} else {
 			switch (InterlevelScene.mode){

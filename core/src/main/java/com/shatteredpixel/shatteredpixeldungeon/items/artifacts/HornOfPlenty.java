@@ -143,7 +143,9 @@ public class HornOfPlenty extends ChargedArtifact {
 		Sample.INSTANCE.play(Assets.Sounds.EAT);
 		GLog.i( Messages.get(this, "eat") );
 
-		if (Dungeon.hero.hasTalent(Talent.IRON_STOMACH)
+		if (hero.hasTalent(Talent.UPLIFTING_MEAL)) {
+			hero.spend(0);
+		} else if (Dungeon.hero.hasTalent(Talent.IRON_STOMACH)
 				|| Dungeon.hero.hasTalent(Talent.ENERGIZING_MEAL)
 				|| Dungeon.hero.hasTalent(Talent.MYSTICAL_MEAL)
 				|| Dungeon.hero.hasTalent(Talent.INVIGORATING_MEAL)

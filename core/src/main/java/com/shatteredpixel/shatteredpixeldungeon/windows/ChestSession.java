@@ -1,6 +1,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
@@ -9,6 +10,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.Key;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ChestSession {
@@ -40,13 +42,16 @@ public class ChestSession {
 	}
 
 	public List<Item> items() {
-		return heap == null ? mimic.items : heap.items;
+		return heap == null ? (mimic.items == null ? Collections.emptyList() : mimic.items) : heap.items;
 	}
 
 	public boolean take(Item item) {
 		if (closed || item == null || !items().contains(item)) return false;
 		Hero hero = Dungeon.hero;
 		if (hero == null || !hero.isAlive()) return false;
+		if (mimic != null && (!hero.ready || hero.invisible <= 0 || !mimic.isAlive()
+				|| mimic.alignment != Char.Alignment.NEUTRAL
+				|| !mimic.canInteract(hero))) return false;
 		if (heap != null && !heap.opened) {
 			if (!heap.resolveOpeningEffects(hero)) return false;
 		}
@@ -56,6 +61,8 @@ public class ChestSession {
 		if (heap != null && !heap.items.isEmpty() && heap.sprite != null) {
 			heap.sprite.view(heap).place(heap.pos);
 		}
+		// 宝箱怪逐件结算，让隐身等状态在下一次取物前正常推进。
+		if (mimic != null) hero.spendAndNextConstant(1f);
 		return true;
 	}
 
@@ -107,7 +114,7 @@ public class ChestSession {
 		if (closed) return;
 		closed = true;
 		if (heap != null && heap.items.isEmpty() && Dungeon.level.heaps.get(heap.pos) == heap) heap.destroy();
-		if ((moved || unlocked) && Dungeon.hero.isAlive()) Dungeon.hero.spendAndNext(Key.TIME_TO_UNLOCK);
+		if (mimic == null && (moved || unlocked) && Dungeon.hero.isAlive()) Dungeon.hero.spendAndNext(Key.TIME_TO_UNLOCK);
 	}
 
 	private int pos() {

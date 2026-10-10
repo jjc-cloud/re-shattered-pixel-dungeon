@@ -34,6 +34,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Web;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.WellWater;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Awareness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ForcedBlindness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ChampionEnemy;
@@ -1902,6 +1903,21 @@ public abstract class Level implements Bundlable {
 
 			BArray.or(heroMindFov, fieldOfView, fieldOfView);
 
+		}
+
+		// 在所有透视、感知、环境光及共享视野合并后收口，不移除相关 Buff。
+		if (c.buff(ForcedBlindness.class) != null) {
+			BArray.setFalse(fieldOfView);
+			for (int y = Math.max(0, cy - 1); y <= Math.min(height() - 1, cy + 1); y++) {
+				for (int x = Math.max(0, cx - 1); x <= Math.min(width() - 1, cx + 1); x++) {
+					int cell = x + y * width();
+					fieldOfView[cell] = discoverable[cell];
+				}
+			}
+			if (c == Dungeon.hero) {
+				if (heroMindFov != null) BArray.setFalse(heroMindFov);
+				Dungeon.hero.mindVisionEnemies.clear();
+			}
 		}
 
 		if (c == Dungeon.hero) {

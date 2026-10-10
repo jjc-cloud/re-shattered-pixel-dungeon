@@ -27,6 +27,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.YogFist;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
@@ -42,6 +43,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Catalog;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Document;
+import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
@@ -221,9 +223,12 @@ public class Badges {
 		HIGH_SCORE_5                ( 125 ),
 		CHAMPION_2                  ( 126 ),
 		CHAMPION_3                  ( 127 ),
-		// 新增徽章从图集第 18 行起独占 136–147 号，行列从 1 开始计数。
+		// 扩展徽章使用图集 136–150 号，宝库结局依次占用 148–150 号。
 		VICTORY_CHAOS               ( 136 ),
-		SPEEDRUN_3                  ( 142 );
+		SPEEDRUN_3                  ( 142 ),
+		VAULT_CHAOTIC_EVIL          ( 148 ),
+		VAULT_SELFISH               ( 149 ),
+		VAULT_HELPFUL               ( 150 );
 
 		public boolean meta;
 
@@ -864,6 +869,18 @@ public class Badges {
 	
 	public static void validateBossSlain() {
 		Badge badge = null;
+		// 宝库成就在退出选择确定后判定，击杀元素时尚不能确定结局。
+		if (Dungeon.branch == 1 && Dungeon.level instanceof VaultLevel) {
+			if (Imp.Quest.isCompleted() && Imp.Quest.vaultBossesDefeated) {
+				switch (Imp.Quest.returnOutcome) {
+					case Imp.Quest.RETURN_EMPTY: badge = Badge.VAULT_CHAOTIC_EVIL; break;
+					case Imp.Quest.RETURN_ITEM: badge = Badge.VAULT_SELFISH; break;
+					case Imp.Quest.RETURN_STATUE: badge = Badge.VAULT_HELPFUL; break;
+				}
+				if (badge != null && local.add(badge)) displayBadge(badge);
+			}
+			return;
+		}
 		switch (Dungeon.depth) {
 		case 5:
 			badge = Badge.BOSS_SLAIN_1;
