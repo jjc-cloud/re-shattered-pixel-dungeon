@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.bags;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
@@ -211,6 +212,7 @@ public class MagicPocket extends Bag {
 					: (kept == null ? Imp.Quest.RETURN_STATUE : Imp.Quest.RETURN_STATUE_ITEM);
 			// 战斗得分已在开门和击败元素时结算，空手返回不撤销这些分数。
 			Imp.Quest.complete(statue == null ? 0 : 4000);
+			if (isVault()) Badges.validateBossSlain();
 		}
 		Item.updateQuickslot();
 		return true;

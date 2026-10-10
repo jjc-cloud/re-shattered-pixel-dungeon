@@ -3,6 +3,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels;
 import com.badlogic.gdx.utils.IntArray;
 import com.badlogic.gdx.utils.IntSet;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
@@ -143,6 +144,11 @@ public final class TerrainInteractions {
 		// 最后一格支撑墙可能已经被坍塌补回，仍须按成功破坏结算本次动作。
 		if (level.map[cell] == before && !(response.action == Action.REPLACE && before != response.terrain)) {
 			return Result.UNCHANGED;
+		}
+		// 瓦砾的破碎效果由成功交互统一播放，近战、投掷和法杖共用。
+		if (Dungeon.depth >= 1 && (Dungeon.depth - 1) / 5 == 4
+				&& (before == Terrain.REGION_DECO || before == Terrain.REGION_DECO_ALT)) {
+			Splash.at(cell, 0xFF958472, 8);
 		}
 		// 开墙后邻格可能由不可发现变为可发现；沿用矿洞的局部更新方式。
 		for (int offset : PathFinder.NEIGHBOURS9) {

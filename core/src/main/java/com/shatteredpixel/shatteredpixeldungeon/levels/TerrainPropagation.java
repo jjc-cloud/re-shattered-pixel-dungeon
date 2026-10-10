@@ -158,7 +158,7 @@ public final class TerrainPropagation {
 		int cell = bolt.collisionPos;
 		if (level.terrainInteractions != null && level.terrainInteractions.hasEffects(source)
 				&& (bolt.collisionProperties & Ballistica.STOP_SOLID) != 0 && !level.solid[cell]
-				&& Actor.findChar(cell) == null && bolt.dist + 1 < bolt.path.size()) {
+				&& (cell == bolt.sourcePos || Actor.findChar(cell) == null) && bolt.dist + 1 < bolt.path.size()) {
 			int next = bolt.path.get(bolt.dist + 1);
 			if (level.solid[next] && !level.passable[next] && !level.avoid[next]
 					&& level.terrainInteractions.ruleAt(next).allows(source)) return next;

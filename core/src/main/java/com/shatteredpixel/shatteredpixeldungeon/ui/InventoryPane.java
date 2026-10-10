@@ -235,6 +235,13 @@ public class InventoryPane extends Component {
 			InventorySlot slot = new InventorySlot(null) {
 				@Override protected void onClick() {
 					if (chestSession != null) {
+						if (chestSession.isMimic()) {
+							if (!Dungeon.hero.ready) return;
+							if (Dungeon.hero.invisible <= 0) {
+								spillChest();
+								return;
+							}
+						}
 						chestSession.take(item());
 						if (!Dungeon.hero.isAlive()) closeChest();
 						else updateInventory();
@@ -529,11 +536,13 @@ public class InventoryPane extends Component {
 	private void spillChest() {
 		if (chestSession == null) return;
 		if (chestSession.isMimic()) {
+			if (!Dungeon.hero.ready) return;
 			com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic mimic = chestSession.mimic();
 			chestSession.wakeMimic();
 			chestSession = null;
 			updateInventory();
-			mimic.interruptLooting();
+			if (mimic.isAlive() && mimic.alignment == Char.Alignment.NEUTRAL
+					&& mimic.canInteract(Dungeon.hero)) mimic.interruptLooting();
 		} else {
 			chestSession.spill();
 			closeChest();

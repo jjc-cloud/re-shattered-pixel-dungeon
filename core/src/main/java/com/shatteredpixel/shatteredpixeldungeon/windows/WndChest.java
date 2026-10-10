@@ -121,6 +121,13 @@ public class WndChest extends WndTabbed {
 		for (int i = 0; i < 5; i++) {
 			InventorySlot slot = new InventorySlot(null) {
 				@Override protected void onClick() {
+					if (session.isMimic()) {
+						if (!Dungeon.hero.ready) return;
+						if (Dungeon.hero.invisible <= 0) {
+							wakeMimic();
+							return;
+						}
+					}
 					session.take(item());
 					refresh();
 				}
@@ -274,10 +281,12 @@ public class WndChest extends WndTabbed {
 	}
 
 	private void wakeMimic() {
+		if (!Dungeon.hero.ready) return;
 		Mimic mimic = session.mimic();
 		session.wakeMimic();
 		hide();
-		mimic.interruptLooting();
+		if (mimic.isAlive() && mimic.alignment == com.shatteredpixel.shatteredpixeldungeon.actors.Char.Alignment.NEUTRAL
+				&& mimic.canInteract(Dungeon.hero)) mimic.interruptLooting();
 	}
 
 	@Override

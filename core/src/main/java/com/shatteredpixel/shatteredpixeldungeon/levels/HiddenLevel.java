@@ -10,6 +10,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.Carpet;
 import com.watabou.noosa.Group;
@@ -108,6 +109,12 @@ public class HiddenLevel extends Level {
 		if (pedestals.size() != 3) return false;
 
 		if (region == 3) layCarpets(pedestals);
+		for (Trap trap : traps.valueList()) {
+			trap.reveal();
+			if (map[trap.pos] == Terrain.SECRET_TRAP) {
+				Painter.set(this, trap.pos, Terrain.TRAP);
+			}
+		}
 		return true;
 	}
 

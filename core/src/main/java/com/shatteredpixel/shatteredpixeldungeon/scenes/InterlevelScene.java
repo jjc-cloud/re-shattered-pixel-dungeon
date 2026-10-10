@@ -100,7 +100,7 @@ public class InterlevelScene extends PixelScene {
 	}
 	private Phase phase;
 	private float timeLeft;
-	private boolean skipStairAnimation;
+	private boolean skipTransitionAnimation;
 
 	public Image background;
 
@@ -127,7 +127,8 @@ public class InterlevelScene extends PixelScene {
 	public void create() {
 		super.create();
 		// 新开局尚未初始化 Dungeon，使用选择界面保存的挑战设置。
-		skipStairAnimation = TestStart.ENABLED && (mode == Mode.DESCEND || mode == Mode.ASCEND)
+		skipTransitionAnimation = TestStart.ENABLED
+				&& (mode == Mode.DESCEND || mode == Mode.ASCEND || mode == Mode.RETURN)
 				&& (Dungeon.hero == null ? (SPDSettings.challenges() & Challenges.TEST_TIME) != 0
 						: Dungeon.isChallenged(Challenges.TEST_TIME));
 		
@@ -224,7 +225,7 @@ public class InterlevelScene extends PixelScene {
 			}
 		Random.popGenerator();
 		
-		if (DeviceCompat.isDebug() || skipStairAnimation){
+		if (DeviceCompat.isDebug() || skipTransitionAnimation){
 			fadeTime = 0f;
 		}
 
@@ -286,7 +287,7 @@ public class InterlevelScene extends PixelScene {
 		align(loadingText);
 		add(loadingText);
 
-		if (mode == Mode.DESCEND && lastRegion <= 5 && !DeviceCompat.isDebug() && !skipStairAnimation){
+		if (mode == Mode.DESCEND && lastRegion <= 5 && !DeviceCompat.isDebug() && !skipTransitionAnimation){
 			if (Dungeon.hero == null || (loadingDepth > Statistics.deepestFloor && loadingDepth % 5 == 1)){
 					storyMessage = PixelScene.renderTextBlock(Document.INTROS.pageBody(region), 6);
 					storyMessage.maxWidth( PixelScene.landscape() ? 180 : 125);
@@ -530,7 +531,7 @@ public class InterlevelScene extends PixelScene {
 			}
 			
 			if ((timeLeft -= Game.elapsed) <= 0) {
-				if (skipStairAnimation) {
+				if (skipTransitionAnimation) {
 					ShatteredPixelDungeon.switchNoFade(GameScene.class);
 				} else {
 					Game.switchScene( GameScene.class );

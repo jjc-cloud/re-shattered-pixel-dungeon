@@ -60,6 +60,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.PotionOfStamina;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.Alchemize;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.BeaconOfReturning;
+import com.shatteredpixel.shatteredpixeldungeon.items.spells.BlindingCrystal;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.CurseInfusion;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.MagicalInfusion;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.PhaseShift;
@@ -266,6 +267,7 @@ public abstract class Recipe {
 	public static class SpecialRecipe extends SimpleRecipe {
 
 		private final int category;
+		protected boolean[] allowExcess;
 
 		@SafeVarargs
 		public SpecialRecipe(int category, int cost, Class<? extends Item> output,
@@ -324,7 +326,9 @@ public abstract class Recipe {
 				if (!matched) return false;
 			}
 			for (int i = 0; i < found.length; i++) {
-				if (found[i] != inQuantity[i]) return false;
+				if (allowExcess != null && allowExcess[i]) {
+					if (found[i] < inQuantity[i]) return false;
+				} else if (found[i] != inQuantity[i]) return false;
 			}
 			return true;
 		}
@@ -346,7 +350,8 @@ public abstract class Recipe {
 			new SpecialRecipe(EXPERIMENTAL_SPELLS, 6, ExperimentalKingsCrown.class,
 					KingsCrown.class, ScrollOfMetamorphosis.class),
 			new SpecialRecipe(EXPERIMENTAL_BREWS, 4, SteamBrew.class,
-					InfernalBrew.class, PotionOfStormClouds.class)
+					InfernalBrew.class, PotionOfStormClouds.class),
+			new BlindingCrystal.Recipe()
 	};
 
 	private static final LinkedHashMap<String, Integer> specialRecipeCosts = new LinkedHashMap<>();
@@ -371,7 +376,7 @@ public abstract class Recipe {
 					new Alchemize.Recipe(), new CurseInfusion.Recipe(),
 					new MagicalInfusion.Recipe(), new Recycle.Recipe(),
 					new ReclaimTrap.Recipe(), new SummonElemental.Recipe(),
-					new BeaconOfReturning.Recipe(), specialRecipes[5], specialRecipes[6]
+					new BeaconOfReturning.Recipe(), specialRecipes[5], specialRecipes[6], specialRecipes[8]
 			}
 	};
 

@@ -160,7 +160,12 @@ public class Mimic extends Mob {
 		}
 		if (Dungeon.hero.invisible > 0) {
 			Sample.INSTANCE.play(Assets.Sounds.UNLOCK);
-			GameScene.openChest(new ChestSession(this));
+			Dungeon.hero.busy();
+			Dungeon.hero.sprite.operate(pos, () -> {
+				Dungeon.hero.sprite.idle();
+				Dungeon.hero.onOperateComplete();
+				GameScene.openChest(new ChestSession(this));
+			});
 			return false;
 		}
 		stopHiding();
