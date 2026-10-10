@@ -73,7 +73,7 @@ public final class VaultTiles {
 				case 29: return 29; // south and west edges
 				case 8:  return 30; // southwest corner only
 				case 9:  return 31; // west edge
-				default: return -1;
+				default: return 11; // 带圆点的地板使用任务图集，不再显示都市底图。
 			}
 		}
 
