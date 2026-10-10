@@ -27,6 +27,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.SwarmIntelTracker;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
@@ -77,6 +78,8 @@ public class StoneOfAggression extends Runestone {
 
 		@Override
 		public void detach() {
+			// 敌意结束时直接取消该目标的集群身份，其他目标的记录不受影响。
+			Buff.detach(target, SwarmIntelTracker.class);
 			//if our target is an enemy, reset any enemy-to-enemy aggro involving it
 			if (target.isAlive()) {
 				if (target.alignment == Char.Alignment.ENEMY) {

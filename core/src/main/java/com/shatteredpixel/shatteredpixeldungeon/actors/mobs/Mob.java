@@ -163,8 +163,6 @@ public abstract class Mob extends Char {
 
 	private static final String ENEMY_ID	= "enemy_id";
 
-	private static final String SWARM_TIME = "swarm_time";
-
 	//for stealth gameplay
 	private static final String USING_STEALTH = "using_stealth";
 	private static final String INVEST_TURNS = "invest_turns";
@@ -203,8 +201,6 @@ public abstract class Mob extends Char {
 		if (enemy != null) {
 			bundle.put(ENEMY_ID, enemy.id() );
 		}
-
-		bundle.put(SWARM_TIME, timeSeenAt);
 
 		bundle.put( USING_STEALTH, usingStealthGamePlay );
 		if (usingStealthGamePlay){
@@ -260,8 +256,6 @@ public abstract class Mob extends Char {
 			enemyID = bundle.getInt(ENEMY_ID);
 		}
 
-		timeSeenAt = bundle.getFloat( SWARM_TIME );
-
 		//no need to actually save this, must be false
 		firstAdded = false;
 	}
@@ -309,15 +303,15 @@ public abstract class Mob extends Char {
 		//prevents action, but still updates enemy seen status
 		if (buff(Feint.AfterImage.FeintConfusion.class) != null){
 			enemySeen = enemyInFOV;
+			processSwarmIntel(false);
 			spend( TICK );
 			return true;
 		}
 
-		AiState curState = state;
 		boolean result = state.act( enemyInFOV, justAlerted );
 
-		//if we just swapped into hunting, this gets processed again
-		processSwarmIntel(enemyInFOV && state == curState);
+		// 发现成功后立即登记，第一发现者不能被随后行动的怪物抢走。
+		processSwarmIntel(state == HUNTING);
 
 		//for updating hero FOV
 		if (buff(PowerOfMany.PowerBuff.class) != null){
@@ -328,41 +322,68 @@ public abstract class Mob extends Char {
 		return result;
 	}
 
-	private float timeSeenAt = Float.MAX_VALUE;
+	private long swarmSightCheck = Long.MIN_VALUE;
 
-	protected void processSwarmIntel( boolean enemyInFOV ){
-		if (alignment == Alignment.ENEMY && state == HUNTING
-				&& Dungeon.isChallenged(Challenges.SWARM_INTELLIGENCE)
-				&& enemyInFOV && enemy != null && enemy.alignment == Alignment.ALLY) {
+	/** 集群使用实际敌对关系，也接受敌意、狂乱和特殊 AI 已选定的敌人。 */
+	public boolean isSwarmEnemy(Char candidate) {
+		if (candidate == null || candidate == this || !candidate.isAlive() || isCharmedBy(candidate)) return false;
+		return isTargeting(candidate)
+				|| ((alignment == Alignment.ENEMY || buff(Amok.class) != null)
+						&& candidate.buff(StoneOfAggression.Aggression.class) != null)
+				|| (buff(Amok.class) != null && candidate.alignment != Alignment.NEUTRAL)
+				|| (alignment == Alignment.ENEMY && candidate.alignment == Alignment.ALLY)
+				|| (alignment == Alignment.ALLY && candidate.alignment == Alignment.ENEMY);
+	}
 
-			if (timeSeenAt >= now()){
-				timeSeenAt = now()-1; //starts at 2
+	/** 已发现的怪物可以同时看见多个敌对单位，视野按当前位置和地形重新检查。 */
+	public boolean seesSwarmEnemy(Char candidate) {
+		if (!isAlive() || (alignment != Alignment.ENEMY && buff(Amok.class) == null)
+				|| state != HUNTING || paralysed > 0
+				|| buff(Feint.AfterImage.FeintConfusion.class) != null
+				|| (this instanceof CrystalGuardian && ((CrystalGuardian) this).recovering())
+				|| !isSwarmEnemy(candidate) || candidate.invisible > 0) return false;
+		if (fieldOfView == null || fieldOfView.length != Dungeon.level.length()) {
+			fieldOfView = new boolean[Dungeon.level.length()];
+		}
+		// 同一次集群检查只投射一次视野，多个目标共用；下次行动会重新检查门和地形。
+		if (swarmSightCheck != SwarmIntelTracker.sightCheck) {
+			Dungeon.level.updateFieldOfView(this, fieldOfView);
+			swarmSightCheck = SwarmIntelTracker.sightCheck;
+		}
+		return fieldOfView[candidate.pos];
+	}
+
+	protected void processSwarmIntel(boolean canCall) {
+		if (!Dungeon.isChallenged(Challenges.SWARM_INTELLIGENCE)) return;
+		SwarmIntelTracker.sightCheck++;
+		for (Char candidate : Actor.chars()) {
+			SwarmIntelTracker tracker = candidate.buff(SwarmIntelTracker.class);
+			if (tracker != null) tracker.refreshSight();
+			if (canCall && seesSwarmEnemy(candidate)) {
+				Buff.affect(candidate, SwarmIntelTracker.class).onSeen(this);
+			} else if (tracker != null && tracker.callerId == id()) {
+				tracker.timeSeenAt = Float.MAX_VALUE;
+				tracker.alertRange = 0;
 			}
-
-			int range = swarmAlertRange();
-			for (Mob mob : Dungeon.level.mobs) {
-				if (mob.alignment == Alignment.ENEMY
-						&& mob.paralysed <= 0
-						&& Dungeon.level.distance(pos, mob.pos) <= range
-						&& mob.state != mob.HUNTING) {
-					mob.beckon(	enemy.pos);
-				}
-			}
-			Buff.affect( Dungeon.hero, SwarmIntelTracker.class );
-		} else {
-			timeSeenAt = Float.MAX_VALUE;
 		}
 	}
 
 	public int swarmAlertRange(){
-		int range = 2*(int)Math.max(now() - timeSeenAt, 0);
-		return (int)GameMath.gate(0, range, 12);
+		int range = 0;
+		for (Char candidate : Actor.chars()) {
+			SwarmIntelTracker tracker = candidate.buff(SwarmIntelTracker.class);
+			if (tracker != null && tracker.callerId == id()) range = Math.max(range, tracker.alertRange);
+		}
+		return range;
 	}
 
 	@Override
 	public void fixTime(float decrement) {
-		if (swarmAlertRange() > 0){
-			timeSeenAt -= decrement;
+		for (Char candidate : Actor.chars()) {
+			SwarmIntelTracker tracker = candidate.buff(SwarmIntelTracker.class);
+			if (tracker != null && tracker.callerId == id() && tracker.timeSeenAt != Float.MAX_VALUE) {
+				tracker.timeSeenAt -= decrement;
+			}
 		}
 		super.fixTime(decrement);
 	}

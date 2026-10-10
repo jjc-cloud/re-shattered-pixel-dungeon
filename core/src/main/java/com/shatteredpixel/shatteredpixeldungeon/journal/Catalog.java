@@ -276,10 +276,10 @@ public enum Catalog {
 				ElixirOfIcyTouch.class, ElixirOfToxicEssence.class, ElixirOfMight.class, ElixirOfFeatherFall.class,
 				ElixirOfKineticEnergy.class);
 
-		SPELLS.addItems( UnstableSpell.class, WildEnergy.class, TelekineticGrab.class, PhaseShift.class,
+		SPELLS.addItems( UnstableSpell.class, WildEnergy.class, TelekineticGrab.class, BlindingCrystal.class, PhaseShift.class,
 				Alchemize.class, CurseInfusion.class, MagicalInfusion.class, Recycle.class,
 				ReclaimTrap.class, SummonElemental.class, BeaconOfReturning.class,
-				ExperimentalTengusMask.class, ExperimentalKingsCrown.class, BlindingCrystal.class);
+				ExperimentalTengusMask.class, ExperimentalKingsCrown.class);
 
 		MISC_CONSUMABLES.addItems( Gold.class, Gem.class, EnergyCrystal.class, Dewdrop.class,
 				IronKey.class, GoldenKey.class, CrystalKey.class, WornKey.class,

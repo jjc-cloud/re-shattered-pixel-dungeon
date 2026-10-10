@@ -67,7 +67,9 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V010_ESCAPE_PLAN, "天赋相关",
 				"\n-现在逃脱计划触发后会直接选中交换的单位。\n-现在启用多重存在会每100回合尝试在英雄周围生成一个镜像。\n-振奋一餐进食不消耗回合。\n-增强了一些被其他职业获取效果不同的天赋。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V33_RANDOMIZE,"随机模式",
-				"\n随机一切！"));	
+				"\n随机一切！"));
+		changes.addButton(new ChangeButton(ChangeIcons.V064_CHALLENGES, "集群智能",
+				"\n集群智能重做，现在集群智能只会由第一位发现敌对单位的怪物触发，只有脱离所有怪物的视野后才会再次触发集群，集群触发距离调整为初始4格，最大8格。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V062_ROGUE_CLOTH,"搜索范围",
 				"\n现在盗贼初始搜索范围与其他英雄相同，补偿此前提升的更高概率发现地牢的秘密，广域搜索天赋增加的搜索范围调整为+1时为5*5，+2时为7*7。"));	
 		changes.addButton(new ChangeButton(ChangeIcons.V020_WAVE, "水面感知",
