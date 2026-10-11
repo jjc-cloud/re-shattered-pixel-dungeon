@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Electricity;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.StormCloud;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.WaterVapor;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AcuteHearing;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Adrenaline;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AllyBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
@@ -55,6 +56,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Petrification;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FrostImbue;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Fury;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Haste;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.HearingLoss;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Hex;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Hunger;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invulnerability;
@@ -335,7 +337,14 @@ public abstract class Char extends Actor {
 	
 	protected boolean moveSprite( int from, int to ) {
 		
-		if (sprite.isVisible() && sprite.parent != null && (Dungeon.level.heroFOV[from] || Dungeon.level.heroFOV[to])) {
+		//秘药影像跟随原精灵，感知范围内也必须播放移动补间与行走动画。
+		boolean heardMovement = this instanceof Mob && Dungeon.hero != null
+				&& Dungeon.hero.buff(AcuteHearing.class) != null
+				&& Dungeon.hero.buff(HearingLoss.class) == null
+				&& Math.min(Dungeon.level.distance(Dungeon.hero.pos, from),
+						Dungeon.level.distance(Dungeon.hero.pos, to)) <= AcuteHearing.DISTANCE;
+		if (sprite.parent != null && (heardMovement
+				|| sprite.isVisible() && (Dungeon.level.heroFOV[from] || Dungeon.level.heroFOV[to]))) {
 			sprite.move( from, to );
 			return true;
 		} else {

@@ -138,7 +138,9 @@ public class Badges {
 		GAMES_PLAYED_2              ( 56, BadgeType.GLOBAL ),
 		HIGH_SCORE_2                ( 57 ),
 		PETRIFIED_STATUE_SHATTERED  ( 137 ),
-		DEATH_FROM_ALLY             ( 139 ),
+		VAULT_CHAOTIC_EVIL          ( 148 ),
+		VAULT_SELFISH               ( 149 ),
+		VAULT_HELPFUL               ( 150 ),
 
 		//gold
 		ENEMY_HAZARDS               ( 64 ),
@@ -170,9 +172,11 @@ public class Badges {
 		GAMES_PLAYED_3              ( 86, BadgeType.GLOBAL ),
 		HIGH_SCORE_3                ( 87 ),
 		FIST_WITHOUT_TELEPORT       ( 138 ),
+		DEATH_FROM_ALLY             ( 139 ),
 		SPEEDRUN_1                  ( 140 ),
-		VICTORY_LOW_STRENGTH        ( 144 ),
-		VICTORY_NO_ALCHEMY          ( 145 ),
+		VICTORY_NO_TALENTS          ( 146 ),
+		VICTORY_MANY_TALENTS        ( 147 ),
+		BOSS_SLAIN_YOG_REMAINS      ( 151 ),
 
 		//platinum
 		MANY_BUFFS                  ( 96 ),
@@ -210,9 +214,6 @@ public class Badges {
 		HIGH_SCORE_4                ( 110 ),
 		CHAMPION_1                  ( 111 ),
 		SPEEDRUN_2                  ( 141 ),
-		VICTORY_NO_FOOD             ( 143 ),
-		VICTORY_NO_TALENTS          ( 146 ),
-		VICTORY_MANY_TALENTS        ( 147 ),
 
 		//diamond
 		PACIFIST_ASCENT             ( 120 ),
@@ -223,12 +224,11 @@ public class Badges {
 		HIGH_SCORE_5                ( 125 ),
 		CHAMPION_2                  ( 126 ),
 		CHAMPION_3                  ( 127 ),
-		// 扩展徽章使用图集 136–150 号，宝库结局依次占用 148–150 号。
 		VICTORY_CHAOS               ( 136 ),
 		SPEEDRUN_3                  ( 142 ),
-		VAULT_CHAOTIC_EVIL          ( 148 ),
-		VAULT_SELFISH               ( 149 ),
-		VAULT_HELPFUL               ( 150 );
+		VICTORY_NO_FOOD             ( 143 ),
+		VICTORY_LOW_STRENGTH        ( 144 ),
+		VICTORY_NO_ALCHEMY          ( 145 );
 
 		public boolean meta;
 
@@ -822,7 +822,8 @@ public class Badges {
 				isUnlocked( Badge.DEATH_FROM_ENEMY_MAGIC) &&
 				isUnlocked( Badge.DEATH_FROM_FRIENDLY_MAGIC) &&
 				isUnlocked( Badge.DEATH_FROM_SACRIFICE) &&
-				isUnlocked( Badge.DEATH_FROM_GRIM_TRAP)) {
+				isUnlocked( Badge.DEATH_FROM_GRIM_TRAP) &&
+				isUnlocked( Badge.DEATH_FROM_ALLY)) {
 
 			Badge badge = Badge.DEATH_FROM_ALL;
 			if (!isUnlocked( badge )) {
@@ -942,12 +943,18 @@ public class Badges {
 				}
 			}
 
-			if (Statistics.qualifiedForBossRemainsBadge && Dungeon.hero.belongings.getItem(RemainsItem.class) != null){
-				badge = Badge.BOSS_SLAIN_REMAINS;
-				local.add( badge );
-				displayBadge( badge );
-			}
+		}
 
+		if (Dungeon.branch == 0 && Statistics.qualifiedForBossRemainsBadge
+				&& Dungeon.hero.belongings.getItem(RemainsItem.class) != null) {
+			local.add(Badge.BOSS_SLAIN_REMAINS);
+			badge = Badge.BOSS_SLAIN_REMAINS;
+			if (Dungeon.depth == 25) {
+				unlock(badge);
+				badge = Badge.BOSS_SLAIN_YOG_REMAINS;
+				local.add(badge);
+			}
+			displayBadge(badge);
 		}
 	}
 
@@ -1154,6 +1161,7 @@ public class Badges {
 				&& ((Char) cause).alignment == Char.Alignment.ALLY
 				&& local.add(Badge.DEATH_FROM_ALLY)) {
 			displayBadge(Badge.DEATH_FROM_ALLY);
+			validateDeathFromAll();
 		}
 	}
 
@@ -1352,6 +1360,7 @@ public class Badges {
 			{Badge.FOOD_EATEN_1, Badge.FOOD_EATEN_2, Badge.FOOD_EATEN_3, Badge.FOOD_EATEN_4, Badge.FOOD_EATEN_5},
 			{Badge.ITEMS_CRAFTED_1, Badge.ITEMS_CRAFTED_2, Badge.ITEMS_CRAFTED_3, Badge.ITEMS_CRAFTED_4, Badge.ITEMS_CRAFTED_5},
 			{Badge.BOSS_SLAIN_1, Badge.BOSS_SLAIN_2, Badge.BOSS_SLAIN_3, Badge.BOSS_SLAIN_4},
+			{Badge.BOSS_SLAIN_REMAINS, Badge.BOSS_SLAIN_YOG_REMAINS},
 			{Badge.RESEARCHER_1, Badge.RESEARCHER_2, Badge.RESEARCHER_3, Badge.RESEARCHER_4, Badge.RESEARCHER_5},
 			{Badge.HIGH_SCORE_1, Badge.HIGH_SCORE_2, Badge.HIGH_SCORE_3, Badge.HIGH_SCORE_4, Badge.HIGH_SCORE_5},
 			{Badge.GAMES_PLAYED_1, Badge.GAMES_PLAYED_2, Badge.GAMES_PLAYED_3, Badge.GAMES_PLAYED_4, Badge.GAMES_PLAYED_5},
@@ -1370,7 +1379,10 @@ public class Badges {
 			{Badge.BOSS_SLAIN_4, Badge.BOSS_CHALLENGE_4},
 			{Badge.VICTORY,      Badge.BOSS_CHALLENGE_5},
 			{Badge.HAPPY_END,    Badge.PACIFIST_ASCENT},
-			{Badge.VICTORY,      Badge.TAKING_THE_MICK}
+			{Badge.VICTORY,      Badge.TAKING_THE_MICK},
+			{Badge.VICTORY,      Badge.VICTORY_NO_FOOD},
+			{Badge.VICTORY,      Badge.VICTORY_LOW_STRENGTH},
+			{Badge.VICTORY,      Badge.VICTORY_NO_ALCHEMY}
 	};
 
 	//If the summary badge is unlocked, don't show the component badges
@@ -1383,7 +1395,8 @@ public class Badges {
 			{Badge.DEATH_FROM_ENEMY_MAGIC, Badge.DEATH_FROM_ALL},
 			{Badge.DEATH_FROM_FRIENDLY_MAGIC, Badge.DEATH_FROM_ALL},
 			{Badge.DEATH_FROM_SACRIFICE, Badge.DEATH_FROM_ALL},
-			{Badge.DEATH_FROM_GRIM_TRAP, Badge.DEATH_FROM_ALL}
+			{Badge.DEATH_FROM_GRIM_TRAP, Badge.DEATH_FROM_ALL},
+			{Badge.DEATH_FROM_ALLY, Badge.DEATH_FROM_ALL}
 	};
 	
 	public static List<Badge> filterReplacedBadges( List<Badge> badges ) {

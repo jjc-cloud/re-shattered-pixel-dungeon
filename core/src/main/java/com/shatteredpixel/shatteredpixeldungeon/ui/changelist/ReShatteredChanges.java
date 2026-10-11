@@ -54,9 +54,11 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V020_COLLAPSE_WALL, "塌方",
 				"\n-矿洞新增不稳定塌方区域，区域内无任何支撑物时会导致整片区域塌方，活埋区域内的所有单位。\n-矿洞区域不同房间之间的墙壁若小于2格宽度，则会生成为可摧毁的松动墙壁。\n-玩家处于塌方格时状态栏会显示特殊的标志符"));
 		changes.addButton(new ChangeButton(ChangeIcons.V061_BADGE, "新徽章",
-				"\n-混沌终局！：在开启所有挑战，且所有选择全随机的的情况下通关随机模式。\n-不堪一击：摧毁一个石化雕像。\n-夺命一击：在不触发光耀之拳或暗影之拳闪现的情况下击杀其中之一。\n-倒戈：死于友方单位。\n-速通玩家：在8000回合内通关。\n-绝食：不食用任何食物的情况下通关。\n-孱弱之躯：通关时基础力量为10。\n-炼金麻瓜：通关时没有炼制任何物品。\n-一无所长：通关时没有投入任何天赋点数。\n-天启之人：投入至少37点天赋点数。\n-宝库突袭特殊结局徽章"));
+				"\n-混沌终局！：在开启所有挑战，且所有选择全随机的的情况下通关随机模式。\n-不堪一击：摧毁一个石化雕像。\n-夺命一击：在不触发光耀之拳或暗影之拳闪现的情况下击杀其中之一。\n-倒戈：死于友方单位。\n-速通玩家：在8000回合内通关。\n-绝食：不食用任何食物的情况下通关。\n-孱弱之躯：通关时基础力量为10。\n-炼金麻瓜：通关时没有炼制任何物品。\n-一无所长：通关时没有投入任何天赋点数。\n-天启之人：投入至少37点天赋点数。\n-这次一定！：持有死于最终boss的英雄遗物击败最终boss。\n-宝库突袭特殊结局徽章"));
 		changes.addButton(new ChangeButton(ChangeIcons.V020_RUBY, "宝石",
 				"\n新增宝石类财宝，偶尔替换金币奖励出现，卖出获得金币。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V020_BLINDING_CRYSTAL, "新炼金产物",
+				"\n-致盲结晶：给予强制失明。\n-聆犀秘药：给予长时间的敏锐听觉，感知周围怪物的位置与移动。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V33_IMP, "宝库突袭",
 				"\n重构四区小恶魔任务。新任务中玩家需直接迎战三元素BOSS，巨型元素的AI调整，现在更加智能。首次引入多BOSS战。"));
 		
@@ -65,11 +67,11 @@ public class ReShatteredChanges {
 		changeInfos.add(changes);
 
 		changes.addButton(new ChangeButton(ChangeIcons.V010_ESCAPE_PLAN, "天赋相关",
-				"\n-现在逃脱计划触发后会直接选中交换的单位。\n-现在启用多重存在会每100回合尝试在英雄周围生成一个镜像。\n-振奋一餐进食不消耗回合。\n-增强了一些被其他职业获取效果不同的天赋。"));
+				"\n-现在逃脱计划触发后会直接选中交换的单位。\n-现在启用多重存在会每100回合尝试在英雄周围生成一个镜像。\n-振奋一餐进食不消耗回合。\n-新天赋敏锐听觉，能够听到周围3/4格范围内所有单位移动的声音。\n-增强了一些被其他职业获取效果不同的天赋。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V33_RANDOMIZE,"随机模式",
 				"\n随机一切！"));
 		changes.addButton(new ChangeButton(ChangeIcons.V064_CHALLENGES, "集群智能",
-				"\n集群智能重做，现在集群智能只会由第一位发现敌对单位的怪物触发，只有脱离所有怪物的视野后才会再次触发集群，集群触发距离调整为初始4格，最大8格。"));
+				"\n集群智能重做，现在集群智能只会由第一位发现敌对单位的怪物触发，只有脱离所有怪物的视野后才会再次触发集群。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V062_ROGUE_CLOTH,"搜索范围",
 				"\n现在盗贼初始搜索范围与其他英雄相同，补偿此前提升的更高概率发现地牢的秘密，广域搜索天赋增加的搜索范围调整为+1时为5*5，+2时为7*7。"));	
 		changes.addButton(new ChangeButton(ChangeIcons.V020_WAVE, "水面感知",

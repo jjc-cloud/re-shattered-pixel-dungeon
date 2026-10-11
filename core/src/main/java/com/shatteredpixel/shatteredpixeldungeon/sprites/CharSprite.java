@@ -24,6 +24,8 @@ package com.shatteredpixel.shatteredpixeldungeon.sprites;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.HearingLoss;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.effects.DarkBlock;
 import com.shatteredpixel.shatteredpixeldungeon.effects.EmoIcon;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Flare;
@@ -236,6 +238,7 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 	}
 
 	public boolean canShowWaterRipple( int pos ) {
+		if (Dungeon.hero != null && Dungeon.hero.buff(HearingLoss.class) != null && !Dungeon.level.heroFOV[pos]) return false;
 		return visible || Dungeon.hero != null
 				&& Dungeon.level.distance(Dungeon.hero.pos, pos) <= 8
 				&& (Dungeon.level.visited[pos] || Dungeon.level.mapped[pos]);
@@ -618,6 +621,7 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 		}
 		
 		super.update();
+		if (ch instanceof Mob) ((Mob) ch).updateHearingShadow();
 		
 		if (flashTime > 0 && (flashTime -= Game.elapsed) <= 0) {
 			resetColor();

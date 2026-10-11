@@ -672,7 +672,7 @@ public class ItemSpriteSheet {
 	public static final int BREW_UNSTABLE   = BREWS+5;
 	public static final int BREW_STEAM      = BREWS+6;
 	
-	private static final int ELIXIRS        =                               xy(1, 27);  //9 slots
+	private static final int ELIXIRS        =                               xy(1, 27);  //10 slots
 	public static final int ELIXIR_HONEY    = ELIXIRS+0;
 	public static final int ELIXIR_AQUA     = ELIXIRS+1;
 	public static final int ELIXIR_MIGHT    = ELIXIRS+2;
@@ -682,10 +682,11 @@ public class ItemSpriteSheet {
 	public static final int ELIXIR_ARCANE   = ELIXIRS+6;
 	public static final int ELIXIR_FEATHER  = ELIXIRS+7;
 	public static final int ELIXIR_KINETIC  = ELIXIRS+8;
+	public static final int ELIXIR_HEARING  = ELIXIRS+9;
 	static{
 		for (int i = BREWS; i < BREWS+7; i++)
 			assignItemRect(i, 12, 14);
-		for (int i = ELIXIRS; i < ELIXIRS+9; i++)
+		for (int i = ELIXIRS; i < ELIXIRS+10; i++)
 			assignItemRect(i, 12, 14);
 
 		assignItemRect(BREW_INFERNAL,   11, 13);
