@@ -155,6 +155,7 @@ public class VaultBossElemental extends Mob {
 	protected int envAttackCooldown = Random.NormalIntRange( 10, 15 );
 	protected int spAttackCooldown = Random.NormalIntRange( 6, 10 );
 	protected int spTargetCell = -1;
+	private boolean empowered;
 
 	private boolean coordinating;
 	private int orbitDirection = Random.Int(2) == 0 ? 1 : -1;
@@ -324,6 +325,7 @@ public class VaultBossElemental extends Mob {
 				if (form == ElementalForm.SHOCK){
 					envAttackCooldown = (int) (envAttackCooldown*0.67f);
 				}
+				if (empowered) envAttackCooldown -= 2;
 
 				Dungeon.hero.interrupt();
 				lastEnemyPos = enemy.pos;
@@ -451,6 +453,7 @@ public class VaultBossElemental extends Mob {
 		if (form == ElementalForm.SHOCK){
 			spAttackCooldown = (int) (spAttackCooldown*0.67f);
 		}
+		if (empowered) spAttackCooldown -= 2;
 		spTargetCell = -1;
 	}
 
@@ -554,12 +557,23 @@ public class VaultBossElemental extends Mob {
 	@Override
 	public void die(Object cause) {
 		super.die(cause);
+		boolean survivors = false;
+		boolean newlyEmpowered = false;
 		for (Mob mob : Dungeon.level.mobs) {
 			if (mob instanceof VaultBossElemental && mob.isAlive()) {
+				VaultBossElemental elemental = (VaultBossElemental) mob;
+				if (!elemental.empowered) {
+					elemental.empowered = true;
+					elemental.spAttackCooldown = Math.max(0, elemental.spAttackCooldown - 2);
+					elemental.envAttackCooldown = Math.max(0, elemental.envAttackCooldown - 2);
+					newlyEmpowered = true;
+				}
 				BossHealthBar.assignBoss(mob);
-				return;
+				survivors = true;
 			}
 		}
+		if (newlyEmpowered) GLog.n(Messages.get(Imp.class, "vault_elementals_empowered"));
+		if (survivors) return;
 		boolean remindStatue = false;
 		if (Dungeon.level instanceof VaultLevel && ((VaultLevel) Dungeon.level).isRegularQuest()) {
 			Buff.detach(Dungeon.hero, MagicSealDomain.class);
@@ -664,6 +678,7 @@ public class VaultBossElemental extends Mob {
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
 		bundle.put(FORM, form);
+		bundle.put("empowered", empowered);
 		bundle.put("coordinating", coordinating);
 		bundle.put("orbit_direction", orbitDirection);
 		bundle.put("orbit_radius", orbitRadius);
@@ -680,6 +695,7 @@ public class VaultBossElemental extends Mob {
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
 		form = bundle.getEnum(FORM, ElementalForm.class);
+		empowered = bundle.getBoolean("empowered");
 		coordinating = bundle.getBoolean("coordinating");
 		if (bundle.contains("orbit_direction")) orbitDirection = bundle.getInt("orbit_direction");
 		orbitRadius = bundle.getFloat("orbit_radius");

@@ -38,7 +38,6 @@ public class SwarmIntelTracker extends Buff {
 
 	// 每个被发现的单位各自持有一份记录；呼叫者死亡也保留身份，直到完全脱离发现。
 	public int callerId = -1;
-	public float timeSeenAt = Float.MAX_VALUE;
 	public int alertRange;
 	private float leftAtZero;
 	private int trackingDepth = Dungeon.depth;
@@ -48,7 +47,6 @@ public class SwarmIntelTracker extends Buff {
 	public void refreshSight() {
 		if (trackingDepth != Dungeon.depth || trackingBranch != Dungeon.branch) {
 			callerId = -1;
-			timeSeenAt = Float.MAX_VALUE;
 			alertRange = 0;
 			trackingDepth = Dungeon.depth;
 			trackingBranch = Dungeon.branch;
@@ -64,21 +62,15 @@ public class SwarmIntelTracker extends Buff {
 			}
 		}
 		if (!seen) callerId = -1;
-		if (!callerSees) {
-			timeSeenAt = Float.MAX_VALUE;
-			alertRange = 0;
-		} else if (timeSeenAt != Float.MAX_VALUE) {
-			alertRange = Math.min(8, 4 + 2 * (int)Math.max(0, Actor.now() - timeSeenAt));
-		}
+		alertRange = callerSees ? 8 : 0;
 	}
 
-	/** 第一发现者登记并呼叫援军；每个目标的范围独立从 4 格增长到 8 格。 */
+	/** 第一发现者登记并呼叫援军，吸引范围固定为 8 格。 */
 	public void onSeen(Mob caller) {
 		refreshSight();
 		if (callerId == -1) callerId = caller.id();
 		if (callerId != caller.id()) return;
-		if (timeSeenAt == Float.MAX_VALUE) timeSeenAt = Actor.now();
-		alertRange = Math.min(8, 4 + 2 * (int)Math.max(0, Actor.now() - timeSeenAt));
+		alertRange = 8;
 		leftAtZero = 5f;
 
 		for (Mob mob : Dungeon.level.mobs) {
@@ -131,6 +123,14 @@ public class SwarmIntelTracker extends Buff {
 
 	@Override
 	public int icon() {
+		// 呼叫行为与状态显示分别判断，视野外的呼叫者不能通过图标泄露位置。
+		Actor caller = Actor.findById(callerId);
+		if (!(caller instanceof Mob) || !((Mob) caller).isAlive() || ((Mob) caller).invisible > 0
+				|| Dungeon.hero == null || Dungeon.level == null
+				|| Dungeon.hero.fieldOfView == null || Dungeon.hero.fieldOfView.length != Dungeon.level.length()
+				|| !Dungeon.level.mobs.contains((Mob) caller) || !Dungeon.hero.fieldOfView[((Mob) caller).pos]) {
+			return BuffIndicator.NONE;
+		}
 		if (alertRange == 0 && leftAtZero <= 0){
 			return BuffIndicator.NONE;
 		} else {
@@ -172,7 +172,6 @@ public class SwarmIntelTracker extends Buff {
 		bundle.put(ALERT_RANGE, alertRange);
 		bundle.put(LEFT, leftAtZero);
 		bundle.put("caller_id", callerId);
-		bundle.put("time_seen_at", timeSeenAt);
 		bundle.put("tracking_depth", trackingDepth);
 		bundle.put("tracking_branch", trackingBranch);
 	}
@@ -183,7 +182,6 @@ public class SwarmIntelTracker extends Buff {
 		alertRange = bundle.getInt(ALERT_RANGE);
 		leftAtZero = bundle.getFloat(LEFT);
 		callerId = bundle.getInt("caller_id");
-		timeSeenAt = bundle.getFloat("time_seen_at");
 		trackingDepth = bundle.getInt("tracking_depth");
 		trackingBranch = bundle.getInt("tracking_branch");
 	}

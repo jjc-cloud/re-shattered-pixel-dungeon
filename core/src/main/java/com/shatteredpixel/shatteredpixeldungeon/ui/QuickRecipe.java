@@ -44,6 +44,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.InfernalBrew
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.ShockingBrew;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.UnstableBrew;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfAquaticRejuvenation;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfAcuteHearing;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfArcaneArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfDragonsBlood;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfFeatherFall;
@@ -56,6 +57,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ExoticScroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.Alchemize;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.BeaconOfReturning;
+import com.shatteredpixel.shatteredpixeldungeon.items.spells.BlindingCrystal;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.CurseInfusion;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.MagicalInfusion;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.PhaseShift;
@@ -375,6 +377,7 @@ public class QuickRecipe extends Component {
 				result.add(new QuickRecipe(new ElixirOfDragonsBlood.Recipe()));
 				result.add(new QuickRecipe(new ElixirOfFeatherFall.Recipe()));
 				result.add(new QuickRecipe(new ElixirOfMight.Recipe()));
+				result.add(new QuickRecipe(new ElixirOfAcuteHearing.Recipe()));
 				//秘药板块末尾
 				addDiscoveredSpecialRecipes(result, pageIdx, Recipe.GUIDE_ELIXIR);
 				return result;
@@ -383,14 +386,10 @@ public class QuickRecipe extends Component {
 				result.add(new QuickRecipe(new WildEnergy.Recipe()));
 				result.add(new QuickRecipe(new TelekineticGrab.Recipe()));
 				result.add(new QuickRecipe(new PhaseShift.Recipe()));
-				if (!PixelScene.landscape()) result.add(null);
-				result.add(null);
 				result.add(new QuickRecipe(new Alchemize.Recipe(), new ArrayList<>(Arrays.asList(new Plant.Seed.PlaceHolder(), new Runestone.PlaceHolder())), new Alchemize().quantity(8)));
 				result.add(new QuickRecipe(new CurseInfusion.Recipe()));
 				result.add(new QuickRecipe(new MagicalInfusion.Recipe()));
 				result.add(new QuickRecipe(new Recycle.Recipe()));
-				if (!PixelScene.landscape()) result.add(null);
-				result.add(null);
 				result.add(new QuickRecipe(new ReclaimTrap.Recipe()));
 				result.add(new QuickRecipe(new SummonElemental.Recipe()));
 				result.add(new QuickRecipe(new BeaconOfReturning.Recipe()));
@@ -408,10 +407,19 @@ public class QuickRecipe extends Component {
 			if (recipe.guideSection() == guideSection) special.add(recipe);
 		}
 		if (special.isEmpty()) return;
-		result.add(null);
+		if (pageIdx == 5) result.add(null);
 		for (Recipe.SpecialRecipe recipe : special) {
 			ArrayList<Item> ingredients = recipe.getIngredients();
-			result.add(new QuickRecipe(recipe, ingredients, recipe.sampleOutput(ingredients),
+			int insertAt = result.size();
+			if (pageIdx == 8 && recipe instanceof BlindingCrystal.Recipe) {
+				for (int i = 0; i < result.size(); i++) {
+					if (result.get(i) != null && result.get(i).output.item instanceof TelekineticGrab) {
+						insertAt = i + 1;
+						break;
+					}
+				}
+			}
+			result.add(insertAt, new QuickRecipe(recipe, ingredients, recipe.sampleOutput(ingredients),
 					Recipe.discoveredSpecialCost(recipe)));
 		}
 	}

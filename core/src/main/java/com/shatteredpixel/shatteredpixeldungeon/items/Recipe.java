@@ -40,6 +40,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.ShockingBrew
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.SteamBrew;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.UnstableBrew;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfAquaticRejuvenation;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfAcuteHearing;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfArcaneArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfDragonsBlood;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfFeatherFall;
@@ -221,6 +222,7 @@ public abstract class Recipe {
 		new ElixirOfToxicEssence.Recipe(),
 		new ElixirOfMight.Recipe(),
 		new ElixirOfFeatherFall.Recipe(),
+		new ElixirOfAcuteHearing.Recipe(),
 		new MagicalInfusion.Recipe(),
 		new BeaconOfReturning.Recipe(),
 		new PhaseShift.Recipe(),
@@ -368,15 +370,16 @@ public abstract class Recipe {
 					new ElixirOfHoneyedHealing.Recipe(), new ElixirOfAquaticRejuvenation.Recipe(),
 					new ElixirOfArcaneArmor.Recipe(), new ElixirOfIcyTouch.Recipe(),
 					new ElixirOfToxicEssence.Recipe(), new ElixirOfDragonsBlood.Recipe(),
-					new ElixirOfFeatherFall.Recipe(), new ElixirOfMight.Recipe(), specialRecipes[4]
+					new ElixirOfFeatherFall.Recipe(), new ElixirOfMight.Recipe(), specialRecipes[4],
+					new ElixirOfAcuteHearing.Recipe()
 			},
 			{
 					new UnstableSpell.Recipe(), new WildEnergy.Recipe(),
-					new TelekineticGrab.Recipe(), new PhaseShift.Recipe(),
+					new TelekineticGrab.Recipe(), specialRecipes[8], new PhaseShift.Recipe(),
 					new Alchemize.Recipe(), new CurseInfusion.Recipe(),
 					new MagicalInfusion.Recipe(), new Recycle.Recipe(),
 					new ReclaimTrap.Recipe(), new SummonElemental.Recipe(),
-					new BeaconOfReturning.Recipe(), specialRecipes[5], specialRecipes[6], specialRecipes[8]
+					new BeaconOfReturning.Recipe(), specialRecipes[5], specialRecipes[6]
 			}
 	};
 

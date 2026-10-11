@@ -94,7 +94,7 @@ public class HeroSelectScene extends PixelScene {
 
 	private RectF insets;
 
-	private static boolean heroWasRandomized = true;
+	private static boolean talentsWereRandomized = true;
 	private static boolean chalWasRandomized = false;
 
 	@Override
@@ -102,6 +102,7 @@ public class HeroSelectScene extends PixelScene {
 		super.create();
 
 		Dungeon.hero = null;
+		GamesInProgress.randomizedClass = false;
 
 		Badges.loadGlobal();
 		Journal.loadGlobal();
@@ -411,7 +412,6 @@ public class HeroSelectScene extends PixelScene {
 
 	private void setSelectedHero(HeroClass cl){
 		GamesInProgress.selectedClass = cl;
-		GamesInProgress.randomizedClass = false;
 
 		try {
 			//loading these big jpgs fails sometimes, so we have a catch for it
@@ -810,34 +810,21 @@ public class HeroSelectScene extends PixelScene {
 			add(challengeButton);
 			buttons.add(challengeButton);
 
-			int unlockedCount = 0;
-			for (HeroClass cls : HeroClass.values()){
-				if (cls.isUnlocked()) unlockedCount++;
-			}
+			StyledButton randomButton = new StyledButton(Chrome.Type.BLANK, Messages.get(HeroSelectScene.class, "randomize"), 6) {
+				@Override
+				protected void onClick() {
 
-			if (unlockedCount >= 2) {
-				StyledButton randomButton = new StyledButton(Chrome.Type.BLANK, Messages.get(HeroSelectScene.class, "randomize"), 6) {
-					@Override
-					protected void onClick() {
-
-						if (Badges.isUnlocked(Badges.Badge.VICTORY) || DeviceCompat.isDebug()){
-							ShatteredPixelDungeon.scene().addToFront(new WndRandomize());
-						} else {
-
-							HeroClass randomCls;
-							do {
-								randomCls = Random.oneOf(HeroClass.values());
-							} while (!randomCls.isUnlocked());
-							setSelectedHero(randomCls);
-							GamesInProgress.randomizedClass = true;
-						}
+					if (Badges.isUnlocked(Badges.Badge.VICTORY) || DeviceCompat.isDebug()){
+						ShatteredPixelDungeon.scene().addToFront(new WndRandomize());
+					} else {
+						GamesInProgress.randomizedClass = !GamesInProgress.randomizedClass;
 					}
-				};
-				randomButton.leftJustify = true;
-				randomButton.icon(Icons.SHUFFLE.get());
-				buttons.add(randomButton);
-				add(randomButton);
-			}
+				}
+			};
+			randomButton.leftJustify = true;
+			randomButton.icon(Icons.SHUFFLE.get());
+			buttons.add(randomButton);
+			add(randomButton);
 
 			for (int i = 1; i < buttons.size(); i++){
 				ColorBlock spc = new ColorBlock(1, 1, 0xFF000000);
@@ -848,26 +835,26 @@ public class HeroSelectScene extends PixelScene {
 
 		private class WndRandomize extends Window {
 
-			CheckBox chkHero;
+			CheckBox chkTalents;
 			CheckBox chkChals;
 			OptionSlider optChals;
 
 			public WndRandomize(){
 				super();
 
-				chkHero = new CheckBox(Messages.get(HeroSelectScene.class, "randomize_hero")){
+				chkTalents = new CheckBox(Messages.get(HeroSelectScene.class, "randomize_hero")){
 					@Override
 					public void checked(boolean value) {
 						super.checked(value);
-						heroWasRandomized = value;
+						talentsWereRandomized = value;
 					}
 				};
-				chkHero.setRect(0, 0, 120, 16);
-				chkHero.checked(heroWasRandomized);
-				add(chkHero);
+				chkTalents.setRect(0, 0, 120, 16);
+				chkTalents.checked(talentsWereRandomized);
+				add(chkTalents);
 				RenderedTextBlock randomDesc = PixelScene.renderTextBlock(6);
 				randomDesc.text(Messages.get(HeroSelectScene.class, "randomize_desc"), 120);
-				randomDesc.setPos(0, chkHero.bottom() + 2);
+				randomDesc.setPos(0, chkTalents.bottom() + 2);
 				add(randomDesc);
 				float settingsTop = randomDesc.bottom() + 4;
 
@@ -928,16 +915,7 @@ public class HeroSelectScene extends PixelScene {
 							ShatteredPixelDungeon.scene().addToFront(new WndChallenges(mask, false));
 						}
 
-						if (chkHero.checked()){
-							HeroClass randomCls;
-							do {
-								randomCls = Random.oneOf(HeroClass.values());
-							} while (!randomCls.isUnlocked());
-							setSelectedHero(randomCls);
-							GamesInProgress.randomizedClass = true;
-						} else {
-							setSelectedHero(GamesInProgress.selectedClass);
-						}
+						GamesInProgress.randomizedClass = chkTalents.checked();
 					}
 				};
 				btnConfirm.setRect(0, optChals.bottom() + 4, 60, 16);

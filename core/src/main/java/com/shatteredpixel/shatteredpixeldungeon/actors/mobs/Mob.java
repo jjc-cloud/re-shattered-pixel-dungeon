@@ -29,6 +29,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Adrenaline;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AcuteHearing;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AllyBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
@@ -40,6 +41,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Corruption;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Dread;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.GreaterHaste;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Hunger;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.HearingLoss;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MindVision;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MonkEnergy;
@@ -100,6 +102,7 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
+import com.watabou.noosa.Image;
 import com.watabou.noosa.tweeners.AlphaTweener;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.GameMath;
@@ -362,7 +365,6 @@ public abstract class Mob extends Char {
 			if (canCall && seesSwarmEnemy(candidate)) {
 				Buff.affect(candidate, SwarmIntelTracker.class).onSeen(this);
 			} else if (tracker != null && tracker.callerId == id()) {
-				tracker.timeSeenAt = Float.MAX_VALUE;
 				tracker.alertRange = 0;
 			}
 		}
@@ -375,17 +377,6 @@ public abstract class Mob extends Char {
 			if (tracker != null && tracker.callerId == id()) range = Math.max(range, tracker.alertRange);
 		}
 		return range;
-	}
-
-	@Override
-	public void fixTime(float decrement) {
-		for (Char candidate : Actor.chars()) {
-			SwarmIntelTracker tracker = candidate.buff(SwarmIntelTracker.class);
-			if (tracker != null && tracker.callerId == id() && tracker.timeSeenAt != Float.MAX_VALUE) {
-				tracker.timeSeenAt -= decrement;
-			}
-		}
-		super.fixTime(decrement);
 	}
 
 	//FIXME this is sort of a band-aid correction for allies needing more intelligent behaviour
@@ -765,6 +756,52 @@ public abstract class Mob extends Char {
 
 	CharSprite movementShadow;
 	AlphaTweener shadowFade;
+	private Image hearingShadow;
+
+	/** 沿用宝库的感知显示层级，持续显示生物影像并揭示脚下地形。 */
+	public void updateHearingShadow() {
+		boolean deaf = Dungeon.hero != null && Dungeon.hero.buff(HearingLoss.class) != null;
+		boolean heard = !deaf && Dungeon.hero != null && Dungeon.level != null
+				&& Dungeon.hero.buff(AcuteHearing.class) != null && isAlive()
+				&& Dungeon.level.distance(Dungeon.hero.pos, pos) <= AcuteHearing.DISTANCE
+				&& sprite != null && sprite.parent != null;
+		if (heard || deaf) {
+			if (shadowFade != null) { shadowFade.killAndErase(); shadowFade = null; }
+			if (movementShadow != null) { movementShadow.killAndErase(); movementShadow = null; }
+		}
+		if (!heard) {
+			if (hearingShadow != null) { hearingShadow.killAndErase(); hearingShadow = null; }
+			return;
+		}
+		if (!Dungeon.level.visited[pos] && !Dungeon.level.mapped[pos]) {
+			Dungeon.level.visited[pos] = true;
+			GameScene.updateFog(pos, 1);
+		}
+		if (hearingShadow == null || hearingShadow.parent == null) {
+			hearingShadow = new Image(sprite) {
+				@Override
+				public void draw() {
+					// 移动补间在精灵更新后执行，绘制时读取最新位置以保持同步。
+					x = sprite.x;
+					y = sprite.y;
+					angle = sprite.angle;
+					origin.set(sprite.origin);
+					super.draw();
+				}
+			};
+			sprite.parent.add(hearingShadow);
+		}
+		hearingShadow.flipHorizontal = sprite.flipHorizontal;
+		hearingShadow.flipVertical = sprite.flipVertical;
+		hearingShadow.copy(sprite);
+		hearingShadow.x = sprite.x;
+		hearingShadow.y = sprite.y;
+		hearingShadow.angle = sprite.angle;
+		hearingShadow.resetColor();
+		hearingShadow.alpha(sprite.alpha());
+		// 已直接看见的生物沿用原精灵，避免两份影像叠加；隐形仍会被听见。
+		hearingShadow.visible = !sprite.visible || !Dungeon.level.heroFOV[pos] || invisible > 0;
+	}
 
 	@Override
 	public void move(int step, boolean travelling) {
@@ -776,20 +813,31 @@ public abstract class Mob extends Char {
 				&& sprite.parent != null
 				&& Dungeon.hero != null
 				&& !sprite.visible){
+			if (Dungeon.hero.buff(HearingLoss.class) != null
+					|| (Dungeon.hero.buff(AcuteHearing.class) != null
+					&& Dungeon.level.distance(pos, Dungeon.hero.pos) <= AcuteHearing.DISTANCE)) return;
 			boolean vaultMovement = usingStealthGamePlay
 					&& Dungeon.level.distance(pos, Dungeon.hero.pos) <= 6;
 			//沿用水面波纹的八格范围和已知地形条件，离开水格才触发感知。
 			boolean waterMovement = !flying && Dungeon.level.water[previousPos]
 					&& sprite.canShowWaterRipple(previousPos);
-			if (!vaultMovement && !waterMovement){
+			//敏锐听觉感知范围内的所有单位移动，不受地形、飞行或阵营限制。
+			boolean heardMovement = Dungeon.hero.hasTalent(Talent.KEEN_HEARING)
+					&& Math.min(Dungeon.level.distance(previousPos, Dungeon.hero.pos),
+							Dungeon.level.distance(pos, Dungeon.hero.pos))
+					<= 2 + Dungeon.hero.pointsInTalent(Talent.KEEN_HEARING);
+			if (!vaultMovement && !waterMovement && !heardMovement){
 				return;
 			}
 
-			//宝库的声音提示可以揭示地形，普通水面感知保留已有的地图信息。
-			if (vaultMovement && !Dungeon.level.visited[pos] && !Dungeon.level.mapped[pos]){
-				//also reveal this cell in the fog of war if it's within a 6 tile path
-				PathFinder.buildDistanceMap(Dungeon.hero.pos, Dungeon.level.passable, 6);
-				if (PathFinder.distance[pos] != Integer.MAX_VALUE) {
+			//敏锐听觉揭示单位脚下地形，宝库保留原有的六格路径限制。
+			if ((vaultMovement || heardMovement) && !Dungeon.level.visited[pos] && !Dungeon.level.mapped[pos]){
+				boolean revealTerrain = heardMovement;
+				if (!revealTerrain) {
+					PathFinder.buildDistanceMap(Dungeon.hero.pos, Dungeon.level.passable, 6);
+					revealTerrain = PathFinder.distance[pos] != Integer.MAX_VALUE;
+				}
+				if (revealTerrain) {
 					Dungeon.level.visited[pos] = true;
 					GameScene.updateFog(pos, 1);
 				}
@@ -1015,6 +1063,7 @@ public abstract class Mob extends Char {
 	public void destroy() {
 		
 		super.destroy();
+		if (hearingShadow != null) { hearingShadow.killAndErase(); hearingShadow = null; }
 		
 		Dungeon.level.mobs.remove( this );
 

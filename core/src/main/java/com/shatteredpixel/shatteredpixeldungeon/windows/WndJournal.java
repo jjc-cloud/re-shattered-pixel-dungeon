@@ -433,7 +433,7 @@ public class WndJournal extends WndTabbed {
 				while(!toAdd.isEmpty() && toAdd.get(0) != null
 						&& w + toAdd.get(0).width() <= width()){
 					toAddThisRow.add(toAdd.remove(0));
-					w += toAddThisRow.get(0).width();
+					w += toAddThisRow.get(toAddThisRow.size() - 1).width();
 				}
 				
 				float spacing = (width() - w)/(toAddThisRow.size() + 1);

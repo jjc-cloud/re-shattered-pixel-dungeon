@@ -142,6 +142,7 @@ public class BuffIndicator extends Component {
 	public static final int MAGIC_ONLY_DOMAIN = 89;
 	public static final int PHYSICAL_MAGIC_NULL_DOMAIN = 90;
 	public static final int COLLAPSE_DANGER = 91;
+	public static final int ACUTE_HEARING = 92;
 
 	public static final int SIZE_SMALL  = 7;
 	public static final int SIZE_LARGE  = 16;
