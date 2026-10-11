@@ -26,12 +26,10 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.watabou.noosa.TextureFilm;
 import com.watabou.noosa.Game;
-import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.VaultTokenDoor;
 
 public class VaultTokenDoorSprite extends MobSprite {
 
-	private boolean wide;
 	private float fadeStart;
 	private float fadeTarget;
 	private float fadeElapsed = 1f;
@@ -43,14 +41,10 @@ public class VaultTokenDoorSprite extends MobSprite {
 		renderShadow = false;
 		visibleOutOfFFOV = true;
 
-		wide = Dungeon.level instanceof VaultLevel && ((VaultLevel) Dungeon.level).isRegularQuest();
-		texture(wide ? Assets.Environment.CITY_QUEST : Assets.Sprites.VAULT_TOKENS_DOOR);
-		TextureFilm frames;
-		if (wide) {
-			perspectiveRaise = 0;
-			frames = new TextureFilm(texture);
-			frames.add(0, texture.uvRect(0, 128, 48, 176));
-		} else frames = new TextureFilm(texture, 16, 16);
+		texture(Assets.Environment.CITY_QUEST);
+		perspectiveRaise = 0;
+		TextureFilm frames = new TextureFilm(texture);
+		frames.add(0, texture.uvRect(0, 128, 48, 176));
 
 		idle = new Animation( 1, false );
 		idle.frames( frames, 0 );
@@ -80,7 +74,7 @@ public class VaultTokenDoorSprite extends MobSprite {
 		super.update();
 		if (ch != null && Dungeon.hero != null && Dungeon.level != null) {
 			int distance = Dungeon.level.distance(ch.pos, Dungeon.hero.pos);
-			if (wide && ch instanceof VaultTokenDoor) {
+			if (ch instanceof VaultTokenDoor) {
 				for (int offset = -1; offset <= 1; offset++) distance = Math.min(distance, Dungeon.level.distance(ch.pos + offset, Dungeon.hero.pos));
 				float target = distance >= 3 ? 0f : distance == 2 ? .5f : 1f;
 				if (target != fadeTarget) {
@@ -90,8 +84,6 @@ public class VaultTokenDoorSprite extends MobSprite {
 				}
 				fadeElapsed = Math.min(1f, fadeElapsed + Game.elapsed);
 				alpha(fadeStart + (fadeTarget - fadeStart) * fadeElapsed);
-			} else {
-				alpha(0.25f * Math.max(0, 4 - Math.max(1, distance)));
 			}
 		}
 	}

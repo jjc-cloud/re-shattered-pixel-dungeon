@@ -1201,7 +1201,7 @@ public abstract class Mob extends Char {
 	}
 	
 	public void rollToDropLoot(){
-		if (vaultCorridorGuard && Dungeon.level instanceof VaultLevel && ((VaultLevel) Dungeon.level).isRegularQuest()) {
+		if (vaultCorridorGuard && Dungeon.level instanceof VaultLevel) {
 			if (!vaultBadgeDropped) {
 				vaultBadgeDropped = true;
 				Item token = new com.shatteredpixel.shatteredpixeldungeon.items.quest.DwarfToken();

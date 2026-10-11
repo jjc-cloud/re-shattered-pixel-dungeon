@@ -106,7 +106,7 @@ public class Heap implements Bundlable {
 		case REMAINS:
 		case SKELETON:
 			CellEmitter.center( pos ).start(Speck.factory(Speck.RATTLE), 0.1f, 3);
-			if (Dungeon.level instanceof VaultLevel && ((VaultLevel) Dungeon.level).isRegularQuest()
+			if (Dungeon.level instanceof VaultLevel
 					&& !Imp.Quest.vaultRemainsCommented) {
 				Imp.Quest.vaultRemainsCommented = true;
 				GLog.n(Messages.get(Imp.class, "vault_remains_hero"));

@@ -1019,7 +1019,7 @@ public abstract class Char extends Actor {
 			damage *= 1.25f;
 		}
 
-		//two separate things can convert dmg to bleed, we handle that here
+		//Harvest converts damage to bleed, while Vorpal adds bleed alongside direct damage.
 		//we do this before modifiers are applied back to dmg as we don't want to stack them twice (from this and bleed)
 		float bleedAmt = 0;
 		Class bleedSrc = null;
@@ -1097,9 +1097,10 @@ public abstract class Char extends Actor {
 			b.announced = false;
 			b.attachTo(this);
 			b.set(bleedAmt, bleedSrc);
-			sprite.showStatus(CharSprite.WARNING, Messages.titleCase(b.name()) + " " + dmg);
+			sprite.showStatus(CharSprite.WARNING, Messages.titleCase(b.name()) + " "
+					+ (bleedSrc == Vorpal.class ? Math.round(b.level()) : dmg));
 			Splash.at( sprite.center(), -PointF.PI / 2, PointF.PI / 6, sprite.blood(), 10 );
-			return;
+			if (bleedSrc != Vorpal.class) return;
 		}
 		//交叉火力：连段期间，除英雄外的任何单位对敌方造成的伤害按其攻击前已有的层数递增（每层+100%/+200%），
 		//即首次该类攻击获得1层加成（英雄攻击那层），此后每次递增1层

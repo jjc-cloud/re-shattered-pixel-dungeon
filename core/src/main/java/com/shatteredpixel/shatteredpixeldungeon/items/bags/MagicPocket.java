@@ -97,8 +97,7 @@ public class MagicPocket extends Bag {
 	}
 
 	public static boolean isVault() {
-		return Dungeon.branch == 1 && Dungeon.level instanceof VaultLevel
-				&& ((VaultLevel) Dungeon.level).isRegularQuest();
+		return Dungeon.branch == 1 && Dungeon.level instanceof VaultLevel;
 	}
 
 	/** Items with special pickup effects (including currency) must also stay in the bag. */
