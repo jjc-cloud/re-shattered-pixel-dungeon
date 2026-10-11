@@ -564,7 +564,7 @@ public class Dungeon {
 			ScrollOfMagicMapping.reveal(level, false);
 		}
 		hero.pos = pos;
-		if (level instanceof VaultLevel && ((VaultLevel) level).isRegularQuest()
+		if (level instanceof VaultLevel
 				&& !Imp.Quest.vaultBossesDefeated) {
 			Buff.affect(hero, MagicSealDomain.class);
 		}

@@ -623,7 +623,7 @@ public class GameScene extends PixelScene {
 			Dungeon.droppedItems.remove( Dungeon.depth );
 		}
 
-		if (Dungeon.level instanceof VaultLevel && ((VaultLevel) Dungeon.level).isRegularQuest()
+		if (Dungeon.level instanceof VaultLevel
 				&& Dungeon.hero.belongings.getItem(MagicPocket.class) != null) {
 			MagicPocket.issue(Dungeon.hero);
 			if (InterlevelScene.mode == InterlevelScene.Mode.DESCEND) {

@@ -147,8 +147,7 @@ public class VaultBossElemental extends Mob {
 	public enum ElementalForm {
 		FIRE,
 		FROST,
-		SHOCK,
-		UNSTABLE //currently unused
+		SHOCK
 	}
 	private ElementalForm form = null; //only initially
 
@@ -420,7 +419,6 @@ public class VaultBossElemental extends Mob {
 			return true;
 		}
 
-
 		AiState lastState = state;
 		boolean result = super.act();
 
@@ -575,10 +573,10 @@ public class VaultBossElemental extends Mob {
 		if (newlyEmpowered) GLog.n(Messages.get(Imp.class, "vault_elementals_empowered"));
 		if (survivors) return;
 		boolean remindStatue = false;
-		if (Dungeon.level instanceof VaultLevel && ((VaultLevel) Dungeon.level).isRegularQuest()) {
+		if (Dungeon.level instanceof VaultLevel) {
 			Buff.detach(Dungeon.hero, MagicSealDomain.class);
 		}
-		if (Dungeon.level instanceof VaultLevel && ((VaultLevel) Dungeon.level).isRegularQuest()
+		if (Dungeon.level instanceof VaultLevel
 				&& !Imp.Quest.vaultBossesDefeated) {
 			remindStatue = true;
 			Imp.Quest.vaultBossesDefeated = true;

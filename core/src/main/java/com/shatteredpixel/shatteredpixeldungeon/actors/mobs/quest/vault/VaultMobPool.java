@@ -25,7 +25,6 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.watabou.utils.Random;
 import com.watabou.utils.Reflection;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -35,18 +34,9 @@ public final class VaultMobPool {
 
 	private VaultMobPool() {}
 
-	public static final Class<? extends Mob>[] TIER_1 = new Class[]{VaultSkeleton.class, VaultDM100.class};
-	public static final Class<? extends Mob>[] TIER_2 = new Class[]{VaultShaman.class, VaultDM200.class, VaultGhoul.class};
-	public static final Class<? extends Mob>[] TIER_3 = new Class[]{VaultElemental.class, VaultGolem.class};
-
-	private static final List<Class<? extends Mob>> TYPES;
-	static {
-		ArrayList<Class<? extends Mob>> types = new ArrayList<>();
-		types.addAll(Arrays.asList(TIER_1));
-		types.addAll(Arrays.asList(TIER_2));
-		types.addAll(Arrays.asList(TIER_3));
-		TYPES = Collections.unmodifiableList(types);
-	}
+	private static final List<Class<? extends Mob>> TYPES = Collections.unmodifiableList(Arrays.asList(
+			VaultSkeleton.class, VaultDM100.class, VaultShaman.class, VaultDM200.class,
+			VaultGhoul.class, VaultElemental.class, VaultGolem.class));
 
 	public static List<Class<? extends Mob>> types() {
 		return TYPES;

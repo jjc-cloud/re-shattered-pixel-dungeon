@@ -29,7 +29,6 @@ import com.shatteredpixel.shatteredpixeldungeon.tiles.CustomTilemap;
 import com.watabou.noosa.Tilemap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CityLevel;
-import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.vault.VaultEntranceRoom;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
@@ -179,33 +178,26 @@ public final class VaultTiles {
 
 		@Override
 		public void restoreFromBundle(Bundle bundle) {
-			if (!bundle.contains(OVERRIDES_KEYS) || !bundle.contains(OVERRIDES_VALUES)) {
-				bundle.put(OVERRIDES_KEYS, new int[0]);
-				bundle.put(OVERRIDES_VALUES, new int[0]);
-			}
 			super.restoreFromBundle(bundle);
-			// Old saves included an auto-stitched entrance. Retain corridor damage only.
-			int oldX = tileX, oldY = tileY, oldWidth = tileW;
-			int[] keys = tileOverrides.keyArray();
-			java.util.ArrayList<Integer> damaged = new java.util.ArrayList<>();
-			for (int key : keys) if (tileOverrides.get(key) == DESTROYED) {
-				damaged.add(oldX + key % oldWidth + (oldY + key / oldWidth) * VaultLayout.WIDTH);
-			}
-			setRect(19, 45, 3, 23);
-			tileOverrides.clear();
-			for (int cell : damaged) {
-				int x = cell % VaultLayout.WIDTH - tileX, y = cell / VaultLayout.WIDTH - tileY;
-				if (x >= 0 && x < tileW && y >= 0 && y < tileH) overrideTile(x, y, DESTROYED);
-			}
 			restorePattern();
 		}
+
 	}
 
 	/** Literal atlas cells for the supplied platform and surrounding entrance rug. */
-	public static class EntranceRug extends VaultEntranceRoom.QuestEntranceInternal {
-		public EntranceRug() { setRect(18, 68, 5, 4); }
-
+	public static class EntranceRug extends CustomTilemap {
 		@Override
+		public Tilemap create() {
+			Tilemap v = super.create();
+			v.map(tileData(), tileW);
+			return v;
+		}
+
+		public EntranceRug() {
+			texture = Assets.Environment.CITY_QUEST;
+			setRect(18, 68, 5, 4);
+		}
+
 		public int[] tileData() {
 			return new int[]{
 					44, 24, 25, 26, 45,
@@ -217,12 +209,12 @@ public final class VaultTiles {
 
 		@Override
 		public String name(int x, int y) {
-			return x >= 1 && x <= 3 && y < 3 ? super.name(x, y) : Messages.get(Carpet.class, "name");
+			return x >= 1 && x <= 3 && y < 3 ? Messages.get(this, "name") : Messages.get(Carpet.class, "name");
 		}
 
 		@Override
 		public String desc(int x, int y) {
-			return x >= 1 && x <= 3 && y < 3 ? super.desc(x, y) : Messages.get(Carpet.class, "desc");
+			return x >= 1 && x <= 3 && y < 3 ? Messages.get(this, "desc") : Messages.get(Carpet.class, "desc");
 		}
 	}
 
@@ -264,46 +256,6 @@ public final class VaultTiles {
 		@Override
 		public String desc(int x, int y) { return Messages.get(CityLevel.class, "statue_desc"); }
 
-	}
-
-	public static class EntranceColumns extends CustomTilemap {
-		public EntranceColumns() {
-			texture = Assets.Environment.CITY_QUEST;
-			setRect(18, 66, 5, 6);
-		}
-
-		public int[] tileData() {
-			int[] data = new int[tileW * tileH];
-			Arrays.fill(data, -1);
-			for (int y = 0; y < tileH; y++) {
-				for (int x = 0; x < tileW; x++) {
-					int gx = tileX + x, gy = tileY + y;
-					if (VaultLayout.tile(gx, gy) == 'o'
-							&& Dungeon.level.map[gx + gy * Dungeon.level.width()] == Terrain.CUSTOM_DECO) {
-						data[x + y * tileW] = 2 * 16 + 11;
-					}
-					if (y + 1 < tileH && VaultLayout.tile(gx, gy + 1) == 'o'
-							&& Dungeon.level.map[gx + (gy + 1) * Dungeon.level.width()] == Terrain.CUSTOM_DECO) {
-						data[x + y * tileW] = 16 + 11;
-					}
-				}
-			}
-			return data;
-		}
-
-		@Override
-		public Tilemap create() {
-			Tilemap result = super.create();
-			result.map(tileData(), tileW);
-			return result;
-		}
-
-		@Override
-		public void restoreFromBundle(Bundle bundle) {
-			super.restoreFromBundle(bundle);
-			// Earlier fixed-map saves only included the body row of the top columns.
-			setRect(18, 66, 5, 6);
-		}
 	}
 
 	/** Supplied single-cell artwork for the treasure chamber door. */

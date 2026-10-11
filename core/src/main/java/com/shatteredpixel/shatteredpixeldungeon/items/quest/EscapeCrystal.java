@@ -55,7 +55,7 @@ public class EscapeCrystal extends Item {
 		super.execute(hero, action);
 		if (!AC_USE.equals(action)) return;
 
-		if (!(Dungeon.level instanceof VaultLevel) || !((VaultLevel) Dungeon.level).isRegularQuest()) {
+		if (!(Dungeon.level instanceof VaultLevel)) {
 			GLog.n(Messages.get(this, "not_vault"));
 			return;
 		}

@@ -33,7 +33,6 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.levels.RegularLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
-import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.vault.treasure.VaultTreasureRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.SpecialRoom;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -150,7 +149,7 @@ public class ScrollOfTeleportation extends Scroll {
 		ArrayList<Integer> candidates = new ArrayList<>();
 		
 		for (Room r : level.rooms()){
-			if (r instanceof SpecialRoom || r instanceof VaultTreasureRoom){
+			if (r instanceof SpecialRoom){
 				int terr;
 				boolean locked = false;
 				for (Point p : r.getPoints()){
@@ -181,10 +180,8 @@ public class ScrollOfTeleportation extends Scroll {
 			boolean secretDoor = false;
 			int doorPos = -1;
 			Room room = level.room(pos);
-			if (room instanceof SpecialRoom || room instanceof VaultTreasureRoom){
-				Room.Door entrance = null;
-				if (room instanceof SpecialRoom) entrance = ((SpecialRoom) room).entrance();
-				if (room instanceof VaultTreasureRoom) entrance = ((VaultTreasureRoom) room).entrance();
+			if (room instanceof SpecialRoom){
+				Room.Door entrance = ((SpecialRoom) room).entrance();
 				if (entrance != null){
 					doorPos = level.pointToCell(entrance);
 					for (int i : PathFinder.NEIGHBOURS8){

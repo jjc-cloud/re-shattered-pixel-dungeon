@@ -28,16 +28,12 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.ImpStatue;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Golem;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Monk;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.PlateArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ScaleArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
-import com.shatteredpixel.shatteredpixeldungeon.items.quest.DwarfToken;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
@@ -46,7 +42,6 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.AmbitiousImpR
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ImpSprite;
-import com.shatteredpixel.shatteredpixeldungeon.windows.WndImpOld;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndQuest;
 import com.watabou.noosa.Game;
 import com.watabou.utils.Bundle;
@@ -129,66 +124,37 @@ public class Imp extends NPC {
 			return true;
 		}
 
-		//pre v4.4.0 logic
-		if (Quest.oldQuest) {
-			if (Quest.given) {
-
-				DwarfToken tokens = Dungeon.hero.belongings.getItem(DwarfToken.class);
-				if (tokens != null && (tokens.quantity() >= 5 || (!Quest.alternative && tokens.quantity() >= 4))) {
-					Game.runOnRenderThread(new Callback() {
+		Quest.tryComplete(Dungeon.hero);
+		if (!Quest.given()){
+			Game.runOnRenderThread(new Callback() {
+				@Override
+				public void call() {
+					GameScene.show(new WndQuest(Imp.this, Messages.get(Imp.this, "quest_intro_1")) {
 						@Override
-						public void call() {
-							GameScene.show(new WndImpOld(Imp.this, tokens));
+						public void hide() {
+							super.hide();
+
+							Quest.given = true;
+							Quest.completed = false;
+
+							tell(Messages.get(Imp.this, "quest_intro_regular"));
 						}
 					});
-				} else {
-					tell(Quest.alternative ?
-							Messages.get(this, "old_monks_2", Messages.titleCase(Dungeon.hero.name()))
-							: Messages.get(this, "old_golems_2", Messages.titleCase(Dungeon.hero.name())));
 				}
-
-			} else {
-				tell(Messages.get(this, "old_intro") + "\n\n" + (Quest.alternative ?
-						Messages.get(this, "old_monks_1", Messages.titleCase(Dungeon.hero.name()))
-						: Messages.get(this, "old_golems_1", Messages.titleCase(Dungeon.hero.name()))));
-				Quest.given = true;
-				Quest.completed = false;
-			}
+			});
+		} else if (!Quest.isCompleted()) {
+			tell(Messages.get(Imp.this, "quest_in_progress_regular"));
 		} else {
-			Quest.tryComplete(Dungeon.hero);
-			if (!Quest.given()){
-				Game.runOnRenderThread(new Callback() {
-					@Override
-					public void call() {
-						GameScene.show(new WndQuest(Imp.this, Messages.get(Imp.this, "quest_intro_1")) {
-							@Override
-							public void hide() {
-								super.hide();
-
-								Quest.given = true;
-								Quest.completed = false;
-
-								tell(Messages.get(Imp.this, "quest_intro_regular"));
-							}
-						});
-					}
-				});
-			} else if (!Quest.isCompleted()) {
-				tell(Messages.get(Imp.this, "quest_in_progress_regular"));
+			if (Quest.vaultBossesDefeated && Quest.returnOutcome == Quest.RETURN_EMPTY) {
+				tell(Messages.get(Imp.this, "quest_completed_empty"));
+			} else if (Quest.vaultBossesDefeated && Quest.returnOutcome == Quest.RETURN_ITEM) {
+				tell(Messages.get(Imp.this, "quest_completed_item"));
+			} else if (Quest.vaultBossesDefeated && Quest.returnOutcome == Quest.RETURN_STATUE) {
+				tell(Messages.get(Imp.this, "quest_completed_statue_only"));
+			} else if (!Quest.earnedShop()){
+				tell(Messages.get(Imp.this, "quest_completed_bad"));
 			} else {
-				if (Quest.vaultBossesDefeated && Quest.returnOutcome == Quest.RETURN_EMPTY) {
-					tell(Messages.get(Imp.this, "quest_completed_empty"));
-				} else if (Quest.vaultBossesDefeated && Quest.returnOutcome == Quest.RETURN_ITEM) {
-					tell(Messages.get(Imp.this, "quest_completed_item"));
-				} else if (Quest.vaultBossesDefeated && Quest.returnOutcome == Quest.RETURN_STATUE) {
-					tell(Messages.get(Imp.this, "quest_completed_statue_only"));
-				} else if (!Quest.earnedShop()){
-					tell(Messages.get(Imp.this, "quest_completed_bad"));
-				} else if (Quest.score < 4000){
-					tell(Messages.get(Imp.this, "quest_completed_good"));
-				} else {
-					tell(Messages.get(Imp.this, "quest_completed_great"));
-				}
+				tell(Messages.get(Imp.this, "quest_completed_great"));
 			}
 		}
 
@@ -216,11 +182,6 @@ public class Imp extends NPC {
 
 		private static boolean spawned;
 
-		//variables exclusive to old, pre-4.0.0 Imp quest
-		private static boolean oldQuest = false;
-		private static boolean alternative; //true= golems, false = monks
-
-		//variables shared by both quests
 		private static boolean given;
 		private static boolean completed;
 		private static boolean vaultEntered;
@@ -235,10 +196,7 @@ public class Imp extends NPC {
 		public static int returnOutcome;
 		public static Item reward; //just used to hold the reward if her's inventory is full in new version
 
-		//variables exclusive to new quest
 		public static ArrayList<Item> rewardOptions = new ArrayList<>();
-		public static int hazardFreebies; //player gets two free hits from hazards before they start penalizing score
-		public static boolean mirrorUsed = false;
 		private static int score; //Not the score used in rankings! This score has no penalty applied
 		
 		public static void reset() {
@@ -252,8 +210,6 @@ public class Imp extends NPC {
 			returnOutcome = 0;
 
 			reward = null;
-			hazardFreebies = 2;
-			mirrorUsed = false;
 			score = 0;
 		}
 		
@@ -261,19 +217,14 @@ public class Imp extends NPC {
 
 		private static final String SPAWNED     = "spawned";
 
-		private static final String OLD_QUEST   = "old_quest";
-		private static final String ALTERNATIVE = "alternative";
 		private static final String REWARD      = "reward";
 
 		private static final String GIVEN       = "given";
 		private static final String COMPLETED   = "completed";
 
-		private static final String HAZRD_FREEBIES = "hazard_freebies";
 		private static final String SCORE       = "score";
 		private static final String REWARD_OPTIONS = "reward_options";
-		private static final String MIRROR_USED = "mirror_used";
 
-		
 		public static void storeInBundle( Bundle bundle ) {
 			
 			Bundle node = new Bundle();
@@ -281,8 +232,6 @@ public class Imp extends NPC {
 			node.put( SPAWNED, spawned );
 			
 			if (spawned) {
-				node.put( OLD_QUEST, oldQuest );
-				node.put( ALTERNATIVE, alternative );
 				
 				node.put("vault_entered", vaultEntered);
 				node.put("vault_gate_opened", vaultGateOpened);
@@ -293,10 +242,8 @@ public class Imp extends NPC {
 				node.put( COMPLETED, completed );
 				node.put( REWARD, reward );
 
-				node.put( HAZRD_FREEBIES, hazardFreebies );
 				node.put( SCORE, score );
 				node.put( REWARD_OPTIONS, rewardOptions );
-				node.put( MIRROR_USED, mirrorUsed );
 			}
 			
 			bundle.put( NODE, node );
@@ -308,23 +255,8 @@ public class Imp extends NPC {
 			
 			if (!node.isNull() && (spawned = node.getBoolean( SPAWNED ))) {
 
-				if (node.contains( OLD_QUEST )){
-					oldQuest = node.getBoolean( OLD_QUEST );
-				} else {
-					oldQuest = true;
-				}
-				if (oldQuest){
-					alternative	= node.getBoolean( ALTERNATIVE );
-					score = 0;
-					rewardOptions.clear();
-					mirrorUsed = false;
-				} else {
-					alternative = false;
-					hazardFreebies = node.getInt( HAZRD_FREEBIES );
-					mirrorUsed = node.getBoolean( MIRROR_USED );
-					score = node.getInt( SCORE );
-					rewardOptions = new ArrayList<>((Collection<Item>) (Collection<?>) node.getCollection( REWARD_OPTIONS ));
-				}
+				score = node.getInt( SCORE );
+				rewardOptions = new ArrayList<>((Collection<Item>) (Collection<?>) node.getCollection( REWARD_OPTIONS ));
 
 				vaultGateOpened = node.getBoolean("vault_gate_opened");
 				vaultBossesDefeated = node.getBoolean("vault_bosses_defeated");
@@ -334,8 +266,7 @@ public class Imp extends NPC {
 				
 				given = node.getBoolean( GIVEN );
 				completed = node.getBoolean( COMPLETED );
-				vaultEntered = node.contains("vault_entered") ? node.getBoolean("vault_entered")
-						: completed || (Dungeon.branch == 1 && Dungeon.depth >= 16 && Dungeon.depth <= 20);
+				vaultEntered = node.getBoolean("vault_entered");
 			}
 		}
 
@@ -345,12 +276,10 @@ public class Imp extends NPC {
 				rooms.add(new AmbitiousImpRoom());
 				spawned = true;
 
-				oldQuest = false;
 				reward = null;
 				score = 0;
 				
 				given = false;
-				mirrorUsed = false;
 
 				rewardOptions.clear();
 				Item artif = Generator.randomArtifact();
@@ -396,7 +325,7 @@ public class Imp extends NPC {
 		}
 
 		public static boolean canEnterVault() {
-			return spawned && given && !completed && !oldQuest && !vaultEntered;
+			return spawned && given && !completed && !vaultEntered;
 		}
 
 		public static void startVault() { vaultEntered = true; }
@@ -405,31 +334,9 @@ public class Imp extends NPC {
 			return given;
 		}
 
-		public static boolean isOld(){
-			return oldQuest;
-		}
-
-		public static void oldProcess( Mob mob ) {
-			if (spawned && oldQuest && given && !completed && Dungeon.depth != 20) {
-				if ((alternative && mob instanceof Monk) ||
-					(!alternative && mob instanceof Golem)) {
-					
-					Dungeon.level.drop( new DwarfToken(), mob.pos ).sprite.drop();
-				}
-			}
-		}
-		
-		public static void oldComplete() {
-			reward = null;
-			completed = true;
-
-			Statistics.questScores[3] = 4000;
-			Notes.remove( Notes.Landmark.IMP );
-		}
-
 		/** Hand in the requested statue without touching any other equipment or loot. */
 		public static boolean tryComplete(Hero hero) {
-			if (oldQuest || !spawned || !given || completed) return false;
+			if (!spawned || !given || completed) return false;
 			if (hero.belongings.getItem(com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket.class) != null) return false;
 			ImpStatue statue = hero.belongings.getItem(ImpStatue.class);
 			if (statue == null) return false;
@@ -452,7 +359,7 @@ public class Imp extends NPC {
 		}
 
 		public static boolean earnedShop() {
-			return completed && (oldQuest || score > 2000);
+			return completed && (score > 2000);
 		}
 	}
 }

@@ -24,7 +24,6 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.Food;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MonkSprite;
@@ -70,14 +69,7 @@ public class Monk extends Mob {
 	public int drRoll() {
 		return super.drRoll() + Random.NormalIntRange(0, 2);
 	}
-	
-	@Override
-	public void rollToDropLoot() {
-		Imp.Quest.oldProcess( this );
-		
-		super.rollToDropLoot();
-	}
-	
+
 	protected float focusCooldown = 0;
 	
 	@Override

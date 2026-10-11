@@ -144,19 +144,4 @@ public abstract class SentrySprite extends MobSprite {
 		}
 	}
 
-	public static class VaultScan extends SentrySprite {
-		@Override
-		protected int texOffset() {
-			return 1;
-		}
-
-	}
-
-	public static class VaultLaser extends SentrySprite {
-		@Override
-		protected int texOffset() {
-			return 2;
-		}
-	}
-
 }
