@@ -54,6 +54,8 @@ import com.watabou.utils.Callback;
 import com.watabou.utils.PointF;
 import com.watabou.utils.Random;
 
+import java.util.ArrayList;
+
 public class WandOfWarding extends Wand {
 
 	{
@@ -91,14 +93,19 @@ public class WandOfWarding extends Wand {
 			currentWardEnergy += ((Ward) Stasis.getStasisAlly()).tier;
 		}
 		
-		int maxWardEnergy = 0;
-		for (Buff buff : curUser.buffs()){
+		// 魔法口袋中的法杖读档后可能没有充能 Buff，容量以实际持有的法杖为准。
+		ArrayList<WandOfWarding> wardingWands = owner.belongings.getAllItems(WandOfWarding.class);
+		for (Buff buff : owner.buffs()){
 			if (buff instanceof Wand.Charger){
-				if (((Charger) buff).wand() instanceof WandOfWarding){
-					maxWardEnergy += 2 + ((Charger) buff).wand().level();
+				Wand wand = ((Charger) buff).wand();
+				// 灌注进法师魔杖的法杖不在背包里，仍通过充能 Buff 计入且不重复统计。
+				if (wand instanceof WandOfWarding && !wardingWands.contains(wand)) {
+					wardingWands.add((WandOfWarding) wand);
 				}
 			}
 		}
+		int maxWardEnergy = 0;
+		for (WandOfWarding wand : wardingWands) maxWardEnergy += 2 + wand.level();
 		
 		wardAvailable = (currentWardEnergy < maxWardEnergy);
 		

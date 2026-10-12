@@ -7,7 +7,7 @@ import com.watabou.noosa.Image;
 
 public class HearingLoss extends FlavourBuff {
 
-	public static final float DURATION = 20f;
+	public static final float DURATION = 50f;
 
 	{
 		// 后遗症同时作为秘药的再次饮用间隔。

@@ -38,6 +38,7 @@ public class SwarmIntelTracker extends Buff {
 
 	// 每个被发现的单位各自持有一份记录；呼叫者死亡也保留身份，直到完全脱离发现。
 	public int callerId = -1;
+	public float timeSeenAt = Float.MAX_VALUE;
 	public int alertRange;
 	private float leftAtZero;
 	private int trackingDepth = Dungeon.depth;
@@ -47,6 +48,7 @@ public class SwarmIntelTracker extends Buff {
 	public void refreshSight() {
 		if (trackingDepth != Dungeon.depth || trackingBranch != Dungeon.branch) {
 			callerId = -1;
+			timeSeenAt = Float.MAX_VALUE;
 			alertRange = 0;
 			trackingDepth = Dungeon.depth;
 			trackingBranch = Dungeon.branch;
@@ -62,15 +64,21 @@ public class SwarmIntelTracker extends Buff {
 			}
 		}
 		if (!seen) callerId = -1;
-		alertRange = callerSees ? 8 : 0;
+		if (!callerSees) {
+			timeSeenAt = Float.MAX_VALUE;
+			alertRange = 0;
+		} else if (timeSeenAt != Float.MAX_VALUE) {
+			alertRange = Math.min(8, 2 + 2 * (int)Math.max(0, Actor.now() - timeSeenAt));
+		}
 	}
 
-	/** 第一发现者登记并呼叫援军，吸引范围固定为 8 格。 */
+	/** 第一发现者登记并持续呼叫援军，每个目标的吸引范围独立从 2 格增长到 8 格。 */
 	public void onSeen(Mob caller) {
 		refreshSight();
 		if (callerId == -1) callerId = caller.id();
 		if (callerId != caller.id()) return;
-		alertRange = 8;
+		if (timeSeenAt == Float.MAX_VALUE) timeSeenAt = Actor.now();
+		alertRange = Math.min(8, 2 + 2 * (int)Math.max(0, Actor.now() - timeSeenAt));
 		leftAtZero = 5f;
 
 		for (Mob mob : Dungeon.level.mobs) {
@@ -172,6 +180,7 @@ public class SwarmIntelTracker extends Buff {
 		bundle.put(ALERT_RANGE, alertRange);
 		bundle.put(LEFT, leftAtZero);
 		bundle.put("caller_id", callerId);
+		bundle.put("time_seen_at", timeSeenAt);
 		bundle.put("tracking_depth", trackingDepth);
 		bundle.put("tracking_branch", trackingBranch);
 	}
@@ -182,6 +191,7 @@ public class SwarmIntelTracker extends Buff {
 		alertRange = bundle.getInt(ALERT_RANGE);
 		leftAtZero = bundle.getFloat(LEFT);
 		callerId = bundle.getInt("caller_id");
+		if (bundle.contains("time_seen_at")) timeSeenAt = bundle.getFloat("time_seen_at");
 		trackingDepth = bundle.getInt("tracking_depth");
 		trackingBranch = bundle.getInt("tracking_branch");
 	}

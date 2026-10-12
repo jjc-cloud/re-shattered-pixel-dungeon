@@ -161,20 +161,15 @@ public abstract class Wand extends Item implements ChargeItem {
 
 	public abstract void onZap(Ballistica attack);
 
-	/** 伤害法杖接管主弹道可破坏的表面；冲击波与焰浪沿用自身范围结算。 */
+	/** 伤害法杖接管主弹道可破坏的表面；解离、冲击波与焰浪沿用自身范围结算。 */
 	public final boolean zapTerrain(Hero owner, int target) {
-		if (cursed || !(this instanceof DamageWand) || this instanceof WandOfFireblast || this instanceof WandOfBlastWave
+		if (cursed || !(this instanceof DamageWand) || this instanceof WandOfDisintegration
+				|| this instanceof WandOfFireblast || this instanceof WandOfBlastWave
 				|| !Dungeon.level.insideMap(target)) return false;
 		int impact = targetingPos(owner, target);
 		if (!Dungeon.level.insideMap(impact) || Dungeon.level.terrainInteractions == null
 				|| !Dungeon.level.terrainInteractions.ruleAt(impact).allows(TerrainInteractions.Source.WAND)
 				|| Actor.findChar(impact) != null) return false;
-		if (this instanceof WandOfDisintegration) {
-			// 解离仍可贯穿遮挡，只接管自身射程内最先接触到的塌方墙。
-			Ballistica beam = new Ballistica(owner.pos, target, collisionProperties(target));
-			int distance = beam.path.indexOf(impact);
-			if (distance < 1 || distance > ((WandOfDisintegration)this).distance()) return false;
-		}
 		if (Dungeon.level.affectTerrain(impact, TerrainInteractions.Source.WAND)) {
 			float pitch = this instanceof WandOfFrost ? 1.1f : this instanceof WandOfLivingEarth ? 0.9f : 1f;
 			Sample.INSTANCE.play(Assets.Sounds.HIT_MAGIC, 1, pitch * Random.Float(0.87f, 1.15f));
@@ -779,7 +774,7 @@ public abstract class Wand extends Item implements ChargeItem {
 
 				final Ballistica shot = new Ballistica( curUser.pos, target, curWand.collisionProperties(target));
 				int cell = shot.collisionPos;
-				if (!curWand.cursed && curWand instanceof DamageWand) {
+				if (!curWand.cursed && curWand instanceof DamageWand && !(curWand instanceof WandOfDisintegration)) {
 					int surface = curWand.targetingPos(curUser, target);
 					if (Dungeon.level.insideMap(surface) && Dungeon.level.terrainInteractions != null
 							&& Dungeon.level.terrainInteractions.ruleAt(surface).allows(TerrainInteractions.Source.WAND)) {

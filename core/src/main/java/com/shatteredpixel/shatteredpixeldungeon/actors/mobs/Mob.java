@@ -365,6 +365,7 @@ public abstract class Mob extends Char {
 			if (canCall && seesSwarmEnemy(candidate)) {
 				Buff.affect(candidate, SwarmIntelTracker.class).onSeen(this);
 			} else if (tracker != null && tracker.callerId == id()) {
+				tracker.timeSeenAt = Float.MAX_VALUE;
 				tracker.alertRange = 0;
 			}
 		}
@@ -377,6 +378,17 @@ public abstract class Mob extends Char {
 			if (tracker != null && tracker.callerId == id()) range = Math.max(range, tracker.alertRange);
 		}
 		return range;
+	}
+
+	@Override
+	public void fixTime(float decrement) {
+		for (Char candidate : Actor.chars()) {
+			SwarmIntelTracker tracker = candidate.buff(SwarmIntelTracker.class);
+			if (tracker != null && tracker.callerId == id() && tracker.timeSeenAt != Float.MAX_VALUE) {
+				tracker.timeSeenAt -= decrement;
+			}
+		}
+		super.fixTime(decrement);
 	}
 
 	//FIXME this is sort of a band-aid correction for allies needing more intelligent behaviour
@@ -1256,9 +1268,9 @@ public abstract class Mob extends Char {
 	@SuppressWarnings("unchecked")
 	public Item createLoot() {
 		Item item;
-		//怪物金币保留原数量，场景随机金币的减半不影响战斗掉落。
+		//怪物自身的金币战利品与场景随机金币使用相同的减半数量范围。
 		if (loot == Gold.class || loot == Generator.Category.GOLD) {
-			item = new Gold(Random.IntRange(30 + Dungeon.depth * 10, 60 + Dungeon.depth * 20));
+			item = new Gold().random();
 		} else if (loot instanceof Generator.Category) {
 
 			item = Generator.randomUsingDefaults( (Generator.Category)loot );
