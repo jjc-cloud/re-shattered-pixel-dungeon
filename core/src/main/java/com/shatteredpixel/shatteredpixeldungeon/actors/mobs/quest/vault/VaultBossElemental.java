@@ -45,6 +45,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicSealDomain;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Paralysis;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.PinCushion;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Sleep;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.ClericSpell;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
@@ -99,6 +100,7 @@ public class VaultBossElemental extends Mob {
 		defenseSkill = 20;
 
 		properties.add(Property.BOSS);
+		immunities.add(Sleep.class);
 	}
 
 	public VaultBossElemental(){

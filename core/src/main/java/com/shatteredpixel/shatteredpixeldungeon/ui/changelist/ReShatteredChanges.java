@@ -81,7 +81,7 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V074_WARDING, "哨位法杖",
 				"\n哨位现在会优先攻击玩家攻击的目标。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V061_BUGFIX,"bug修复",
-				"\n-修复了20层可破坏地形被破坏后仍使用原有的连续绘制导致的贴图错误问题。\n-修复了20层贴图缓存未释放导致背景出现贴图的问题。\n-修复了魔能超载无法超额使用暗影斗篷的问题。\n-修复了宝库入口的光源更新顺序导致的特效错误问题。\n-修复了其他端塌方闪退的问题。"));
+				"\n-修复了20层可破坏地形被破坏后仍使用原有的连续绘制导致的贴图错误问题。\n-修复了20层贴图缓存未释放导致背景出现贴图的问题。\n-修复了魔能超载无法超额使用暗影斗篷的问题。\n-修复了宝库入口的光源更新顺序导致的特效错误问题。\n-修复了其他端塌方闪退的问题。\n-修复了解离射线无法穿透蜘蛛网、长度提前截断与伤害丢失的问题。"));
 		
 
 		changes = new ChangeInfo("增强", false, null);
