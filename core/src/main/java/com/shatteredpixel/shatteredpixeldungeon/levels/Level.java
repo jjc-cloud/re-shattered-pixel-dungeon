@@ -262,6 +262,22 @@ public abstract class Level implements Bundlable {
 		}
 		return changed;
 	}
+
+	/**
+	 * 无副作用查询：该格是否属于“不遮挡视野且可被解离摧毁”的地形。
+	 * 判定与 affectTerrain(cell, DISINTEGRATION) 的破坏结果一致，但不会改动地图。
+	 */
+	public boolean passthroughDisintegrationRay(int cell) {
+		if (!insideMap(cell) || losBlocking[cell]) return false;
+		if (terrainInteractions != null) {
+			TerrainInteractions.Action action = terrainInteractions.ruleAt(cell)
+					.response(TerrainInteractions.Source.DISINTEGRATION).action;
+			if (action == TerrainInteractions.Action.REPLACE
+					|| action == TerrainInteractions.Action.DESTROY) return true;
+			if (action != TerrainInteractions.Action.LEGACY) return false;
+		}
+		return flamable[cell];
+	}
 	
 	public Feeling feeling = Feeling.NONE;
 	
