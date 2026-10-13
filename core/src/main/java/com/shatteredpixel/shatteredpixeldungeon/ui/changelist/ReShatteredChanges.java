@@ -28,6 +28,7 @@ import java.util.ArrayList;
 public class ReShatteredChanges {
 
 	public static void addAllChanges(ArrayList<ChangeInfo> changeInfos) {
+		add_v0_2_1_Changes(changeInfos);
 		add_v0_2_0_Changes(changeInfos);
 		add_02_ImportantChanges(changeInfos);
 		add_v0_1_3_Changes(changeInfos);
@@ -36,6 +37,30 @@ public class ReShatteredChanges {
 		add_v0_1_0_Changes(changeInfos);
 		add_01_ImportantChanges(changeInfos);
 		addDevelopmentPreview(changeInfos);
+	}
+
+	public static void add_v0_2_1_Changes(ArrayList<ChangeInfo> changeInfos) {
+		ChangeInfo changes = new ChangeInfo("v0.2.1", true, "");
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+
+		changes = new ChangeInfo("改动", false, null);
+		changes.hardlight(CharSprite.WARNING);
+		changeInfos.add(changes);
+
+
+		changes.addButton(new ChangeButton(ChangeIcons.V081_MISC, "杂项改动",
+				"\n-取消强制新手流程，首次开局即可自由选择英雄与挑战，无需先进入地牢取得手册。"
+				+ "\n-随机模式不再要求通关，首次开局即可设置随机天赋与随机挑战。"
+				+ "\n-踩到隐藏楼层入口时始终显示回响提示，不再要求关闭音效或将音效音量设为零。"
+			));
+		changes.addButton(new ChangeButton(ChangeIcons.V061_BUGFIX, "bug修复",
+				"\n-修复地毯被摧毁后，残留的过渡贴图仍阻止水覆盖下层地形的问题。"
+				+ "\n-修复检查破损地毯时仍显示地毯残片的问题，现在显示其下的地形。"
+				+ "\n-修复带有余烬的特殊地砖可以长草的问题。"
+				+ "\n-修复宝库Boss房内无圆点地砖被草覆盖后变成普通地板的问题。"
+				+ "\n-修复击败Boss后解锁的宝库门在开启时显示普通地砖、门顶部仍有残留的问题。"
+			));
 	}
 
 	public static void add_v0_2_0_Changes(ArrayList<ChangeInfo> changeInfos) {

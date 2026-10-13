@@ -147,7 +147,9 @@ public final class VaultLayout {
 					case 'D': level.map[cell] = Terrain.CUSTOM_DECO; break;
 					case 'd': level.map[cell] = Terrain.LOCKED_DOOR; break;
 					default:
-						level.map[cell] = Random.Int(10) == 0 ? Terrain.EMPTY_DECO : Terrain.EMPTY;
+						//Boss 房的无圆点地砖同样属于特殊地板，不允许被草覆盖。
+						level.map[cell] = y < GATE_Y ? Terrain.EMPTY_SP
+								: Random.Int(10) == 0 ? Terrain.EMPTY_DECO : Terrain.EMPTY;
 						break;
 				}
 			}

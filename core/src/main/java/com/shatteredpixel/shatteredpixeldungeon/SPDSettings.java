@@ -235,7 +235,8 @@ public class SPDSettings extends GameSettings {
 	}
 	
 	public static boolean intro() {
-		return getBoolean( KEY_INTRO, true );
+		//跳过强制新手流程，首次开局即可自由选择英雄、挑战和随机模式。
+		return false;
 	}
 	
 	public static void lastClass( int value ) {

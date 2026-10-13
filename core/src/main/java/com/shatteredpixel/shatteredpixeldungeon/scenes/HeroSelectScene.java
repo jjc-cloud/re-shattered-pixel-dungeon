@@ -813,12 +813,7 @@ public class HeroSelectScene extends PixelScene {
 			StyledButton randomButton = new StyledButton(Chrome.Type.BLANK, Messages.get(HeroSelectScene.class, "randomize"), 6) {
 				@Override
 				protected void onClick() {
-
-					if (Badges.isUnlocked(Badges.Badge.VICTORY) || DeviceCompat.isDebug()){
-						ShatteredPixelDungeon.scene().addToFront(new WndRandomize());
-					} else {
-						GamesInProgress.randomizedClass = !GamesInProgress.randomizedClass;
-					}
+					ShatteredPixelDungeon.scene().addToFront(new WndRandomize());
 				}
 			};
 			randomButton.leftJustify = true;
