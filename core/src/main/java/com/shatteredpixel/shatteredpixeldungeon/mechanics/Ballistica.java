@@ -43,6 +43,7 @@ public class Ballistica {
 	public static final int STOP_CHARS = 2;     //ballistica will stop on first char hit
 	public static final int STOP_SOLID = 4;     //ballistica will stop on solid terrain
 	public static final int IGNORE_SOFT_SOLID = 8; //ballistica will ignore soft solid terrain, such as doors and webs
+	public static final int PASS_DISINTEGRABLE = 16; //ballistica will pass through solid terrain that a disintegration ray would destroy
 
 	public static final int PROJECTILE =  	STOP_TARGET	| STOP_CHARS	| STOP_SOLID;
 
@@ -73,6 +74,7 @@ public class Ballistica {
 
 	private void build( int from, int to, boolean stopTarget, boolean stopChars, boolean stopTerrain, boolean ignoreSoftSolid ) {
 		int w = Dungeon.level.width();
+		boolean passDisintegrable = (collisionProperties & PASS_DISINTEGRABLE) > 0;
 
 		int x0 = from % w;
 		int x1 = to % w;
@@ -121,6 +123,7 @@ public class Ballistica {
 					&& cell != sourcePos
 					&& !Dungeon.level.passable[cell]
 					&& !Dungeon.level.avoid[cell]
+					&& !(passDisintegrable && Dungeon.level.passthroughDisintegrationRay(cell))
 					&& Actor.findChar(cell) == null) {
 				collide(path.get(path.size() - 1));
 			}
@@ -129,6 +132,8 @@ public class Ballistica {
 
 			if (collisionPos == null && stopTerrain && cell != sourcePos && Dungeon.level.solid[cell]) {
 				if (ignoreSoftSolid && (Dungeon.level.passable[cell] || Dungeon.level.avoid[cell])) {
+					//do nothing
+				} else if (passDisintegrable && Dungeon.level.passthroughDisintegrationRay(cell)) {
 					//do nothing
 				} else {
 					collide(cell);

@@ -5,6 +5,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ForcedBlindness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.LiquidMetal;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -12,6 +13,7 @@ import com.shatteredpixel.shatteredpixeldungeon.plants.Blindweed;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
+import com.watabou.utils.Callback;
 
 public class BlindingCrystal extends TargetedSpell {
 
@@ -22,12 +24,20 @@ public class BlindingCrystal extends TargetedSpell {
 	}
 
 	@Override
+	protected void fx(Ballistica bolt, Callback callback) {
+		MagicMissile.boltFromChar( curUser.sprite.parent,
+				MagicMissile.BEACON,
+				curUser.sprite,
+				bolt.collisionPos,
+				callback);
+		Sample.INSTANCE.play(Assets.Sounds.ZAP);
+	}
+
+	@Override
 	protected void affectTarget(Ballistica bolt, Hero hero) {
 		Char target = Actor.findChar(bolt.collisionPos);
 		if (target != null) {
 			ForcedBlindness.apply(target);
-			if (target.sprite != null) target.sprite.burst(0xFFFFFF88, 6);
-			Sample.INSTANCE.play(Assets.Sounds.HIT_MAGIC);
 		} else {
 			GLog.w(Messages.get(this, "no_target"));
 		}
