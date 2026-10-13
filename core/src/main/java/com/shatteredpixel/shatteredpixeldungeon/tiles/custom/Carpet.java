@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.CustomTilemap;
 import com.watabou.noosa.Game;
+import com.watabou.noosa.Image;
 import com.watabou.noosa.Tilemap;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.SparseArray;
@@ -212,6 +213,17 @@ public class Carpet extends CustomTilemap {
 		}
 		v.map( data, tileW );
 		return v;
+	}
+
+	@Override
+	public synchronized Image image(int tileX, int tileY) {
+		int cell = tileX + tileW*tileY;
+		//破损过渡图只用于地图显示，检查与覆水应按下层地形处理。
+		if (tileOverrides.containsKey(cell)) {
+			int override = tileOverrides.get(cell);
+			if (override == DESTROYED || override == SKIP) return null;
+		}
+		return super.image(tileX, tileY);
 	}
 
 	//for now we assume that overrides should give the text/desc of the base tile

@@ -44,7 +44,7 @@ public class DungeonTerrainTilemap extends DungeonTilemap {
 	protected int getTileVisual(int pos, int tile, boolean flat) {
 		if (!flat && DungeonTileSheet.doorTile(tile) && Dungeon.level instanceof VaultLevel
 				&& ((VaultLevel) Dungeon.level).customDoorCell(pos)) {
-			return DungeonTileSheet.getVisualWithAlts(DungeonTileSheet.FLOOR, pos);
+			return DungeonTileSheet.getVisualWithAlts(DungeonTileSheet.FLOOR_SP, pos);
 		}
 		if (!flat && Dungeon.level instanceof VaultLevel && ((VaultLevel) Dungeon.level).customStatueCell(pos)) {
 			return DungeonTileSheet.getVisualWithAlts(DungeonTileSheet.FLOOR, pos);

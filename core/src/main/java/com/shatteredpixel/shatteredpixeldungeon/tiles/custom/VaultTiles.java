@@ -50,7 +50,7 @@ public final class VaultTiles {
 			if (x < tileX || x >= tileX + tileW || y < tileY || y >= tileY + tileH) return false;
 			char tile = VaultLayout.tile(x, y);
 			int terrain = Dungeon.level.map[x + y * Dungeon.level.width()];
-			return (tile == '.' && (terrain == Terrain.EMPTY || terrain == Terrain.EMPTY_DECO))
+			return (tile == '.' && (terrain == Terrain.EMPTY_SP || terrain == Terrain.EMPTY || terrain == Terrain.EMPTY_DECO))
 					|| (tile == 'D' && (terrain == Terrain.CUSTOM_DECO || terrain == Terrain.EMPTY
 					|| terrain == Terrain.EMPTY_DECO || terrain == Terrain.DOOR || terrain == Terrain.LOCKED_DOOR
 					|| terrain == Terrain.OPEN_DOOR));
@@ -272,7 +272,8 @@ public final class VaultTiles {
 			int terrain = Dungeon.level.map[cell];
 			if (terrain != Terrain.DOOR && terrain != Terrain.LOCKED_DOOR && terrain != Terrain.OPEN_DOOR) return data;
 			for (int y = 0; y < tileH; y++) {
-				if (terrain != Terrain.OPEN_DOOR || y == 0) data[y] = (terrain == Terrain.LOCKED_DOOR ? 2 : 1) + (11 + y) * 16;
+				//任务图集第 0 列是开门状态，上下两格都使用对应贴图。
+				data[y] = (terrain == Terrain.OPEN_DOOR ? 0 : terrain == Terrain.LOCKED_DOOR ? 2 : 1) + (11 + y) * 16;
 			}
 			return data;
 		}

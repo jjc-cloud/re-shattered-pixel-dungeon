@@ -1403,7 +1403,6 @@ public abstract class Level implements Bundlable {
 				map[pos] == Terrain.FURROWED_GRASS ||
 				map[pos] == Terrain.EMPTY ||
 				map[pos] == Terrain.EMBERS ||
-				map[pos] == Terrain.EMBERS_SP ||
 				map[pos] == Terrain.EMPTY_DECO) {
 			set(pos, Terrain.GRASS, this);
 			GameScene.updateMap(pos);
@@ -1533,8 +1532,7 @@ public abstract class Level implements Bundlable {
 				}
 			}
 
-			if ( (map[ch.pos] == Terrain.GRASS || map[ch.pos] == Terrain.EMBERS
-					|| map[ch.pos] == Terrain.EMBERS_SP)
+			if ( (map[ch.pos] == Terrain.GRASS || map[ch.pos] == Terrain.EMBERS)
 					&& ch == Dungeon.hero && Dungeon.hero.hasTalent(Talent.REJUVENATING_STEPS)
 					&& ch.buff(Talent.RejuvenatingStepsCooldown.class) == null){
 
