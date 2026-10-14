@@ -397,6 +397,7 @@ public class TitleScene extends PixelScene {
 		@Override
 		protected void onClick() {
 			ChangesScene.changesSelected = 0;
+			com.shatteredpixel.shatteredpixeldungeon.ui.changelist.ReShatteredChanges.selectedPage = 0;
 			ShatteredPixelDungeon.switchNoFade( ChangesScene.class );
 		}
 
