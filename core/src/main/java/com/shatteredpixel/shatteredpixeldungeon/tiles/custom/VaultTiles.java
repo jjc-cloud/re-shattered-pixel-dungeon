@@ -159,7 +159,7 @@ public final class VaultTiles {
 		}
 	}
 
-	/** The straight corridor carpet ends at the supplied entrance rug. */
+	/** 直走廊地毯：靠入口一端接入口地毯，靠大门一端用转角收口。 */
 	public static class EntranceCarpet extends Carpet {
 		public EntranceCarpet() {
 			setRect(19, 45, 3, 23);
@@ -171,7 +171,12 @@ public final class VaultTiles {
 				for (int x = 0; x < tileW; x++) {
 					int cell = x + y * tileW;
 					if (tileOverrides.containsKey(cell) && tileOverrides.get(cell) == DESTROYED) continue;
-					overrideTile(x, y, 48 + (x == 0 ? 8 : x == tileW - 1 ? 2 : 0));
+					if (y == 0){
+						//大门一侧原本是敞口，换成左上角、上边、右上角把口收住
+						overrideTile(x, y, 48 + (x == 0 ? 9 : x == tileW - 1 ? 3 : 1));
+					} else {
+						overrideTile(x, y, 48 + (x == 0 ? 8 : x == tileW - 1 ? 2 : 0));
+					}
 				}
 			}
 		}

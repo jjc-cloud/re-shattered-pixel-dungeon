@@ -186,6 +186,7 @@ public class WelcomeScene extends PixelScene {
 				protected void onClick() {
 					super.onClick();
 					updateVersion(previousVersion);
+					com.shatteredpixel.shatteredpixeldungeon.ui.changelist.ReShatteredChanges.selectedPage = 0;
 					ShatteredPixelDungeon.switchScene(ChangesScene.class);
 				}
 			};

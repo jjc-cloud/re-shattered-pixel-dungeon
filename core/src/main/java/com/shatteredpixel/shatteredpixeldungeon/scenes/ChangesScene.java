@@ -262,7 +262,16 @@ public class ChangesScene extends PixelScene {
 
 		float left = list.left()-4f;
 
-		if (!showingReShatteredChanges && changesSelected <= 3){
+		if (showingReShatteredChanges){
+
+			//本作更新日志的页面切换按钮；页面划分见 ReShatteredChanges.PAGE_NAMES。
+			if (ReShatteredChanges.pageCount() > 1){
+				for (int i = 0; i < ReShatteredChanges.pageCount(); i++){
+					left = setupReShatteredPageButton(i, ReShatteredChanges.pageName(i), left, list.bottom());
+				}
+			}
+
+		} else if (changesSelected <= 3){
 
 			left = setupChangesSelectionButton(0, "v4.X", left, list.bottom(), 24);
 			left = setupChangesSelectionButton(1, "v3.X", left, list.bottom(), 24);
@@ -270,7 +279,7 @@ public class ChangesScene extends PixelScene {
 			left = setupChangesSelectionButton(3, "v1.X", left, list.bottom(), 24);
 			left = setupChangesSelectionButton(4, "PreRelease->", left, list.bottom(), 53);
 
-		} else if (!showingReShatteredChanges) {
+		} else {
 
 			left = setupChangesSelectionButton(3, "<-Release", left, list.bottom(), 40);
 			left = setupChangesSelectionButton(4, "v0.9", left, list.bottom(), 22);
@@ -299,6 +308,26 @@ public class ChangesScene extends PixelScene {
 		};
 		if (changesSelected != idx) button.textColor( 0xBBBBBB );
 		button.setRect(left, top, width, changesSelected == idx ? 19 : 15);
+		addToBack(button);
+		return button.right()-2;
+	}
+
+	/** 本作更新日志的页面切换按钮；宽度按文字自动计算，页面数量与名称来自 ReShatteredChanges.PAGE_NAMES。 */
+	private float setupReShatteredPageButton(int idx, String text, float left, float top){
+		StyledButton button = new StyledButton(Chrome.Type.GREY_BUTTON_TR, text, 8){
+			@Override
+			protected void onClick() {
+				super.onClick();
+				if (ReShatteredChanges.selectedPage != idx) {
+					ReShatteredChanges.selectedPage = idx;
+					ShatteredPixelDungeon.seamlessResetScene();
+				}
+			}
+		};
+		boolean selected = ReShatteredChanges.selectedPage == idx;
+		if (!selected) button.textColor( 0xBBBBBB );
+		float width = Math.max( Math.round(button.reqWidth()) + 10, 22 );
+		button.setRect(left, top, width, selected ? 19 : 15);
 		addToBack(button);
 		return button.right()-2;
 	}

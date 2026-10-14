@@ -27,16 +27,49 @@ import java.util.ArrayList;
 
 public class ReShatteredChanges {
 
+	/**
+	 * 本作更新日志的页面表。数组下标就是页面序号，顺序即底部切换按钮从左到右的排列。
+	 * 想新增一个版本页：在 PAGE_NAMES 末尾追加一个按钮名，再在 addAllChanges 里为对应的新下标补内容。
+	 * 数组只有 1 项时不会显示底部切换按钮，也就是现在的默认状态。
+	 */
+	public static final String[] PAGE_NAMES = {
+		"v0.2",
+		"v0.1",
+	};
+
+	/** 当前正在查看的页，由更新页底部的切换按钮改写。 */
+	public static int selectedPage = 0;
+
+	public static int pageCount() {
+		return PAGE_NAMES.length;
+	}
+
+	public static String pageName(int page) {
+		return PAGE_NAMES[page];
+	}
+
 	public static void addAllChanges(ArrayList<ChangeInfo> changeInfos) {
-		add_v0_2_1_Changes(changeInfos);
-		add_v0_2_0_Changes(changeInfos);
-		add_02_ImportantChanges(changeInfos);
-		add_v0_1_3_Changes(changeInfos);
-		add_v0_1_2_Changes(changeInfos);
-		add_v0_1_1_Changes(changeInfos);
-		add_v0_1_0_Changes(changeInfos);
-		add_01_ImportantChanges(changeInfos);
-		addDevelopmentPreview(changeInfos);
+		addAllChanges(changeInfos, selectedPage);
+	}
+
+	/** 按页填充内容。default 与第 0 页相同，保证 selectedPage 越界时也总能显示一页。 */
+	public static void addAllChanges(ArrayList<ChangeInfo> changeInfos, int page) {
+		switch (page) {
+			case 0:
+				add_02_ImportantChanges(changeInfos);
+				add_v0_2_1_Changes(changeInfos);
+				add_v0_2_0_Changes(changeInfos);
+				break;
+			case 1:
+				add_01_done(changeInfos);
+				add_01_ImportantChanges(changeInfos);
+				add_v0_1_3_Changes(changeInfos);
+				add_v0_1_2_Changes(changeInfos);
+				add_v0_1_1_Changes(changeInfos);
+				add_v0_1_0_Changes(changeInfos);
+				addDevelopmentPreview(changeInfos);
+				break;
+		}
 	}
 
 	public static void add_v0_2_1_Changes(ArrayList<ChangeInfo> changeInfos) {
@@ -157,8 +190,9 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V010_FLUORESCENT_MOSS, "双向环境光源",
 				"\n环境光真正提供照明，不论是英雄还是敌人都享有光源的视野。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V020_BUCKET, "环境交互",
-				"\n现在地图中的元素接入了响应系统，会响应特定的动作，新增了一种特殊的木桶，其中装有随机的宝物。"));
-
+				"\n-现在地图中的元素接入了响应系统，会响应特定的动作，新增了一种特殊的木桶，其中装有随机的宝物。\n-矿洞地形改造，在矿洞中薄弱的墙壁可以被直接摧毁，拾取支撑会引其塌方。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V33_IMP, "宝库突袭",
+				"\n重构四区小恶魔任务。新任务中玩家需直接迎战三元素BOSS，巨型元素的AI调整，现在更加智能。首次引入多BOSS战。"));
 	}
 
 	public static void add_v0_1_3_Changes(ArrayList<ChangeInfo> changeInfos) {
@@ -340,6 +374,14 @@ public class ReShatteredChanges {
 
 	}
 
+	public static void add_01_done(ArrayList<ChangeInfo> changeInfos) {
+
+		ChangeInfo changes = new ChangeInfo("2026-9-28完结", true, "");
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+	}
+
+
 	public static void add_01_ImportantChanges(ArrayList<ChangeInfo> changeInfos) {
 
 		ChangeInfo changes = new ChangeInfo("重要改动", true, "");
@@ -350,6 +392,8 @@ public class ReShatteredChanges {
 				"\n现在所有角色的基础属性做出了区分。\n\n-战士拥有更快的生命回复速度。\n\n-法师拥有更快的法杖充能速度，不仅限于魔杖，但神器充能速度下降。"
 				+ "\n\n-盗贼更加耐饿，且更容易发现地牢的秘密，但法杖充能速度下降。\n\n-女猎手更难以被怪物发现。\n\n-决斗家可以双持武器。\n\n-牧师拥有更快的神器充能速度，但受到的伤害更多。"
 			));
+		changes.addButton(new ChangeButton(ChangeIcons.V035_WARRIOR_HEROARM, "战士转职重做",
+				"\n战士转职后会破损纹章会修复为完整纹章，根据转职获得不同的效果。角斗士更专注于战斗技巧与抵御伤害，狂战士则更专注于进攻及怒气控制。"));	
 		changes.addButton(new ChangeButton(ChangeIcons.V010_FLUORESCENT_MOSS, "环境",
 				"\n现在灯火、地面的发光苔藓与火焰会照亮周围的环境，怪物在水面上移动时更容易被玩家发现，火焰会使水蒸发。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V070_ALCHEMY_POT, "实验性炼金",
