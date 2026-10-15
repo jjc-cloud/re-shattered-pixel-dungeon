@@ -2627,13 +2627,14 @@ public class Hero extends Char {
 					? (Weapon) belongings.weapon()
 					: (Weapon) belongings.secondWep();
 			if (followup.STRReq() <= STR() && followup.canReach(this, target.pos)) {
+				float followupDamageMultiplier = championFollowupDamageMultiplier(followup);
 				boolean wasEnemy = target.alignment == Alignment.ENEMY
 						|| (target instanceof Mimic && target.alignment == Alignment.NEUTRAL);
 				KindOfWeapon abilityWeapon = belongings.abilityWeapon;
 				belongings.abilityWeapon = followup;
 				secondaryAttack = true;
 				try {
-					boolean followupHit = attack(target, 0.4f + 0.2f*pointsInTalent(Talent.COMBINED_LETHALITY), 0f, 1f);
+					boolean followupHit = attack(target, followupDamageMultiplier, 0f, 1f);
 					if (followupHit && wasEnemy) {
 						Buff.affect(this, Sai.ComboStrikeTracker.class).addHit(target);
 					}
@@ -2647,6 +2648,21 @@ public class Hero extends Char {
 				}
 			}
 		}
+	}
+
+	private float championFollowupDamageMultiplier(Weapon followup) {
+		// Compare weapon delays before switching the attacking weapon. Shared speed bonuses cancel out.
+		float delayRatio = belongings.attackingWeapon().delayFactor(this) / followup.delayFactor(this);
+		float speedDifference = Math.max(delayRatio, 1f / delayRatio) - 1f;
+		float fullBonus = 0.3f;
+		float maxBonus = 0.5625f; // 0.8 * (1 + 0.5625) = 1.25 times the follow-up weapon's own DPS.
+		float maxSpeedRatio = 7.5f; // Speed-augmented 0.5-delay weapon vs damage-augmented 1.5-delay weapon.
+		float reducedRate = (maxBonus - fullBonus) / (maxSpeedRatio - 1f - fullBonus);
+		float speedBonus = Math.min(maxBonus, Math.min(speedDifference, fullBonus)
+				+ Math.max(0f, speedDifference - fullBonus) * reducedRate);
+		float baseMultiplier = 0.5f + 0.1f * pointsInTalent(Talent.COMBINED_LETHALITY);
+		// A follow-up is one strike: discount slower weapons, without granting faster weapons extra strikes.
+		return baseMultiplier * (1f + speedBonus) * Math.min(1f, delayRatio);
 	}
 	
 	@Override
