@@ -220,6 +220,7 @@ public class VaultBossElemental extends Mob {
 		sprite.flipHorizontal = wasTurned;
 		BossHealthBar.assignBoss(this, true);
 		BossHealthBar.bleed(this, HP < HT/2);
+		Dungeon.observe();
 	}
 
 	@Override

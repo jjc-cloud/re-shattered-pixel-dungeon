@@ -23,6 +23,8 @@ package com.shatteredpixel.shatteredpixeldungeon.tiles;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
 import com.shatteredpixel.shatteredpixeldungeon.levels.HallsBossLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.MiningLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
@@ -75,8 +77,14 @@ public class WallBlockingTilemap extends Tilemap {
 			return;
 		}
 
+		// 保留可见燃烧书架的墙面和顶部；不永久清除，熄灭后继续按普通书架更新。
+		if ((shelf(cell) && Dungeon.level.heroFOV[cell] && Blob.volumeAt(cell, Fire.class) > 0)
+				|| (cell + mapWidth < size && shelf(cell + mapWidth)
+						&& Dungeon.level.heroFOV[cell + mapWidth] && Blob.volumeAt(cell + mapWidth, Fire.class) > 0)) {
+			curr = BLOCK_NONE;
+
 		//non-wall tiles
-		if (!wall(cell)) {
+		} else if (!wall(cell)) {
 
 			//clear empty floor tiles and cells which are visible
 			if (!fogHidden(cell) || !wall(cell + mapWidth)) {

@@ -24,6 +24,9 @@ package com.shatteredpixel.shatteredpixeldungeon.tiles;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.watabou.gltextures.TextureCache;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.NoosaScript;
@@ -277,6 +280,22 @@ public class FogOfWar extends Image {
 			
 		}
 		
+		// 自身可见的燃烧书架不再借用邻格的黑雾；顶部只清除贴图伸出的半格。
+		Blob fire = Dungeon.level.blobs.get(Fire.class);
+		if (fire != null && fire.volume > 0 && fire.cur != null) {
+			for (Rect update : updating) {
+				for (int y = Math.max(1, update.top); y < Math.min(mapHeight, update.bottom + 1); y++) {
+					for (int x = update.left; x < update.right; x++) {
+						int pos = x + y * mapWidth;
+						if (visible[pos] && Dungeon.level.map[pos] == Terrain.BOOKSHELF && fire.cur[pos] > 0) {
+							fog.setColor(0);
+							fog.fillRectangle(x * PIX_PER_TILE, y * PIX_PER_TILE - PIX_PER_TILE / 2,
+									PIX_PER_TILE, PIX_PER_TILE + PIX_PER_TILE / 2);
+						}
+					}
+				}
+			}
+		}
 		texture.bitmap(fog);
 
 	}

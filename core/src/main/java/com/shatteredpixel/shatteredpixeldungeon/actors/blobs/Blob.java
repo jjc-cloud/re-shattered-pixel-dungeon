@@ -284,11 +284,11 @@ public class Blob extends Actor {
 
 	public void fullyClear(){
 		Level owner = level != null ? level : Dungeon.level;
-		if (owner != null) owner.updateBlobLighting(this);
 		volume = 0;
 		area.setEmpty();
 		cur = new int[owner.length()];
 		off = new int[owner.length()];
+		if (owner != null) owner.updateBlobLighting(this);
 	}
 
 	public void onBuildFlagMaps( Level l ){

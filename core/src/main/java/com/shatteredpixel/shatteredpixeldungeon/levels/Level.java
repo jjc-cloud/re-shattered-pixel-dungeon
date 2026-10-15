@@ -29,6 +29,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.SacrificialFire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Web;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.WellWater;
@@ -1591,6 +1592,10 @@ public abstract class Level implements Bundlable {
 		if (ch.isAlive() && ch instanceof Piranha && !water[ch.pos]){
 			((Piranha) ch).dieOnLand();
 		}
+		// 普通移动、传送和击退共用落点处理，角色光源随落点刷新。
+		if (ch != Dungeon.hero && (ch.buff(Burning.class) != null || Char.hasProp(ch, Char.Property.FIERY))) {
+			Dungeon.observe();
+		}
 	}
 	
 	//public method for forcing the hard press of a cell. e.g. when an item lands on it
@@ -1708,10 +1713,15 @@ public abstract class Level implements Bundlable {
 	/** 光源更新不强制创建缓存，生成和读档后的首次观察会读取完整状态。 */
 	public void updateBlobLighting(Blob blob) {
 		if (lighting != null) lighting.blobChanged(blob);
+		if (this == Dungeon.level && blob.getClass() == Fire.class) GameScene.updateFog();
 	}
 
 	public void updateBlobLighting(Blob blob, int cell) {
 		if (lighting != null) lighting.blobChanged(blob, cell);
+		// 自然视野未变化时，书架点燃和熄灭仍须重绘墙面与顶部的迷雾。
+		if (this == Dungeon.level && blob.getClass() == Fire.class && map[cell] == Terrain.BOOKSHELF) {
+			GameScene.updateFog(cell, 1);
+		}
 	}
 
 	/** 自然视距与 Light 在此收口，天赋修正只用于本次视觉投射。 */

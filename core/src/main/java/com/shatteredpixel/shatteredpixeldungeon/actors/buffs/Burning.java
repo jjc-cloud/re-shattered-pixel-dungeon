@@ -90,7 +90,9 @@ public class Burning extends Buff implements Hero.Doom, Buff.DOTbuff {
 	public boolean attachTo(Char target) {
 		Buff.detach( target, Chill.class);
 
-		return super.attachTo(target);
+		if (!super.attachTo(target)) return false;
+		if (target.sprite != null) Dungeon.observe();
+		return true;
 	}
 
 	@Override
@@ -189,6 +191,7 @@ public class Burning extends Buff implements Hero.Doom, Buff.DOTbuff {
 	public void detach() {
 		target.needsIncomingDOTUpdate = true;
 		super.detach();
+		if (target.sprite != null) Dungeon.observe();
 	}
 	
 	public void reignite( Char ch ) {

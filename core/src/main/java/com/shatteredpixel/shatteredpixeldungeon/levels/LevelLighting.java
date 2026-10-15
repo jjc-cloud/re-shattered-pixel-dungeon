@@ -22,9 +22,11 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.SmokeScreen;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.WaterVapor;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.ShadowCaster;
 
 import java.util.Arrays;
@@ -44,6 +46,8 @@ public final class LevelLighting {
 	private final boolean[][] blocking = new boolean[4][];
 	private final BitSet staticDirty = new BitSet();
 	private final BitSet dirty = new BitSet();
+	private final BitSet characterLight = new BitSet();
+	private final BitSet nextCharacterLight = new BitSet();
 	private boolean initialized;
 	private int maxRadius;
 
@@ -124,6 +128,21 @@ public final class LevelLighting {
 			dirty.set(0, blocks);
 			initialized = true;
 		}
+		// 燃烧状态和火属性角色只照亮自身；移动、熄灭和形态变化只重算变化格所在块。
+		nextCharacterLight.clear();
+		for (Char ch : level.mobs) {
+			if (ch.isAlive() && level.insideMap(ch.pos)
+					&& (ch.buff(Burning.class) != null || Char.hasProp(ch, Char.Property.FIERY))) {
+				nextCharacterLight.set(ch.pos);
+			}
+		}
+		characterLight.xor(nextCharacterLight);
+		for (int cell = characterLight.nextSetBit(0); cell >= 0; cell = characterLight.nextSetBit(cell + 1)) {
+			int x = cell % width, y = cell / width;
+			invalidate(x, y, x + 1, y + 1, false);
+		}
+		characterLight.clear();
+		characterLight.or(nextCharacterLight);
 		if (dirty.isEmpty()) return;
 		Blob smoke = level.blobs.get(SmokeScreen.class);
 		Blob vapor = level.blobs.get(WaterVapor.class);
@@ -162,6 +181,7 @@ public final class LevelLighting {
 			for (int y = top; y < bottom; y++) {
 				for (int x = left; x < right; x++) {
 					int cell = x + y * width;
+					illuminated[cell] |= characterLight.get(cell);
 					lit |= illuminated[cell];
 					for (int policy = 0; policy < blocking.length; policy++) {
 						if (blocking[policy] != null) blocking[policy][cell] = blocksSight(cell, policy, smoke, vapor);

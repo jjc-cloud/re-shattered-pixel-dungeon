@@ -1078,6 +1078,7 @@ public abstract class Mob extends Char {
 		if (hearingShadow != null) { hearingShadow.killAndErase(); hearingShadow = null; }
 		
 		Dungeon.level.mobs.remove( this );
+		if (Char.hasProp(this, Property.FIERY)) Dungeon.observe();
 
 		if (Dungeon.hero.buff(MindVision.class) != null){
 			Dungeon.observe();
