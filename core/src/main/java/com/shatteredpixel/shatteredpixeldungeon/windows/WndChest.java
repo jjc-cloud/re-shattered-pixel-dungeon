@@ -291,7 +291,7 @@ public class WndChest extends WndTabbed {
 
 	@Override
 	public boolean onSignal(KeyEvent event) {
-		if (event.pressed && desktop && event.code == Input.Keys.SPACE) {
+		if (event.pressed && event.code == Input.Keys.SPACE) {
 			spillAll();
 			return true;
 		}
