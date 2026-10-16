@@ -102,10 +102,6 @@ public class ChestSession {
 		}
 	}
 
-	public void wakeMimic() {
-		closed = true;
-	}
-
 	public Mimic mimic() {
 		return mimic;
 	}

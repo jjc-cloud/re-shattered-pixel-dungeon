@@ -39,6 +39,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.InfernalBrew
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.ShockingBrew;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.SteamBrew;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.UnstableBrew;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.Elixir;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfAquaticRejuvenation;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfAcuteHearing;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfArcaneArmor;
@@ -67,6 +68,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.spells.MagicalInfusion;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.PhaseShift;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.ReclaimTrap;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.Recycle;
+import com.shatteredpixel.shatteredpixeldungeon.items.spells.Spell;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.SummonElemental;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.TelekineticGrab;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.UnstableSpell;
@@ -358,56 +360,57 @@ public abstract class Recipe {
 
 	private static final LinkedHashMap<String, Integer> specialRecipeCosts = new LinkedHashMap<>();
 
-	private static final Recipe[][] experimentalRecipes = new Recipe[][]{
-			{
-					new Bomb.EnhanceBomb(), specialRecipes[0], specialRecipes[1],
-					specialRecipes[2], specialRecipes[3]
-			},
-			{
-					new UnstableBrew.Recipe(), new CausticBrew.Recipe(),
-					new BlizzardBrew.Recipe(), new ShockingBrew.Recipe(),
-					new InfernalBrew.Recipe(), specialRecipes[7], new AquaBrew.Recipe(),
-					new ElixirOfHoneyedHealing.Recipe(), new ElixirOfAquaticRejuvenation.Recipe(),
-					new ElixirOfArcaneArmor.Recipe(), new ElixirOfIcyTouch.Recipe(),
-					new ElixirOfToxicEssence.Recipe(), new ElixirOfDragonsBlood.Recipe(),
-					new ElixirOfFeatherFall.Recipe(), new ElixirOfMight.Recipe(), specialRecipes[4],
-					new ElixirOfAcuteHearing.Recipe()
-			},
-			{
-					new UnstableSpell.Recipe(), new WildEnergy.Recipe(),
-					new TelekineticGrab.Recipe(), specialRecipes[8], new PhaseShift.Recipe(),
-					new Alchemize.Recipe(), new CurseInfusion.Recipe(),
-					new MagicalInfusion.Recipe(), new Recycle.Recipe(),
-					new ReclaimTrap.Recipe(), new SummonElemental.Recipe(),
-					new BeaconOfReturning.Recipe(), specialRecipes[5], specialRecipes[6]
+	// 实验性炼金按产物类型索引现有配方，共用实例，不另行维护配方清单。
+	private static final ArrayList<ArrayList<Recipe>> experimentalRecipes = new ArrayList<>();
+	static {
+		for (int category = 0; category <= EXPERIMENTAL_SPELLS; category++) {
+			experimentalRecipes.add(new ArrayList<>());
+		}
+		for (Recipe[] recipes : new Recipe[][]{
+				variableRecipes, oneIngredientRecipes, twoIngredientRecipes, threeIngredientRecipes}) {
+			for (Recipe recipe : recipes) {
+				Class<? extends Item> output = recipe instanceof SimpleRecipe
+						? ((SimpleRecipe) recipe).output : null;
+				// 非固定配方按已有实现归类，避免用空材料调用依赖材料的 sampleOutput。
+				if (recipe instanceof Bomb.EnhanceBomb
+						|| output != null && Bomb.class.isAssignableFrom(output)) {
+					experimentalRecipes.get(EXPERIMENTAL_BOMBS).add(recipe);
+				} else if (recipe instanceof UnstableBrew.Recipe
+						|| output != null && (Brew.class.isAssignableFrom(output)
+						|| Elixir.class.isAssignableFrom(output))) {
+					experimentalRecipes.get(EXPERIMENTAL_BREWS).add(recipe);
+				} else if (recipe instanceof UnstableSpell.Recipe || recipe instanceof Alchemize.Recipe
+						|| output != null && Spell.class.isAssignableFrom(output)) {
+					experimentalRecipes.get(EXPERIMENTAL_SPELLS).add(recipe);
+				}
 			}
-	};
+		}
+		for (SpecialRecipe recipe : specialRecipes) {
+			experimentalRecipes.get(recipe.category).add(recipe);
+		}
+	}
 
 	public static ArrayList<Item> experimentalOutputs(int category) {
 		ArrayList<Item> result = new ArrayList<>();
-		if (category < 0 || category >= experimentalRecipes.length) return result;
+		if (category < 0 || category >= experimentalRecipes.size()) return result;
 
 		if (category == EXPERIMENTAL_BOMBS) {
 			for (Class<? extends Bomb> output : Bomb.EnhanceBomb.validIngredients.values()) {
 				result.add(Reflection.newInstance(output));
 			}
-			for (SpecialRecipe recipe : specialRecipes) {
-				if (recipe.category == category) result.add(recipe.sampleOutput(null));
-			}
-		} else {
-			for (Recipe recipe : experimentalRecipes[category]) {
-				result.add(recipe.sampleOutput(null));
-			}
+		}
+		for (Recipe recipe : experimentalRecipes.get(category)) {
+			if (!(recipe instanceof Bomb.EnhanceBomb)) result.add(recipe.sampleOutput(null));
 		}
 		return result;
 	}
 
 	public static Recipe findExperimentalRecipe(ArrayList<Item> ingredients, Item output,
 			int energy, int category) {
-		if (output == null || category < 0 || category >= experimentalRecipes.length) return null;
+		if (output == null || category < 0 || category >= experimentalRecipes.size()) return null;
 		ingredients = RealityWarp.alchemyIngredients(ingredients);
 
-		for (Recipe recipe : experimentalRecipes[category]) {
+		for (Recipe recipe : experimentalRecipes.get(category)) {
 			boolean enoughEnergy = recipe instanceof SpecialRecipe
 					? energy >= recipe.cost(ingredients) : energy == recipe.cost(ingredients);
 			if (ingredients.size() == experimentalIngredientSlots(recipe, category)

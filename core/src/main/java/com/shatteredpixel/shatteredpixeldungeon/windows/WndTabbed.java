@@ -24,10 +24,21 @@ package com.shatteredpixel.shatteredpixeldungeon.windows;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Chrome;
 import com.shatteredpixel.shatteredpixeldungeon.SPDAction;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.PotionBandolier;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.ScrollHolder;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.VelvetPouch;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Button;
+import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
+import com.watabou.input.GameAction;
 import com.watabou.input.KeyBindings;
 import com.watabou.input.KeyEvent;
 import com.watabou.noosa.Game;
@@ -255,6 +266,58 @@ public class WndTabbed extends Window {
 		}
 	}
 	
+	public static Image bagIcon(Bag bag) {
+		if (bag instanceof MagicPocket) {
+			return new ItemSprite(ItemSpriteSheet.MAGIC_POCKET);
+		} else if (bag instanceof VelvetPouch) {
+			return Icons.get( Icons.SEED_POUCH );
+		} else if (bag instanceof ScrollHolder) {
+			return Icons.get( Icons.SCROLL_HOLDER );
+		} else if (bag instanceof MagicalHolster) {
+			return Icons.get( Icons.WAND_HOLSTER );
+		} else if (bag instanceof PotionBandolier) {
+			return Icons.get( Icons.POTION_BANDOLIER );
+		} else {
+			return Icons.get( Icons.BACKPACK );
+		}
+	}
+
+	protected class BagTab extends IconTab {
+
+		protected final Bag bag;
+		private final int index;
+
+		public BagTab( Bag bag, int index ) {
+			super( bagIcon(bag) );
+
+			this.bag = bag;
+			this.index = index;
+		}
+
+		@Override
+		public GameAction keyAction() {
+			switch (index){
+				case 1:
+					return SPDAction.BAG_1;
+				case 2:
+					return SPDAction.BAG_2;
+				case 3:
+					return SPDAction.BAG_3;
+				case 4:
+					return SPDAction.BAG_4;
+				case 5:
+					return SPDAction.BAG_5;
+				default:
+					return null;
+			}
+		}
+
+		@Override
+		protected String hoverText() {
+			return Messages.titleCase(bag.name());
+		}
+	}
+
 	protected class IconTab extends Tab {
 		
 		protected Image icon;

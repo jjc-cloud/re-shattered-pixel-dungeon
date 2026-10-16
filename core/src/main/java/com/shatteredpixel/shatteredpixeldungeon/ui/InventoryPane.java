@@ -30,20 +30,15 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Belongings;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
-import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket;
-import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
-import com.shatteredpixel.shatteredpixeldungeon.items.bags.PotionBandolier;
-import com.shatteredpixel.shatteredpixeldungeon.items.bags.ScrollHolder;
-import com.shatteredpixel.shatteredpixeldungeon.items.bags.VelvetPouch;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndBag;
 import com.shatteredpixel.shatteredpixeldungeon.windows.ChestSession;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoItem;
+import com.shatteredpixel.shatteredpixeldungeon.windows.WndTabbed;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndUseItem;
 import com.watabou.gltextures.TextureCache;
 import com.watabou.input.GameAction;
@@ -538,11 +533,8 @@ public class InventoryPane extends Component {
 		if (chestSession.isMimic()) {
 			if (!Dungeon.hero.ready) return;
 			com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic mimic = chestSession.mimic();
-			chestSession.wakeMimic();
-			chestSession = null;
-			updateInventory();
-			if (mimic.isAlive() && mimic.alignment == Char.Alignment.NEUTRAL
-					&& mimic.canInteract(Dungeon.hero)) mimic.interruptLooting();
+			closeChest();
+			mimic.interruptLooting();
 		} else {
 			chestSession.spill();
 			closeChest();
@@ -622,22 +614,6 @@ public class InventoryPane extends Component {
 			energy.alpha( lastEnabled ? 1f : 0.3f );
 		}
 
-	}
-
-	private Image bagIcon(Bag bag) {
-		if (bag instanceof MagicPocket) {
-			return new ItemSprite(ItemSpriteSheet.MAGIC_POCKET);
-		} else if (bag instanceof VelvetPouch) {
-			return Icons.get( Icons.SEED_POUCH );
-		} else if (bag instanceof ScrollHolder) {
-			return Icons.get( Icons.SCROLL_HOLDER );
-		} else if (bag instanceof MagicalHolster) {
-			return Icons.get( Icons.WAND_HOLSTER );
-		} else if (bag instanceof PotionBandolier) {
-			return Icons.get( Icons.POTION_BANDOLIER );
-		} else {
-			return Icons.get( Icons.BACKPACK );
-		}
 	}
 
 	private class InventoryPaneSlot extends InventorySlot {
@@ -796,7 +772,7 @@ public class InventoryPane extends Component {
 		private int index;
 
 		public BagButton( Bag bag, int index ){
-			super( bagIcon(bag) );
+			super( WndTabbed.bagIcon(bag) );
 			this.bag = bag;
 			this.index = index;
 			visible = active = bag != null;
@@ -804,7 +780,7 @@ public class InventoryPane extends Component {
 
 		public void bag( Bag bag ){
 			this.bag = bag;
-			icon(bagIcon(bag));
+			icon(WndTabbed.bagIcon(bag));
 			visible = active = bag != null;
 
 			if (lastBag == bag){

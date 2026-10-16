@@ -7,25 +7,17 @@ import com.shatteredpixel.shatteredpixeldungeon.SPDAction;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Belongings;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
-import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
-import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
-import com.shatteredpixel.shatteredpixeldungeon.items.bags.PotionBandolier;
-import com.shatteredpixel.shatteredpixeldungeon.items.bags.ScrollHolder;
-import com.shatteredpixel.shatteredpixeldungeon.items.bags.VelvetPouch;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
-import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.InventorySlot;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
-import com.watabou.input.GameAction;
 import com.watabou.input.KeyBindings;
 import com.watabou.input.KeyEvent;
-import com.watabou.noosa.Image;
 import com.watabou.noosa.NinePatch;
 
 import java.util.ArrayList;
@@ -54,14 +46,6 @@ public class WndChest extends WndTabbed {
 	private final ArrayList<InventorySlot> chestSlots = new ArrayList<>();
 	private final ArrayList<InventorySlot> bagSlots = new ArrayList<>();
 	private final ArrayList<InventorySlot> equippedSlots = new ArrayList<>();
-
-	public WndChest(Heap heap, boolean unlocked) {
-		this(new ChestSession(heap, unlocked));
-	}
-
-	public WndChest(Mimic mimic) {
-		this(new ChestSession(mimic));
-	}
 
 	public WndChest(ChestSession session) {
 		super();
@@ -283,10 +267,8 @@ public class WndChest extends WndTabbed {
 	private void wakeMimic() {
 		if (!Dungeon.hero.ready) return;
 		Mimic mimic = session.mimic();
-		session.wakeMimic();
 		hide();
-		if (mimic.isAlive() && mimic.alignment == com.shatteredpixel.shatteredpixeldungeon.actors.Char.Alignment.NEUTRAL
-				&& mimic.canInteract(Dungeon.hero)) mimic.interruptLooting();
+		mimic.interruptLooting();
 	}
 
 	@Override
@@ -330,40 +312,5 @@ public class WndChest extends WndTabbed {
 		super.hide();
 		if (desktop) GameScene.setChestInventoryHidden(false);
 		session.close();
-	}
-
-	private Image icon(Bag bag) {
-		if (bag instanceof VelvetPouch) return Icons.get(Icons.SEED_POUCH);
-		if (bag instanceof ScrollHolder) return Icons.get(Icons.SCROLL_HOLDER);
-		if (bag instanceof MagicalHolster) return Icons.get(Icons.WAND_HOLSTER);
-		if (bag instanceof PotionBandolier) return Icons.get(Icons.POTION_BANDOLIER);
-		return Icons.get(Icons.BACKPACK);
-	}
-
-	private class BagTab extends IconTab {
-		private final Bag bag;
-		private final int index;
-
-		private BagTab(Bag bag, int index) {
-			super(icon(bag));
-			this.bag = bag;
-			this.index = index;
-		}
-
-		@Override
-		public GameAction keyAction() {
-			switch (index) {
-				case 2: return SPDAction.BAG_2;
-				case 3: return SPDAction.BAG_3;
-				case 4: return SPDAction.BAG_4;
-				case 5: return SPDAction.BAG_5;
-				default: return SPDAction.BAG_1;
-			}
-		}
-
-		@Override
-		protected String hoverText() {
-			return Messages.titleCase(bag.name());
-		}
 	}
 }

@@ -27,11 +27,6 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Belongings;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
-import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket;
-import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
-import com.shatteredpixel.shatteredpixeldungeon.items.bags.PotionBandolier;
-import com.shatteredpixel.shatteredpixeldungeon.items.bags.ScrollHolder;
-import com.shatteredpixel.shatteredpixeldungeon.items.bags.VelvetPouch;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
@@ -43,7 +38,6 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RightClickMenu;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
-import com.watabou.input.GameAction;
 import com.watabou.input.KeyBindings;
 import com.watabou.input.KeyEvent;
 import com.watabou.input.PointerEvent;
@@ -414,58 +408,6 @@ public class WndBag extends WndTabbed {
 	@Override
 	protected int tabHeight() {
 		return 20;
-	}
-	
-	private Image icon(Bag bag) {
-		if (bag instanceof MagicPocket) {
-			return new ItemSprite(ItemSpriteSheet.MAGIC_POCKET);
-		} else if (bag instanceof VelvetPouch) {
-			return Icons.get( Icons.SEED_POUCH );
-		} else if (bag instanceof ScrollHolder) {
-			return Icons.get( Icons.SCROLL_HOLDER );
-		} else if (bag instanceof MagicalHolster) {
-			return Icons.get( Icons.WAND_HOLSTER );
-		} else if (bag instanceof PotionBandolier) {
-			return Icons.get( Icons.POTION_BANDOLIER );
-		} else {
-			return Icons.get( Icons.BACKPACK );
-		}
-	}
-	
-	private class BagTab extends IconTab {
-
-		private Bag bag;
-		private int index;
-		
-		public BagTab( Bag bag, int index ) {
-			super( icon(bag) );
-			
-			this.bag = bag;
-			this.index = index;
-		}
-
-		@Override
-		public GameAction keyAction() {
-			switch (index){
-				case 1:
-					return SPDAction.BAG_1;
-				case 2:
-					return SPDAction.BAG_2;
-				case 3:
-					return SPDAction.BAG_3;
-				case 4:
-					return SPDAction.BAG_4;
-				case 5:
-					return SPDAction.BAG_5;
-				default:
-					return null;
-			}
-		}
-
-		@Override
-		protected String hoverText() {
-			return Messages.titleCase(bag.name());
-		}
 	}
 	
 	public static class Placeholder extends Item {

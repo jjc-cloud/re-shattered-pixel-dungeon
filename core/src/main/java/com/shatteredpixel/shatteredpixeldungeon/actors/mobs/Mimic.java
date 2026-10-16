@@ -185,6 +185,7 @@ public class Mimic extends Mob {
 	}
 
 	public void interruptLooting() {
+		if (!isAlive() || alignment != Alignment.NEUTRAL || !canInteract(Dungeon.hero)) return;
 		stopHiding();
 		Dungeon.hero.busy();
 		Dungeon.hero.sprite.operate(pos);

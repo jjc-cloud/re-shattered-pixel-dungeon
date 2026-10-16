@@ -77,10 +77,19 @@ public class ReShatteredChanges {
 		changes.hardlight(Window.TITLE_COLOR);
 		changeInfos.add(changes);
 
+		changes = new ChangeInfo("增强", false, null);
+		changes.hardlight(CharSprite.POSITIVE);
+		changeInfos.add(changes);
+		
+		changes.addButton(new ChangeButton(ChangeIcons.V062_ROGUE_HEROARM, "疾行者",
+				"\n-灵猴之护改为被动收益。\n-飞速投掷现在绑定移动速度，根据移动速度造成额外伤害。"));
+
 		changes = new ChangeInfo("改动", false, null);
 		changes.hardlight(CharSprite.WARNING);
 		changeInfos.add(changes);
 
+		changes.addButton(new ChangeButton(ChangeIcons.V20_DUELIST_HEROARM, "勇士",
+				"\n上调复合损伤基础数值，但削减数值上限。现在会根据攻速差进行补偿，攻速差越大补偿越高，而非无条件使用副武器进行完整追击。"));
 
 		changes.addButton(new ChangeButton(ChangeIcons.V081_MISC, "杂项改动",
 				"\n-取消强制新手流程，首次开局即可自由选择英雄与挑战，无需先进入地牢取得手册。"
