@@ -666,9 +666,7 @@ public class Hero extends Char {
 				}
 			}
 		} else {
-			if (buff(Momentum.class) != null && buff(Momentum.class).freerunning()){
-				accuracy *= 1f + pointsInTalent(Talent.PROJECTILE_MOMENTUM)/2f;
-			}
+			accuracy *= 1f + Talent.projectileMomentumBonus(this) / 2f;
 		}
 
 		if (buff(Scimitar.SwordDance.class) != null){

@@ -1310,7 +1310,11 @@ public abstract class Char extends Actor {
 
 	@Override
 	protected void spend( float time ) {
+		super.spend( time / timeScale() );
+	}
 
+	// 行动耗时和依赖实际速度的效果共用这组修正。
+	public float timeScale() {
 		float timeScale = 1f;
 		Petrification petrification = buff(Petrification.class);
 		if (petrification != null) timeScale *= petrification.speedFactor();
@@ -1324,7 +1328,7 @@ public abstract class Char extends Actor {
 			timeScale *= 2.0f;
 		}
 		
-		super.spend( time / timeScale );
+		return timeScale;
 	}
 	
 	public synchronized LinkedHashSet<Buff> buffs() {

@@ -378,11 +378,10 @@ public class FloatingText extends RenderedTextBlock {
 			} else if (attacker.buff(Talent.LiquidAgilACCTracker.class) != null) {
 				hitReasons.put(HIT_LIQ, 3f);
 			}
-		} else {
-			if (attacker.buff(Momentum.class) != null
-					&& attacker.buff(Momentum.class).freerunning()
-					&& ((Hero)attacker).hasTalent(Talent.PROJECTILE_MOMENTUM)) {
-				hitReasons.put(HIT_MOMEN, 1f + ((Hero) attacker).pointsInTalent(Talent.PROJECTILE_MOMENTUM) / 2f);
+		} else if (attacker instanceof Hero) {
+			float momentumBonus = Talent.projectileMomentumBonus((Hero) attacker);
+			if (momentumBonus > 0f) {
+				hitReasons.put(HIT_MOMEN, 1f + momentumBonus / 2f);
 			}
 		}
 

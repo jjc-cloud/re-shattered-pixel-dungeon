@@ -116,9 +116,9 @@ public class Momentum extends Buff implements ActionIndicator.Action {
 		}
 	}
 	
-	public int evasionBonus( int heroLvl, int excessArmorStr ){
+	public int evasionBonus( int heroLvl ){
 		if (freerunTurns > 0) {
-			return heroLvl/2 + excessArmorStr*Dungeon.hero.pointsInTalent(Talent.EVASIVE_ARMOR);
+			return heroLvl/2;
 		} else {
 			return 0;
 		}

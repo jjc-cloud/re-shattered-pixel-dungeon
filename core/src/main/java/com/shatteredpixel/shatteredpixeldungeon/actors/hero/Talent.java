@@ -33,6 +33,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.CounterBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.EnhancedRings;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.GreaterHaste;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Haste;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LostInventory;
@@ -784,6 +785,19 @@ public enum Talent {
 
 	public static class WarriorFoodImmunity extends FlavourBuff{
 		{ actPriority = HERO_PRIO+1; }
+	}
+
+	public static float projectileMomentumBonus( Hero hero ){
+		int points = hero.pointsInTalent(PROJECTILE_MOMENTUM);
+		if (points == 0) return 0f;
+
+		// 复用移动速度与行动时间修正；不耗时移动取增幅曲线的极限。
+		float speed = hero.buff(GreaterHaste.class) != null
+				? Float.POSITIVE_INFINITY : hero.speed() * hero.timeScale();
+		float bonus = Math.max(0f, speed - 1f);
+		// 2 倍移速对应原增幅，3 倍移速后边际收益指数衰减，最终趋近原增幅的 3 倍。
+		if (bonus > 2f) bonus = 3f - (float)Math.exp(2f - bonus);
+		return points * bonus;
 	}
 
 	public static float itemIDSpeedFactor( Hero hero, Item item ){
