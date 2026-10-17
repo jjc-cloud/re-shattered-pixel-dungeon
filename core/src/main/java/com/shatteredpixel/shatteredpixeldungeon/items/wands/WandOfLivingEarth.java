@@ -122,12 +122,15 @@ public class WandOfLivingEarth extends DamageWand {
 
 			//if the collision pos is occupied (likely will be), then spawn the guardian in the
 			//adjacent cell which is closes to the user of the wand.
-			if (ch != null){
+			// 破坏支撑墙可能立即引发塌方，落点仍不可通行时沿用相邻召唤位置。
+			if (ch != null || !Dungeon.level.passable[bolt.collisionPos]){
 
-				ch.sprite.centerEmitter().burst(MagicMissile.EarthParticle.BURST, 5 + buffedLvl()/2);
+				if (ch != null) {
+					ch.sprite.centerEmitter().burst(MagicMissile.EarthParticle.BURST, 5 + buffedLvl()/2);
 
-				wandProc(ch, chargesPerCast());
-				ch.damage(damage, this, curUser);
+					wandProc(ch, chargesPerCast());
+					ch.damage(damage, this, curUser);
+				}
 
 				int closest = -1;
 				boolean[] passable = Dungeon.level.passable;
@@ -151,7 +154,7 @@ public class WandOfLivingEarth extends DamageWand {
 					Dungeon.level.occupyCell(guardian);
 				}
 
-				if (ch.alignment == Char.Alignment.ENEMY || ch.buff(Amok.class) != null) {
+				if (ch != null && (ch.alignment == Char.Alignment.ENEMY || ch.buff(Amok.class) != null)) {
 					guardian.aggro(ch);
 				}
 

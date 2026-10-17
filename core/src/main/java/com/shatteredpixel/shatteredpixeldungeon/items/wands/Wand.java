@@ -136,37 +136,49 @@ public abstract class Wand extends Item implements ChargeItem {
 
 	@Override
 	public int targetingPos(Hero user, int dst) {
-		Ballistica bolt = new Ballistica(user.pos, dst, cursed && !cursedKnown ? collisionProperties : collisionProperties(dst));
-		if (!cursed && this instanceof DamageWand && !(this instanceof WandOfFireblast)) {
-			if (this instanceof WandOfDisintegration) {
-				int range = Math.min(bolt.dist, ((WandOfDisintegration)this).distance());
-				for (int cell : bolt.subPath(1, range)) {
-					if (Dungeon.level.terrainInteractions != null
-							&& Dungeon.level.terrainInteractions.ruleAt(cell).allows(TerrainInteractions.Source.WAND)) return cell;
-				}
-			} else {
-				// 使用实际弹道的停止规则，补充实体墙面接触，不依赖点击格的地形。
-				Ballistica contact = (bolt.collisionProperties & Ballistica.STOP_SOLID) != 0 ? bolt
-						: new Ballistica(user.pos, dst, bolt.collisionProperties | Ballistica.STOP_SOLID);
-				int surface = (contact.collisionProperties & Ballistica.STOP_TARGET) != 0
-						&& contact.collisionPos == dst && !Dungeon.level.solid[dst] ? contact.collisionPos
-						: TerrainPropagation.impactCell(Dungeon.level, contact, TerrainInteractions.Source.WAND);
-				if (Dungeon.level.terrainInteractions != null
-						&& Dungeon.level.terrainInteractions.ruleAt(surface).allows(TerrainInteractions.Source.WAND)) return surface;
+		if (this instanceof WandOfDisintegration && (!cursed || !cursedKnown)) return dst;
+		if (cursed && !cursedKnown) return new Ballistica(user.pos, dst, collisionProperties).collisionPos;
+		return prepareZap(user, dst).collisionPos;
+	}
+
+	/** 瞄准、动画与命中共用同一弹道；贯穿与锥形法术保留自己的作用路径。 */
+	public final Ballistica prepareZap(Hero owner, int target) {
+		Ballistica bolt = new Ballistica(owner.pos, target, collisionProperties(target));
+		if (!cursed && this instanceof DamageWand && !(this instanceof WandOfDisintegration)
+				&& !(this instanceof WandOfFireblast)) {
+			Ballistica contact = (bolt.collisionProperties & Ballistica.STOP_SOLID) != 0 ? bolt
+					: new Ballistica(owner.pos, target, bolt.collisionProperties | Ballistica.STOP_SOLID);
+			int surface = (contact.collisionProperties & Ballistica.STOP_TARGET) != 0
+					&& contact.collisionPos == target && !Dungeon.level.solid[target] ? contact.collisionPos
+					: TerrainPropagation.impactCell(Dungeon.level, contact, TerrainInteractions.Source.WAND);
+			if (Dungeon.level.terrainInteractions != null
+					&& Dungeon.level.terrainInteractions.ruleAt(surface).allows(TerrainInteractions.Source.WAND)) {
+				bolt.collisionPos = surface;
+				bolt.dist = bolt.path.indexOf(surface);
 			}
 		}
-		if (this instanceof WandOfDisintegration && (!cursed || !cursedKnown)) return dst;
-		return bolt.collisionPos;
+		return bolt;
 	}
 
 	public abstract void onZap(Ballistica attack);
 
-	/** 伤害法杖接管主弹道可破坏的表面；解离、冲击波与焰浪沿用自身范围结算。 */
+	/** 地形响应只处理地形，不能截断照明、揭示、连锁伤害等原施法效果。 */
+	public final void resolveZap(Ballistica attack) {
+		zapTerrain(attack);
+		onZap(attack);
+	}
+
+	/** 单独查询并施加地形作用；返回值不能用于决定是否执行 onZap。 */
 	public final boolean zapTerrain(Hero owner, int target) {
+		if (!Dungeon.level.insideMap(target)) return false;
+		return zapTerrain(prepareZap(owner, target));
+	}
+
+	private boolean zapTerrain(Ballistica attack) {
 		if (cursed || !(this instanceof DamageWand) || this instanceof WandOfDisintegration
-				|| this instanceof WandOfFireblast || this instanceof WandOfBlastWave
-				|| !Dungeon.level.insideMap(target)) return false;
-		int impact = targetingPos(owner, target);
+				|| this instanceof WandOfFireblast || this instanceof WandOfBlastWave) return false;
+		// 使用动画已经命中的格，不能在地形改变后重新追踪弹道。
+		int impact = attack.collisionPos;
 		if (!Dungeon.level.insideMap(impact) || Dungeon.level.terrainInteractions == null
 				|| !Dungeon.level.terrainInteractions.ruleAt(impact).allows(TerrainInteractions.Source.WAND)
 				|| Actor.findChar(impact) != null) return false;
@@ -772,17 +784,8 @@ public abstract class Wand extends Item implements ChargeItem {
 					return;
 				}
 
-				final Ballistica shot = new Ballistica( curUser.pos, target, curWand.collisionProperties(target));
+				final Ballistica shot = curWand.prepareZap(curUser, target);
 				int cell = shot.collisionPos;
-				if (!curWand.cursed && curWand instanceof DamageWand && !(curWand instanceof WandOfDisintegration)) {
-					int surface = curWand.targetingPos(curUser, target);
-					if (Dungeon.level.insideMap(surface) && Dungeon.level.terrainInteractions != null
-							&& Dungeon.level.terrainInteractions.ruleAt(surface).allows(TerrainInteractions.Source.WAND)) {
-						cell = surface;
-						shot.collisionPos = surface;
-						shot.dist = shot.path.indexOf(surface);
-					}
-				}
 				
 				if (target == curUser.pos || cell == curUser.pos) {
 					if (target == curUser.pos && curUser.hasTalent(Talent.SHIELD_BATTERY)){
@@ -882,7 +885,7 @@ public abstract class Wand extends Item implements ChargeItem {
 					} else {
 						curWand.fx(shot, new Callback() {
 							public void call() {
-								if (!curWand.zapTerrain(curUser, target)) curWand.onZap(shot);
+								curWand.resolveZap(shot);
 								if (Random.Float() < WondrousResin.extraCurseEffectChance()){
 									WondrousResin.forcePositive = true;
 									CursedWand.cursedZap(curWand,

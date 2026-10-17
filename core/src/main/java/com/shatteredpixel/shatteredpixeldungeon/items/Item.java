@@ -717,51 +717,38 @@ public class Item implements Bundlable {
 		QuickSlotButton.target(enemy);
 		
 		final float delay = castDelay(user, cell);
-
-		if (enemy != null) {
-			((MissileSprite) user.sprite.parent.recycle(MissileSprite.class)).
-					reset(user.sprite,
-							enemy.sprite,
-							this,
-							new Callback() {
-						@Override
-						public void call() {
-							curUser = user;
-							Item i = Item.this.detach(user.belongings.backpack);
-							if (i != null) i.onThrow(cell);
-							if (curUser.hasTalent(Talent.IMPROVISED_PROJECTILES)
-									&& !(Item.this instanceof MissileWeapon)
-									&& curUser.buff(Talent.ImprovisedProjectileCooldown.class) == null){
-								if (enemy != null && enemy.alignment != curUser.alignment){
-									Sample.INSTANCE.play(Assets.Sounds.HIT);
-									Buff.affect(enemy, Blindness.class, 1f + 2f * curUser.pointsInTalent(Talent.IMPROVISED_PROJECTILES));
-									Buff.affect(curUser, Talent.ImprovisedProjectileCooldown.class, 70f - 20f * curUser.pointsInTalent(Talent.IMPROVISED_PROJECTILES));
-								}
-							}
-							if (user.buff(Talent.LethalMomentumTracker.class) != null){
-								user.buff(Talent.LethalMomentumTracker.class).detach();
-								user.next();
-							} else {
-								user.spendAndNext(delay);
-							}
-						}
-					});
-		} else {
-			((MissileSprite) user.sprite.parent.recycle(MissileSprite.class)).
-					reset(user.sprite,
-							cell,
-							this,
-							new Callback() {
-						@Override
-						public void call() {
-							curUser = user;
-							Item i = Item.this.detach(user.belongings.backpack);
-							user.spend(delay);
-							if (i != null) i.onThrow(cell);
-							user.next();
-						}
-					});
-		}
+		// 命中生物与地形共用结算，攻击效果先执行，耗时只结算一次。
+		Callback onImpact = new Callback() {
+			@Override
+			public void call() {
+				curUser = user;
+				Item i = Item.this.detach(user.belongings.backpack);
+				if (enemy == null && !(Item.this instanceof MissileWeapon)) {
+					user.spend(delay);
+					if (i != null) i.onThrow(cell);
+					user.next();
+					return;
+				}
+				if (i != null) i.onThrow(cell);
+				if (enemy != null && curUser.hasTalent(Talent.IMPROVISED_PROJECTILES)
+						&& !(Item.this instanceof MissileWeapon)
+						&& curUser.buff(Talent.ImprovisedProjectileCooldown.class) == null
+						&& enemy.alignment != curUser.alignment){
+					Sample.INSTANCE.play(Assets.Sounds.HIT);
+					Buff.affect(enemy, Blindness.class, 1f + 2f * curUser.pointsInTalent(Talent.IMPROVISED_PROJECTILES));
+					Buff.affect(curUser, Talent.ImprovisedProjectileCooldown.class, 70f - 20f * curUser.pointsInTalent(Talent.IMPROVISED_PROJECTILES));
+				}
+				if (user.buff(Talent.LethalMomentumTracker.class) != null){
+					user.buff(Talent.LethalMomentumTracker.class).detach();
+					user.next();
+				} else {
+					user.spendAndNext(delay);
+				}
+			}
+		};
+		MissileSprite missile = (MissileSprite) user.sprite.parent.recycle(MissileSprite.class);
+		if (enemy != null) missile.reset(user.sprite, enemy.sprite, this, onImpact);
+		else missile.reset(user.sprite, cell, this, onImpact);
 	}
 	
 	public float castDelay( Char user, int cell ){

@@ -1471,8 +1471,9 @@ public class Hero extends Char {
 						== TerrainInteractions.Result.CHANGED) {
 					hitSound(Random.Float(0.87f, 1.15f));
 					if (!isAlive()) { next(); return; }
+					Invisibility.dispel();
 					Dungeon.observe();
-					spendAndNext(TICK);
+					spendAndNext(attackDelay());
 					return;
 				}
 				// 由下一次 Hero.act 恢复输入，避免敌人回合尚未结束时再次接受点击。

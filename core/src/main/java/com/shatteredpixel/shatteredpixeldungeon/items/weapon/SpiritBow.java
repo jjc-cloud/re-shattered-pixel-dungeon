@@ -27,6 +27,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.RevealedArea;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
@@ -369,9 +370,9 @@ public class SpiritBow extends Weapon {
 					&& Dungeon.level.terrainInteractions.ruleAt(cell).allows(TerrainInteractions.Source.MISSILE)) {
 				if (Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.MISSILE)) {
 					hitSound(Random.Float(0.87f, 1.15f));
+					Invisibility.dispel();
 					Dungeon.observe();
 				}
-				return;
 			}
 			Char enemy = Actor.findChar( cell );
 			if (enemy == null || enemy == curUser) {
@@ -381,8 +382,8 @@ public class SpiritBow extends Weapon {
 				if (!curUser.shoot( enemy, this )) {
 					Splash.at(cell, 0xCC99FFFF, 1);
 				}
-				if (sniperSpecial && SpiritBow.this.augment != Augment.SPEED) sniperSpecial = false;
 			}
+			if (sniperSpecial && SpiritBow.this.augment != Augment.SPEED) sniperSpecial = false;
 		}
 
 		@Override

@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicImmune;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.PinCushion;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.RevealedArea;
@@ -280,11 +281,9 @@ abstract public class MissileWeapon extends Weapon {
 				&& Dungeon.level.terrainInteractions.ruleAt(cell).allows(TerrainInteractions.Source.MISSILE)) {
 			if (Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.MISSILE)) {
 				hitSound(Random.Float(0.87f, 1.15f));
+				Invisibility.dispel();
 				Dungeon.observe();
 			}
-			parent = null;
-			if (!spawnedForEffect) super.onThrow(cell);
-			return;
 		}
 		Char enemy = Actor.findChar( cell );
 		if (enemy == null || enemy == curUser) {
@@ -297,6 +296,7 @@ abstract public class MissileWeapon extends Weapon {
 				if (Actor.findChar(cell) == null) {
 					RevealedArea a = Buff.affect(curUser, RevealedArea.class, 5 * curUser.pointsInTalent(Talent.SEER_SHOT));
 					a.depth = Dungeon.depth;
+					a.branch = Dungeon.branch;
 					a.pos = cell;
 					Buff.affect(curUser, Talent.SeerShotCooldown.class, 20f);
 				}

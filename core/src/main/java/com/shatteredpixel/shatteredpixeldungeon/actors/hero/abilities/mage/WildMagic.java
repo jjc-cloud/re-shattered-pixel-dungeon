@@ -34,10 +34,8 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClassArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.WondrousResin;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.CursedWand;
-import com.shatteredpixel.shatteredpixeldungeon.items.wands.DamageWand;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
-import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HeroIcon;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
@@ -139,14 +137,7 @@ public class WildMagic extends ArmorAbility {
 	private void zapWand( ArrayList<Wand> wands, Hero hero, int cell){
 		Wand cur = wands.remove(0);
 
-		Ballistica aim = new Ballistica(hero.pos, cell, cur.collisionProperties(cell));
-		int impact = cur.targetingPos(hero, cell);
-		if (!cur.cursed && cur instanceof DamageWand && Dungeon.level.insideMap(impact)
-				&& Dungeon.level.terrainInteractions != null
-				&& Dungeon.level.terrainInteractions.ruleAt(impact).allows(TerrainInteractions.Source.WAND)) {
-			aim.collisionPos = impact;
-			aim.dist = aim.path.indexOf(impact);
-		}
+		Ballistica aim = cur.prepareZap(hero, cell);
 
 		hero.sprite.zap(aim.collisionPos);
 
@@ -156,7 +147,7 @@ public class WildMagic extends ArmorAbility {
 				cur.fx(aim, new Callback() {
 					@Override
 					public void call() {
-						if (!cur.zapTerrain(hero, cell)) cur.onZap(aim);
+						cur.resolveZap(aim);
 						boolean alsoCursedZap = Random.Float() < WondrousResin.extraCurseEffectChance();
 						if (Game.timeTotal - startTime < 0.33f) {
 							hero.sprite.parent.add(new Delayer(0.33f - (Game.timeTotal - startTime)) {
