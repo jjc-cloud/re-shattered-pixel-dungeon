@@ -43,7 +43,6 @@ import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.BArray;
 import com.watabou.utils.Bundle;
-import com.watabou.utils.Callback;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
@@ -335,24 +334,7 @@ public class Necromancer extends Mob {
 				
 				spend(TICK);
 
-				boolean teleporting = false;
-				//teleport our skeleton to the enemy if..
-				//we can't see it
 				if (!fieldOfView[mySkeleton.pos]){
-					teleporting = true;
-
-				//it has a relatively long path to reach the hero (e.g. it's blocked in a tunnelway)
-				} else if (!mySkeleton.canAttack(enemy)){
-					PathFinder.Path skelePath = Dungeon.findPath(mySkeleton, enemy.pos, Dungeon.level.passable, fieldOfView, true);
-
-					if (skelePath == null ||
-							(skelePath.size() > 2*Dungeon.level.distance(pos, enemy.pos)
-							&& skelePath.size() >= 4)){
-						teleporting = true;
-					}
-				}
-
-				if (teleporting){
 
 					//teleport them to the closest spot next to the enemy that can be seen
 					if (!Dungeon.level.adjacent(mySkeleton.pos, enemy.pos)){
