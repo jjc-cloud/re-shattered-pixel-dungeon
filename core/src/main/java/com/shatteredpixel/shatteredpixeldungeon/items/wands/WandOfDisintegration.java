@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
@@ -70,7 +72,7 @@ public class WandOfDisintegration extends DamageWand {
 	public void onZap(Ballistica beam) {
 		
 		boolean terrainAffected = false;
-		boolean surfaceHandled = false;
+		ArrayList<Integer> terrainCells = new ArrayList<>();
 		
 		int level = buffedLvl();
 		
@@ -103,16 +105,7 @@ public class WandOfDisintegration extends DamageWand {
 				terrainPassed++;
 			}
 
-			// 第一处法杖可破坏地形仍按原规则处理，但不截短射线或跳过后续伤害。
-			if (!surfaceHandled && ch == null && Dungeon.level.terrainInteractions != null
-					&& Dungeon.level.terrainInteractions.ruleAt(c).allows(TerrainInteractions.Source.WAND)) {
-				surfaceHandled = true;
-				if (Dungeon.level.affectTerrain(c, TerrainInteractions.Source.WAND)) {
-					terrainAffected = true;
-					Sample.INSTANCE.play(Assets.Sounds.HIT_MAGIC, 1, Random.Float(0.87f, 1.15f));
-				}
-			}
-			terrainAffected |= Dungeon.level.affectTerrain(c, TerrainInteractions.Source.DISINTEGRATION);
+			terrainCells.add(c);
 			// 蛛网独立于底下地形清除，地形拒绝破坏也不影响射线破网。
 			if (web != null && web.volume > 0 && web.cur[c] > 0) {
 				web.clear(c);
@@ -122,6 +115,9 @@ public class WandOfDisintegration extends DamageWand {
 			CellEmitter.center( c ).burst( PurpleParticle.BURST, Random.IntRange( 1, 2 ) );
 		}
 		
+		boolean contentChanged = Dungeon.level.interactions().affectCells(terrainCells, CellContent.BREAKABLE | CellContent.BURNABLE);
+		if (contentChanged) Sample.INSTANCE.play(Assets.Sounds.HIT_MAGIC, 1, Random.Float(0.87f, 1.15f));
+		terrainAffected |= contentChanged;
 		if (terrainAffected) {
 			Dungeon.observe();
 		}

@@ -133,7 +133,7 @@ public class Rapier extends MeleeWeapon {
 		hero.sprite.jump(hero.pos, dest, 0, 0.1f, new Callback() {
 			@Override
 			public void call() {
-				if (Dungeon.level.map[hero.pos] == Terrain.OPEN_DOOR) {
+				if (Dungeon.level.hasTerrain(hero.pos, Terrain.OPEN_DOOR)) {
 					Door.leave( hero.pos );
 				}
 				hero.pos = dest;

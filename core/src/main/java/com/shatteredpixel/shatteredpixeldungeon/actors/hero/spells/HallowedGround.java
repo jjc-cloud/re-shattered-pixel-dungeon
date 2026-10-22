@@ -98,7 +98,7 @@ public class HallowedGround extends TargetedClericSpell {
 		PathFinder.buildDistanceMap(target, BArray.not(Dungeon.level.solid, null), hero.pointsInTalent(Talent.HALLOWED_GROUND));
 		for (int i = 0; i < Dungeon.level.length(); i++){
 			if (PathFinder.distance[i] != Integer.MAX_VALUE){
-				int c = Dungeon.level.map[i];
+				int c = Dungeon.level.terrainAt(i);
 				if (c == Terrain.EMPTY || c == Terrain.EMBERS || c == Terrain.EMPTY_DECO) {
 					Level.set( i, Terrain.GRASS);
 					GameScene.updateMap( i );
@@ -188,7 +188,7 @@ public class HallowedGround extends TargetedClericSpell {
 							continue;
 						}
 
-						int c = Dungeon.level.map[cell];
+						int c = Dungeon.level.terrainAt(cell);
 						if (c == Terrain.GRASS && Dungeon.level.plants.get(c) == null) {
 							if (Random.Int(chance) == 0) {
 								if (!Regeneration.regenOn()

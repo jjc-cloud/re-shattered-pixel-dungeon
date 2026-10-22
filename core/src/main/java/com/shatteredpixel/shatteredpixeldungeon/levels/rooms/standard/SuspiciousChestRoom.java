@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.MimicTooth;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Random;
 
@@ -45,8 +46,8 @@ public class SuspiciousChestRoom extends StandardRoom {
 
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1 , Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1 , CellPlacement.reset(Terrain.EMPTY) );
 
 		for (Door door : connected.values()) {
 			door.set( Door.Type.REGULAR );
@@ -60,7 +61,7 @@ public class SuspiciousChestRoom extends StandardRoom {
 
 		int center = level.pointToCell(center());
 
-		Painter.set(level, center, Terrain.PEDESTAL);
+		Painter.set(level, center, CellPlacement.reset(Terrain.PEDESTAL));
 
 		float mimicChance = 1/3f * MimicTooth.mimicChanceMultiplier();
 		if (Random.Float() < mimicChance) {

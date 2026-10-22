@@ -31,6 +31,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
@@ -43,38 +44,39 @@ public class SacrificeRoom extends SpecialRoom {
 
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.CHASM );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.CHASM) );
 
 		Point c = center();
 		Door door = entrance();
 		if (door.x == left || door.x == right) {
 			if (door.y == c.y) c.y += Random.Int(2) == 0 ? -1 : +1;
-			Point p = Painter.drawInside( level, this, door, Math.abs( door.x - c.x ) - 2, Terrain.EMPTY_SP );
+			Point p = Painter.drawInside( level, this, door, Math.abs( door.x - c.x ) - 2, CellPlacement.reset(Terrain.EMPTY_SP) );
 			for (; p.y != c.y; p.y += p.y < c.y ? +1 : -1) {
-				Painter.set( level, p, Terrain.EMPTY_SP );
+				Painter.set( level, p, CellPlacement.reset(Terrain.EMPTY_SP) );
 			}
 		} else {
 			if (door.x == c.x) c.x += Random.Int(2) == 0 ? -1 : +1;
-			Point p = Painter.drawInside( level, this, door, Math.abs( door.y - c.y ) - 2, Terrain.EMPTY_SP );
+			Point p = Painter.drawInside( level, this, door, Math.abs( door.y - c.y ) - 2, CellPlacement.reset(Terrain.EMPTY_SP) );
 			for (; p.x != c.x; p.x += p.x < c.x ? +1 : -1) {
-				Painter.set( level, p, Terrain.EMPTY_SP );
+				Painter.set( level, p, CellPlacement.reset(Terrain.EMPTY_SP) );
 			}
 		}
 
 		//we add four statues to give some cover from ranged enemies
 		Point statue = new Point(c);
 		statue.x -= 2;
-		if (statue.x > left) Painter.set( level, statue, Terrain.STATUE );
+		if (statue.x > left) Painter.set( level, statue, CellPlacement.reset(Terrain.EMPTY, Terrain.STATUE) );
 		statue.x += 2; statue.y -= 2;
-		if (statue.y > top) Painter.set( level, statue, Terrain.STATUE );
+		if (statue.y > top) Painter.set( level, statue, CellPlacement.reset(Terrain.EMPTY, Terrain.STATUE) );
 		statue.y += 2; statue.x += 2;
-		if (statue.x < right) Painter.set( level, statue, Terrain.STATUE );
+		if (statue.x < right) Painter.set( level, statue, CellPlacement.reset(Terrain.EMPTY, Terrain.STATUE) );
 		statue.x -= 2; statue.y += 2;
-		if (statue.y < bottom) Painter.set( level, statue, Terrain.STATUE );
+		if (statue.y < bottom) Painter.set( level, statue, CellPlacement.reset(Terrain.EMPTY, Terrain.STATUE) );
 
-		Painter.fill( level, c.x - 1, c.y - 1, 3, 3, Terrain.EMBERS );
-		Painter.set( level, c, Terrain.PEDESTAL );
+		// 祭坛平台和雕像落脚点需要实际地面，不能只向背景深渊叠加内容。
+		Painter.fill( level, c.x - 1, c.y - 1, 3, 3, CellPlacement.reset(Terrain.EMPTY, Terrain.EMBERS) );
+		Painter.set( level, c, CellPlacement.reset(Terrain.PEDESTAL) );
 
 		Blob.seed( level.pointToCell(c), 6 + Dungeon.depth * 4, SacrificialFire.class, level ).setPrize(prize(level));
 

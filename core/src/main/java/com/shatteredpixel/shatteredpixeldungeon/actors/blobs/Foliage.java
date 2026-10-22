@@ -44,8 +44,8 @@ public class Foliage extends Blob {
 	@Override
 	protected void evolve() {
 
-		int[] map = Dungeon.level.map;
-		
+
+
 		boolean seen = false;
 
 		Fire fire = (Fire)Dungeon.level.blobs.get( Fire.class );
@@ -59,7 +59,7 @@ public class Foliage extends Blob {
 					off[cell] = cur[cell];
 					volume += off[cell];
 
-					if (map[cell] == Terrain.EMBERS) {
+					if (Dungeon.level.hasTerrain(cell, Terrain.EMBERS)) {
 						//only turn terrain into grass if no fire is adjacent to it
 						boolean valid = true;
 						if (fire != null && fire.volume > 0) {
@@ -82,7 +82,7 @@ public class Foliage extends Blob {
 				}
 			}
 		}
-		
+
 		Hero hero = Dungeon.hero;
 		if (hero.isAlive() && cur[hero.pos] > 0) {
 			Shadows s = Buff.affect( hero, Shadows.class );
@@ -91,13 +91,13 @@ public class Foliage extends Blob {
 			}
 		}
 	}
-	
+
 	@Override
 	public void use( BlobEmitter emitter ) {
 		super.use( emitter );
 		emitter.start( ShaftParticle.FACTORY, 0.9f, 0 );
 	}
-	
+
 	@Override
 	public String tileDesc() {
 		return Messages.get(this, "desc");

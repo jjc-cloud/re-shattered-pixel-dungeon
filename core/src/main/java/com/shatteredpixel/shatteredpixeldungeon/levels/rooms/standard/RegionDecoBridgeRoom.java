@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 
 //doesn't look much like a bridge, but can easily use it internally
 public class RegionDecoBridgeRoom extends StandardBridgeRoom {
@@ -35,8 +36,8 @@ public class RegionDecoBridgeRoom extends StandardBridgeRoom {
 		return 1;
 	}
 
-	protected int spaceTile(){
-		return Terrain.REGION_DECO_ALT;
+	protected CellPlacement spaceTile(){
+		return CellPlacement.reset(Terrain.EMPTY, Terrain.REGION_DECO_ALT);
 	}
 
 	@Override

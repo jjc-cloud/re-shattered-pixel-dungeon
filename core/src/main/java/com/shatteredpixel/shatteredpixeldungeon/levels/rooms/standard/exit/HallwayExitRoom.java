@@ -41,7 +41,7 @@ public class HallwayExitRoom extends HallwayRoom {
 
 		int exit = -1;
 		for ( Point p : getPoints()){
-			if (level.map[level.pointToCell(p)] == Terrain.EXIT){
+			if (level.terrainAt(level.pointToCell(p)) == Terrain.EXIT){
 				exit = level.pointToCell(p);
 				break;
 			}

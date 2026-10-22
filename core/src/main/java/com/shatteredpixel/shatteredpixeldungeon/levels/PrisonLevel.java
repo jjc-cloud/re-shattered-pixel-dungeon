@@ -212,11 +212,11 @@ public class PrisonLevel extends RegularLevel {
 
 	public static void addPrisonVisuals(Level level, Group group){
 		for (int i=0; i < level.length(); i++) {
-			if (level.map[i] == Terrain.WALL_DECO) {
+			if (level.hasTerrain(i, Terrain.WALL_DECO)) {
 				group.add( new Torch( i ) );
 			}
 			//alt deco is a chasm visual in the prison
-			if (level.map[i] == Terrain.REGION_DECO_ALT) {
+			if (level.hasTerrain(i, Terrain.REGION_DECO_ALT)) {
 				group.add( new WindParticle.Wind( i ) );
 			}
 		}

@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.blobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -63,14 +65,14 @@ public class Electricity extends Blob {
 				
 				if (cur[cell] > 0) {
 					if (Dungeon.level.terrainInteractions != null) {
-						terrainAffected |= Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.ELECTRIC);
+						terrainAffected |= Dungeon.level.affectTerrain(cell, CellContent.CONDUCTIVE);
 					}
 					spreadFromCell(cell, cur[cell]);
 				}
 			}
 		}
 		
-		if (Dungeon.level.terrainInteractions != null && Dungeon.level.terrainInteractions.hasConductors(TerrainInteractions.Source.ELECTRIC)) {
+		if (Dungeon.level.terrainInteractions != null && Dungeon.level.terrainInteractions.hasConductors()) {
 			spreadThroughConductors();
 		}
 		if (terrainAffected) Dungeon.observe();
@@ -130,7 +132,7 @@ public class Electricity extends Blob {
 	/** 各连通导体采用接触电场的最大剩余时间，不叠加时间；伤害仍由本 Blob 每格结算一次。 */
 	private void spreadThroughConductors() {
 		if (conduction == null) conduction = new TerrainPropagation();
-		conduction.begin(Dungeon.level, TerrainInteractions.Source.ELECTRIC);
+		conduction.begin(Dungeon.level, CellContent.CONDUCTIVE);
 		int width = Dungeon.level.width();
 		// 只从本回合已带电的区域发起接触，新增区域由导体遍历处理。
 		int left = area.left, right = area.right, top = area.top, bottom = area.bottom;

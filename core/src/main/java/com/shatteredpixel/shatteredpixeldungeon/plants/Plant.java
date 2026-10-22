@@ -157,7 +157,7 @@ public abstract class Plant implements Bundlable {
 				return;
 			}
 
-			if (Dungeon.level.map[cell] == Terrain.ALCHEMY
+			if (Dungeon.level.hasTerrain(cell, Terrain.ALCHEMY)
 					|| Dungeon.level.pit[cell]
 					|| Dungeon.level.traps.get(cell) != null
 					|| Dungeon.isChallenged(Challenges.NO_HERBALISM)) {
@@ -167,7 +167,7 @@ public abstract class Plant implements Bundlable {
 				Dungeon.level.plant( this, cell );
 				if (Dungeon.hero.subClass == HeroSubClass.WARDEN) {
 					for (int i : PathFinder.NEIGHBOURS8) {
-						int c = Dungeon.level.map[cell + i];
+						int c = Dungeon.level.terrainAt(cell + i);
 						if ( c == Terrain.EMPTY || c == Terrain.EMPTY_DECO
 								|| c == Terrain.EMBERS || c == Terrain.GRASS){
 							Level.set(cell + i, Terrain.FURROWED_GRASS);
@@ -193,7 +193,7 @@ public abstract class Plant implements Bundlable {
 				if (Dungeon.isChallenged(Challenges.NO_HERBALISM) && hero.subClass == HeroSubClass.WARDEN){
 					Dungeon.level.plant( seed, hero.pos );
 					for (int i : PathFinder.NEIGHBOURS8) {
-						int c = Dungeon.level.map[hero.pos + i];
+						int c = Dungeon.level.terrainAt(hero.pos + i);
 						if ( c == Terrain.EMPTY || c == Terrain.EMPTY_DECO
 								|| c == Terrain.EMBERS || c == Terrain.GRASS){
 							Level.set(hero.pos + i, Terrain.FURROWED_GRASS);

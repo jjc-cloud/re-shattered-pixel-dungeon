@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.GameMath;
 import com.watabou.utils.Point;
@@ -48,8 +49,8 @@ public class RingTunnelRoom extends TunnelRoom {
 
 		Rect ring = getConnectionSpace();
 
-		Painter.fill( level, ring.left, ring.top, 3, 3,  floor);
-		Painter.fill( level, ring.left+1, ring.top+1, 1, 1,  Terrain.WALL);
+		Painter.fill( level, ring.left, ring.top, 3, 3,  CellPlacement.reset(floor));
+		Painter.fill( level, ring.left+1, ring.top+1, 1, 1,  CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 	}
 
 	//caches the value so multiple calls will always return the same.

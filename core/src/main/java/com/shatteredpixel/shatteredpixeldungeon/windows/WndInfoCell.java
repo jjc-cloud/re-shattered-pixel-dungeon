@@ -22,182 +22,208 @@
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
-import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
+import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellState;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CaveCollapse;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CavesLevel;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.HeroSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.CellPreview;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.CustomTilemap;
-import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTerrainTilemap;
-import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTileSheet;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.Carpet;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.TerrainFeaturesTilemap;
+import com.shatteredpixel.shatteredpixeldungeon.ui.IconButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
+import com.shatteredpixel.shatteredpixeldungeon.ui.ScrollPane;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 import com.watabou.noosa.Image;
+import com.watabou.noosa.ui.Component;
+import com.watabou.utils.RectF;
+import java.util.ArrayList;
 
 public class WndInfoCell extends Window {
-	
-	private static final float GAP	= 2;
-	
-	private static final int WIDTH = 120;
+    private static final int WIDTH = 120;
+    private static final int CONTENT_SLOT = 24;
+    private ScrollPane scroll;
+    public static Image cellImage(int cell) { return new CellPreview(cell); }
+    public static String cellName(int cell) {
+        return Dungeon.level.tileName(Dungeon.level.cellAt(cell).ground());
+    }
 
-	public static Image cellImage( int cell ){
-		int tile = Dungeon.level.map[cell];
-		if (Dungeon.level.water[cell]) {
-			tile = Terrain.WATER;
-		} else if (Dungeon.level.pit[cell]) {
-			tile = Terrain.CHASM;
-		}
+    public WndInfoCell(int cell) {
+        CellState state = Dungeon.level.cellAt(cell);
+        Image preview = cellImage(cell);
+        preview.x = 0;
+        add(preview);
 
-		Image customImage = null;
-		int x = cell % Dungeon.level.width();
-		int y = cell / Dungeon.level.width();
-		for (CustomTilemap i : Dungeon.level.customTiles){
-			if ((x >= i.tileX && x < i.tileX+i.tileW) &&
-					(y >= i.tileY && y < i.tileY+i.tileH)){
-				if (i.image(x - i.tileX, y - i.tileY) != null) {
-					customImage = i.image(x - i.tileX, y - i.tileY);
-				}
-			}
-		}
-		if (customImage == null){
-			for (CustomTilemap i : Dungeon.level.customTerrain){
-				if ((x >= i.tileX && x < i.tileX+i.tileW) &&
-						(y >= i.tileY && y < i.tileY+i.tileH)){
-					if (i.image(x - i.tileX, y - i.tileY) != null) {
-						customImage = i.image(x - i.tileX, y - i.tileY);
-					}
-				}
-			}
-		}
+        ArrayList<Object> objects = GameScene.getObjectsAtCell(cell);
+        StringBuilder desc = new StringBuilder();
+        int top = state.terrain();
+        boolean coveredGround = state.buried() || DungeonTileSheet.wallStitcheable(top);
+        if (!coveredGround) {
+            desc.append(Messages.get(this, "ground", Dungeon.level.tileName(state.ground())));
+            String groundDesc = Dungeon.level.tileDesc(state.ground());
+            if (groundDesc != null && !groundDesc.isEmpty()) desc.append("\n").append(groundDesc);
+        }
+        ArrayList<String> contentNames = new ArrayList<>();
+        ArrayList<String> details = new ArrayList<>();
+        boolean carpetDescribed = false;
+        for (CellContent content : state.contents()) {
+            if (!state.exposed(content) || content.type() == CellContent.HIDDEN_ENTRANCE
+                    || CellContent.family(content.type()) == Terrain.TRAP) continue;
+            if (content.type() == CellContent.CARPET) {
+                if (!carpetDescribed) {
+                    contentNames.add(Messages.get(this, "carpet"));
+                    details.add(Messages.get(this, "carpet_desc"));
+                    carpetDescribed = true;
+                }
+                continue;
+            }
+            String name = Dungeon.level.tileName(content.type());
+            String detail = Dungeon.level.tileDesc(content.type());
+            if (!contentNames.contains(name)) {
+                contentNames.add(name);
+            }
+            if (detail != null && !detail.isEmpty()) {
+                details.add(detail);
+            }
+        }
+        ArrayList<String> objectNames = GameScene.getObjectNames(objects);
+        for (String name : objectNames) {
+            if (!contentNames.contains(name)) {
+                contentNames.add(name);
+            }
+        }
+        boolean contentsStarted = !contentNames.isEmpty();
+        if (contentsStarted) {
+            if (desc.length() > 0) desc.append("\n\n");
+            desc.append(Messages.get(this, "contents"));
+            for (int i = 0; i < contentNames.size(); i++) {
+                desc.append(" _").append(contentNames.get(i)).append("_");
+                if (i < contentNames.size() - 1) desc.append("、");
+            }
+        }
+        if (!details.isEmpty()) {
+            desc.append("\n\n");
+            for (int i = 0; i < details.size(); i++) {
+                if (i > 0) desc.append("\n\n");
+                desc.append(details.get(i));
+            }
+        }
+        int x = cell % Dungeon.level.width(), y = cell / Dungeon.level.width();
+        ArrayList<CustomTilemap> custom = new ArrayList<>(Dungeon.level.customTiles);
+        custom.addAll(Dungeon.level.customTerrain);
+        for (CustomTilemap tile : custom) {
+            if (tile instanceof Carpet) continue;
+            int tx = x - tile.tileX, ty = y - tile.tileY;
+            if (tx < 0 || ty < 0 || tx >= tile.tileW || ty >= tile.tileH) continue;
+            String detail = tile.desc(tx, ty);
+            if (detail != null && !detail.isEmpty()) {
+                if (desc.length() > 0) desc.append("\n\n");
+                desc.append(detail);
+            }
+        }
+        for (Blob blob : Dungeon.level.blobs.values()) {
+            if ((Dungeon.level.heroFOV[cell] || blob.alwaysVisible) && blob.volume > 0
+                    && blob.cur != null && blob.cur[cell] > 0 && blob.tileDesc() != null) {
+                if (desc.length() > 0) desc.append("\n\n");
+                desc.append(blob.tileDesc());
+            }
+        }
+        if (Dungeon.level.caveCollapse != null && Dungeon.level.caveCollapse.contains(cell) && !state.buried())
+            desc.append("\n\n").append(Messages.get(CaveCollapse.class, "ground_desc"));
+        if (Dungeon.level.caveCollapse != null && Dungeon.level.caveCollapse.hasGold(cell))
+            desc.append("\n\n").append(Messages.get(CavesLevel.class, "wall_deco_desc"));
+        if (desc.length() == 0) desc.append(Messages.get(this, "nothing"));
+        if (!objects.isEmpty() && !contentsStarted) {
+            if (desc.length() > 0) desc.append("\n\n");
+            desc.append(Messages.get(this, "contents"));
+        }
 
-		if (customImage != null){
-			return customImage;
-		} else {
+        Component body = new Component();
+        body.setSize(WIDTH, 0);
+        // ScrollPane 的 PointerArea 后注册会先接收事件。
+        // 先创建滚动容器，再创建条目按钮，按钮才能点击。
+        scroll = new ScrollPane(body);
+        add(scroll);
+        RenderedTextBlock info = PixelScene.renderTextBlock(desc.toString(), 6);
+        info.maxWidth(WIDTH);
+        body.add(info);
+        float iconTop = info.bottom() + 4;
+        int contentCount = 0;
+        for (Object object : objects) {
+            final Object content = object;
+            Image icon;
+            if (object == Dungeon.hero) {
+                icon = HeroSprite.avatar((Hero)object);
+            } else if (object instanceof Char && ((Char)object).sprite != null) {
+                icon = new Image(((Char)object).sprite);
+            } else if (object instanceof Mob) {
+                CharSprite sprite = ((Mob)object).sprite();
+                sprite.idle();
+                icon = new Image(sprite);
+            } else if (object instanceof Heap) {
+                icon = new ItemSprite((Heap)object);
+            } else if (object instanceof Item) {
+                icon = new ItemSprite((Item)object);
+            } else if (object instanceof Plant) {
+                icon = TerrainFeaturesTilemap.getPlantVisual((Plant)object);
+            } else if (object instanceof Trap) {
+                icon = TerrainFeaturesTilemap.getTrapVisual((Trap)object);
+            } else {
+                continue;
+            }
+            if (icon.width() > CONTENT_SLOT - 2 || icon.height() > CONTENT_SLOT - 2) {
+                RectF frame = icon.frame();
+                float wShrink = frame.width() * (1f - (CONTENT_SLOT - 2) / icon.width());
+                float hShrink = frame.height() * (1f - (CONTENT_SLOT - 2) / icon.height());
+                if (wShrink > 0) {
+                    frame.left += wShrink / 2f;
+                    frame.right -= wShrink / 2f;
+                }
+                if (hShrink > 0) {
+                    frame.top += hShrink / 2f;
+                    frame.bottom -= hShrink / 2f;
+                }
+                icon.frame(frame);
+            }
+            IconButton button = new IconButton(icon) {
+                @Override protected void onClick() { GameScene.examineObject(content); }
+            };
+            button.setRect(contentCount % 5 * CONTENT_SLOT,
+                    iconTop + contentCount / 5 * CONTENT_SLOT,
+                    CONTENT_SLOT, CONTENT_SLOT);
+            body.add(button);
+            contentCount++;
+        }
+        int rows = (contentCount + 4) / 5;
+        float bottom = iconTop + rows * CONTENT_SLOT;
+        body.setSize(WIDTH, bottom);
+        float topOffset = preview.height() + 4;
+        int height = (int)Math.ceil(Math.max(CONTENT_SLOT, Math.min(bottom,
+                PixelScene.uiCamera.height - topOffset - 30)));
+        // 滚动区使用独立相机，必须在窗口尺寸和屏幕位置确定之后布局。
+        resize(WIDTH, (int)topOffset + height + 2);
+        scroll.setRect(0, topOffset, WIDTH, height);
+    }
 
-			if (tile == Terrain.WATER) {
-				Image water = new Image(Dungeon.level.waterTex());
-				water.frame(0, 0, DungeonTilemap.SIZE, DungeonTilemap.SIZE);
-				return water;
-			} else {
-				return DungeonTerrainTilemap.tile(cell, tile);
-			}
-		}
-	}
-
-	public static String cellName( int cell ){
-		CustomTilemap customTile = null;
-		int x = cell % Dungeon.level.width();
-		int y = cell / Dungeon.level.width();
-		for (CustomTilemap i : Dungeon.level.customTiles){
-			if ((x >= i.tileX && x < i.tileX+i.tileW) &&
-					(y >= i.tileY && y < i.tileY+i.tileH)){
-				if (i.image(x - i.tileX, y - i.tileY) != null) {
-					customTile = i;
-				}
-			}
-		}
-		if (customTile == null){
-			for (CustomTilemap i : Dungeon.level.customTerrain){
-				if ((x >= i.tileX && x < i.tileX+i.tileW) &&
-						(y >= i.tileY && y < i.tileY+i.tileH)){
-					if (i.image(x - i.tileX, y - i.tileY) != null) {
-						customTile = i;
-					}
-				}
-			}
-		}
-		if (customTile != null){
-			x -= customTile.tileX;
-			y -= customTile.tileY;
-		}
-
-		if (customTile != null && customTile.name(x, y) != null){
-			return customTile.name(x, y);
-		} else {
-			return Dungeon.level.tileName(Dungeon.level.map[cell]);
-		}
-	}
-	
-	public WndInfoCell( int cell ) {
-		
-		super();
-
-		CustomTilemap customTile = null;
-		int x = cell % Dungeon.level.width();
-		int y = cell / Dungeon.level.width();
-		for (CustomTilemap i : Dungeon.level.customTiles){
-			if ((x >= i.tileX && x < i.tileX+i.tileW) &&
-					(y >= i.tileY && y < i.tileY+i.tileH)){
-				if (i.image(x - i.tileX, y - i.tileY) != null) {
-					customTile = i;
-				}
-			}
-		}
-		if (customTile == null){
-			for (CustomTilemap i : Dungeon.level.customTerrain){
-				if ((x >= i.tileX && x < i.tileX+i.tileW) &&
-						(y >= i.tileY && y < i.tileY+i.tileH)){
-					if (i.image(x - i.tileX, y - i.tileY) != null) {
-						customTile = i;
-					}
-				}
-			}
-		}
-		if (customTile != null){
-			x -= customTile.tileX;
-			y -= customTile.tileY;
-		}
-
-		String desc = "";
-
-		IconTitle titlebar = new IconTitle();
-		titlebar.icon(cellImage(cell));
-		titlebar.label(cellName(cell));
-
-		if (customTile != null){
-			String customDesc = customTile.desc(x, y);
-			if (customDesc != null) {
-				desc += customDesc;
-			} else {
-				desc += Dungeon.level.tileDesc(Dungeon.level.map[cell]);
-			}
-
-		} else {
-
-			desc += Dungeon.level.tileDesc(Dungeon.level.map[cell]);
-		}
-		// 先确定基础说明，再逐层追加环境；空地的默认说明也不被环境文本挤掉。
-		if (desc.length() == 0) {
-			desc = Messages.get(this, "nothing");
-		}
-		titlebar.setRect(0, 0, WIDTH, 0);
-		add(titlebar);
-
-		RenderedTextBlock info = PixelScene.renderTextBlock(6);
-		add(info);
-
-		for (Blob blob : Dungeon.level.blobs.values()) {
-			if ((Dungeon.level.heroFOV[cell] || blob.alwaysVisible)
-					&& blob.volume > 0 && blob.cur[cell] > 0 && blob.tileDesc() != null) {
-				if (desc.length() > 0) {
-					desc += "\n\n";
-				}
-				desc += blob.tileDesc();
-			}
-		}
-		if (Dungeon.level.caveCollapse != null && Dungeon.level.caveCollapse.contains(cell)
-				&& Dungeon.level.map[cell] != Terrain.COLLAPSE_WALL) {
-			desc += "\n\n" + Messages.get(CaveCollapse.class, "ground_desc");
-		}
-		if (Dungeon.level.caveCollapse != null && Dungeon.level.caveCollapse.hasGold(cell)) {
-			desc += "\n\n" + Messages.get(CavesLevel.class, "wall_deco_desc");
-		}
-		
-		info.text( desc );
-		info.maxWidth(WIDTH);
-		info.setPos(titlebar.left(), titlebar.bottom() + 2*GAP);
-		
-		resize( WIDTH, (int)info.bottom()+2 );
-	}
+    @Override
+    public void offset(int xOffset, int yOffset) {
+        super.offset(xOffset, yOffset);
+        if (scroll != null) scroll.setPos(scroll.left(), scroll.top());
+    }
 }

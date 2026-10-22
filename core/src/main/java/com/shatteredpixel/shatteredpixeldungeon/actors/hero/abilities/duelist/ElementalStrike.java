@@ -352,7 +352,7 @@ public class ElementalStrike extends ArmorAbility {
 			}
 
 			for (int cell : cells) {
-				int terr = Dungeon.level.map[cell];
+				int terr = Dungeon.level.terrainAt(cell);
 				if (terr == Terrain.EMPTY || terr == Terrain.EMBERS || terr == Terrain.EMPTY_DECO ||
 						terr == Terrain.GRASS) {
 					if (grassToPlace > 0

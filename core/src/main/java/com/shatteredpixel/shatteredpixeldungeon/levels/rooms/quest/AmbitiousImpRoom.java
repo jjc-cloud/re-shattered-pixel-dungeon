@@ -27,6 +27,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.SpecialRoom;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -51,20 +52,20 @@ public class AmbitiousImpRoom extends SpecialRoom {
 	@Override
 	public void paint(Level level) {
 
-		Painter.fill( level, this, Terrain.WALL_DECO );
-		Painter.fill( level, this, 1, Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL_DECO) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY) );
 
 		Point c = center();
 
-		Painter.set(level, c.x-2, c.y-2, Terrain.REGION_DECO);
-		Painter.set(level, c.x+2, c.y-2, Terrain.REGION_DECO);
-		Painter.set(level, c.x-2, c.y+2, Terrain.REGION_DECO);
-		Painter.set(level, c.x+2, c.y+2, Terrain.REGION_DECO);
+		Painter.set(level, c.x-2, c.y-2, CellPlacement.content(Terrain.REGION_DECO));
+		Painter.set(level, c.x+2, c.y-2, CellPlacement.content(Terrain.REGION_DECO));
+		Painter.set(level, c.x-2, c.y+2, CellPlacement.content(Terrain.REGION_DECO));
+		Painter.set(level, c.x+2, c.y+2, CellPlacement.content(Terrain.REGION_DECO));
 
-		Painter.set(level, c.x-3, c.y-3, Terrain.WALL_DECO);
-		Painter.set(level, c.x+3, c.y-3, Terrain.WALL_DECO);
-		Painter.set(level, c.x-3, c.y+3, Terrain.WALL_DECO);
-		Painter.set(level, c.x+3, c.y+3, Terrain.WALL_DECO);
+		Painter.set(level, c.x-3, c.y-3, CellPlacement.content(Terrain.WALL_DECO));
+		Painter.set(level, c.x+3, c.y-3, CellPlacement.content(Terrain.WALL_DECO));
+		Painter.set(level, c.x-3, c.y+3, CellPlacement.content(Terrain.WALL_DECO));
+		Painter.set(level, c.x+3, c.y+3, CellPlacement.content(Terrain.WALL_DECO));
 
 		Door entrance = entrance();
 		Imp npc = new Imp();
@@ -79,11 +80,11 @@ public class AmbitiousImpRoom extends SpecialRoom {
 		}
 		level.mobs.add( npc );
 
-		Painter.drawInside(level, this, entrance, 1, Terrain.EMPTY);
+		Painter.drawInside(level, this, entrance, 1, CellPlacement.reset(Terrain.EMPTY));
 		entrance.set( Door.Type.REGULAR );
 
-		Painter.fill( level, left+1, top+3, 7, 3, Terrain.CUSTOM_DECO_EMPTY);
-		Painter.fill( level, left+3, top+1, 3, 7, Terrain.CUSTOM_DECO_EMPTY);
+		Painter.fill( level, left+1, top+3, 7, 3, CellPlacement.reset(Terrain.CUSTOM_DECO_EMPTY));
+		Painter.fill( level, left+3, top+1, 3, 7, CellPlacement.reset(Terrain.CUSTOM_DECO_EMPTY));
 
 		Carpet carpet = new Carpet();
 		carpet.setRect(left+1, top+3, 7, 3);
@@ -113,7 +114,7 @@ public class AmbitiousImpRoom extends SpecialRoom {
 				Dungeon.depth,
 				Dungeon.branch + 1,
 				LevelTransition.Type.BRANCH_ENTRANCE));
-		Painter.set(level, entrancePos, Terrain.EXIT);
+		Painter.set(level, entrancePos, CellPlacement.reset(Terrain.EXIT));
 
 	}
 
@@ -212,7 +213,7 @@ public class AmbitiousImpRoom extends SpecialRoom {
 
 			if (!Dungeon.level.passable[cell+3]) {
 				data[3] = BANNER_1 + Random.Int(2);
-				if (Dungeon.level.map[cell+3+Dungeon.level.width()] != Terrain.PEDESTAL) {
+				if (Dungeon.level.terrainAt(cell+3+Dungeon.level.width()) != Terrain.PEDESTAL) {
 					data[3 + tileW] = BANNER__BOTTOM;
 				}
 			}

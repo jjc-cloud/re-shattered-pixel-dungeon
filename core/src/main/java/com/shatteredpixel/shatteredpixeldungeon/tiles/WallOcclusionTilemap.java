@@ -48,7 +48,7 @@ public class WallOcclusionTilemap extends DungeonTilemap {
 
 	public WallOcclusionTilemap() {
 		super(Assets.Environment.OCCLUSION_SHADOWS);
-		map( Dungeon.level.map, Dungeon.level.width());
+		map( Dungeon.level.terrainVisuals(), Dungeon.level.width());
 	}
 
 	protected int getTileVisual( int pos, int tile, boolean flat ){

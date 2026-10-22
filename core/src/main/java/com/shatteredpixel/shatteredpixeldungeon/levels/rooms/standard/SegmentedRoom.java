@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
@@ -47,13 +48,13 @@ public class SegmentedRoom extends StandardRoom {
 
 	@Override
 	public void paint( Level level ) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1 , Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1 , CellPlacement.reset(Terrain.EMPTY) );
 		
 		for (Door door : connected.values()) {
 			door.set( Door.Type.REGULAR );
 			//set door areas to be empty to help with create walls logic
-			Painter.set(level, door, Terrain.EMPTY);
+			Painter.set(level, door, CellPlacement.reset(Terrain.EMPTY));
 		}
 		
 		createWalls( level, new Rect(left+1, top+1, right-1, bottom-1));
@@ -73,15 +74,15 @@ public class SegmentedRoom extends StandardRoom {
 			do{
 				int splitX = Random.IntRange(area.left+2, area.right-2);
 				
-				if (level.map[splitX + level.width()*(area.top-1)] == Terrain.WALL
-						&& level.map[splitX + level.width()*(area.bottom+1)] == Terrain.WALL){
+				if (level.hasTerrain(splitX + level.width()*(area.top-1), Terrain.WALL)
+						&& level.hasTerrain(splitX + level.width()*(area.bottom+1), Terrain.WALL)){
 					tries = 0;
 					
-					Painter.drawLine(level, new Point(splitX, area.top), new Point(splitX, area.bottom), Terrain.WALL);
+					Painter.drawLine(level, new Point(splitX, area.top), new Point(splitX, area.bottom), CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 					
 					int spaceTop = Random.IntRange(area.top, area.bottom-1);
-					Painter.set(level, splitX, spaceTop, Terrain.EMPTY);
-					Painter.set(level, splitX, spaceTop+1, Terrain.EMPTY);
+					Painter.set(level, splitX, spaceTop, CellPlacement.reset(Terrain.EMPTY));
+					Painter.set(level, splitX, spaceTop+1, CellPlacement.reset(Terrain.EMPTY));
 					
 					createWalls(level, new Rect(area.left, area.top, splitX-1, area.bottom));
 					createWalls(level, new Rect(splitX+1, area.top, area.right, area.bottom));
@@ -95,15 +96,15 @@ public class SegmentedRoom extends StandardRoom {
 			do{
 				int splitY = Random.IntRange(area.top+2, area.bottom-2);
 				
-				if (level.map[area.left-1 + level.width()*splitY] == Terrain.WALL
-						&& level.map[area.right+1 + level.width()*splitY] == Terrain.WALL){
+				if (level.hasTerrain(area.left-1 + level.width()*splitY, Terrain.WALL)
+						&& level.hasTerrain(area.right+1 + level.width()*splitY, Terrain.WALL)){
 					tries = 0;
 					
-					Painter.drawLine(level, new Point(area.left, splitY), new Point(area.right, splitY), Terrain.WALL);
+					Painter.drawLine(level, new Point(area.left, splitY), new Point(area.right, splitY), CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 					
 					int spaceLeft = Random.IntRange(area.left, area.right-1);
-					Painter.set(level, spaceLeft, splitY, Terrain.EMPTY);
-					Painter.set(level, spaceLeft+1, splitY, Terrain.EMPTY);
+					Painter.set(level, spaceLeft, splitY, CellPlacement.reset(Terrain.EMPTY));
+					Painter.set(level, spaceLeft+1, splitY, CellPlacement.reset(Terrain.EMPTY));
 					
 					createWalls(level, new Rect(area.left, area.top, area.right, splitY-1));
 					createWalls(level, new Rect(area.left, splitY+1, area.right, area.bottom));

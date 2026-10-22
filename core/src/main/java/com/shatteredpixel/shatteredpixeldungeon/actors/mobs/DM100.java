@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
@@ -97,7 +99,7 @@ public class DM100 extends Mob {
 
 			Invisibility.dispel(this);
 			if (hit( this, enemy, true )) {
-				TerrainPropagation.point(Dungeon.level, TerrainInteractions.Source.ELECTRIC, enemy.pos,
+				TerrainPropagation.point(Dungeon.level, CellContent.CONDUCTIVE, enemy.pos,
 						enemy, this, target -> {
 					int dmg = Random.NormalIntRange(3, 10);
 					dmg = Math.round(dmg * AscensionChallenge.statModifier(this));

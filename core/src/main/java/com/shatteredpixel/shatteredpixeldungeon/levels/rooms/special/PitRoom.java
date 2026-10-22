@@ -29,6 +29,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.CrystalKey;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
@@ -45,8 +46,8 @@ public class PitRoom extends SpecialRoom {
 
 	public void paint( Level level ) {
 		
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY) );
 		
 		Door entrance = entrance();
 		entrance.set( Door.Type.CRYSTAL );
@@ -61,7 +62,7 @@ public class PitRoom extends SpecialRoom {
 		} else if (entrance.y == bottom) {
 			well = new Point( Random.Int( 2 ) == 0 ? left + 1 : right - 1, top+1 );
 		}
-		Painter.set( level, well, Terrain.EMPTY_WELL );
+		Painter.set( level, well, CellPlacement.reset(Terrain.EMPTY_WELL) );
 		
 		int remains = level.pointToCell(center());
 		

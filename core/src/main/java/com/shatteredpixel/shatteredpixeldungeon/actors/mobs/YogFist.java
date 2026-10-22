@@ -284,7 +284,7 @@ public abstract class YogFist extends Mob {
 
 			for (int i = 0; i < furrowedTiles; i++) {
 				int cell = pos + PathFinder.NEIGHBOURS9[Random.Int(9)];
-				if (Dungeon.level.map[cell] == Terrain.GRASS) {
+				if (Dungeon.level.hasTerrain(cell, Terrain.GRASS)) {
 					Level.set(cell, Terrain.FURROWED_GRASS);
 					GameScene.updateMap(cell);
 					CellEmitter.get(cell).burst(LeafParticle.GENERAL, 10);
@@ -308,8 +308,8 @@ public abstract class YogFist extends Mob {
 		public void damage(int dmg, Object src) {
 			int grassCells = 0;
 			for (int i : PathFinder.NEIGHBOURS9) {
-				if (Dungeon.level.map[pos+i] == Terrain.FURROWED_GRASS
-				|| Dungeon.level.map[pos+i] == Terrain.HIGH_GRASS){
+				if (Dungeon.level.hasTerrain(pos+i, Terrain.FURROWED_GRASS)
+				|| Dungeon.level.hasTerrain(pos+i, Terrain.HIGH_GRASS)){
 					grassCells++;
 				}
 			}
@@ -373,7 +373,7 @@ public abstract class YogFist extends Mob {
 		private boolean canSpreadGrass(int cell){
 			int yogPos = Dungeon.level.exit() + Dungeon.level.width()*3;
 			return Dungeon.level.distance(cell, yogPos) > 4 && !Dungeon.level.solid[cell]
-					&& !(Dungeon.level.map[cell] == Terrain.FURROWED_GRASS || Dungeon.level.map[cell] == Terrain.HIGH_GRASS);
+					&& !(Dungeon.level.hasTerrain(cell, Terrain.FURROWED_GRASS) || Dungeon.level.hasTerrain(cell, Terrain.HIGH_GRASS));
 		}
 
 	}

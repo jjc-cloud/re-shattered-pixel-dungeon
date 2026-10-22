@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.exit;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.StatueLineRoom;
 import com.watabou.utils.Point;
@@ -54,7 +55,7 @@ public class StatueLineExitRoom extends StatueLineRoom {
 			exit = level.pointToCell(random(3));
 		} while (level.findMob(exit) != null);
 
-		Painter.set(level, exit, Terrain.EXIT);
+		Painter.set(level, exit, CellPlacement.reset(Terrain.EXIT));
 		level.transitions.add(new LevelTransition(level, exit, LevelTransition.Type.REGULAR_EXIT));
 	}
 

@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.watabou.utils.Random;
@@ -34,10 +35,10 @@ import com.watabou.utils.Rect;
 public class GrassyGraveRoom extends StandardRoom {
 
 	@Override
-	public void merge(Level l, Room other, Rect merge, int mergeTerrain) {
-		if (mergeTerrain == Terrain.EMPTY &&
+	public void merge(Level l, Room other, Rect merge, CellPlacement mergeTerrain) {
+		if (mergeTerrain.isGround(Terrain.EMPTY) &&
 				(other instanceof GrassyGraveRoom || other instanceof PlantsRoom)){
-			super.merge(l, other, merge, Terrain.GRASS);
+			super.merge(l, other, merge, CellPlacement.reset(Terrain.EMPTY, Terrain.GRASS));
 		} else {
 			super.merge(l, other, merge, mergeTerrain);
 		}
@@ -46,12 +47,12 @@ public class GrassyGraveRoom extends StandardRoom {
 	@Override
 	public void paint(Level level) {
 		
-		Painter.fill( level, this, Terrain.WALL );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
 		for (Door door : connected.values()) {
 			door.set( Door.Type.REGULAR );
 		}
 		
-		Painter.fill( level, this, 1 , Terrain.GRASS );
+		Painter.fill( level, this, 1 , CellPlacement.reset(Terrain.EMPTY, Terrain.GRASS) );
 		
 		int w = width() - 2;
 		int h = height() - 2;

@@ -38,6 +38,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfFrost;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.EmptyRoom;
@@ -56,8 +57,8 @@ public class MagicalFireRoom extends SpecialRoom {
 	@Override
 	public void paint(Level level) {
 
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY) );
 
 		Door door = entrance();
 		door.set( Door.Type.REGULAR );
@@ -69,7 +70,7 @@ public class MagicalFireRoom extends SpecialRoom {
 			firePos.y = top+1;
 			while (firePos.y != bottom){
 				Blob.seed(level.pointToCell(firePos), 1, EternalFire.class, level);
-				Painter.set(level, firePos, Terrain.EMPTY_SP);
+				Painter.set(level, firePos, CellPlacement.reset(Terrain.EMPTY_SP));
 				firePos.y++;
 			}
 			if (door.x == left){
@@ -81,7 +82,7 @@ public class MagicalFireRoom extends SpecialRoom {
 			firePos.x = left+1;
 			while (firePos.x != right){
 				Blob.seed(level.pointToCell(firePos), 1, EternalFire.class, level);
-				Painter.set(level, firePos, Terrain.EMPTY_SP);
+				Painter.set(level, firePos, CellPlacement.reset(Terrain.EMPTY_SP));
 				firePos.x++;
 			}
 			if (door.y == top){
@@ -91,7 +92,7 @@ public class MagicalFireRoom extends SpecialRoom {
 			}
 		}
 
-		Painter.fill(level, behindFire, Terrain.EMPTY_SP);
+		Painter.fill(level, behindFire, CellPlacement.reset(Terrain.EMPTY_SP));
 
 		boolean honeyPot = Random.Int( 2 ) == 0;
 
@@ -142,7 +143,7 @@ public class MagicalFireRoom extends SpecialRoom {
 		//note that this is slightly brittle, assumes the fire is either all there or totally gone
 		if (fire != null && fire.volume > 0){
 			int cell = l.pointToCell(p);
-			if (l.map[cell] == Terrain.EMPTY_SP) return false;
+			if (l.terrainAt(cell) == Terrain.EMPTY_SP) return false;
 
 			if (fire.cur[cell] > 0)     return false;
 			for (int i : PathFinder.NEIGHBOURS4){
@@ -226,8 +227,8 @@ public class MagicalFireRoom extends SpecialRoom {
 
 						//burn adjacent heaps, but only on outside and non-water cells
 						if (Dungeon.level.heaps.get(cell) != null
-							&& Dungeon.level.map[cell] != Terrain.EMPTY_SP
-							&& Dungeon.level.map[cell] != Terrain.WATER){
+							&& Dungeon.level.terrainAt(cell) != Terrain.EMPTY_SP
+							&& !Dungeon.level.hasTerrain(cell, Terrain.WATER)){
 							Dungeon.level.heaps.get(cell).burn();
 						}
 					}

@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.exit;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.StatuesRoom;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.Carpet;
@@ -52,8 +53,8 @@ public class StatuesExitRoom extends StatuesRoom {
 			Point c = center();
 			exit = level.pointToCell(c);
 			for (int i : PathFinder.NEIGHBOURS8){
-				if (level.map[exit + i] != Terrain.STATUE ){
-					Painter.set(level, exit + i, Terrain.EMPTY_DECO);
+				if (!level.hasTerrain(exit + i, Terrain.STATUE) ){
+					Painter.set(level, exit + i, CellPlacement.ground(Terrain.EMPTY_DECO));
 				}
 			}
 			Carpet carpet = new Carpet();
@@ -80,8 +81,8 @@ public class StatuesExitRoom extends StatuesRoom {
 			//remain plain floor. Only Terrain.EMPTY is changed, as EMPTY_DECO has the same flags.
 			for (int y = carpetRect.top; y <= carpetRect.bottom; y++){
 				for (int x = carpetRect.left; x <= carpetRect.right; x++){
-					if (level.map[x + y*level.width()] == Terrain.EMPTY){
-						Painter.set( level, x, y, Terrain.EMPTY_DECO );
+					if (level.terrainAt(x + y*level.width()) == Terrain.EMPTY){
+						Painter.set( level, x, y, CellPlacement.ground(Terrain.EMPTY_DECO) );
 					}
 				}
 			}
@@ -91,14 +92,14 @@ public class StatuesExitRoom extends StatuesRoom {
 		} else {
 			//already have an exit placed in this case
 			for ( Point p : getPoints()){
-				if (level.map[level.pointToCell(p)] == Terrain.EXIT){
+				if (level.terrainAt(level.pointToCell(p)) == Terrain.EXIT){
 					exit = level.pointToCell(p);
 					break;
 				}
 			}
 		}
 
-		Painter.set( level, exit, Terrain.EXIT );
+		Painter.set( level, exit, CellPlacement.reset(Terrain.EXIT) );
 		level.transitions.add(new LevelTransition(level, exit, LevelTransition.Type.REGULAR_EXIT));
 
 	}

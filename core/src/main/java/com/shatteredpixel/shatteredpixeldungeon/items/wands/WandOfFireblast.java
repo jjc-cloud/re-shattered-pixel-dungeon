@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
@@ -95,7 +97,7 @@ public class WandOfFireblast extends DamageWand {
 			}
 
 			//knock doors open
-			if (Dungeon.level.map[cell] == Terrain.DOOR){
+			if (Dungeon.level.hasTerrain(cell, Terrain.DOOR)){
 				Level.set(cell, Terrain.OPEN_DOOR);
 				GameScene.updateMap(cell);
 			}
@@ -189,7 +191,7 @@ public class WandOfFireblast extends DamageWand {
 				for (int i : PathFinder.NEIGHBOURS9) {
 					CellEmitter.get(defender.pos + i).burst(SmokeParticle.FACTORY, 4);
 					if (Fire.volumeAt(defender.pos+i, Fire.class) > 0){
-						Dungeon.level.affectTerrain(defender.pos + i, TerrainInteractions.Source.FIRE, true);
+						Dungeon.level.affectTerrain(defender.pos + i, CellContent.BURNABLE);
 						fire.clear(defender.pos + i);
 					}
 

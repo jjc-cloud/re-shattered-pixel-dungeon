@@ -35,13 +35,19 @@ public class DungeonTerrainTilemap extends DungeonTilemap {
 	public DungeonTerrainTilemap(){
 		super(Dungeon.level.tilesTex());
 
-		map( Dungeon.level.map, Dungeon.level.width() );
+		map( Dungeon.level.terrainVisuals(), Dungeon.level.width() );
 
 		instance = this;
 	}
 
 	@Override
 	protected int getTileVisual(int pos, int tile, boolean flat) {
+        if (!flat && !DungeonTileSheet.wallStitcheable(tile) && !DungeonTileSheet.doorTile(tile)) {
+            if (Dungeon.level.cellAt(pos).hasTerrain(Terrain.WATER)) tile = Terrain.WATER;
+            else if (TerrainFeaturesTilemap.contentVisual(pos, tile) >= 0
+                    || tile == Terrain.TRAP || tile == Terrain.SECRET_TRAP || tile == Terrain.INACTIVE_TRAP)
+                tile = Dungeon.level.cellAt(pos).ground();
+        }
 		if (!flat && DungeonTileSheet.doorTile(tile) && Dungeon.level instanceof VaultLevel
 				&& ((VaultLevel) Dungeon.level).customDoorCell(pos)) {
 			return DungeonTileSheet.getVisualWithAlts(DungeonTileSheet.FLOOR_SP, pos);
@@ -90,12 +96,6 @@ public class DungeonTerrainTilemap extends DungeonTilemap {
 				return DungeonTileSheet.RAISED_STATUE;
 			} else if (tile == Terrain.STATUE_SP) {
 				return DungeonTileSheet.RAISED_STATUE_SP;
-			} else if (tile == Terrain.STATUE_EMBERS) {
-				return DungeonTileSheet.getVisualWithAlts(DungeonTileSheet.EMBERS, pos) == DungeonTileSheet.EMBERS_ALT
-						? DungeonTileSheet.RAISED_STATUE_EMBERS_ALT : DungeonTileSheet.RAISED_STATUE_EMBERS;
-			} else if (tile == Terrain.STATUE_SP_EMBERS) {
-				return DungeonTileSheet.getVisualWithAlts(DungeonTileSheet.EMBERS_SP, pos) == DungeonTileSheet.EMBERS_SP_ALT
-						? DungeonTileSheet.RAISED_STATUE_SP_EMBERS_ALT : DungeonTileSheet.RAISED_STATUE_SP_EMBERS;
 			} else if (tile == Terrain.REGION_DECO) {
 				return DungeonTileSheet.RAISED_REGION_DECO;
 			} else if (tile == Terrain.REGION_DECO_ALT) {

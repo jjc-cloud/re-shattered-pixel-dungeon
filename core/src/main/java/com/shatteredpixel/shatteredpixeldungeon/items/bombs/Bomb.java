@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.bombs;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.badlogic.gdx.utils.IntArray;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 
@@ -180,19 +182,15 @@ public class Bomb extends Item {
 			// 在破坏地形或触发其他炸弹前保存本次爆炸接触到的墙面。
 			IntArray surfaces = Dungeon.level.terrainInteractions == null ? null
 					: Dungeon.level.terrainInteractions.blastSurfaces(affectedCells, PathFinder.distance, explosionRange());
-			if (surfaces != null) {
-				for (int j = 0; j < surfaces.size; j++) {
-					terrainAffected |= Dungeon.level.terrainInteractions.interact(surfaces.get(j), TerrainInteractions.Source.EXPLOSION)
-							== TerrainInteractions.Result.CHANGED;
-				}
-			}
+			ArrayList<Integer> terrainCells = new ArrayList<>(affectedCells);
+			if (surfaces != null) for (int j = 0; j < surfaces.size; j++) terrainCells.add(surfaces.get(j));
+			terrainAffected |= Dungeon.level.interactions().affectCells(terrainCells, CellContent.BREAKABLE | CellContent.BURNABLE);
 
 			for (int i : affectedCells){
 				if (Dungeon.level.heroFOV[i]) {
 					CellEmitter.get(i).burst(SmokeParticle.FACTORY, 4);
 				}
 
-				terrainAffected |= Dungeon.level.affectTerrain(i, TerrainInteractions.Source.EXPLOSION);
 
 				//destroys items / triggers bombs caught in the blast.
 				Heap heap = Dungeon.level.heaps.get(i);
@@ -200,37 +198,7 @@ public class Bomb extends Item {
 					heap.explode();
 				}
 			}
-			for (CustomTilemap tilemap : Dungeon.level.customTiles) {
-				if (!(tilemap instanceof Carpet)) continue;
-				Carpet carpet = (Carpet) tilemap;
-				for (int i : affectedCells) {
-					int terrain = Dungeon.level.map[i];
-					boolean floor = terrain == Terrain.EMPTY || terrain == Terrain.EMPTY_SP
-							|| terrain == Terrain.EMPTY_DECO || terrain == Terrain.CUSTOM_DECO_EMPTY;
-					//只有真会露出余烬的格才记录地毯破坏；入口、出口和没有余烬底图的台座
-					//保留原地毯图层，和解离射线取同一套判定。
-					if (!floor && terrain != Terrain.EMBERS && terrain != Terrain.EMBERS_SP
-							&& terrain != Terrain.STATUE_EMBERS && terrain != Terrain.STATUE_SP_EMBERS
-							&& terrain != Terrain.CUSTOM_DECO_EMBERS_SP) continue;
-					if (carpet.overrideTile(i, Dungeon.level, Carpet.DESTROYED)) {
-						if (floor) {
-							Level.set(i, terrain == Terrain.EMPTY_SP ? Terrain.EMBERS_SP : Terrain.EMBERS, Dungeon.level);
-							GameScene.updateMap(i);
-							}
-						terrainAffected = true;
-					}
-				}
-				if (surfaces != null) {
-					for (int j = 0; j < surfaces.size; j++) {
-						int surface = surfaces.get(j);
-						int ground = Dungeon.level.map[surface];
-						if (ground != Terrain.EMBERS && ground != Terrain.EMBERS_SP
-								&& ground != Terrain.STATUE_EMBERS && ground != Terrain.STATUE_SP_EMBERS
-								&& ground != Terrain.CUSTOM_DECO_EMBERS_SP) continue;
-						terrainAffected |= carpet.overrideTile(surface, Dungeon.level, Carpet.DESTROYED);
-					}
-				}
-			}
+
 			
 			for (Char ch : affectedChars){
 

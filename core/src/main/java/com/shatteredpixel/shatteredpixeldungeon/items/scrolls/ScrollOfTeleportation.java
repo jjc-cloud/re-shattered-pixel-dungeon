@@ -153,7 +153,7 @@ public class ScrollOfTeleportation extends Scroll {
 				int terr;
 				boolean locked = false;
 				for (Point p : r.getPoints()){
-					terr = level.map[level.pointToCell(p)];
+					terr = level.terrainAt(level.pointToCell(p));
 					if (terr == Terrain.LOCKED_DOOR || terr == Terrain.CRYSTAL_DOOR || terr == Terrain.BARRICADE){
 						locked = true;
 						break;
@@ -199,9 +199,9 @@ public class ScrollOfTeleportation extends Scroll {
 			appear( hero, pos );
 			Dungeon.level.occupyCell( hero );
 			Buff.detach(hero, Roots.class);
-			if (secretDoor && level.map[doorPos] == Terrain.SECRET_DOOR){
+			if (secretDoor && level.hasTerrain(doorPos, Terrain.SECRET_DOOR)){
 				Sample.INSTANCE.play( Assets.Sounds.SECRET );
-				int oldValue = Dungeon.level.map[doorPos];
+				int oldValue = Dungeon.level.terrainAt(doorPos);
 				GameScene.discoverTile( doorPos, oldValue );
 				Dungeon.level.discover( doorPos );
 				ScrollOfMagicMapping.discover( doorPos );

@@ -92,17 +92,14 @@ public class DungeonTileSheet {
 		chasmStitcheable.put( Terrain.EMPTY,        CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.GRASS,        CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.EMBERS,       CHASM_FLOOR );
-		chasmStitcheable.put( Terrain.EMBERS_SP,    CHASM_FLOOR_SP );
 		chasmStitcheable.put( Terrain.EMPTY_WELL,   CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.HIGH_GRASS,   CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.FURROWED_GRASS,CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.EMPTY_DECO,   CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.CUSTOM_DECO,  CHASM_FLOOR );
-		chasmStitcheable.put( Terrain.CUSTOM_DECO_EMBERS_SP, CHASM_FLOOR_SP );
 		chasmStitcheable.put( Terrain.EMPTY_WELL,   CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.WELL,         CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.STATUE,       CHASM_FLOOR );
-		chasmStitcheable.put( Terrain.STATUE_EMBERS, CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.REGION_DECO,  CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.SEWER_BARREL_MARKED, CHASM_FLOOR );
 		chasmStitcheable.put( Terrain.SECRET_TRAP,  CHASM_FLOOR );
@@ -119,7 +116,6 @@ public class DungeonTileSheet {
 		chasmStitcheable.put( Terrain.EMPTY_SP,     CHASM_FLOOR_SP );
 		chasmStitcheable.put( Terrain.CUSTOM_DECO_SP, CHASM_FLOOR_SP );
 		chasmStitcheable.put( Terrain.STATUE_SP,    CHASM_FLOOR_SP );
-		chasmStitcheable.put( Terrain.STATUE_SP_EMBERS, CHASM_FLOOR_SP );
 
 		//wall
 		chasmStitcheable.put( Terrain.WALL,         CHASM_WALL );
@@ -157,11 +153,11 @@ public class DungeonTileSheet {
 	//These tiles can stitch with water
 	public static HashSet<Integer> waterStitcheable = new HashSet<>(Arrays.asList(
 			Terrain.EMPTY, Terrain.GRASS, Terrain.EMPTY_WELL,
-			Terrain.ENTRANCE, Terrain.EXIT, Terrain.EMBERS, Terrain.EMBERS_SP,
+			Terrain.ENTRANCE, Terrain.EXIT, Terrain.EMBERS,
 			Terrain.BARRICADE, Terrain.HIGH_GRASS, Terrain.FURROWED_GRASS, Terrain.SECRET_TRAP,
 			Terrain.TRAP, Terrain.INACTIVE_TRAP, Terrain.EMPTY_DECO,
-			Terrain.CUSTOM_DECO, Terrain.CUSTOM_DECO_EMBERS_SP, Terrain.WELL,
-			Terrain.STATUE, Terrain.STATUE_EMBERS, Terrain.STATUE_SP_EMBERS, Terrain.REGION_DECO,
+			Terrain.CUSTOM_DECO, Terrain.WELL,
+			Terrain.STATUE, Terrain.REGION_DECO,
 			Terrain.SEWER_BARREL_MARKED, Terrain.ALCHEMY,
 			Terrain.CUSTOM_DECO_EMPTY, Terrain.MINE_CRYSTAL, Terrain.MINE_BOULDER,
 			Terrain.DOOR, Terrain.OPEN_DOOR, Terrain.LOCKED_DOOR, Terrain.HERO_LKD_DR, Terrain.CRYSTAL_DOOR
@@ -475,7 +471,6 @@ public class DungeonTileSheet {
 		directVisuals.put(Terrain.ENTRANCE,         ENTRANCE);
 		directVisuals.put(Terrain.EXIT,             EXIT);
 		directVisuals.put(Terrain.EMBERS,           EMBERS);
-		directVisuals.put(Terrain.EMBERS_SP,        EMBERS_SP);
 		directVisuals.put(Terrain.PEDESTAL,         PEDESTAL);
 		directVisuals.put(Terrain.EMPTY_SP,         FLOOR_SP);
 		directVisuals.put(Terrain.ENTRANCE_SP,      ENTRANCE_SP);
@@ -485,7 +480,6 @@ public class DungeonTileSheet {
 		directVisuals.put(Terrain.INACTIVE_TRAP,    directVisuals.get(Terrain.EMPTY));
 		directVisuals.put(Terrain.CUSTOM_DECO,      directVisuals.get(Terrain.EMPTY));
 		directVisuals.put(Terrain.CUSTOM_DECO_SP,   directVisuals.get(Terrain.EMPTY_SP));
-		directVisuals.put(Terrain.CUSTOM_DECO_EMBERS_SP, EMBERS_SP);
 		directVisuals.put(Terrain.CUSTOM_DECO_EMPTY,directVisuals.get(Terrain.EMPTY));
 		directVisuals.put(Terrain.CUSTOM_DECO_WTR,  WATER);
 
@@ -516,8 +510,6 @@ public class DungeonTileSheet {
 
 		directFlatVisuals.put(Terrain.STATUE,           FLAT_STATUE);
 		directFlatVisuals.put(Terrain.STATUE_SP,        FLAT_STATUE_SP);
-		directFlatVisuals.put(Terrain.STATUE_EMBERS,   FLAT_STATUE);
-		directFlatVisuals.put(Terrain.STATUE_SP_EMBERS, FLAT_STATUE_SP);
 		directFlatVisuals.put(Terrain.REGION_DECO,      FLAT_REGION_DECO);
 		directFlatVisuals.put(Terrain.REGION_DECO_ALT,  FLAT_REGION_DECO_ALT);
 		directFlatVisuals.put(Terrain.SEWER_BARREL_MARKED, FLAT_SEWER_BARREL_MARKED);

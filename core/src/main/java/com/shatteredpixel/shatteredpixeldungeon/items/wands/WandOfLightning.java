@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
@@ -214,13 +216,13 @@ public class WandOfLightning extends DamageWand {
 
 		affected.clear();
 		arcs.clear();
-		conducting = Dungeon.level.terrainInteractions != null && Dungeon.level.terrainInteractions.hasEffects(TerrainInteractions.Source.ELECTRIC);
+		conducting = Dungeon.level.terrainInteractions != null && Dungeon.level.terrainInteractions.hasEffects(CellContent.CONDUCTIVE);
 		if (conducting) {
 			if (conduction == null) conduction = new TerrainPropagation();
-			conduction.begin(Dungeon.level, TerrainInteractions.Source.ELECTRIC);
+			conduction.begin(Dungeon.level, CellContent.CONDUCTIVE);
 		}
 
-		int cell = TerrainPropagation.impactCell(Dungeon.level, bolt, TerrainInteractions.Source.ELECTRIC);
+		int cell = TerrainPropagation.impactCell(Dungeon.level, bolt, CellContent.CONDUCTIVE);
 		impactCell = cell;
 		impactInWater = Dungeon.level.water[cell];
 

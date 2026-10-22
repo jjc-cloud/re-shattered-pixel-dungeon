@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
@@ -78,17 +80,11 @@ public class WandOfBlastWave extends DamageWand {
 		BlastWave.blast(bolt.collisionPos);
 		boolean terrainAffected = false;
 		ArrayList<Integer> affectedCells = new ArrayList<>();
-		ArrayList<Integer> wallCells = new ArrayList<>();
 		for (int offset : PathFinder.NEIGHBOURS9) {
 			int cell = bolt.collisionPos + offset;
-			if (Dungeon.level.insideMap(cell)) {
-				if (Dungeon.level.map[cell] == Terrain.COLLAPSE_WALL) wallCells.add(cell);
-				else affectedCells.add(cell);
-			}
+			if (Dungeon.level.insideMap(cell)) affectedCells.add(cell);
 		}
-		// 固定冲击前的墙面；最后支撑墙触发坍塌后，同次冲击不会再清理新落下的岩壁。
-		for (int cell : affectedCells) terrainAffected |= Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.SHOCKWAVE);
-		for (int cell : wallCells) terrainAffected |= Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.SHOCKWAVE);
+		terrainAffected = Dungeon.level.interactions().affectCells(affectedCells, CellContent.BREAKABLE);
 		if (terrainAffected) Dungeon.observe();
 
 		//presses all tiles in the AOE first, with the exception of tengu dart traps
@@ -195,7 +191,7 @@ public class WandOfBlastWave extends DamageWand {
 						Dungeon.fail(cause);
 					}
 				}
-				if (closeDoors && Dungeon.level.map[oldPos] == Terrain.OPEN_DOOR){
+				if (closeDoors && Dungeon.level.hasTerrain(oldPos, Terrain.OPEN_DOOR)){
 					Door.leave(oldPos);
 				}
 				Dungeon.level.occupyCell(ch);

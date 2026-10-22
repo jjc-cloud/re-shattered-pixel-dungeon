@@ -27,6 +27,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.DisintegrationTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.PoisonDartTrap;
@@ -40,8 +41,8 @@ public class SecretHoardRoom extends SecretRoom {
 	
 	@Override
 	public void paint(Level level) {
-		Painter.fill(level, this, Terrain.WALL);
-		Painter.fill(level, this, 1, Terrain.EMPTY);
+		Painter.fill(level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL));
+		Painter.fill(level, this, 1, CellPlacement.reset(Terrain.EMPTY));
 		
 		Class<? extends Trap> trapClass;
 		if (Random.Int(2) == 0){
@@ -70,9 +71,9 @@ public class SecretHoardRoom extends SecretRoom {
 		}
 		
 		for (Point p : getPoints()){
-			if (Random.Int(2) == 0 && level.map[level.pointToCell(p)] == Terrain.EMPTY){
+			if (Random.Int(2) == 0 && level.terrainAt(level.pointToCell(p)) == Terrain.EMPTY){
 				level.setTrap(Reflection.newInstance(trapClass).reveal(), level.pointToCell(p));
-				Painter.set(level, p, Terrain.TRAP);
+				Painter.set(level, p, CellPlacement.content(Terrain.TRAP));
 			}
 		}
 		

@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.TrapMechanism;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.SummoningTrap;
 import com.watabou.utils.Point;
@@ -46,8 +47,8 @@ public class SecretSummoningRoom extends SecretRoom {
 	
 	@Override
 	public void paint(Level level) {
-		Painter.fill(level, this, Terrain.WALL);
-		Painter.fill(level, this, 1, Terrain.SECRET_TRAP);
+		Painter.fill(level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL));
+		Painter.fill(level, this, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.SECRET_TRAP));
 		
 		Point center = center();
 		level.drop(Generator.random(), level.pointToCell(center)).setHauntedIfCursed().type = Heap.Type.SKELETON;
@@ -56,11 +57,11 @@ public class SecretSummoningRoom extends SecretRoom {
 		float revealInc = 0;
 		for (Point p : getPoints()){
 			int cell = level.pointToCell(p);
-			if (level.map[cell] == Terrain.SECRET_TRAP){
+			if (level.hasTerrain(cell, Terrain.SECRET_TRAP)){
 				revealInc += revealedChance;
 				if (revealInc >= 1) {
 					level.setTrap(new SummoningTrap().reveal(), cell);
-					Painter.set(level, cell, Terrain.TRAP);
+					Painter.set(level, cell, CellPlacement.content(Terrain.TRAP));
 					revealInc--;
 				} else {
 					level.setTrap(new SummoningTrap().rollOutdatedRandom(level).hide(), cell);

@@ -34,6 +34,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfMet
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ExoticCrystals;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.EmptyRoom;
 import com.watabou.utils.Point;
@@ -52,7 +53,7 @@ public class CrystalPathRoom extends SpecialRoom {
 	@Override
 	public void paint(Level level) {
 
-		Painter.fill( level, this, Terrain.WALL );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
 
 		//rooms are ordered from closest to furthest from the entrance
 		EmptyRoom[] rooms = new EmptyRoom[6];
@@ -65,7 +66,7 @@ public class CrystalPathRoom extends SpecialRoom {
 		int prize1 = 0, prize2 = 0;
 		if (entry.x == left || entry.x == right){
 
-			Painter.drawInside(level, this, entry, width() > 8 ? 5 : 3, Terrain.EMPTY);
+			Painter.drawInside(level, this, entry, width() > 8 ? 5 : 3, CellPlacement.reset(Terrain.EMPTY));
 
 			int roomW1 = width() >= 9 ? 2 : 1;
 			int roomW2 = width() % 2 == 0 ? 2 : 1;
@@ -73,44 +74,44 @@ public class CrystalPathRoom extends SpecialRoom {
 
 			if (entry.x == left){
 				rooms[0].setPos(left+1, entry.y-roomH-1).resize(roomW1-1, roomH-1);
-				Painter.set(level, rooms[0].left, rooms[0].bottom+1, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[0].left, rooms[0].bottom+1, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 				rooms[1].setPos(left+1, entry.y+2).resize(roomW1-1, roomH-1);
-				Painter.set(level, rooms[1].left, rooms[1].top-1, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[1].left, rooms[1].top-1, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 
 				rooms[2].setPos(rooms[1].right+2, entry.y-roomH-1).resize(roomW1-1, roomH-1);
-				Painter.set(level, rooms[2].left, rooms[2].bottom+1, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[2].left, rooms[2].bottom+1, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 				rooms[3].setPos(rooms[1].right+2, entry.y+2).resize(roomW1-1, roomH-1);
-				Painter.set(level, rooms[3].left, rooms[3].top-1, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[3].left, rooms[3].top-1, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 
 				rooms[4].setPos(rooms[3].right+2, entry.y-roomH-1).resize(roomW2-1, roomH);
-				Painter.set(level, rooms[4].left-1, rooms[4].bottom-1, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[4].left-1, rooms[4].bottom-1, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 				rooms[5].setPos(rooms[3].right+2, entry.y+1).resize(roomW2-1, roomH);
-				Painter.set(level, rooms[5].left-1, rooms[5].top+1, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[5].left-1, rooms[5].top+1, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 
 				prize1 = level.pointToCell(new Point(rooms[4].left, rooms[4].bottom));
 				prize2 = level.pointToCell(new Point(rooms[5].left, rooms[5].top));
 			} else {
 				rooms[0].setPos(right-roomW1, entry.y-roomH-1).resize(roomW1-1, roomH-1);
-				Painter.set(level, rooms[0].right, rooms[0].bottom+1, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[0].right, rooms[0].bottom+1, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 				rooms[1].setPos(right-roomW1, entry.y+2).resize(roomW1-1, roomH-1);
-				Painter.set(level, rooms[1].right, rooms[1].top-1, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[1].right, rooms[1].top-1, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 
 				rooms[2].setPos(rooms[1].left-roomW1-1, entry.y-roomH-1).resize(roomW1-1, roomH-1);
-				Painter.set(level, rooms[2].right, rooms[2].bottom+1, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[2].right, rooms[2].bottom+1, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 				rooms[3].setPos(rooms[1].left-roomW1-1, entry.y+2).resize(roomW1-1, roomH-1);
-				Painter.set(level, rooms[3].right, rooms[3].top-1, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[3].right, rooms[3].top-1, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 
 				rooms[4].setPos(rooms[3].left-roomW2-1, entry.y-roomH-1).resize(roomW2-1, roomH);
-				Painter.set(level, rooms[4].right+1, rooms[4].bottom-1, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[4].right+1, rooms[4].bottom-1, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 				rooms[5].setPos(rooms[3].left-roomW2-1, entry.y+1).resize(roomW2-1, roomH);
-				Painter.set(level, rooms[5].right+1, rooms[5].top+1, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[5].right+1, rooms[5].top+1, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 
 				prize1 = level.pointToCell(new Point(rooms[4].right, rooms[4].bottom));
 				prize2 = level.pointToCell(new Point(rooms[5].right, rooms[5].top));
 			}
 
 		} else {
-			Painter.drawInside(level, this, entry, height() > 8 ? 5 : 3, Terrain.EMPTY);
+			Painter.drawInside(level, this, entry, height() > 8 ? 5 : 3, CellPlacement.reset(Terrain.EMPTY));
 
 			int roomW = width() >= 9 ? 2 : 1;
 			int roomH1 = height() >= 9 ? 2 : 1;
@@ -118,37 +119,37 @@ public class CrystalPathRoom extends SpecialRoom {
 
 			if (entry.y == top){
 				rooms[0].setPos(entry.x-roomW-1, top+1).resize(roomW-1, roomH1-1);
-				Painter.set(level, rooms[0].right+1, rooms[0].top, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[0].right+1, rooms[0].top, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 				rooms[1].setPos(entry.x+2, top+1).resize(roomW-1, roomH1-1);
-				Painter.set(level, rooms[1].left-1, rooms[1].top, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[1].left-1, rooms[1].top, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 
 				rooms[2].setPos(entry.x-roomW-1, rooms[1].bottom+2).resize(roomW-1, roomH1-1);
-				Painter.set(level, rooms[2].right+1, rooms[2].top, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[2].right+1, rooms[2].top, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 				rooms[3].setPos(entry.x+2,  rooms[1].bottom+2).resize(roomW-1, roomH1-1);
-				Painter.set(level, rooms[3].left-1, rooms[3].top, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[3].left-1, rooms[3].top, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 
 				rooms[4].setPos(entry.x-roomW-1, rooms[3].bottom+2).resize(roomW, roomH2-1);
-				Painter.set(level, rooms[4].right-1, rooms[4].top-1, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[4].right-1, rooms[4].top-1, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 				rooms[5].setPos(entry.x+1, rooms[3].bottom+2).resize(roomW, roomH2-1);
-				Painter.set(level, rooms[5].left+1, rooms[5].top-1, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[5].left+1, rooms[5].top-1, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 
 				prize1 = level.pointToCell(new Point(rooms[4].right, rooms[4].top));
 				prize2 = level.pointToCell(new Point(rooms[5].left, rooms[5].top));
 			} else {
 				rooms[0].setPos(entry.x-roomW-1, bottom-roomH1).resize(roomW-1, roomH1-1);
-				Painter.set(level, rooms[0].right+1, rooms[0].bottom, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[0].right+1, rooms[0].bottom, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 				rooms[1].setPos(entry.x+2, bottom-roomH1).resize(roomW-1, roomH1-1);
-				Painter.set(level, rooms[1].left-1, rooms[1].bottom, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[1].left-1, rooms[1].bottom, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 
 				rooms[2].setPos(entry.x-roomW-1, rooms[1].top-roomH1-1).resize(roomW-1, roomH1-1);
-				Painter.set(level, rooms[2].right+1, rooms[2].bottom, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[2].right+1, rooms[2].bottom, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 				rooms[3].setPos(entry.x+2, rooms[1].top-roomH1-1).resize(roomW-1, roomH1-1);
-				Painter.set(level, rooms[3].left-1, rooms[3].bottom, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[3].left-1, rooms[3].bottom, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 
 				rooms[4].setPos(entry.x-roomW-1, rooms[3].top-roomH2-1).resize(roomW, roomH2-1);
-				Painter.set(level, rooms[4].right-1, rooms[4].bottom+1, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[4].right-1, rooms[4].bottom+1, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 				rooms[5].setPos(entry.x+1,  rooms[3].top-roomH2-1).resize(roomW, roomH2-1);
-				Painter.set(level, rooms[5].left+1, rooms[5].bottom+1, Terrain.CRYSTAL_DOOR);
+				Painter.set(level, rooms[5].left+1, rooms[5].bottom+1, CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 
 				prize1 = level.pointToCell(new Point(rooms[4].right, rooms[4].bottom));
 				prize2 = level.pointToCell(new Point(rooms[5].left, rooms[5].bottom));
@@ -157,10 +158,10 @@ public class CrystalPathRoom extends SpecialRoom {
 		}
 
 		for (EmptyRoom room : rooms) {
-			Painter.fill(level, room, Terrain.EMPTY_SP);
+			Painter.fill(level, room, CellPlacement.reset(Terrain.EMPTY_SP));
 		}
-		Painter.set(level, prize1, Terrain.PEDESTAL);
-		Painter.set(level, prize2, Terrain.PEDESTAL);
+		Painter.set(level, prize1, CellPlacement.reset(Terrain.PEDESTAL));
+		Painter.set(level, prize2, CellPlacement.reset(Terrain.PEDESTAL));
 
 		//random potion/scroll in rooms 1-4, with lower value ones going into earlier rooms
 		ArrayList<Item> potions = new ArrayList<>();

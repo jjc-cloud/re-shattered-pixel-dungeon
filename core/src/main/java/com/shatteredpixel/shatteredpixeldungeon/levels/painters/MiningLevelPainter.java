@@ -54,7 +54,7 @@ public class MiningLevelPainter extends CavesPainter {
 	protected void generateGold(Level level, ArrayList<Room> rooms) {
 		//we start by counting all the gold purposefully made by rooms
 		for (int i = 0; i < level.length(); i++){
-			if (level.map[i] == Terrain.WALL_DECO) {
+			if (level.hasTerrain(i, Terrain.WALL_DECO)) {
 				goldToAdd--;
 			}
 		}
@@ -64,7 +64,7 @@ public class MiningLevelPainter extends CavesPainter {
 			}
 		}
 
-		int[] map = level.map;
+		int[] map = level.terrainVisuals();
 		do {
 			Random.shuffle(rooms);
 			for (Room r : rooms) {
@@ -75,10 +75,10 @@ public class MiningLevelPainter extends CavesPainter {
 				for (Point p : r.getPoints()){
 					int i = level.pointToCell(p);
 
-					if (level.insideMap(i) && goldToAdd > 0 && map[i] == Terrain.WALL){
+					if (level.insideMap(i) && goldToAdd > 0 && level.hasTerrain(i, Terrain.WALL)){
 
 						for (int j : PathFinder.NEIGHBOURS4){
-							if (level.insideMap(i+j) && map[i+j] != Terrain.WALL){
+							if (level.insideMap(i+j) && !level.hasTerrain(i+j, Terrain.WALL)){
 								Point o = level.cellToPoint(i+j);
 								if (r.inside(o)) {
 									goldPosCandidates.add(i);
@@ -92,19 +92,19 @@ public class MiningLevelPainter extends CavesPainter {
 				if (goldToAdd > 0 && !goldPosCandidates.isEmpty()){
 					int pos = Random.element(goldPosCandidates);
 
-					map[pos] = Terrain.WALL_DECO;
+					level.cellAt(pos).place(Terrain.WALL_DECO);
 					goldToAdd--;
 
 					if (goldToAdd > 0){
 						int i = PathFinder.NEIGHBOURS4[Random.Int(4)];
-						if (level.insideMap(pos+i) && map[pos+i] == Terrain.WALL){
-							map[pos+i] = Terrain.WALL_DECO;
+						if (level.insideMap(pos+i) && level.hasTerrain(pos+i, Terrain.WALL)){
+							level.cellAt(pos+i).place(Terrain.WALL_DECO);
 							goldToAdd--;
 						}
 						if (Random.Int(2) == 0){
 							i = PathFinder.NEIGHBOURS4[Random.Int(4)];
-							if (level.insideMap(pos+i) && map[pos+i] == Terrain.WALL){
-								map[pos+i] = Terrain.WALL_DECO;
+							if (level.insideMap(pos+i) && level.hasTerrain(pos+i, Terrain.WALL)){
+								level.cellAt(pos+i).place(Terrain.WALL_DECO);
 								goldToAdd--;
 							}
 						}
@@ -133,30 +133,30 @@ public class MiningLevelPainter extends CavesPainter {
 				int door = d.x + d.y * l.width();
 
 				if (d.type == Room.Door.Type.WALL || d.type == Room.Door.Type.HIDDEN){
-					l.map[door] = Terrain.WALL;
+					l.cellAt(door).place(Terrain.WALL);
 				} else {
 					//some of these are randomly hidden, using the same rules as regular levels
 					if (Random.Float() < hiddenDoorChance) {
 						d.type = Room.Door.Type.HIDDEN;
 						Graph.buildDistanceMap(rooms, r);
 						if (n.distance == Integer.MAX_VALUE){
-							l.map[door] = Terrain.EMPTY;
+							l.cellAt(door).reset(Terrain.EMPTY);
 							d.type = Room.Door.Type.EMPTY;
 						} else {
-							l.map[door] = Terrain.WALL;
+							l.cellAt(door).place(Terrain.WALL);
 						}
 					} else {
-						l.map[door] = Terrain.EMPTY;
+						l.cellAt(door).reset(Terrain.EMPTY);
 						d.type = Room.Door.Type.EMPTY;
 					}
 
 				}
 
 				//if the door is empty, always merge the rooms
-				if (l.map[door] == Terrain.EMPTY){
+				if ((l.cellAt(door).flags() & Terrain.PASSABLE) != 0){
 					if (roomMerges.get(r) == n || roomMerges.get(n) == r){
 						continue;
-					} else if (mergeRooms(l, r, n, r.connected.get(n), Terrain.EMPTY)) {
+					} else if (mergeRooms(l, r, n, r.connected.get(n), CellPlacement.reset(Terrain.EMPTY))) {
 						roomMerges.put(r, n);
 						roomMerges.put(n, r);
 					}
@@ -172,8 +172,8 @@ public class MiningLevelPainter extends CavesPainter {
 
 		//no chasms allowed, replace with ground!
 		for (int i = 0; i < level.length(); i++){
-			if (level.map[i] == Terrain.CHASM){
-				level.map[i] = Terrain.EMPTY;
+			if (level.terrainAt(i) == Terrain.CHASM){
+				level.cellAt(i).setGround(Terrain.EMPTY);
 			}
 		}
 	}

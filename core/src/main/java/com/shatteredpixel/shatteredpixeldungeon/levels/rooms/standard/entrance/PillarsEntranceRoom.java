@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.entrance;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.PillarsRoom;
 import com.watabou.utils.PathFinder;
@@ -52,13 +53,13 @@ public class PillarsEntranceRoom extends PillarsRoom {
 
 			for (int i : PathFinder.NEIGHBOURS4){
 				if (i == -level.width()) continue;
-				if (level.map[entrance+i] == Terrain.WALL){
+				if (level.hasTerrain(entrance+i, Terrain.WALL)){
 					valid = false;
 				}
 			}
 
-		} while (level.findMob(entrance) != null || level.map[entrance] == Terrain.WALL || !valid);
-		Painter.set( level, entrance, Terrain.ENTRANCE );
+		} while (level.findMob(entrance) != null || level.hasTerrain(entrance, Terrain.WALL) || !valid);
+		Painter.set( level, entrance, CellPlacement.reset(Terrain.ENTRANCE) );
 
 		level.transitions.add(new LevelTransition(level, entrance, LevelTransition.Type.REGULAR_ENTRANCE));
 	}

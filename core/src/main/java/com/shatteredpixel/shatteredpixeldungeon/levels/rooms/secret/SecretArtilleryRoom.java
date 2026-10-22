@@ -25,22 +25,23 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 
 public class SecretArtilleryRoom extends SecretRoom {
 	
 	@Override
 	public void paint(Level level) {
-		Painter.fill(level, this, Terrain.WALL);
-		Painter.fill(level, this, 1, Terrain.EMPTY_SP);
+		Painter.fill(level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL));
+		Painter.fill(level, this, 1, CellPlacement.reset(Terrain.EMPTY_SP));
 		
-		Painter.set(level, center(), Terrain.STATUE_SP);
+		Painter.set(level, center(), CellPlacement.ground(Terrain.EMPTY_SP, Terrain.STATUE_SP));
 		
 		for (int i = 0; i < 3; i++){
 			int itemPos;
 			do{
 				itemPos = level.pointToCell(random());
-			} while ( level.map[itemPos] != Terrain.EMPTY_SP
+			} while ( level.terrainAt(itemPos) != Terrain.EMPTY_SP
 					|| level.heaps.get(itemPos) != null);
 			
 			if( i == 0 ){

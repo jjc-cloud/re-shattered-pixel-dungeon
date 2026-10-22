@@ -84,10 +84,10 @@ public class ScrollOfMagicMapping extends Scroll {
 	public static boolean reveal( Level level, boolean showEffects ) {
 		boolean noticed = false;
 		for (int i = 0; i < level.length(); i++) {
-			int terr = level.map[i];
+			int terr = level.terrainAt(i);
 			if (level.discoverable[i]) {
 				level.mapped[i] = true;
-				if ((Terrain.flags[terr] & Terrain.SECRET) != 0) {
+				if ((level.cellAt(i).flags() & Terrain.SECRET) != 0) {
 					level.discover(i);
 					if (showEffects && level.heroFOV[i]) {
 						GameScene.discoverTile(i, terr);

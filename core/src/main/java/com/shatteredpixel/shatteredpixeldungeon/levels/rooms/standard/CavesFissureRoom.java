@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.watabou.utils.PathFinder;
@@ -50,23 +51,23 @@ public class CavesFissureRoom extends StandardRoom {
 	}
 
 	@Override
-	public boolean canMerge(Level l, Room other, Point p, int mergeTerrain) {
-		if (mergeTerrain == Terrain.CHASM) {
+	public boolean canMerge(Level l, Room other, Point p, CellPlacement mergeTerrain) {
+		if (mergeTerrain.isGround(Terrain.CHASM)) {
 			return true;
 		} else {
 			int cell = l.pointToCell(pointInside(p, 1));
-			return l.map[cell] != Terrain.CHASM;
+			return l.terrainAt(cell) != Terrain.CHASM;
 		}
 	}
 
 	@Override
 	public boolean canPlaceItem(Point p, Level l) {
-		return super.canPlaceItem(p, l) && l.map[l.pointToCell(p)] != Terrain.EMPTY_SP;
+		return super.canPlaceItem(p, l) && l.terrainAt(l.pointToCell(p)) != Terrain.EMPTY_SP;
 	}
 
 	@Override
 	public boolean canPlaceCharacter(Point p, Level l) {
-		return super.canPlaceCharacter(p, l) && l.map[l.pointToCell(p)] != Terrain.EMPTY_SP;
+		return super.canPlaceCharacter(p, l) && l.terrainAt(l.pointToCell(p)) != Terrain.EMPTY_SP;
 	}
 
 	@Override
@@ -76,8 +77,8 @@ public class CavesFissureRoom extends StandardRoom {
 		PathFinder.setMapSize(width()-2, height()-2);
 
 		do {
-			Painter.fill(level, this, Terrain.WALL);
-			Painter.fill(level, this, 1, Terrain.EMPTY);
+			Painter.fill(level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL));
+			Painter.fill(level, this, 1, CellPlacement.reset(Terrain.EMPTY));
 
 			for (Door door : connected.values()) {
 				door.set(Door.Type.REGULAR);
@@ -154,45 +155,45 @@ public class CavesFissureRoom extends StandardRoom {
 
 				PointF curr = new PointF(center);
 				int cell = (int) curr.x + ((int) curr.y) * level.width();
-				Painter.set(level, cell, Terrain.CHASM);
+				Painter.set(level, cell, CellPlacement.reset(Terrain.CHASM));
 				do {
 					if (!horizontal) {
-						if (level.map[cell - 1] == Terrain.EMPTY
+						if (level.terrainAt(cell - 1) == Terrain.EMPTY
 								&& ((curr.x % 1 <= 0.5f) || sizeCat == SizeCategory.GIANT)) {
-							Painter.set(level, cell - 1, Terrain.CHASM);
+							Painter.set(level, cell - 1, CellPlacement.reset(Terrain.CHASM));
 						}
-						if (level.map[cell] == Terrain.EMPTY)
-							Painter.set(level, cell, Terrain.CHASM);
-						if (level.map[cell + 1] == Terrain.EMPTY
+						if (level.terrainAt(cell) == Terrain.EMPTY)
+							Painter.set(level, cell, CellPlacement.reset(Terrain.CHASM));
+						if (level.terrainAt(cell + 1) == Terrain.EMPTY
 								&& ((curr.x % 1 > 0.5f) || sizeCat == SizeCategory.GIANT)) {
-							Painter.set(level, cell + 1, Terrain.CHASM);
+							Painter.set(level, cell + 1, CellPlacement.reset(Terrain.CHASM));
 						}
 					} else {
-						if (level.map[cell - level.width()] == Terrain.EMPTY
+						if (level.terrainAt(cell - level.width()) == Terrain.EMPTY
 								&& ((curr.y % 1 <= 0.5f) || sizeCat == SizeCategory.GIANT)) {
-							Painter.set(level, cell - level.width(), Terrain.CHASM);
+							Painter.set(level, cell - level.width(), CellPlacement.reset(Terrain.CHASM));
 						}
-						if (level.map[cell] == Terrain.EMPTY)
-							Painter.set(level, cell, Terrain.CHASM);
-						if (level.map[cell + level.width()] == Terrain.EMPTY
+						if (level.terrainAt(cell) == Terrain.EMPTY)
+							Painter.set(level, cell, CellPlacement.reset(Terrain.CHASM));
+						if (level.terrainAt(cell + level.width()) == Terrain.EMPTY
 								&& ((curr.y % 1 > 0.5f) || sizeCat == SizeCategory.GIANT)) {
-							Painter.set(level, cell + level.width(), Terrain.CHASM);
+							Painter.set(level, cell + level.width(), CellPlacement.reset(Terrain.CHASM));
 						}
 					}
 
 					curr.x += dX;
 					curr.y += dY;
 					cell = (int) curr.x + ((int) curr.y) * level.width();
-				} while (level.map[cell] == Terrain.EMPTY || level.map[cell] == Terrain.CHASM);
+				} while (level.terrainAt(cell) == Terrain.EMPTY || level.terrainAt(cell) == Terrain.CHASM);
 
 			}
 
 			//add chasm to the center in larger rooms
 			if (lineAngles.size() >= 3) {
 				if (sizeCat == SizeCategory.GIANT) {
-					Painter.fill(level, (int) center.x - 2, (int) center.y - 2, 5, 5, Terrain.CHASM);
+					Painter.fill(level, (int) center.x - 2, (int) center.y - 2, 5, 5, CellPlacement.reset(Terrain.CHASM));
 				} else {
-					Painter.fill(level, (int) center.x - 1, (int) center.y - 1, 3, 3, Terrain.CHASM);
+					Painter.fill(level, (int) center.x - 1, (int) center.y - 1, 3, 3, CellPlacement.reset(Terrain.CHASM));
 				}
 			}
 
@@ -207,7 +208,7 @@ public class CavesFissureRoom extends StandardRoom {
 
 			int doorPoint = 0;
 			for (Door door : connected.values()) {
-				Painter.drawInside(level, this, door, 1, Terrain.EMPTY);
+				Painter.drawInside(level, this, door, 1, CellPlacement.reset(Terrain.EMPTY));
 				if (door.x == left)         doorPoint = xyToRoomCoords(door.x+1, door.y);
 				else if (door.x == right)   doorPoint = xyToRoomCoords(door.x-1, door.y);
 				else if (door.y == top)     doorPoint = xyToRoomCoords(door.x, door.y+1);
@@ -221,7 +222,7 @@ public class CavesFissureRoom extends StandardRoom {
 
 			for (Point p : shrink().getPoints()){
 				int i = xyToRoomCoords(p.x, p.y);
-				passable[i] = level.map[level.pointToCell(p)] != Terrain.CHASM;
+				passable[i] = level.terrainAt(level.pointToCell(p)) != Terrain.CHASM;
 			}
 
 			PathFinder.buildDistanceMap(doorPoint, passable);
@@ -256,9 +257,9 @@ public class CavesFissureRoom extends StandardRoom {
 			if (dX <= 0) {
 				for (int X = left + 1; X <= right - 1; X++) {
 					int cell = X + Y * level.width();
-					if (level.map[cell] == Terrain.CHASM) {
+					if (level.terrainAt(cell) == Terrain.CHASM) {
 						foundChasm = true;
-						Painter.set(level, cell, Terrain.EMPTY_SP);
+						Painter.set(level, cell, CellPlacement.reset(Terrain.EMPTY_SP));
 					} else if (foundChasm) {
 						break;
 					}
@@ -266,9 +267,9 @@ public class CavesFissureRoom extends StandardRoom {
 			} else {
 				for (int X = right-1; X >= left+1; X--) {
 					int cell = X + Y * level.width();
-					if (level.map[cell] == Terrain.CHASM) {
+					if (level.terrainAt(cell) == Terrain.CHASM) {
 						foundChasm = true;
-						Painter.set(level, cell, Terrain.EMPTY_SP);
+						Painter.set(level, cell, CellPlacement.reset(Terrain.EMPTY_SP));
 					} else if (foundChasm) {
 						break;
 					}
@@ -285,9 +286,9 @@ public class CavesFissureRoom extends StandardRoom {
 			if (dY <= 0) {
 				for (int Y = top + 1; Y <= bottom - 1; Y++) {
 					int cell = X + Y * level.width();
-					if (level.map[cell] == Terrain.CHASM) {
+					if (level.terrainAt(cell) == Terrain.CHASM) {
 						foundChasm = true;
-						Painter.set(level, cell, Terrain.EMPTY_SP);
+						Painter.set(level, cell, CellPlacement.reset(Terrain.EMPTY_SP));
 					} else if (foundChasm){
 						break;
 					}
@@ -295,9 +296,9 @@ public class CavesFissureRoom extends StandardRoom {
 			} else {
 				for (int Y = bottom-1; Y >= top + 1; Y--) {
 					int cell = X + Y * level.width();
-					if (level.map[cell] == Terrain.CHASM) {
+					if (level.terrainAt(cell) == Terrain.CHASM) {
 						foundChasm = true;
-						Painter.set(level, cell, Terrain.EMPTY_SP);
+						Painter.set(level, cell, CellPlacement.reset(Terrain.EMPTY_SP));
 					} else if (foundChasm){
 						break;
 					}

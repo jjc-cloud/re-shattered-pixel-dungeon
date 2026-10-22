@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
@@ -443,7 +445,7 @@ public class CursedWand {
 		public boolean valid(Item origin, Char user, Ballistica bolt, boolean positiveOnly) {
 			int pos = bolt.collisionPos;
 
-			if (Dungeon.level.map[pos] != Terrain.ALCHEMY
+			if (!Dungeon.level.hasTerrain(pos, Terrain.ALCHEMY)
 					&& !Dungeon.level.pit[pos]
 					&& Dungeon.level.traps.get(pos) == null
 					&& !Dungeon.isChallenged(Challenges.NO_HERBALISM)) {
@@ -544,7 +546,7 @@ public class CursedWand {
 		public boolean effect(Item origin, Char user, Ballistica bolt, boolean positiveOnly) {
 
 			ArrayList<Char> affected = new ArrayList<>();
-			TerrainPropagation propagation = TerrainPropagation.event(Dungeon.level, TerrainInteractions.Source.ELECTRIC);
+			TerrainPropagation propagation = TerrainPropagation.event(Dungeon.level, CellContent.CONDUCTIVE);
 
 			user.sprite.parent.add(new Lightning(user.pos - 1, user.pos + 1, null));
 			user.sprite.parent.add(new Lightning(user.pos - Dungeon.level.width(), user.pos + Dungeon.level.width(), null));

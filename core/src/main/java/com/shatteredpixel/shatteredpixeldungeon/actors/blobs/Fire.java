@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.blobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -64,7 +66,7 @@ public class Fire extends Blob {
 		}
 		if (level.water[cell]) {
 			// 蒸发时露出覆水前的地面；天然水没有记录，仍露出普通地面。
-			Level.set(cell, level.waterCoveredTerrain.get(cell, Terrain.EMPTY), level);
+			level.cellAt(cell).removeTerrain(Terrain.WATER);
 			//Hero-side effects generate before blobs act, while mob-side effects generate
 			//after them. Give early generators one setup tick so both timings leave the
 			//steam visible for one complete turn.
@@ -116,7 +118,7 @@ public class Fire extends Blob {
 
 					fire = cur[cell] - 1;
 					if (fire <= 0) {
-						observe |= Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.FIRE);
+						observe |= Dungeon.level.affectTerrain(cell, CellContent.BURNABLE);
 					}
 
 				} else if (freeze == null || freeze.volume <= 0 || freeze.cur[cell] <= 0) {

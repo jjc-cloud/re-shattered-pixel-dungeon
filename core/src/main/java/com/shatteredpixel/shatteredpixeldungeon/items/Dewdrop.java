@@ -63,7 +63,7 @@ public class Dewdrop extends Item {
 
 		} else {
 
-			int terr = Dungeon.level.map[pos];
+			int terr = Dungeon.level.terrainAt(pos);
 			if (!consumeDew(1, hero, terr == Terrain.ENTRANCE || terr == Terrain.ENTRANCE_SP
 					|| terr == Terrain.EXIT || terr == Terrain.UNLOCKED_EXIT)){
 				return false;

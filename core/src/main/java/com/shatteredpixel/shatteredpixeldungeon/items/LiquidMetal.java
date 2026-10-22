@@ -81,7 +81,7 @@ public class LiquidMetal extends Item {
 
 	@Override
 	protected void onThrow( int cell ) {
-		if (Dungeon.level.map[cell] == Terrain.WELL || Dungeon.level.pit[cell]) {
+		if (Dungeon.level.terrainAt(cell) == Terrain.WELL || Dungeon.level.pit[cell]) {
 
 			super.onThrow( cell );
 

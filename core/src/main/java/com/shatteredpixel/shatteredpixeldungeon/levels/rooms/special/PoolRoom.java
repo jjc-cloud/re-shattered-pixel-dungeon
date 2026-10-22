@@ -31,6 +31,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfInvisibili
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Random;
 
@@ -50,8 +51,8 @@ public class PoolRoom extends SpecialRoom {
 	
 	public void paint(Level level ) {
 		
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.WATER );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.WATER) );
 		
 		Door door = entrance();
 		door.set( Door.Type.REGULAR );
@@ -62,31 +63,31 @@ public class PoolRoom extends SpecialRoom {
 			
 			x = right - 1;
 			y = top + height() / 2;
-			Painter.fill(level, left+1, top+1, 1, height()-2, Terrain.EMPTY_SP);
+			Painter.fill(level, left+1, top+1, 1, height()-2, CellPlacement.reset(Terrain.EMPTY_SP));
 			
 		} else if (door.x == right) {
 			
 			x = left + 1;
 			y = top + height() / 2;
-			Painter.fill(level, right-1, top+1, 1, height()-2, Terrain.EMPTY_SP);
+			Painter.fill(level, right-1, top+1, 1, height()-2, CellPlacement.reset(Terrain.EMPTY_SP));
 			
 		} else if (door.y == top) {
 			
 			x = left + width() / 2;
 			y = bottom - 1;
-			Painter.fill(level, left+1, top+1, width()-2, 1, Terrain.EMPTY_SP);
+			Painter.fill(level, left+1, top+1, width()-2, 1, CellPlacement.reset(Terrain.EMPTY_SP));
 			
 		} else if (door.y == bottom) {
 			
 			x = left + width() / 2;
 			y = top + 1;
-			Painter.fill(level, left+1, bottom-1, width()-2, 1, Terrain.EMPTY_SP);
+			Painter.fill(level, left+1, bottom-1, width()-2, 1, CellPlacement.reset(Terrain.EMPTY_SP));
 			
 		}
 		
 		int pos = x + y * level.width();
 		level.drop( prize( level ), pos ).type = Heap.Type.CHEST;
-		Painter.set( level, pos, Terrain.PEDESTAL );
+		Painter.set( level, pos, CellPlacement.reset(Terrain.PEDESTAL) );
 		
 		level.addItemToSpawn( new PotionOfInvisibility() );
 		
@@ -94,7 +95,7 @@ public class PoolRoom extends SpecialRoom {
 			Piranha piranha = Piranha.random();
 			do {
 				piranha.pos = level.pointToCell(random());
-			} while (level.map[piranha.pos] != Terrain.WATER|| level.findMob( piranha.pos ) != null);
+			} while (!level.hasTerrain(piranha.pos, Terrain.WATER)|| level.findMob( piranha.pos ) != null);
 			level.mobs.add( piranha );
 		}
 	}

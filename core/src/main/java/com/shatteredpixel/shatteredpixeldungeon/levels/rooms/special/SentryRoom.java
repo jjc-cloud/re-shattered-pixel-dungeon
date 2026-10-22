@@ -36,6 +36,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.EmptyRoom;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -56,8 +57,8 @@ public class SentryRoom extends SpecialRoom {
 	@Override
 	public void paint(Level level) {
 
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY_SP );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY_SP) );
 
 		Door entrance = entrance();
 
@@ -75,79 +76,79 @@ public class SentryRoom extends SpecialRoom {
 		//determine position of sentry, treasure, and paint safe tiles / statues
 		if (entrance.x == left){
 			sentryPos.set(right-1, center.y);
-			Painter.fill(level, left+1, top+1, 1, height()-2, Terrain.EMPTY);
+			Painter.fill(level, left+1, top+1, 1, height()-2, CellPlacement.reset(Terrain.EMPTY));
 			if (entrance.y > center.y){
 				treasurePos.set(left+1, (top + 1 + center.y)/2);
-				Painter.fill(level, left+1, top+1, 2, center.y-top-1, Terrain.EMPTY);
+				Painter.fill(level, left+1, top+1, 2, center.y-top-1, CellPlacement.reset(Terrain.EMPTY));
 			} else {
 				treasurePos.set(left+1, (bottom + center.y)/2);
-				Painter.fill(level, left+1, center.y+1, 2, bottom-center.y-1, Terrain.EMPTY);
+				Painter.fill(level, left+1, center.y+1, 2, bottom-center.y-1, CellPlacement.reset(Terrain.EMPTY));
 			}
 			for (int x = right-3; x > left; x--){
-				if (level.map[x + (center.y * level.width())] == Terrain.EMPTY_SP){
-					Painter.set(level, x, center.y, Terrain.STATUE_SP);
+				if (level.terrainAt(x + (center.y * level.width())) == Terrain.EMPTY_SP){
+					Painter.set(level, x, center.y, CellPlacement.ground(Terrain.EMPTY_SP, Terrain.STATUE_SP));
 				} else {
-					Painter.set(level, x, center.y, Terrain.STATUE);
+					Painter.set(level, x, center.y, CellPlacement.content(Terrain.STATUE));
 				}
 			}
 			dangerDist = 2*(width()-5);
 		} else if (entrance.x == right){
 			sentryPos.set(left+1, center.y);
-			Painter.fill(level, right-1, top+1, 1, height()-2, Terrain.EMPTY);
+			Painter.fill(level, right-1, top+1, 1, height()-2, CellPlacement.reset(Terrain.EMPTY));
 			if (entrance.y > center.y){
 				treasurePos.set(right-1, (top + 1 + center.y)/2);
-				Painter.fill(level, right-2, top+1, 2, center.y-top-1, Terrain.EMPTY);
+				Painter.fill(level, right-2, top+1, 2, center.y-top-1, CellPlacement.reset(Terrain.EMPTY));
 			} else {
 				treasurePos.set(right-1, (bottom + 1 + center.y)/2);
-				Painter.fill(level, right-2, center.y+1, 2, bottom-center.y-1, Terrain.EMPTY);
+				Painter.fill(level, right-2, center.y+1, 2, bottom-center.y-1, CellPlacement.reset(Terrain.EMPTY));
 			}
 			for (int x = left+3; x < right; x++){
-				if (level.map[x + (center.y * level.width())] == Terrain.EMPTY_SP){
-					Painter.set(level, x, center.y, Terrain.STATUE_SP);
+				if (level.terrainAt(x + (center.y * level.width())) == Terrain.EMPTY_SP){
+					Painter.set(level, x, center.y, CellPlacement.ground(Terrain.EMPTY_SP, Terrain.STATUE_SP));
 				} else {
-					Painter.set(level, x, center.y, Terrain.STATUE);
+					Painter.set(level, x, center.y, CellPlacement.content(Terrain.STATUE));
 				}
 			}
 			dangerDist = 2*(width()-5);
 		} else if (entrance.y == top){
 			sentryPos.set(center.x, bottom-1);
-			Painter.fill(level, left+1, top+1, width()-2, 1, Terrain.EMPTY);
+			Painter.fill(level, left+1, top+1, width()-2, 1, CellPlacement.reset(Terrain.EMPTY));
 			if (entrance.x > center.x){
 				treasurePos.set((left + 1 + center.x)/2, top+1);
-				Painter.fill(level, left+1, top+1, center.x-left-1, 2, Terrain.EMPTY);
+				Painter.fill(level, left+1, top+1, center.x-left-1, 2, CellPlacement.reset(Terrain.EMPTY));
 			} else {
 				treasurePos.set((right + center.x)/2, top+1);
-				Painter.fill(level, center.x+1, top+1, right - center.x-1, 2, Terrain.EMPTY);
+				Painter.fill(level, center.x+1, top+1, right - center.x-1, 2, CellPlacement.reset(Terrain.EMPTY));
 			}
 			for (int y = bottom-3; y > top; y--){
-				if (level.map[center.x + (y * level.width())] == Terrain.EMPTY_SP){
-					Painter.set(level, center.x, y, Terrain.STATUE_SP);
+				if (level.terrainAt(center.x + (y * level.width())) == Terrain.EMPTY_SP){
+					Painter.set(level, center.x, y, CellPlacement.ground(Terrain.EMPTY_SP, Terrain.STATUE_SP));
 				} else {
-					Painter.set(level, center.x, y, Terrain.STATUE);
+					Painter.set(level, center.x, y, CellPlacement.content(Terrain.STATUE));
 				}
 			}
 			dangerDist = 2*(height()-5);
  		} else  if (entrance.y == bottom){
 			sentryPos.set(center.x, top+1);
-			Painter.fill(level, left+1, bottom-1, width()-2, 1, Terrain.EMPTY);
+			Painter.fill(level, left+1, bottom-1, width()-2, 1, CellPlacement.reset(Terrain.EMPTY));
 			if (entrance.x > center.x){
 				treasurePos.set((left + 1 + center.x)/2, bottom-1);
-				Painter.fill(level, left+1, bottom-2, center.x-left-1, 2, Terrain.EMPTY);
+				Painter.fill(level, left+1, bottom-2, center.x-left-1, 2, CellPlacement.reset(Terrain.EMPTY));
 			} else {
 				treasurePos.set((right + center.x)/2, bottom-1);
-				Painter.fill(level, center.x+1, bottom-2, right - center.x-1, 2, Terrain.EMPTY);
+				Painter.fill(level, center.x+1, bottom-2, right - center.x-1, 2, CellPlacement.reset(Terrain.EMPTY));
 			}
 			for (int y = top+3; y < bottom; y++){
-				if (level.map[center.x + (y * level.width())] == Terrain.EMPTY_SP){
-					Painter.set(level, center.x, y, Terrain.STATUE_SP);
+				if (level.terrainAt(center.x + (y * level.width())) == Terrain.EMPTY_SP){
+					Painter.set(level, center.x, y, CellPlacement.ground(Terrain.EMPTY_SP, Terrain.STATUE_SP));
 				} else {
-					Painter.set(level, center.x, y, Terrain.STATUE);
+					Painter.set(level, center.x, y, CellPlacement.content(Terrain.STATUE));
 				}
 			}
 			dangerDist = 2*(height()-5);
 		}
 
-		Painter.set(level, sentryPos, Terrain.PEDESTAL);
+		Painter.set(level, sentryPos, CellPlacement.reset(Terrain.PEDESTAL));
 		Sentry sentry = new Sentry();
 		sentry.pos = level.pointToCell(sentryPos);
 		sentry.room = new EmptyRoom();
@@ -155,7 +156,7 @@ public class SentryRoom extends SpecialRoom {
 		sentry.initialChargeDelay = sentry.curChargeDelay = dangerDist / 3f + 0.1f;
 		level.mobs.add( sentry );
 
-		Painter.set(level, treasurePos, Terrain.PEDESTAL);
+		Painter.set(level, treasurePos, CellPlacement.reset(Terrain.PEDESTAL));
 		level.drop( prize( level ), level.pointToCell(treasurePos) ).type = Heap.Type.CHEST;
 
 		level.addItemToSpawn(new PotionOfHaste());
@@ -251,7 +252,7 @@ public class SentryRoom extends SpecialRoom {
 
 			if (Dungeon.hero != null){
 				if (fieldOfView[Dungeon.hero.pos]
-						&& Dungeon.level.map[Dungeon.hero.pos] == Terrain.EMPTY_SP
+						&& Dungeon.level.terrainAt(Dungeon.hero.pos) == Terrain.EMPTY_SP
 						&& room.inside(Dungeon.level.cellToPoint(Dungeon.hero.pos))
 						&& !Dungeon.hero.belongings.lostInventory()){
 

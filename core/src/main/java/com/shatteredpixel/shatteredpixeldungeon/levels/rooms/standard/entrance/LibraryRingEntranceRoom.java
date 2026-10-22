@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.entrance;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.LibraryRingRoom;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.Carpet;
@@ -56,10 +57,10 @@ public class LibraryRingEntranceRoom extends LibraryRingRoom {
 	public void paint(Level level) {
 		super.paint(level);
 
-		Painter.fill(level, this, 5, Terrain.EMPTY_SP);
+		Painter.fill(level, this, 5, CellPlacement.reset(Terrain.EMPTY_SP));
 
 		Point p = center();
-		Painter.set(level, p, Terrain.ENTRANCE_SP);
+		Painter.set(level, p, CellPlacement.reset(Terrain.ENTRANCE_SP));
 		level.transitions.add(new LevelTransition(level, level.pointToCell(p), LevelTransition.Type.REGULAR_ENTRANCE));
 
 		Carpet carpet = new Carpet();
@@ -76,8 +77,8 @@ public class LibraryRingEntranceRoom extends LibraryRingRoom {
 
 		p.x += dirX;
 		p.y += dirY;
-		while (level.map[level.pointToCell(p)] != Terrain.EMPTY){
-			Painter.set(level, p, Terrain.EMPTY_SP);
+		while (level.terrainAt(level.pointToCell(p)) != Terrain.EMPTY){
+			Painter.set(level, p, CellPlacement.reset(Terrain.EMPTY_SP));
 			p.x += dirX;
 			p.y += dirY;
 		}

@@ -32,7 +32,7 @@ public class RaisedTerrainTilemap extends DungeonTilemap {
 	public RaisedTerrainTilemap() {
 		super(Assets.Environment.RAISED_TERRAIN);
 		skipCells.clear();
-		map( Dungeon.level.map, Dungeon.level.width() );
+		map( Dungeon.level.terrainVisuals(), Dungeon.level.width() );
 	}
 
 	public static HashSet<Integer> skipCells = new HashSet<>();

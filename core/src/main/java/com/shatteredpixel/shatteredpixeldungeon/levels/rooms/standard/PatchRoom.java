@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Patch;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.watabou.utils.BArray;
 import com.watabou.utils.PathFinder;
 
@@ -92,12 +93,12 @@ public abstract class PatchRoom extends StandardRoom {
 	}
 
 	//convenience method for the common case of just setting all terrain in the patch to a value
-	protected void fillPatch(Level level, int terrain){
+	protected void fillPatch(Level level, CellPlacement placement){
 		for (int i = top + 1; i < bottom; i++) {
 			for (int j = left + 1; j < right; j++) {
 				if (patch[xyToPatchCoords(j, i)]) {
 					int cell = i * level.width() + j;
-					level.map[cell] = terrain;
+					placement.apply(level, cell);
 				}
 			}
 		}

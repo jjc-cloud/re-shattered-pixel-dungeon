@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.quest.vault;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
@@ -467,7 +469,7 @@ public class VaultBossElemental extends Mob {
 	public int defenseProc(Char enemy, int damage) {
 		if (form == ElementalForm.SHOCK && enemy == Dungeon.hero && !(Dungeon.hero.belongings.attackingWeapon() instanceof MissileWeapon)){
 			enemy.sprite.parent.addToFront( new Lightning( sprite.center(), enemy.sprite.center(), null ) );
-			TerrainPropagation.point(Dungeon.level, TerrainInteractions.Source.ELECTRIC, enemy.pos,
+			TerrainPropagation.point(Dungeon.level, CellContent.CONDUCTIVE, enemy.pos,
 					enemy, this, target -> {
 				if (target instanceof VaultBossElemental) return;
 				if (target == Dungeon.hero) {
@@ -1513,7 +1515,7 @@ public class VaultBossElemental extends Mob {
 			affectedCells.add(cell + PathFinder.CIRCLE8[i]);
 		}
 
-		TerrainPropagation propagation = TerrainPropagation.event(Dungeon.level, TerrainInteractions.Source.ELECTRIC);
+		TerrainPropagation propagation = TerrainPropagation.event(Dungeon.level, CellContent.CONDUCTIVE);
 		if (propagation != null) propagation.extendCells(affectedCells);
 
 		for (int c : affectedCells){

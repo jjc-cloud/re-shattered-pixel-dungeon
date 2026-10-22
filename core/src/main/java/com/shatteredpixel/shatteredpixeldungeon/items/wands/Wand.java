@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
@@ -150,9 +152,9 @@ public abstract class Wand extends Item implements ChargeItem {
 					: new Ballistica(owner.pos, target, bolt.collisionProperties | Ballistica.STOP_SOLID);
 			int surface = (contact.collisionProperties & Ballistica.STOP_TARGET) != 0
 					&& contact.collisionPos == target && !Dungeon.level.solid[target] ? contact.collisionPos
-					: TerrainPropagation.impactCell(Dungeon.level, contact, TerrainInteractions.Source.WAND);
+					: TerrainPropagation.impactCell(Dungeon.level, contact, CellContent.BREAKABLE);
 			if (Dungeon.level.terrainInteractions != null
-					&& Dungeon.level.terrainInteractions.ruleAt(surface).allows(TerrainInteractions.Source.WAND)) {
+					&& Dungeon.level.terrainInteractions.allows(surface, CellContent.BREAKABLE)) {
 				bolt.collisionPos = surface;
 				bolt.dist = bolt.path.indexOf(surface);
 			}
@@ -180,9 +182,9 @@ public abstract class Wand extends Item implements ChargeItem {
 		// 使用动画已经命中的格，不能在地形改变后重新追踪弹道。
 		int impact = attack.collisionPos;
 		if (!Dungeon.level.insideMap(impact) || Dungeon.level.terrainInteractions == null
-				|| !Dungeon.level.terrainInteractions.ruleAt(impact).allows(TerrainInteractions.Source.WAND)
+				|| !Dungeon.level.terrainInteractions.allows(impact, CellContent.BREAKABLE)
 				|| Actor.findChar(impact) != null) return false;
-		if (Dungeon.level.affectTerrain(impact, TerrainInteractions.Source.WAND)) {
+		if (Dungeon.level.affectTerrain(impact, CellContent.BREAKABLE)) {
 			float pitch = this instanceof WandOfFrost ? 1.1f : this instanceof WandOfLivingEarth ? 0.9f : 1f;
 			Sample.INSTANCE.play(Assets.Sounds.HIT_MAGIC, 1, pitch * Random.Float(0.87f, 1.15f));
 			Dungeon.observe();

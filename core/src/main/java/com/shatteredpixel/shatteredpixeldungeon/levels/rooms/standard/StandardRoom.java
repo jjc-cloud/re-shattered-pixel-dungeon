@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
@@ -115,9 +116,9 @@ public abstract class StandardRoom extends Room {
 	}
 
 	@Override
-	public boolean canMerge(Level l, Room other, Point p, int mergeTerrain) {
+	public boolean canMerge(Level l, Room other, Point p, CellPlacement mergeTerrain) {
 		int cell = l.pointToCell(pointInside(p, 1));
-		return (Terrain.flags[l.map[cell]] & Terrain.SOLID) == 0;
+		return (l.cellAt(cell).flags() & Terrain.SOLID) == 0;
 	}
 
 	//FIXME this is a very messy way of handing variable standard rooms

@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -47,7 +49,7 @@ public class ShockingDart extends TippedDart {
 
 		//when processing charged shot, only shock enemies
 		if (!processingChargedShot || attacker.alignment != defender.alignment) {
-			TerrainPropagation.point(Dungeon.level, TerrainInteractions.Source.ELECTRIC, defender.pos,
+			TerrainPropagation.point(Dungeon.level, CellContent.CONDUCTIVE, defender.pos,
 					defender, attacker, target -> {
 				if (!processingChargedShot || attacker.alignment != target.alignment) {
 					target.damage(Random.NormalIntRange(5 + Dungeon.scalingDepth() / 4, 10 + Dungeon.scalingDepth() / 4), new Electricity());

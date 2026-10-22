@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Bones;
@@ -1067,7 +1069,7 @@ public class Hero extends Char {
 			}
 		}
 		
-		if(hasTalent(Talent.BARKSKIN) && Dungeon.level.map[pos] == Terrain.FURROWED_GRASS){
+		if(hasTalent(Talent.BARKSKIN) && Dungeon.level.hasTerrain(pos, Terrain.FURROWED_GRASS)){
 			Barkskin.conditionallyAppend(this, (lvl*pointsInTalent(Talent.BARKSKIN))/2, 1 );
 		}
 		
@@ -1114,9 +1116,9 @@ public class Hero extends Char {
 	public boolean canSelfTrample(){
 		return canSelfTrample && !rooted && !flying &&
 				//standing in high grass
-				(Dungeon.level.map[pos] == Terrain.HIGH_GRASS ||
+				(Dungeon.level.hasTerrain(pos, Terrain.HIGH_GRASS) ||
 				//standing in furrowed grass and not huntress
-				(heroClass != HeroClass.HUNTRESS && Dungeon.level.map[pos] == Terrain.FURROWED_GRASS) ||
+				(heroClass != HeroClass.HUNTRESS && Dungeon.level.hasTerrain(pos, Terrain.FURROWED_GRASS)) ||
 				//standing on a plant
 				Dungeon.level.plants.get(pos) != null);
 	}
@@ -1165,7 +1167,7 @@ public class Hero extends Char {
 	
 	private boolean actBuy( HeroAction.Buy action ) {
 		int dst = action.dst;
-		if (Dungeon.level.map[dst] == Terrain.COLLAPSE_WALL) { ready(); return false; }
+		if (Dungeon.level.hasTerrain(dst, Terrain.COLLAPSE_WALL)) { ready(); return false; }
 		if (pos == dst) {
 
 			ready();
@@ -1224,7 +1226,7 @@ public class Hero extends Char {
 
 	private boolean actPickUp( HeroAction.PickUp action ) {
 		int dst = action.dst;
-		if (Dungeon.level.map[dst] == Terrain.COLLAPSE_WALL) { ready(); return false; }
+		if (Dungeon.level.hasTerrain(dst, Terrain.COLLAPSE_WALL)) { ready(); return false; }
 		if (pos == dst) {
 			
 			Heap heap = Dungeon.level.heaps.get( pos );
@@ -1306,7 +1308,7 @@ public class Hero extends Char {
 	
 	private boolean actOpenChest( HeroAction.OpenChest action ) {
 		int dst = action.dst;
-		if (Dungeon.level.map[dst] == Terrain.COLLAPSE_WALL) { ready(); return false; }
+		if (Dungeon.level.hasTerrain(dst, Terrain.COLLAPSE_WALL)) { ready(); return false; }
 		if (Dungeon.level.adjacent( pos, dst ) || pos == dst) {
 			path = null;
 			
@@ -1364,7 +1366,7 @@ public class Hero extends Char {
 			path = null;
 			
 			boolean hasKey = false;
-			int door = Dungeon.level.map[doorCell];
+			int door = Dungeon.level.terrainAt(doorCell);
 			
 			if (Dungeon.branch != 0) {
 
@@ -1425,22 +1427,22 @@ public class Hero extends Char {
 	private boolean canInteractTerrain(int cell) {
 		KindOfWeapon weapon = belongings.weapon();
 		// 遗物找回前允许徒手清理相邻或脚下的岩壁，不依赖被封存的装备。
-		if (Dungeon.level.map[cell] == Terrain.COLLAPSE_WALL && belongings.lostInventory()
+		if (Dungeon.level.hasTerrain(cell, Terrain.COLLAPSE_WALL) && belongings.lostInventory()
 				&& !(weapon instanceof MeleeWeapon)) {
 			return cell == pos || Dungeon.level.adjacent(pos, cell);
 		}
 		if (weapon == null) return false;
 		if (!(weapon instanceof MeleeWeapon)) return false;
 		// 复活后可能身处塌方墙内，允许打掉脚下墙体脱困。
-		return (cell == pos && Dungeon.level.map[cell] == Terrain.COLLAPSE_WALL)
+		return (cell == pos && Dungeon.level.hasTerrain(cell, Terrain.COLLAPSE_WALL))
 				|| Dungeon.level.adjacent(pos, cell) || weapon.canReach(this, cell);
 	}
 
 	private boolean actInteractTerrain(HeroAction.InteractTerrain action) {
 		if (Dungeon.level != action.level || !action.level.insideMap(action.dst)
-				|| action.level.map[action.dst] != action.terrain
+				|| (action.content == null || action.level.cellAt(action.dst).content(action.terrain) != action.content)
 				|| action.level.terrainInteractions == null
-				|| !action.level.terrainInteractions.ruleAt(action.dst).allows(TerrainInteractions.Source.CLICK)
+				|| !action.level.terrainInteractions.allows(action.dst, CellContent.BREAKABLE)
 				|| (!(belongings.weapon() instanceof MeleeWeapon)
 						&& !(action.terrain == Terrain.COLLAPSE_WALL && belongings.lostInventory()))
 				|| (Actor.findChar(action.dst) != null && !(action.dst == pos && action.terrain == Terrain.COLLAPSE_WALL))) {
@@ -1463,11 +1465,11 @@ public class Hero extends Char {
 				sprite.idle();
 				if (curAction == action) curAction = null;
 				if (!isAlive() || Dungeon.level != action.level) { next(); return; }
-				if (action.level.map[action.dst] == action.terrain
+				if ((action.content != null && action.level.cellAt(action.dst).content(action.terrain) == action.content)
 						&& canInteractTerrain(action.dst)
 						&& (Actor.findChar(action.dst) == null || (action.dst == pos && action.terrain == Terrain.COLLAPSE_WALL))
 						&& action.level.terrainInteractions != null
-						&& action.level.terrainInteractions.interact(action.dst, TerrainInteractions.Source.CLICK)
+						&& action.level.terrainInteractions.interact(action.dst, CellContent.BREAKABLE)
 						== TerrainInteractions.Result.CHANGED) {
 					hitSound(Random.Float(0.87f, 1.15f));
 					if (!isAlive()) { next(); return; }
@@ -1487,10 +1489,10 @@ public class Hero extends Char {
 	private boolean actMine(HeroAction.Mine action){
 		if (Dungeon.level.adjacent(pos, action.dst)){
 			path = null;
-			if ((Dungeon.level.map[action.dst] == Terrain.WALL
-					|| Dungeon.level.map[action.dst] == Terrain.WALL_DECO
-					|| Dungeon.level.map[action.dst] == Terrain.MINE_CRYSTAL
-					|| Dungeon.level.map[action.dst] == Terrain.MINE_BOULDER)
+			if ((Dungeon.level.hasTerrain(action.dst, Terrain.WALL)
+					|| Dungeon.level.hasTerrain(action.dst, Terrain.WALL_DECO)
+					|| Dungeon.level.hasTerrain(action.dst, Terrain.MINE_CRYSTAL)
+					|| Dungeon.level.hasTerrain(action.dst, Terrain.MINE_BOULDER))
 				&& Dungeon.level.insideMap(action.dst)){
 				sprite.attack(action.dst, new Callback() {
 					@Override
@@ -1498,14 +1500,14 @@ public class Hero extends Char {
 
 						boolean crystalAdjacent = false;
 						for (int i : PathFinder.NEIGHBOURS8) {
-							if (Dungeon.level.map[action.dst + i] == Terrain.MINE_CRYSTAL){
+							if (Dungeon.level.hasTerrain(action.dst + i, Terrain.MINE_CRYSTAL)){
 								crystalAdjacent = true;
 								break;
 							}
 						}
 
 						//1 hunger spent total
-						if (Dungeon.level.map[action.dst] == Terrain.WALL_DECO){
+						if (Dungeon.level.hasTerrain(action.dst, Terrain.WALL_DECO)){
 							DarkGold gold = new DarkGold();
 							if (MagicPocket.pickUp(gold, Dungeon.hero, pos)) {
 								DarkGold existing = Dungeon.hero.belongings.getItem(DarkGold.class);
@@ -1523,30 +1525,36 @@ public class Hero extends Char {
 							PixelScene.shake(0.5f, 0.5f);
 							CellEmitter.center( action.dst ).burst( Speck.factory( Speck.STAR ), 7 );
 							Sample.INSTANCE.play( Assets.Sounds.EVOKE );
-							Level.set( action.dst, Terrain.EMPTY_DECO );
+							Dungeon.level.cellAt(action.dst).removeTerrain(Terrain.WALL);
+						Dungeon.level.cellAt(action.dst).removeTerrain(Terrain.WALL_DECO);
+						Dungeon.level.cellAt(action.dst).removeTerrain(Terrain.MINE_BOULDER);
 
 							//mining gold doesn't break crystals
 							crystalAdjacent = false;
 
 						//4 hunger spent total
-						} else if (Dungeon.level.map[action.dst] == Terrain.WALL){
+						} else if (Dungeon.level.hasTerrain(action.dst, Terrain.WALL)){
 							buff(Hunger.class).affectHunger(-3);
 							PixelScene.shake(0.5f, 0.5f);
 							CellEmitter.get( action.dst ).burst( Speck.factory( Speck.ROCK ), 2 );
 							Sample.INSTANCE.play( Assets.Sounds.MINE );
-							Level.set( action.dst, Terrain.EMPTY_DECO );
+							Dungeon.level.cellAt(action.dst).removeTerrain(Terrain.WALL);
+						Dungeon.level.cellAt(action.dst).removeTerrain(Terrain.WALL_DECO);
+						Dungeon.level.cellAt(action.dst).removeTerrain(Terrain.MINE_BOULDER);
 
 						//1 hunger spent total
-						} else if (Dungeon.level.map[action.dst] == Terrain.MINE_CRYSTAL){
+						} else if (Dungeon.level.hasTerrain(action.dst, Terrain.MINE_CRYSTAL)){
 							Splash.at(action.dst, 0xFFFFFF, 5);
 							Sample.INSTANCE.play( Assets.Sounds.SHATTER );
-							Level.set( action.dst, Terrain.EMPTY );
+							Dungeon.level.cellAt(action.dst).removeTerrain(Terrain.MINE_CRYSTAL);
 
 						//1 hunger spent total
-						} else if (Dungeon.level.map[action.dst] == Terrain.MINE_BOULDER){
+						} else if (Dungeon.level.hasTerrain(action.dst, Terrain.MINE_BOULDER)){
 							Splash.at(action.dst, 0x555555, 5);
 							Sample.INSTANCE.play( Assets.Sounds.MINE, 0.6f );
-							Level.set( action.dst, Terrain.EMPTY_DECO );
+							Dungeon.level.cellAt(action.dst).removeTerrain(Terrain.WALL);
+						Dungeon.level.cellAt(action.dst).removeTerrain(Terrain.WALL_DECO);
+						Dungeon.level.cellAt(action.dst).removeTerrain(Terrain.MINE_BOULDER);
 						}
 
 						for (int i : PathFinder.NEIGHBOURS9) {
@@ -1562,9 +1570,9 @@ public class Hero extends Char {
 								protected void onComplete() {
 									boolean broke = false;
 									for (int i : PathFinder.NEIGHBOURS8) {
-										if (Dungeon.level.map[action.dst+i] == Terrain.MINE_CRYSTAL){
+										if (Dungeon.level.hasTerrain(action.dst+i, Terrain.MINE_CRYSTAL)){
 											Splash.at(action.dst+i, 0xFFFFFF, 5);
-											Level.set( action.dst+i, Terrain.EMPTY );
+											Dungeon.level.cellAt(action.dst+i).removeTerrain(Terrain.MINE_CRYSTAL);
 											broke = true;
 										}
 									}
@@ -2142,9 +2150,9 @@ public class Hero extends Char {
 		
 		Char ch = Actor.findChar( cell );
 		Heap heap = Dungeon.level.heaps.get( cell );
-		if (Dungeon.level.map[cell] == Terrain.COLLAPSE_WALL) heap = null;
+		if (Dungeon.level.hasTerrain(cell, Terrain.COLLAPSE_WALL)) heap = null;
 
-		if (Dungeon.level.map[cell] == Terrain.ALCHEMY && cell != pos) {
+		if (Dungeon.level.hasTerrain(cell, Terrain.ALCHEMY) && cell != pos) {
 			
 			curAction = new HeroAction.Alchemy( cell );
 			
@@ -2159,10 +2167,10 @@ public class Hero extends Char {
 		//TODO perhaps only trigger this if hero is already adjacent? reducing mistaps
 		} else if (Dungeon.level instanceof MiningLevel &&
 					belongings.getItem(Pickaxe.class) != null &&
-				(Dungeon.level.map[cell] == Terrain.WALL
-						|| Dungeon.level.map[cell] == Terrain.WALL_DECO
-						|| Dungeon.level.map[cell] == Terrain.MINE_CRYSTAL
-						|| Dungeon.level.map[cell] == Terrain.MINE_BOULDER)){
+				(Dungeon.level.hasTerrain(cell, Terrain.WALL)
+						|| Dungeon.level.hasTerrain(cell, Terrain.WALL_DECO)
+						|| Dungeon.level.hasTerrain(cell, Terrain.MINE_CRYSTAL)
+						|| Dungeon.level.hasTerrain(cell, Terrain.MINE_BOULDER))){
 
 			curAction = new HeroAction.Mine( cell );
 
@@ -2185,10 +2193,10 @@ public class Hero extends Char {
 				curAction = new HeroAction.OpenChest( cell );
 			}
 			
-		} else if (Dungeon.level.map[cell] == Terrain.LOCKED_DOOR
-				|| Dungeon.level.map[cell] == Terrain.HERO_LKD_DR
-				|| Dungeon.level.map[cell] == Terrain.CRYSTAL_DOOR
-				|| Dungeon.level.map[cell] == Terrain.LOCKED_EXIT) {
+		} else if (Dungeon.level.hasTerrain(cell, Terrain.LOCKED_DOOR)
+				|| Dungeon.level.hasTerrain(cell, Terrain.HERO_LKD_DR)
+				|| Dungeon.level.hasTerrain(cell, Terrain.CRYSTAL_DOOR)
+				|| Dungeon.level.terrainAt(cell) == Terrain.LOCKED_EXIT) {
 			
 			curAction = new HeroAction.Unlock( cell );
 			
@@ -2203,9 +2211,9 @@ public class Hero extends Char {
 
 		} else if (Dungeon.level.terrainInteractions != null
 				&& (belongings.weapon() instanceof MeleeWeapon
-						|| (Dungeon.level.map[cell] == Terrain.COLLAPSE_WALL && belongings.lostInventory()))
+						|| (Dungeon.level.hasTerrain(cell, Terrain.COLLAPSE_WALL) && belongings.lostInventory()))
 				&& (fieldOfView[cell] || Dungeon.level.visited[cell] || Dungeon.level.mapped[cell])
-				&& Dungeon.level.terrainInteractions.ruleAt(cell).allows(TerrainInteractions.Source.CLICK)) {
+				&& Dungeon.level.terrainInteractions.allows(cell, CellContent.BREAKABLE)) {
 			curAction = new HeroAction.InteractTerrain(cell);
 			lastAction = null;
 
@@ -2458,7 +2466,7 @@ public class Hero extends Char {
 		Badges.validateDeathFromAlly(cause);
 		
 		int length = Dungeon.level.length();
-		int[] map = Dungeon.level.map;
+		int[] map = Dungeon.level.terrainVisuals();
 		boolean[] visited = Dungeon.level.visited;
 		boolean[] discoverable = Dungeon.level.discoverable;
 		
@@ -2469,7 +2477,7 @@ public class Hero extends Char {
 			if (discoverable[i]) {
 				
 				visited[i] = true;
-				if ((Terrain.flags[terr] & Terrain.SECRET) != 0) {
+				if ((Dungeon.level.cellAt(i).flags() & Terrain.SECRET) != 0) {
 					Dungeon.level.discover( i );
 				}
 			}
@@ -2545,7 +2553,7 @@ public class Hero extends Char {
 	@Override
 	public void move(int step, boolean travelling) {
 		int previousPos = pos;
-		boolean wasHighGrass = Dungeon.level.map[step] == Terrain.HIGH_GRASS;
+		boolean wasHighGrass = Dungeon.level.hasTerrain(step, Terrain.HIGH_GRASS);
 
 		super.move( step, travelling);
 		if (pos != previousPos) Buff.detach(this, HoldFast.class);
@@ -2560,12 +2568,12 @@ public class Hero extends Char {
 				GLog.i(Messages.get(this, "hidden_entrance_hint"));
 			} else if (Dungeon.level.water[pos]) {
 				Sample.INSTANCE.play( Assets.Sounds.WATER, 1, Random.Float( 0.8f, 1.25f ) );
-			} else if (Dungeon.level.map[pos] == Terrain.EMPTY_SP) {
+			} else if (Dungeon.level.terrainAt(pos) == Terrain.EMPTY_SP) {
 				Sample.INSTANCE.play( Assets.Sounds.STURDY, 1, Random.Float( 0.96f, 1.05f ) );
-			} else if (Dungeon.level.map[pos] == Terrain.GRASS
-					|| Dungeon.level.map[pos] == Terrain.EMBERS
-					|| Dungeon.level.map[pos] == Terrain.EMBERS_SP
-					|| Dungeon.level.map[pos] == Terrain.FURROWED_GRASS){
+			} else if (Dungeon.level.hasTerrain(pos, Terrain.GRASS)
+					|| Dungeon.level.hasTerrain(pos, Terrain.EMBERS)
+					|| Dungeon.level.hasTerrain(pos, Terrain.EMBERS)
+					|| Dungeon.level.hasTerrain(pos, Terrain.FURROWED_GRASS)){
 				if (step == pos && wasHighGrass) {
 					Sample.INSTANCE.play(Assets.Sounds.TRAMPLE, 1, Random.Float( 0.96f, 1.05f ) );
 				} else {
@@ -2675,7 +2683,7 @@ public class Hero extends Char {
 		if (curAction instanceof HeroAction.Unlock) {
 
 			int doorCell = ((HeroAction.Unlock)curAction).dst;
-			int door = Dungeon.level.map[doorCell];
+			int door = Dungeon.level.terrainAt(doorCell);
 
 			SkeletonKey.keyRecharge skele = buff(SkeletonKey.keyRecharge.class);
 			SkeletonKey.KeyReplacementTracker keyUseTrack = buff(SkeletonKey.KeyReplacementTracker.class);
@@ -2706,7 +2714,7 @@ public class Hero extends Char {
 						if (keyUseTrack != null){
 							keyUseTrack.processCrystalLockOpened();
 						}
-						Level.set(doorCell, Terrain.EMPTY);
+						Dungeon.level.cellAt(doorCell).removeTerrain(Terrain.CRYSTAL_DOOR);
 						Sample.INSTANCE.play(Assets.Sounds.TELEPORT);
 						CellEmitter.get( doorCell ).start( Speck.factory( Speck.DISCOVER ), 0.025f, 20 );
 					}
@@ -2728,7 +2736,7 @@ public class Hero extends Char {
 			
 			Heap heap = Dungeon.level.heaps.get( ((HeroAction.OpenChest)curAction).dst );
 			if (heap == null || !isAlive() || Dungeon.level.distance(pos, heap.pos) > 1
-					|| Dungeon.level.map[heap.pos] == Terrain.COLLAPSE_WALL) {
+					|| Dungeon.level.hasTerrain(heap.pos, Terrain.COLLAPSE_WALL)) {
 				ready();
 				return;
 			}
@@ -2873,7 +2881,7 @@ public class Hero extends Char {
 							chance = 0f;
 							
 						//unintentional trap detection scales from 40% at floor 0 to 30% at floor 25
-						} else if (Dungeon.level.map[curr] == Terrain.SECRET_TRAP) {
+						} else if (Dungeon.level.hasTerrain(curr, Terrain.SECRET_TRAP)) {
 							chance = 0.4f - (Dungeon.depth / 250f);
 							
 						//unintentional door detection scales from 20% at floor 0 to 0% at floor 20
@@ -2891,7 +2899,7 @@ public class Hero extends Char {
 						//outdated design challenge: hidden traps are never noticed passively, only found by
 						//an intentional search. Hidden doors are unaffected, so this stays after the rogue bonus
 						if (!intentional && !foresight && Dungeon.isChallenged(Challenges.OUTDATED_DESIGN)
-								&& Dungeon.level.map[curr] == Terrain.SECRET_TRAP){
+								&& Dungeon.level.hasTerrain(curr, Terrain.SECRET_TRAP)){
 							chance = 0f;
 						}
 
@@ -2902,7 +2910,7 @@ public class Hero extends Char {
 						
 						if (Random.Float() < chance) {
 						
-							int oldValue = Dungeon.level.map[curr];
+							int oldValue = Dungeon.level.terrainAt(curr);
 							
 							GameScene.discoverTile( curr, oldValue );
 							

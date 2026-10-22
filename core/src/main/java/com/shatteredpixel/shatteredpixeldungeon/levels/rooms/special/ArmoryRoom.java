@@ -29,6 +29,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.keys.IronKey;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.TrinketCatalyst;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
@@ -37,8 +38,8 @@ public class ArmoryRoom extends SpecialRoom {
 
 	public void paint( Level level ) {
 		
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY) );
 		
 		Door entrance = entrance();
 		Point statue = null;
@@ -52,7 +53,7 @@ public class ArmoryRoom extends SpecialRoom {
 			statue = new Point( Random.Int( 2 ) == 0 ? left+1 : right-1, top+1 );
 		}
 		if (statue != null) {
-			Painter.set( level, statue, Terrain.STATUE );
+			Painter.set( level, statue, CellPlacement.content(Terrain.STATUE) );
 		}
 		
 		int n = Random.IntRange( 2, 3 );
@@ -61,7 +62,7 @@ public class ArmoryRoom extends SpecialRoom {
 			int pos;
 			do {
 				pos = level.pointToCell(random());
-			} while (level.map[pos] != Terrain.EMPTY || level.heaps.get( pos ) != null);
+			} while (level.terrainAt(pos) != Terrain.EMPTY || level.heaps.get( pos ) != null);
 			level.drop( prize( level ), pos );
 		}
 
@@ -70,7 +71,7 @@ public class ArmoryRoom extends SpecialRoom {
 			int pos;
 			do {
 				pos = level.pointToCell(random());
-			} while (level.map[pos] != Terrain.EMPTY || level.heaps.get( pos ) != null);
+			} while (level.terrainAt(pos) != Terrain.EMPTY || level.heaps.get( pos ) != null);
 			level.drop( cata, pos );
 		}
 		

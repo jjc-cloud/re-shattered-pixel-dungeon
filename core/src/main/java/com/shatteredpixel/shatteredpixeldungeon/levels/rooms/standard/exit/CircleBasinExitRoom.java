@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.exit;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.CircleBasinRoom;
 import com.watabou.utils.Point;
@@ -45,7 +46,7 @@ public class CircleBasinExitRoom extends CircleBasinRoom {
 		super.paint(level);
 
 		int exit = level.pointToCell(center());
-		Painter.set( level, exit, Terrain.EXIT );
+		Painter.set( level, exit, CellPlacement.reset(Terrain.EXIT) );
 
 		level.transitions.add(new LevelTransition(level, exit, LevelTransition.Type.REGULAR_EXIT));
 	}

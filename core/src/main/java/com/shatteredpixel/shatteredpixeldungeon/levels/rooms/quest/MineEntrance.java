@@ -27,6 +27,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretRoom;
@@ -74,7 +75,7 @@ public class MineEntrance extends CaveRoom {
 			valid = false;
 			entrance = level.pointToCell(random(3));
 			for (int i : PathFinder.NEIGHBOURS9){
-				if (level.map[entrance+i] != Terrain.WALL){
+				if (!level.hasTerrain(entrance+i, Terrain.WALL)){
 					valid = true;
 				}
 			}
@@ -82,10 +83,10 @@ public class MineEntrance extends CaveRoom {
 				valid = true;
 			}
 		} while (level.findMob(entrance) != null || !valid);
-		Painter.set( level, entrance, Terrain.ENTRANCE_SP );
+		Painter.set( level, entrance, CellPlacement.reset(Terrain.ENTRANCE_SP) );
 
 		for (int i : PathFinder.NEIGHBOURS8){
-			Painter.set( level, entrance+i, Terrain.EMPTY_SP );
+			Painter.set( level, entrance+i, CellPlacement.reset(Terrain.EMPTY_SP) );
 		}
 
 		QuestExit vis = new QuestExit();
@@ -104,8 +105,8 @@ public class MineEntrance extends CaveRoom {
 			for (int i = 0; i < width()*height()/2; i ++){
 				Point r = random(1);
 				if (level.distance(level.pointToCell(r), entrance) > 1
-					&& level.map[level.pointToCell(r)] != Terrain.WALL) {
-					Painter.set(level, r, Terrain.MINE_CRYSTAL);
+					&& !level.hasTerrain(level.pointToCell(r), Terrain.WALL)) {
+					Painter.set(level, r, CellPlacement.content(Terrain.MINE_CRYSTAL));
 				}
 			}
 		} else if (Blacksmith.Quest.Type() == Blacksmith.Quest.GNOLL) {
@@ -131,7 +132,7 @@ public class MineEntrance extends CaveRoom {
 
 			for (Point p : getPoints()){
 				int cell = level.pointToCell(p);
-				if (level.distance(cell, entrance) > 1 && level.map[cell] == Terrain.EMPTY){
+				if (level.distance(cell, entrance) > 1 && level.terrainAt(cell) == Terrain.EMPTY){
 					float dist = 1000;
 					for (Door d : doors){
 						dist = Math.min(dist, Point.distance(p, d));
@@ -139,9 +140,9 @@ public class MineEntrance extends CaveRoom {
 					dist = GameMath.gate(1f, dist-0.5f, 5f);
 					float val = Random.Float((float) Math.pow(dist, 2));
 					if (val <= 0.75f || dist <= 1) {
-						Painter.set(level, cell, Terrain.MINE_BOULDER);
+						Painter.set(level, cell, CellPlacement.content(Terrain.MINE_BOULDER));
 					} else if (val <= 5f && dist <= 3){
-						Painter.set(level, cell, Terrain.EMPTY_DECO);
+						Painter.set(level, cell, CellPlacement.ground(Terrain.EMPTY_DECO));
 					}
 				}
 			}

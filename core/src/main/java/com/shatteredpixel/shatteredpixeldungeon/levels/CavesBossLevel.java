@@ -45,6 +45,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CavesPainter;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -88,7 +89,7 @@ public class CavesBossLevel extends Level {
 				Music.INSTANCE.play(Assets.Music.CAVES_BOSS, true);
 			}
 		//if wall isn't broken
-		} else if (map[14 + 13*width()] == Terrain.CUSTOM_DECO){
+		} else if (hasTerrain(14 + 13*width(), Terrain.CUSTOM_DECO)){
 			Music.INSTANCE.end();
 		} else {
 			Music.INSTANCE.playTracks(CavesLevel.CAVES_TRACK_LIST, CavesLevel.CAVES_TRACK_CHANCES, false);
@@ -120,18 +121,18 @@ public class CavesBossLevel extends Level {
 
 		setSize(WIDTH, HEIGHT);
 
-		Painter.fill(this, gate, Terrain.CUSTOM_DECO);
+		Painter.fill(this, gate, CellPlacement.reset(Terrain.EMPTY, Terrain.CUSTOM_DECO));
 
 		//set up main boss arena
-		Painter.fillEllipse(this, mainArena, Terrain.EMPTY);
+		Painter.fillEllipse(this, mainArena, CellPlacement.reset(Terrain.EMPTY));
 
 		boolean[] patch = Patch.generate( width, height-14, 0.15f, 2, true );
 		for (int i= 14*width(); i < length(); i++) {
-			if (map[i] == Terrain.EMPTY) {
+			if (terrainAt(i) == Terrain.EMPTY) {
 				if (patch[i - 14*width()]){
-					map[i] = Terrain.WATER;
+					cellAt(i).place(Terrain.WATER);
 				} else if (Random.Int(Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 4 : 8) == 0){
-					map[i] = Terrain.INACTIVE_TRAP;
+					cellAt(i).place(Terrain.INACTIVE_TRAP);
 				}
 			}
 		}
@@ -142,22 +143,22 @@ public class CavesBossLevel extends Level {
 		new CavesPainter().paint(this, null);
 
 		//setup exit area above main boss arena
-		Painter.fill(this, 0, 3, width(), 4, Terrain.CHASM);
-		Painter.fill(this, 6, 7, 21, 1, Terrain.CHASM);
-		Painter.fill(this, 9, 3, 1, 6, Terrain.REGION_DECO_ALT);
-		Painter.fill(this, 23, 3, 1, 6, Terrain.REGION_DECO_ALT);
-		Painter.fill(this, 10, 8, 13, 1, Terrain.CHASM);
-		Painter.fill(this, 12, 9, 9, 1, Terrain.CHASM);
-		Painter.fill(this, 13, 10, 7, 1, Terrain.CHASM);
-		Painter.fill(this, 14, 3, 5, 10, Terrain.EMPTY);
+		Painter.fill(this, 0, 3, width(), 4, CellPlacement.reset(Terrain.CHASM));
+		Painter.fill(this, 6, 7, 21, 1, CellPlacement.reset(Terrain.CHASM));
+		Painter.fill(this, 9, 3, 1, 6, CellPlacement.reset(Terrain.EMPTY, Terrain.REGION_DECO_ALT));
+		Painter.fill(this, 23, 3, 1, 6, CellPlacement.reset(Terrain.EMPTY, Terrain.REGION_DECO_ALT));
+		Painter.fill(this, 10, 8, 13, 1, CellPlacement.reset(Terrain.CHASM));
+		Painter.fill(this, 12, 9, 9, 1, CellPlacement.reset(Terrain.CHASM));
+		Painter.fill(this, 13, 10, 7, 1, CellPlacement.reset(Terrain.CHASM));
+		Painter.fill(this, 14, 3, 5, 10, CellPlacement.reset(Terrain.EMPTY));
 
 		//fill in special floor, statues, and exits
-		Painter.fill(this, 15, 2, 3, 3, Terrain.EMPTY_SP);
-		Painter.fill(this, 15, 5, 3, 1, Terrain.STATUE);
-		Painter.fill(this, 15, 7, 3, 1, Terrain.STATUE);
-		Painter.fill(this, 15, 9, 3, 1, Terrain.STATUE);
-		Painter.fill(this, 16, 5, 1, 6, Terrain.EMPTY_SP);
-		Painter.fill(this, 15, 0, 3, 3, Terrain.EXIT);
+		Painter.fill(this, 15, 2, 3, 3, CellPlacement.reset(Terrain.EMPTY_SP));
+		Painter.fill(this, 15, 5, 3, 1, CellPlacement.content(Terrain.STATUE));
+		Painter.fill(this, 15, 7, 3, 1, CellPlacement.content(Terrain.STATUE));
+		Painter.fill(this, 15, 9, 3, 1, CellPlacement.content(Terrain.STATUE));
+		Painter.fill(this, 16, 5, 1, 6, CellPlacement.reset(Terrain.EMPTY_SP));
+		Painter.fill(this, 15, 0, 3, 3, CellPlacement.reset(Terrain.EXIT));
 
 		int exitCell = 16 + 2*width();
 		LevelTransition exit = new LevelTransition(this, exitCell, LevelTransition.Type.REGULAR_EXIT);
@@ -183,7 +184,7 @@ public class CavesBossLevel extends Level {
 		//ensures that all pylons can be reached without stepping over water or wires
 		boolean[] pass = new boolean[length];
 		for (int i = 0; i < length; i++){
-			pass[i] = map[i] == Terrain.EMPTY || map[i] == Terrain.EMPTY_SP || map[i] == Terrain.EMPTY_DECO;
+			pass[i] = terrainAt(i) == Terrain.EMPTY || terrainAt(i) == Terrain.EMPTY_SP || terrainAt(i) == Terrain.EMPTY_DECO;
 		}
 		PathFinder.buildDistanceMap(16 + 25*width(), pass);
 		for (int i : pylonPositions){
@@ -269,7 +270,7 @@ public class CavesBossLevel extends Level {
 	@Override
 	public boolean invalidHeroPos(int tile) {
 		//hero cannot be above gate, or above arena, when gate is closed
-		if (map[gate.left + gate.top*width()] == Terrain.CUSTOM_DECO){
+		if (hasTerrain(gate.left + gate.top*width(), Terrain.CUSTOM_DECO)){
 			Point p = cellToPoint(tile);
 			if (p.y < diggableArea.top){
 				return true;
@@ -335,7 +336,7 @@ public class CavesBossLevel extends Level {
 		boss.state = boss.WANDERING;
 		do {
 			boss.pos = pointToCell(Random.element(mainArena.getPoints()));
-		} while (!openSpace[boss.pos] || map[boss.pos] == Terrain.EMPTY_SP || Actor.findChar(boss.pos) != null);
+		} while (!openSpace[boss.pos] || terrainAt(boss.pos) == Terrain.EMPTY_SP || Actor.findChar(boss.pos) != null);
 		GameScene.add( boss );
 
 		Game.runOnRenderThread(new Callback() {
@@ -353,10 +354,11 @@ public class CavesBossLevel extends Level {
 
 		blobs.get(PylonEnergy.class).fullyClear();
 
+		cellAt(entrance()).removeTerrain(Terrain.WALL);
 		set( entrance(), Terrain.ENTRANCE );
 		int i = gate.top*width();
 		for (int j = gate.left; j < gate.right; j++){
-			set( i+j, Terrain.EMPTY );
+			cellAt(i+j).removeTerrain(Terrain.CUSTOM_DECO);
 			if (Dungeon.level.heroFOV[i+j]){
 				CellEmitter.get(i+j).burst(BlastParticle.FACTORY, 10);
 			}
@@ -403,7 +405,7 @@ public class CavesBossLevel extends Level {
 		}
 
 		for( int i = (mainArena.top-1)*width; i <length; i++){
-			if (map[i] == Terrain.INACTIVE_TRAP || map[i] == Terrain.WATER || map[i] == Terrain.CUSTOM_DECO){
+			if (hasTerrain(i, Terrain.INACTIVE_TRAP) || hasTerrain(i, Terrain.WATER) || hasTerrain(i, Terrain.CUSTOM_DECO)){
 				GameScene.add(Blob.seed(i, 1, PylonEnergy.class));
 			}
 		}
@@ -486,12 +488,12 @@ public class CavesBossLevel extends Level {
 	 * semi-randomized setup for entrance and corners
 	 */
 
-	private static final short n = -1; //used when a tile shouldn't be changed
-	private static final short W = Terrain.WALL;
-	private static final short e = Terrain.EMPTY;
-	private static final short s = Terrain.EMPTY_SP;
+	private static final CellPlacement n = CellPlacement.NONE; //used when a tile shouldn't be changed
+	private static final CellPlacement W = CellPlacement.reset(Terrain.EMPTY, Terrain.WALL);
+	private static final CellPlacement e = CellPlacement.reset(Terrain.EMPTY);
+	private static final CellPlacement s = CellPlacement.reset(Terrain.EMPTY_SP);
 
-	private static short[] entrance1 = {
+	private static CellPlacement[] entrance1 = {
 			n, n, n, n, n, n, n, n,
 			n, n, n, n, n, n, n, n,
 			n, n, n, n, W, e, W, W,
@@ -502,7 +504,7 @@ public class CavesBossLevel extends Level {
 			n, n, W, W, e, e, e, e
 	};
 
-	private static short[] entrance2 = {
+	private static CellPlacement[] entrance2 = {
 			n, n, n, n, n, n, n, n,
 			n, n, n, n, n, n, n, n,
 			n, n, n, n, n, e, e, e,
@@ -513,7 +515,7 @@ public class CavesBossLevel extends Level {
 			n, n, e, e, e, e, e, e
 	};
 
-	private static short[] entrance3 = {
+	private static CellPlacement[] entrance3 = {
 			n, n, n, n, n, n, n, n,
 			n, n, n, n, n, n, n, n,
 			n, n, n, n, n, n, n, n,
@@ -524,7 +526,7 @@ public class CavesBossLevel extends Level {
 			n, n, n, W, W, e, e, e
 	};
 
-	private static short[] entrance4 = {
+	private static CellPlacement[] entrance4 = {
 			n, n, n, n, n, n, n, n,
 			n, n, n, n, n, n, n, e,
 			n, n, n, n, n, n, W, e,
@@ -535,7 +537,7 @@ public class CavesBossLevel extends Level {
 			n, e, e, e, e, e, e, e
 	};
 
-	private static short[][] entranceVariants = {
+	private static CellPlacement[][] entranceVariants = {
 			entrance1,
 			entrance2,
 			entrance3,
@@ -551,7 +553,7 @@ public class CavesBossLevel extends Level {
 		int SE = entrance + 7 + 7*width();
 		int SW = entrance - 7 + 7*width();
 
-		short[] entranceTiles = Random.oneOf(entranceVariants);
+		CellPlacement[] entranceTiles = Random.oneOf(entranceVariants);
 		for (int i = 0; i < entranceTiles.length; i++){
 			if (i % 8 == 0 && i != 0){
 				NW += (width() - 8);
@@ -560,15 +562,15 @@ public class CavesBossLevel extends Level {
 				SW -= (width() + 8);
 			}
 
-			if (entranceTiles[i] != n) map[NW] = map[NE] = map[SE] = map[SW] = entranceTiles[i];
+			for (int cell : new int[]{NW, NE, SE, SW}) entranceTiles[i].apply(this, cell);
 			NW++; NE--; SW++; SE--;
 		}
 
-		Painter.set(this, entrance, Terrain.ENTRANCE);
+		Painter.set(this, entrance, CellPlacement.reset(Terrain.ENTRANCE));
 		transitions.add(new LevelTransition(this, entrance, LevelTransition.Type.REGULAR_ENTRANCE));
 	}
 
-	private static short[] corner1 = {
+	private static CellPlacement[] corner1 = {
 			W, W, W, W, W, W, W, W, W, W,
 			W, s, s, s, e, e, e, W, W, W,
 			W, s, s, s, W, W, e, e, W, W,
@@ -581,7 +583,7 @@ public class CavesBossLevel extends Level {
 			W, W, W, W, n, n, n, n, n, n,
 	};
 
-	private static short[] corner2 = {
+	private static CellPlacement[] corner2 = {
 			W, W, W, W, W, W, W, W, W, W,
 			W, s, s, s, W, W, W, W, W, W,
 			W, s, s, s, e, e, e, e, e, W,
@@ -594,7 +596,7 @@ public class CavesBossLevel extends Level {
 			W, W, W, e, e, n, n, n, n, n,
 	};
 
-	private static short[] corner3 = {
+	private static CellPlacement[] corner3 = {
 			W, W, W, W, W, W, W, W, W, W,
 			W, s, s, s, W, W, W, W, W, W,
 			W, s, s, s, e, e, e, e, W, W,
@@ -607,7 +609,7 @@ public class CavesBossLevel extends Level {
 			W, W, W, W, n, n, n, n, n, n,
 	};
 
-	private static short[] corner4 = {
+	private static CellPlacement[] corner4 = {
 			W, W, W, W, W, W, W, W, W, W,
 			W, s, s, s, W, W, W, W, W, W,
 			W, s, s, s, e, e, e, W, W, W,
@@ -620,7 +622,7 @@ public class CavesBossLevel extends Level {
 			W, W, W, W, n, n, n, n, n, n,
 	};
 
-	private static short[][] cornerVariants = {
+	private static CellPlacement[][] cornerVariants = {
 			corner1,
 			corner2,
 			corner3,
@@ -633,7 +635,7 @@ public class CavesBossLevel extends Level {
 		int SE = 30 + 39*width();
 		int SW = 2 + 39*width();
 
-		short[] cornerTiles = Random.oneOf(cornerVariants);
+		CellPlacement[] cornerTiles = Random.oneOf(cornerVariants);
 		for(int i = 0; i < cornerTiles.length; i++){
 			if (i % 10 == 0 && i != 0){
 				NW += (width() - 10);
@@ -642,7 +644,7 @@ public class CavesBossLevel extends Level {
 				SW -= (width() + 10);
 			}
 
-			if (cornerTiles[i] != n) map[NW] = map[NE] = map[SE] = map[SW] = cornerTiles[i];
+			for (int cell : new int[]{NW, NE, SE, SW}) cornerTiles[i].apply(this, cell);
 			NW++; NE--; SW++; SE--;
 		}
 	}
@@ -812,7 +814,7 @@ public class CavesBossLevel extends Level {
 				int j = Dungeon.level.width() * tileY;
 				for (int i = 0; i < data.length; i++){
 
-					if (Dungeon.level.map[j] == Terrain.EMPTY_SP) {
+					if (Dungeon.level.terrainAt(j) == Terrain.EMPTY_SP) {
 						for (int k : pylonPositions) {
 							if (k == j) {
 								if (Dungeon.level.locked
@@ -826,7 +828,7 @@ public class CavesBossLevel extends Level {
 								data[i] = 54 + (j % w + 8 * (j / w)) - (k % w + 8 * (k / w));
 							}
 						}
-					} else if (Dungeon.level.map[j] == Terrain.INACTIVE_TRAP){
+					} else if (Dungeon.level.hasTerrain(j, Terrain.INACTIVE_TRAP)){
 						data[i] = 37;
 					} else if (gate.inside(Dungeon.level.cellToPoint(j))){
 						int idx = Dungeon.level.solid[j] ? 40 : 32;
@@ -849,7 +851,7 @@ public class CavesBossLevel extends Level {
 		@Override
 		public String name(int tileX, int tileY) {
 			int i = tileX + tileW*(tileY + this.tileY);
-			if (Dungeon.level.map[i] == Terrain.INACTIVE_TRAP){
+			if (Dungeon.level.hasTerrain(i, Terrain.INACTIVE_TRAP)){
 				return Messages.get(CavesBossLevel.class, "wires_name");
 			} else if (gate.inside(Dungeon.level.cellToPoint(i))){
 				return Messages.get(CavesBossLevel.class, "gate_name");
@@ -861,7 +863,7 @@ public class CavesBossLevel extends Level {
 		@Override
 		public String desc(int tileX, int tileY) {
 			int i = tileX + tileW*(tileY + this.tileY);
-			if (Dungeon.level.map[i] == Terrain.INACTIVE_TRAP){
+			if (Dungeon.level.hasTerrain(i, Terrain.INACTIVE_TRAP)){
 				return Messages.get(CavesBossLevel.class, "wires_desc");
 			} else if (gate.inside(Dungeon.level.cellToPoint(i))){
 				if (Dungeon.level.solid[i]){
@@ -896,7 +898,7 @@ public class CavesBossLevel extends Level {
 
 		@Override
 		protected void evolve() {
-			TerrainPropagation propagation = TerrainPropagation.event(Dungeon.level, TerrainInteractions.Source.ELECTRIC);
+			TerrainPropagation propagation = TerrainPropagation.event(Dungeon.level, CellContent.CONDUCTIVE);
 			java.util.ArrayList<Integer> shocks = propagation == null ? null : new java.util.ArrayList<>();
 
 			for (int cell = 0; cell < Dungeon.level.length(); cell++) {

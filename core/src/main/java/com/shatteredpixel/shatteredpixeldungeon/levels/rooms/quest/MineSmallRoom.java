@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretRoom;
@@ -59,8 +60,8 @@ public class MineSmallRoom extends CaveRoom {
 		if (Blacksmith.Quest.Type() == Blacksmith.Quest.CRYSTAL){
 			for (int i = 0; i < width()*height()/3; i ++){
 				Point r = random(1);
-				if (level.map[level.pointToCell(r)] != Terrain.WALL) {
-					Painter.set(level, r, Terrain.MINE_CRYSTAL);
+				if (!level.hasTerrain(level.pointToCell(r), Terrain.WALL)) {
+					Painter.set(level, r, CellPlacement.content(Terrain.MINE_CRYSTAL));
 				}
 			}
 		} else if (Blacksmith.Quest.Type() == Blacksmith.Quest.GNOLL) {
@@ -86,7 +87,7 @@ public class MineSmallRoom extends CaveRoom {
 
 			for (Point p : getPoints()){
 				int cell = level.pointToCell(p);
-				if (level.map[cell] == Terrain.EMPTY){
+				if (level.terrainAt(cell) == Terrain.EMPTY){
 					float dist = 1000;
 					for (Door d : doors){
 						dist = Math.min(dist, Point.distance(p, d));
@@ -94,9 +95,9 @@ public class MineSmallRoom extends CaveRoom {
 					dist = GameMath.gate(1f, dist, 5f);
 					float val = Random.Float((float) Math.pow(dist, 2));
 					if (val <= 0.75f || dist <= 1) {
-						Painter.set(level, cell, Terrain.MINE_BOULDER);
+						Painter.set(level, cell, CellPlacement.content(Terrain.MINE_BOULDER));
 					} else if (val <= 5f && dist <= 2){
-						Painter.set(level, cell, Terrain.EMPTY_DECO);
+						Painter.set(level, cell, CellPlacement.ground(Terrain.EMPTY_DECO));
 					}
 				}
 			}

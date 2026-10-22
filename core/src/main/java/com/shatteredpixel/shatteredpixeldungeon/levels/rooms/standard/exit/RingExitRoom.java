@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.exit;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.RingRoom;
 import com.watabou.utils.Point;
@@ -40,13 +41,13 @@ public class RingExitRoom extends RingRoom {
 		return true;
 	}
 
-	protected int centerDecoTiles(){
-		return Terrain.EMPTY_SP;
+	protected CellPlacement centerDecoTiles(){
+		return CellPlacement.reset(Terrain.EMPTY_SP);
 	}
 
 	@Override
 	protected void placeCenterDetail(Level level, int pos) {
-		Painter.set(level, pos, Terrain.EXIT);
+		Painter.set(level, pos, CellPlacement.reset(Terrain.EXIT));
 		level.transitions.add(new LevelTransition(level, pos, LevelTransition.Type.REGULAR_EXIT));
 	}
 

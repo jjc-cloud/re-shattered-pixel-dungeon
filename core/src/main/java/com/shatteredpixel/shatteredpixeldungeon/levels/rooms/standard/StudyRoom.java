@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
@@ -48,12 +49,12 @@ public class StudyRoom extends StandardRoom {
 	
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1 , Terrain.BOOKSHELF );
-		Painter.fill( level, this, 2 , Terrain.EMPTY_SP );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1 , CellPlacement.reset(Terrain.EMPTY, Terrain.BOOKSHELF) );
+		Painter.fill( level, this, 2 , CellPlacement.reset(Terrain.EMPTY_SP) );
 		
 		for (Door door : connected.values()) {
-			Painter.drawInside(level, this, door, 2, Terrain.EMPTY_SP);
+			Painter.drawInside(level, this, door, 2, CellPlacement.reset(Terrain.EMPTY_SP));
 			door.set( Door.Type.REGULAR );
 		}
 		
@@ -62,21 +63,21 @@ public class StudyRoom extends StandardRoom {
 			int pillarW = (width()-7)/2;
 			int pillarH = (height()-7)/2;
 			
-			Painter.fill(level, left+3, top+3, pillarW, 1, Terrain.BOOKSHELF);
-			Painter.fill(level, left+3, top+3, 1, pillarH, Terrain.BOOKSHELF);
+			Painter.fill(level, left+3, top+3, pillarW, 1, CellPlacement.content(Terrain.BOOKSHELF));
+			Painter.fill(level, left+3, top+3, 1, pillarH, CellPlacement.content(Terrain.BOOKSHELF));
 			
-			Painter.fill(level, left+3, bottom-2-1, pillarW, 1, Terrain.BOOKSHELF);
-			Painter.fill(level, left+3, bottom-2-pillarH, 1, pillarH, Terrain.BOOKSHELF);
+			Painter.fill(level, left+3, bottom-2-1, pillarW, 1, CellPlacement.content(Terrain.BOOKSHELF));
+			Painter.fill(level, left+3, bottom-2-pillarH, 1, pillarH, CellPlacement.content(Terrain.BOOKSHELF));
 			
-			Painter.fill(level, right-2-pillarW, top+3, pillarW, 1, Terrain.BOOKSHELF);
-			Painter.fill(level, right-2-1, top+3, 1, pillarH, Terrain.BOOKSHELF);
+			Painter.fill(level, right-2-pillarW, top+3, pillarW, 1, CellPlacement.content(Terrain.BOOKSHELF));
+			Painter.fill(level, right-2-1, top+3, 1, pillarH, CellPlacement.content(Terrain.BOOKSHELF));
 			
-			Painter.fill(level, right-2-pillarW, bottom-2-1, pillarW, 1, Terrain.BOOKSHELF);
-			Painter.fill(level, right-2-1, bottom-2-pillarH, 1, pillarH, Terrain.BOOKSHELF);
+			Painter.fill(level, right-2-pillarW, bottom-2-1, pillarW, 1, CellPlacement.content(Terrain.BOOKSHELF));
+			Painter.fill(level, right-2-1, bottom-2-pillarH, 1, pillarH, CellPlacement.content(Terrain.BOOKSHELF));
 		}
 		
 		Point center = center();
-		Painter.set( level, center, Terrain.PEDESTAL );
+		Painter.set( level, center, CellPlacement.reset(Terrain.PEDESTAL) );
 		
 		Item prize = (Random.Int(2) == 0) ? level.findPrizeItem() : null;
 		

@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Skeleton;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
@@ -32,6 +34,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.quest.CorpseDust;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.SpecialRoom;
@@ -49,8 +52,6 @@ public class MassGraveRoom extends SpecialRoom {
 
 	//雕像外观由 StatueRaised 固定贴图绘制，与地形本身脱钩：按默认规则炸成余烬后贴图不会消失，
 	//所以整格额外设成爆炸无效，其余来源沿用默认规则。
-	private static final TerrainInteractions.Rule UNBREAKABLE_STATUE =
-			TerrainInteractions.Rule.LEGACY.on(TerrainInteractions.Source.EXPLOSION, TerrainInteractions.Response.IGNORE);
 
 	@Override
 	public int minWidth() { return 11; }
@@ -64,20 +65,20 @@ public class MassGraveRoom extends SpecialRoom {
 		entrance.set(Door.Type.BARRICADE);
 		level.addItemToSpawn(new PotionOfLiquidFlame());
 
-		Painter.fill(level, this, Terrain.WALL);
-		Painter.fill(level, this, 1, Terrain.CUSTOM_DECO_EMPTY);
+		Painter.fill(level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL));
+		Painter.fill(level, this, 1, CellPlacement.reset(Terrain.CUSTOM_DECO_EMPTY));
 
-		Painter.fill(level, left+1, top+1, 3, 1, Terrain.WALL);
-		Painter.fill(level, left+1, top+2, 2, 1, Terrain.WALL);
-		Painter.fill(level, right-3, top+1, 3, 1, Terrain.WALL);
-		Painter.fill(level, right-2, top+2, 2, 1, Terrain.WALL);
-		Painter.set(level, left+5, top, Terrain.WALL_DECO);
+		Painter.fill(level, left+1, top+1, 3, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
+		Painter.fill(level, left+1, top+2, 2, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
+		Painter.fill(level, right-3, top+1, 3, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
+		Painter.fill(level, right-2, top+2, 2, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
+		Painter.set(level, left+5, top, CellPlacement.content(Terrain.WALL_DECO));
 
-		Painter.set(level, left+3, top+2, Terrain.STATUE);
-		Painter.set(level, right-3, top+2, Terrain.STATUE);
+		Painter.set(level, left+3, top+2, CellPlacement.content(Terrain.STATUE));
+		Painter.set(level, right-3, top+2, CellPlacement.content(Terrain.STATUE));
 
-		level.interactions().setOverride(level.pointToCell(new Point(left+3, top+2)), UNBREAKABLE_STATUE);
-		level.interactions().setOverride(level.pointToCell(new Point(right-3, top+2)), UNBREAKABLE_STATUE);
+		level.interactions().propertiesAt(level.pointToCell(new Point(left+3, top+2)), Terrain.STATUE, 0, CellContent.BREAKABLE);
+		level.interactions().propertiesAt(level.pointToCell(new Point(right-3, top+2)), Terrain.STATUE, 0, CellContent.BREAKABLE);
 
 		MassGraveDeco b = new MassGraveDeco();
 		b.setRect(left+1, top, width()-2, height()-1);

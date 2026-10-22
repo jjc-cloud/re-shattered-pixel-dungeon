@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.entrance;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.StatuesRoom;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.Carpet;
@@ -52,8 +53,8 @@ public class StatuesEntranceRoom extends StatuesRoom {
 			Point c = center();
 			entrance = level.pointToCell(c);
 			for (int i : PathFinder.NEIGHBOURS8){
-				if (level.map[entrance + i] != Terrain.STATUE ){
-					Painter.set(level, entrance + i, Terrain.EMPTY_DECO);
+				if (!level.hasTerrain(entrance + i, Terrain.STATUE) ){
+					Painter.set(level, entrance + i, CellPlacement.ground(Terrain.EMPTY_DECO));
 				}
 			}
 			Carpet carpet = new Carpet();
@@ -80,8 +81,8 @@ public class StatuesEntranceRoom extends StatuesRoom {
 			//remain plain floor. Only Terrain.EMPTY is changed, as EMPTY_DECO has the same flags.
 			for (int y = carpetRect.top; y <= carpetRect.bottom; y++){
 				for (int x = carpetRect.left; x <= carpetRect.right; x++){
-					if (level.map[x + y*level.width()] == Terrain.EMPTY){
-						Painter.set( level, x, y, Terrain.EMPTY_DECO );
+					if (level.terrainAt(x + y*level.width()) == Terrain.EMPTY){
+						Painter.set( level, x, y, CellPlacement.ground(Terrain.EMPTY_DECO) );
 					}
 				}
 			}
@@ -91,14 +92,14 @@ public class StatuesEntranceRoom extends StatuesRoom {
 		} else {
 			//already have an entrance placed in this case
 			for ( Point p : getPoints()){
-				if (level.map[level.pointToCell(p)] == Terrain.ENTRANCE){
+				if (level.terrainAt(level.pointToCell(p)) == Terrain.ENTRANCE){
 					entrance = level.pointToCell(p);
 					break;
 				}
 			}
 		}
 
-		Painter.set( level, entrance, Terrain.ENTRANCE );
+		Painter.set( level, entrance, CellPlacement.reset(Terrain.ENTRANCE) );
 		level.transitions.add(new LevelTransition(level, entrance, LevelTransition.Type.REGULAR_ENTRANCE));
 
 	}

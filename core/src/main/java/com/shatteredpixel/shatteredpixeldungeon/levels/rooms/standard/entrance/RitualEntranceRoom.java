@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.entrance;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.RitualRoom;
 import com.watabou.utils.Point;
@@ -42,7 +43,7 @@ public class RitualEntranceRoom extends RitualRoom {
 
 	@Override
 	protected void placeloot(Level level, Point p) {
-		Painter.set(level, p, Terrain.ENTRANCE);
+		Painter.set(level, p, CellPlacement.reset(Terrain.ENTRANCE));
 		level.transitions.add(new LevelTransition(level, level.pointToCell(p), LevelTransition.Type.REGULAR_ENTRANCE));
 	}
 }

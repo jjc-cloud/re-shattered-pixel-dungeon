@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfLiquidFlam
 import com.shatteredpixel.shatteredpixeldungeon.items.stones.StoneOfEnchantment;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 
@@ -33,8 +34,8 @@ public class SecretRunestoneRoom extends SecretRoom {
 	
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill(level, this, 1, Terrain.EMPTY);
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill(level, this, 1, CellPlacement.reset(Terrain.EMPTY));
 		
 		Door entrance = entrance();
 		Point center = center();
@@ -43,21 +44,21 @@ public class SecretRunestoneRoom extends SecretRoom {
 			Painter.drawLine(level,
 					new Point(center.x, top+1),
 					new Point(center.x, bottom-1),
-					Terrain.BOOKSHELF);
+					CellPlacement.content(Terrain.BOOKSHELF));
 			if (entrance.x == left) {
-				Painter.fill(level, center.x+1, top+1, right-center.x-1, height()-2, Terrain.EMPTY_SP);
+				Painter.fill(level, center.x+1, top+1, right-center.x-1, height()-2, CellPlacement.reset(Terrain.EMPTY_SP));
 			} else {
-				Painter.fill(level, left+1, top+1, center.x-left-1, height()-2, Terrain.EMPTY_SP);
+				Painter.fill(level, left+1, top+1, center.x-left-1, height()-2, CellPlacement.reset(Terrain.EMPTY_SP));
 			}
 		} else {
 			Painter.drawLine(level,
 					new Point(left+1, center.y),
 					new Point(right-1, center.y),
-					Terrain.BOOKSHELF);
+					CellPlacement.content(Terrain.BOOKSHELF));
 			if (entrance.y == top) {
-				Painter.fill(level, left+1, center.y+1, width()-2, bottom-center.y-1, Terrain.EMPTY_SP);
+				Painter.fill(level, left+1, center.y+1, width()-2, bottom-center.y-1, CellPlacement.reset(Terrain.EMPTY_SP));
 			} else {
-				Painter.fill(level, left+1, top+1, width()-2, center.y-top-1, Terrain.EMPTY_SP);
+				Painter.fill(level, left+1, top+1, width()-2, center.y-top-1, CellPlacement.reset(Terrain.EMPTY_SP));
 			}
 		}
 		
@@ -67,17 +68,17 @@ public class SecretRunestoneRoom extends SecretRoom {
 		
 		do{
 			dropPos = level.pointToCell(random());
-		} while (level.map[dropPos] != Terrain.EMPTY);
+		} while (level.terrainAt(dropPos) != Terrain.EMPTY);
 		level.drop( Generator.randomUsingDefaults(Generator.Category.STONE), dropPos);
 		
 		do{
 			dropPos = level.pointToCell(random());
-		} while (level.map[dropPos] != Terrain.EMPTY || level.heaps.get(dropPos) != null);
+		} while (level.terrainAt(dropPos) != Terrain.EMPTY || level.heaps.get(dropPos) != null);
 		level.drop( Generator.randomUsingDefaults(Generator.Category.STONE), dropPos);
 		
 		do{
 			dropPos = level.pointToCell(random());
-		} while (level.map[dropPos] != Terrain.EMPTY_SP);
+		} while (level.terrainAt(dropPos) != Terrain.EMPTY_SP);
 		level.drop( new StoneOfEnchantment(), dropPos);
 		
 		entrance.set(Door.Type.HIDDEN);
@@ -95,6 +96,6 @@ public class SecretRunestoneRoom extends SecretRoom {
 	
 	@Override
 	public boolean canPlaceCharacter(Point p, Level l) {
-		return super.canPlaceCharacter(p, l) && l.map[l.pointToCell(p)] != Terrain.EMPTY_SP;
+		return super.canPlaceCharacter(p, l) && l.terrainAt(l.pointToCell(p)) != Terrain.EMPTY_SP;
 	}
 }

@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Random;
 import com.watabou.utils.Rect;
@@ -36,9 +37,9 @@ public class CellBlockRoom extends StandardRoom {
 
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY );
-		Painter.fill( level, this, 3, Terrain.WALL );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY) );
+		Painter.fill( level, this, 3, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL) );
 
 		Rect internal = new EmptyRoom();
 		internal.set(left+3, top+3, right-3, bottom-3);
@@ -79,38 +80,38 @@ public class CellBlockRoom extends StandardRoom {
 				int top = internal.top + 1 + (y * (h + Hspacing));
 
 				if (Random.Int(w*h) == 0 && (!guaranteeOpenRoom || openRooms > 1)){
-					Painter.fill(level, left, top, w, h, Terrain.REGION_DECO);
+					Painter.fill(level, left, top, w, h, CellPlacement.reset(Terrain.EMPTY, Terrain.REGION_DECO));
 					openRooms--;
 				} else {
-					Painter.fill(level, left, top, w, h, Terrain.EMPTY_SP);
+					Painter.fill(level, left, top, w, h, CellPlacement.reset(Terrain.EMPTY_SP));
 				}
 
 				if (topBottomDoors == null) {
 					switch (Random.Int(4)){
-						case 0: Painter.set(level, internal.left, internal.top + internal.height()/2, Terrain.DOOR); break;
-						case 1: Painter.set(level, internal.left + internal.width()/2, internal.top, Terrain.DOOR); break;
-						case 2: Painter.set(level, internal.right, internal.top + internal.height()/2, Terrain.DOOR);break;
-						case 3: Painter.set(level, internal.left + internal.width()/2, internal.bottom, Terrain.DOOR); break;
+						case 0: Painter.set(level, internal.left, internal.top + internal.height()/2, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR)); break;
+						case 1: Painter.set(level, internal.left + internal.width()/2, internal.top, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR)); break;
+						case 2: Painter.set(level, internal.right, internal.top + internal.height()/2, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR));break;
+						case 3: Painter.set(level, internal.left + internal.width()/2, internal.bottom, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR)); break;
 					}
 				} else if (topBottomDoors){
 					if (y == 0){
-						Painter.set(level, left + w/2, top-1, Terrain.DOOR);
+						Painter.set(level, left + w/2, top-1, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR));
 					} else if (y == cols-1){
-						Painter.set(level, left + w/2-1, top+h, Terrain.DOOR);
+						Painter.set(level, left + w/2-1, top+h, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR));
 					} else if (x == 0) {
-						Painter.set(level, left-1, top+h/2-1, Terrain.DOOR);
+						Painter.set(level, left-1, top+h/2-1, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR));
 					} else if (x == rows-1){
-						Painter.set(level, left+w, top+h/2, Terrain.DOOR);
+						Painter.set(level, left+w, top+h/2, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR));
 					}
 				} else if (!topBottomDoors) {
 					if (x == 0){
-						Painter.set(level, left-1, top+h/2-1, Terrain.DOOR);
+						Painter.set(level, left-1, top+h/2-1, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR));
 					} else if (x == rows-1){
-						Painter.set(level, left+w, top+h/2, Terrain.DOOR);
+						Painter.set(level, left+w, top+h/2, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR));
 					} else if (y == 0) {
-						Painter.set(level, left + w/2, top-1, Terrain.DOOR);
+						Painter.set(level, left + w/2, top-1, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR));
 					} else if (y == cols-1){
-						Painter.set(level, left + w/2-1, top+h, Terrain.DOOR);
+						Painter.set(level, left + w/2-1, top+h, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR));
 					}
 				}
 			}

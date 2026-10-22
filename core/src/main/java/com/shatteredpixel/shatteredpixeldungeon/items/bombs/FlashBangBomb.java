@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.bombs;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
@@ -62,7 +64,7 @@ public class FlashBangBomb extends Bomb {
 		super.explode(cell);
 
 		ArrayList<Char> affected = new ArrayList<>();
-		TerrainPropagation event = TerrainPropagation.event(Dungeon.level, TerrainInteractions.Source.ELECTRIC);
+		TerrainPropagation event = TerrainPropagation.event(Dungeon.level, CellContent.CONDUCTIVE);
 		PathFinder.buildDistanceMap( cell, BArray.not( Dungeon.level.solid, null ), explosionRange() );
 		for (int i = 0; i < PathFinder.distance.length; i++) {
 			if (event != null && PathFinder.distance[i] < Integer.MAX_VALUE) event.touch(i);

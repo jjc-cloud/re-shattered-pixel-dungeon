@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Firebloom;
@@ -50,10 +51,10 @@ public class PlantsRoom extends StandardRoom {
 	}
 	
 	@Override
-	public void merge(Level l, Room other, Rect merge, int mergeTerrain) {
-		if (mergeTerrain == Terrain.EMPTY &&
+	public void merge(Level l, Room other, Rect merge, CellPlacement mergeTerrain) {
+		if (mergeTerrain.isGround(Terrain.EMPTY) &&
 				(other instanceof PlantsRoom || other instanceof GrassyGraveRoom)){
-			super.merge(l, other, merge, Terrain.GRASS);
+			super.merge(l, other, merge, CellPlacement.reset(Terrain.EMPTY, Terrain.GRASS));
 		} else {
 			super.merge(l, other, merge, mergeTerrain);
 		}
@@ -61,12 +62,12 @@ public class PlantsRoom extends StandardRoom {
 
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.GRASS );
-		Painter.fill( level, this, 2, Terrain.HIGH_GRASS );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.GRASS) );
+		Painter.fill( level, this, 2, CellPlacement.content(Terrain.HIGH_GRASS) );
 		
 		if (Math.min(width(), height()) >= 7){
-			Painter.fill( level, this, 3, Terrain.GRASS );
+			Painter.fill( level, this, 3, CellPlacement.content(Terrain.GRASS) );
 		}
 		
 		Point center = center();
@@ -76,8 +77,8 @@ public class PlantsRoom extends StandardRoom {
 			
 			//place 4 plants for very large rooms
 			if (Math.min(width(), height()) >= 11) {
-				Painter.drawLine(level, new Point(left+2, center.y), new Point(right-2, center.y), Terrain.HIGH_GRASS);
-				Painter.drawLine(level, new Point(center.x, top+2), new Point(center.x, bottom-2), Terrain.HIGH_GRASS);
+				Painter.drawLine(level, new Point(left+2, center.y), new Point(right-2, center.y), CellPlacement.content(Terrain.HIGH_GRASS));
+				Painter.drawLine(level, new Point(center.x, top+2), new Point(center.x, bottom-2), CellPlacement.content(Terrain.HIGH_GRASS));
 				level.plant( randomSeed(), level.pointToCell(new Point(center.x-1, center.y-1)));
 				level.plant( randomSeed(), level.pointToCell(new Point(center.x+1, center.y-1)));
 				level.plant( randomSeed(), level.pointToCell(new Point(center.x-1, center.y+1)));
@@ -86,13 +87,13 @@ public class PlantsRoom extends StandardRoom {
 			//place 2 plants otherwise
 			//left/right
 			} else if (width() > height() || (width() == height() && Random.Int(2) == 0)){
-				Painter.drawLine(level, new Point(center.x, top+2), new Point(center.x, bottom-2), Terrain.HIGH_GRASS);
+				Painter.drawLine(level, new Point(center.x, top+2), new Point(center.x, bottom-2), CellPlacement.content(Terrain.HIGH_GRASS));
 				level.plant( randomSeed(), level.pointToCell(new Point(center.x-1, center.y)));
 				level.plant( randomSeed(), level.pointToCell(new Point(center.x+1, center.y)));
 			
 			//top/bottom
 			} else {
-				Painter.drawLine(level, new Point(left+2, center.y), new Point(right-2, center.y), Terrain.HIGH_GRASS);
+				Painter.drawLine(level, new Point(left+2, center.y), new Point(right-2, center.y), CellPlacement.content(Terrain.HIGH_GRASS));
 				level.plant( randomSeed(), level.pointToCell(new Point(center.x, center.y-1)));
 				level.plant( randomSeed(), level.pointToCell(new Point(center.x, center.y+1)));
 			

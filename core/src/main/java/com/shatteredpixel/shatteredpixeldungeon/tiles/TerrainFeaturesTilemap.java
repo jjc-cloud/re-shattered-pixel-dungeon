@@ -38,23 +38,33 @@ public class TerrainFeaturesTilemap extends DungeonTilemap {
 	private static TerrainFeaturesTilemap instance;
 
 	private SparseArray<Plant> plants;
+	private int contentType = -1;
 	private SparseArray<Trap> traps;
 
 	public TerrainFeaturesTilemap(SparseArray<Plant> plants, SparseArray<Trap> traps) {
+		this(plants, traps, -1);
+	}
+
+	public TerrainFeaturesTilemap(SparseArray<Plant> plants, SparseArray<Trap> traps, int contentType) {
 		super(Assets.Environment.TERRAIN_FEATURES);
 
+		this.contentType = contentType;
 		this.plants = plants;
 		this.traps = traps;
 
 		if (Dungeon.level != null) {
-			map(Dungeon.level.map, Dungeon.level.width());
+			map(Dungeon.level.terrainVisuals(), Dungeon.level.width());
 		}
 
 		instance = this;
 	}
 
 	protected int getTileVisual(int pos, int tile, boolean flat){
-		if (traps.get(pos) != null){
+		if (Dungeon.level.cellAt(pos).buried()) return -1;
+		if (contentType >= 0) {
+			return Dungeon.level.cellAt(pos).hasTerrain(contentType) ? contentVisual(pos, contentType) : -1;
+		}
+		if (contentType != -3 && traps != null && traps.get(pos) != null){
 			Trap trap = traps.get(pos);
 			if (!trap.visible)
 				return -1;
@@ -62,10 +72,15 @@ public class TerrainFeaturesTilemap extends DungeonTilemap {
 				return (trap.active ? trap.color : Trap.BLACK) + (trap.shape * 16);
 		}
 
-		if (plants.get(pos) != null){
+		if (contentType != -2 && plants != null && plants.get(pos) != null){
 			return plants.get(pos).image + 7*16;
 		}
 
+		if (contentType != -1) return -1;
+		return contentVisual(pos, tile);
+	}
+
+	public static int contentVisual(int pos, int tile) {
 		int stage = (Dungeon.depth-1)/5;
 		if (Dungeon.depth == 21 && Dungeon.level instanceof LastShopLevel) stage--;
 		stage = Math.min(stage, 4);
@@ -93,8 +108,7 @@ public class TerrainFeaturesTilemap extends DungeonTilemap {
 		} else if (tile == Terrain.ALCHEMY) {
 			return 135 + 16*stage;
 
-		} else if (tile == Terrain.STATUE || tile == Terrain.STATUE_SP
-				|| tile == Terrain.STATUE_EMBERS || tile == Terrain.STATUE_SP_EMBERS) {
+		} else if (tile == Terrain.STATUE || tile == Terrain.STATUE_SP) {
 			return 136 + 16*stage;
 
 		} else if (tile == Terrain.REGION_DECO) {
@@ -104,9 +118,9 @@ public class TerrainFeaturesTilemap extends DungeonTilemap {
 		} else if (tile == Terrain.REGION_DECO_ALT) {
 			return 138 + 16 * stage;
 
-		} else if (tile == Terrain.EMBERS || tile == Terrain.EMBERS_SP) {
-			int embers = tile == Terrain.EMBERS_SP ? DungeonTileSheet.EMBERS_SP : DungeonTileSheet.EMBERS;
-			int embersAlt = tile == Terrain.EMBERS_SP ? DungeonTileSheet.EMBERS_SP_ALT : DungeonTileSheet.EMBERS_ALT;
+		} else if (tile == Terrain.EMBERS) {
+			int embers = DungeonTileSheet.EMBERS;
+			int embersAlt = DungeonTileSheet.EMBERS_ALT;
 			if (DungeonTileSheet.getVisualWithAlts(embers, pos) == embersAlt){
 				return 208 + 1;
 			} else {
@@ -141,6 +155,14 @@ public class TerrainFeaturesTilemap extends DungeonTilemap {
 		return -1;
 	}
 
+	public static Image contentImage(int pos, int type) {
+		int visual = contentVisual(pos, type);
+		if (visual < 0) return null;
+		Image image = new Image(Assets.Environment.TERRAIN_FEATURES);
+		image.frame((visual % 16) * SIZE, (visual / 16) * SIZE, SIZE, SIZE);
+		return image;
+	}
+
 	public static Image getTrapVisual( Trap trap ){
 		if (instance == null) instance = new TerrainFeaturesTilemap(null, null);
 
@@ -163,17 +185,10 @@ public class TerrainFeaturesTilemap extends DungeonTilemap {
 		return img;
 	}
 
-	public static Image tile(int pos, int tile ) {
-		RectF uv = instance.tileset.get( instance.getTileVisual( pos, tile, true ) );
-		if (uv == null) return null;
-		
-		Image img = new Image( instance.texture );
-		img.frame(uv);
-		return img;
-	}
-
 	public void growPlant( final int pos ){
-		final Image plant = tile( pos, map[pos] );
+		Plant target = plants == null ? null : plants.get(pos);
+		if (target == null || Dungeon.level.cellAt(pos).buried()) return;
+		final Image plant = getPlantVisual(target);
 		if (plant == null) return;
 		
 		plant.origin.set( 8, 12 );

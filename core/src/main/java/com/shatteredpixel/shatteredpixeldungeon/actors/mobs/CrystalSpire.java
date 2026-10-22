@@ -235,7 +235,7 @@ public class CrystalSpire extends Mob {
 		ArrayList<Integer> spreadCells = new ArrayList<>();
 		for (int i : currentCells){
 			for (int j : PathFinder.NEIGHBOURS4){
-				if ((!Dungeon.level.solid[i+j] || Dungeon.level.map[i+j] == Terrain.MINE_CRYSTAL)
+				if ((!Dungeon.level.solid[i+j] || Dungeon.level.hasTerrain(i+j, Terrain.MINE_CRYSTAL))
 						&& !spreadCells.contains(i+j) && !currentCells.contains(i+j)){
 					spreadCells.add(i+j);
 				}
@@ -250,7 +250,7 @@ public class CrystalSpire extends Mob {
 		ArrayList<Integer> lineCells = new ArrayList<>();
 		Ballistica aim = new Ballistica(pos, Dungeon.hero.pos, Ballistica.WONT_STOP);
 		for (int i : aim.subPath(1, 7)){
-			if (!Dungeon.level.solid[i] || Dungeon.level.map[i] == Terrain.MINE_CRYSTAL){
+			if (!Dungeon.level.solid[i] || Dungeon.level.hasTerrain(i, Terrain.MINE_CRYSTAL)){
 				lineCells.add(i);
 			} else {
 				break;
@@ -272,7 +272,7 @@ public class CrystalSpire extends Mob {
 		ArrayList<Integer> spreadCells = new ArrayList<>();
 		for (int i : currentCells){
 			for (int j : PathFinder.NEIGHBOURS8){
-				if ((!Dungeon.level.solid[i+j] || Dungeon.level.map[i+j] == Terrain.MINE_CRYSTAL)
+				if ((!Dungeon.level.solid[i+j] || Dungeon.level.hasTerrain(i+j, Terrain.MINE_CRYSTAL))
 						&& !spreadCells.contains(i+j) && !currentCells.contains(i+j)){
 					spreadCells.add(i+j);
 				}
@@ -365,8 +365,8 @@ public class CrystalSpire extends Mob {
 						}
 
 						for (int i = 0; i < Dungeon.level.length(); i++){
-							if (fieldOfView[i] && Dungeon.level.map[i] == Terrain.MINE_CRYSTAL){
-								Level.set(i, Terrain.EMPTY);
+							if (fieldOfView[i] && Dungeon.level.hasTerrain(i, Terrain.MINE_CRYSTAL)){
+								Dungeon.level.cellAt(i).removeTerrain(Terrain.MINE_CRYSTAL);
 								GameScene.updateMap(i);
 								Splash.at(i, 0xFFFFFF, 5);
 							}
@@ -423,11 +423,11 @@ public class CrystalSpire extends Mob {
 						if (affectingGuardians){
 							boolean[] passable = new boolean[Dungeon.level.length()];
 							for (int i = 0; i < Dungeon.level.length(); i++){
-								if (Dungeon.level.map[i] == Terrain.MINE_CRYSTAL){
+								if (Dungeon.level.hasTerrain(i, Terrain.MINE_CRYSTAL)){
 									passable[i] = true;
 								} else {
 									//grab from tiles themselves, ignore blobs that affect terrain
-									passable[i] = (Terrain.flags[Dungeon.level.map[i]] & Terrain.PASSABLE) != 0;
+									passable[i] = (Dungeon.level.cellAt(i).flags() & Terrain.PASSABLE) != 0;
 								}
 							}
 							PathFinder.buildDistanceMap(pos, passable);

@@ -60,16 +60,14 @@ public class DeadEndLevel extends Level {
 		
 		for (int i=2; i < SIZE; i++) {
 			for (int j=2; j < SIZE; j++) {
-				map[i * width() + j] = Terrain.EMPTY;
+				cellAt(i * width() + j).reset(Terrain.EMPTY);
 			}
 		}
 		
 		for (int i=1; i <= SIZE; i++) {
-			map[width() + i] =
-			map[width() * SIZE + i] =
-			map[width() * i + 1] =
-			map[width() * i + SIZE] =
-				Terrain.WATER;
+			for (int cell : new int[]{width() + i, width() * SIZE + i, width() * i + 1, width() * i + SIZE}) {
+				cellAt(cell).reset(Terrain.EMPTY, Terrain.WATER);
+			}
 		}
 		
 		int entrance = SIZE * width() + SIZE / 2 + 1;
@@ -85,7 +83,7 @@ public class DeadEndLevel extends Level {
 					0,
 					LevelTransition.Type.BRANCH_EXIT));
 		}
-		map[entrance] = Terrain.ENTRANCE;
+		cellAt(entrance).reset(Terrain.ENTRANCE);
 		
 		return true;
 	}

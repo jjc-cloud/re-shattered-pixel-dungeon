@@ -148,7 +148,7 @@ public class VaultTokenDoor extends NPC {
 										Statistics.questScores[3] += 2000;
 									}
 									for (int offset = -doorWidth / 2; offset <= doorWidth / 2; offset++) {
-										Level.set(pos + offset, Terrain.EMPTY);
+										Dungeon.level.cellAt(pos + offset).removeTerrain(Terrain.CUSTOM_DECO);
 										GameScene.updateMap(pos + offset);
 										ScrollOfMagicMapping.discover(pos + offset);
 									}

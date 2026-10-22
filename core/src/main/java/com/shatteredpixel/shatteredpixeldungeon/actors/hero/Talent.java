@@ -852,9 +852,9 @@ public enum Talent {
 					//1/2 turns of roots
 					Buff.affect(ch, Roots.class, factor * hero.pointsInTalent(LIQUID_NATURE));
 				}
-				if (Dungeon.level.map[grassCell] == Terrain.EMPTY ||
-						Dungeon.level.map[grassCell] == Terrain.EMBERS ||
-						Dungeon.level.map[grassCell] == Terrain.EMPTY_DECO){
+				if (Dungeon.level.terrainAt(grassCell) == Terrain.EMPTY ||
+						Dungeon.level.hasTerrain(grassCell, Terrain.EMBERS) ||
+						Dungeon.level.terrainAt(grassCell) == Terrain.EMPTY_DECO){
 					Level.set(grassCell, Terrain.GRASS);
 					GameScene.updateMap(grassCell);
 				}
@@ -866,7 +866,7 @@ public enum Talent {
 				grassCells.remove(0);
 			}
 			for (int grassCell : grassCells){
-				int t = Dungeon.level.map[grassCell];
+				int t = Dungeon.level.terrainAt(grassCell);
 				if ((t == Terrain.EMPTY || t == Terrain.EMPTY_DECO || t == Terrain.EMBERS
 						|| t == Terrain.GRASS || t == Terrain.FURROWED_GRASS)
 						&& Dungeon.level.plants.get(grassCell) == null){

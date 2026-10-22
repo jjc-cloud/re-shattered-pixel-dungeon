@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.watabou.utils.Random;
@@ -48,11 +49,11 @@ public class PlatformRoom extends StandardRoom {
 	}
 	
 	@Override
-	public void merge(Level l, Room other, Rect merge, int mergeTerrain) {
-		if (mergeTerrain != Terrain.CHASM && connected.containsKey(other)
+	public void merge(Level l, Room other, Rect merge, CellPlacement mergeTerrain) {
+		if (!mergeTerrain.isGround(Terrain.CHASM) && connected.containsKey(other)
 				&& (other instanceof PlatformRoom || other instanceof ChasmRoom)){
-			super.merge(l, other, merge, Terrain.CHASM);
-			Painter.set(l, connected.get(other), Terrain.EMPTY_SP);
+			super.merge(l, other, merge, CellPlacement.reset(Terrain.CHASM));
+			Painter.set(l, connected.get(other), CellPlacement.reset(Terrain.EMPTY_SP));
 		} else {
 			super.merge(l, other, merge, mergeTerrain);
 		}
@@ -61,20 +62,20 @@ public class PlatformRoom extends StandardRoom {
 	@Override
 	public void paint(Level level) {
 		
-		Painter.fill( level, this, Terrain.WALL );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
 		
-		Painter.fill( level, this, 1, Terrain.CHASM );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.CHASM) );
 		
 		ArrayList<Rect> platforms = new ArrayList<>();
 		splitPlatforms( new Rect(left+2, top+2, right-2, bottom-2), platforms);
 		
 		for (Rect platform : platforms){
-			Painter.fill( level, platform.left, platform.top, platform.width()+1, platform.height()+1, Terrain.EMPTY_SP);
+			Painter.fill( level, platform.left, platform.top, platform.width()+1, platform.height()+1, CellPlacement.reset(Terrain.EMPTY_SP));
 		}
 		
 		for (Door door : connected.values()) {
 			door.set( Door.Type.REGULAR );
-			Painter.drawInside(level, this, door, 2, Terrain.EMPTY_SP);
+			Painter.drawInside(level, this, door, 2, CellPlacement.reset(Terrain.EMPTY_SP));
 		}
 		
 	}

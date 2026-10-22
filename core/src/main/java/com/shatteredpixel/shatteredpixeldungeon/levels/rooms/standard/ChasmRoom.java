@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.watabou.utils.Rect;
@@ -70,11 +71,11 @@ public class ChasmRoom extends PatchRoom {
 	}
 
 	@Override
-	public void merge(Level l, Room other, Rect merge, int mergeTerrain) {
-		if (mergeTerrain == Terrain.EMPTY
+	public void merge(Level l, Room other, Rect merge, CellPlacement mergeTerrain) {
+		if (mergeTerrain.isGround(Terrain.EMPTY)
 				&& (other instanceof ChasmRoom || other instanceof PlatformRoom)){
-			super.merge(l, other, merge, Terrain.CHASM);
-			Painter.set(l, connected.get(other), Terrain.EMPTY);
+			super.merge(l, other, merge, CellPlacement.reset(Terrain.CHASM));
+			Painter.set(l, connected.get(other), CellPlacement.reset(Terrain.EMPTY));
 		} else {
 			super.merge(l, other, merge, mergeTerrain);
 		}
@@ -82,15 +83,15 @@ public class ChasmRoom extends PatchRoom {
 
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1 , Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1 , CellPlacement.reset(Terrain.EMPTY) );
 		for (Room.Door door : connected.values()) {
 			door.set( Room.Door.Type.REGULAR );
 		}
 
 		setupPatch(level);
 
-		fillPatch(level, Terrain.CHASM);
+		fillPatch(level, CellPlacement.reset(Terrain.CHASM));
 	}
 
 }

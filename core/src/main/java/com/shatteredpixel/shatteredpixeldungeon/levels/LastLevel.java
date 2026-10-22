@@ -29,6 +29,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.items.Amulet;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.CustomTilemap;
@@ -123,35 +124,35 @@ public class LastLevel extends Level {
 	protected boolean build() {
 
 		setSize(16, 64);
-		Arrays.fill( map, Terrain.CHASM );
+		for (int cell = 0; cell < length(); cell++) cellAt(cell).reset(Terrain.CHASM);
 
 		final int MID = width/2;
 
-		Painter.fill( this, 0, height-1, width, 1, Terrain.WALL );
-		Painter.fill( this, MID - 1, 10, 3, (height-11), Terrain.EMPTY);
-		Painter.fill( this, MID - 2, height - 3, 5, 1, Terrain.EMPTY);
-		Painter.fill( this, MID - 3, height - 2, 7, 1, Terrain.EMPTY);
+		Painter.fill( this, 0, height-1, width, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( this, MID - 1, 10, 3, (height-11), CellPlacement.reset(Terrain.EMPTY));
+		Painter.fill( this, MID - 2, height - 3, 5, 1, CellPlacement.reset(Terrain.EMPTY));
+		Painter.fill( this, MID - 3, height - 2, 7, 1, CellPlacement.reset(Terrain.EMPTY));
 
 		int entrance = (height-ROOM_TOP) * width() + MID;
-		Painter.fill(this, 0, height - ROOM_TOP, width, 2, Terrain.WALL);
-		map[entrance] = Terrain.ENTRANCE;
-		map[entrance+width] = Terrain.ENTRANCE;
+		Painter.fill(this, 0, height - ROOM_TOP, width, 2, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
+		cellAt(entrance).setGround(Terrain.ENTRANCE);
+		cellAt(entrance+width).setGround(Terrain.ENTRANCE);
 		LevelTransition entry = new LevelTransition(this, entrance, LevelTransition.Type.REGULAR_ENTRANCE);
 		entry.left--;
 		entry.right++;
 		entry.bottom += 2;
 		transitions.add(entry);
-		Painter.fill(this, 0, height - ROOM_TOP + 2, width, 8, Terrain.EMPTY);
-		Painter.fill(this, MID-1, height - ROOM_TOP + 2, 3, 1, Terrain.ENTRANCE);
+		Painter.fill(this, 0, height - ROOM_TOP + 2, width, 8, CellPlacement.reset(Terrain.EMPTY));
+		Painter.fill(this, MID-1, height - ROOM_TOP + 2, 3, 1, CellPlacement.reset(Terrain.ENTRANCE));
 
 		for (int i=0; i < length(); i++) {
-			if (map[i] == Terrain.EMPTY && Random.Int( 5 ) == 0) {
-				map[i] = Terrain.EMPTY_DECO;
+			if (terrainAt(i) == Terrain.EMPTY && Random.Int( 5 ) == 0) {
+				cellAt(i).setGround(Terrain.EMPTY_DECO);
 			}
 		}
 
-		Painter.fill( this, MID - 2, 9, 5, 7, Terrain.EMPTY);
-		Painter.fill( this, MID - 3, 10, 7, 5, Terrain.EMPTY);
+		Painter.fill( this, MID - 2, 9, 5, 7, CellPlacement.reset(Terrain.EMPTY));
+		Painter.fill( this, MID - 3, 10, 7, 5, CellPlacement.reset(Terrain.EMPTY));
 
 		feeling = Feeling.NONE;
 		viewDistance = 4;
@@ -276,7 +277,7 @@ public class LastLevel extends Level {
 			int candlesStart = AMULET_POS - 3 - 3*Dungeon.level.width();
 
 			int cell = tileX + tileY * Dungeon.level.width();
-			int[] map = Dungeon.level.map;
+			int[] map = Dungeon.level.terrainVisuals();
 			int[] data = new int[tileW*tileH];
 			for (int i = 0; i < data.length; i++){
 				if (i % tileW == 0){

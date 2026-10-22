@@ -40,6 +40,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.ExoticPotio
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ExoticCrystals;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
@@ -66,25 +67,25 @@ public class SecretLaboratoryRoom extends SecretRoom {
 	
 	public void paint( Level level ) {
 		
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY_SP );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY_SP) );
 		
 		entrance().set( Door.Type.HIDDEN );
 		
 		Point pot = center();
-		Painter.set( level, pot, Terrain.ALCHEMY );
+		Painter.set( level, pot, CellPlacement.content(Terrain.ALCHEMY) );
 
 		Blob.seed( pot.x + level.width() * pot.y, 1, Alchemy.class, level );
 
 		int pos;
 		do {
 			pos = level.pointToCell(random());
-		} while (level.map[pos] != Terrain.EMPTY_SP || level.heaps.get( pos ) != null);
+		} while (level.terrainAt(pos) != Terrain.EMPTY_SP || level.heaps.get( pos ) != null);
 		level.drop( new EnergyCrystal().quantity(Random.IntRange(3, 5)), pos );
 
 		do {
 			pos = level.pointToCell(random());
-		} while (level.map[pos] != Terrain.EMPTY_SP || level.heaps.get( pos ) != null);
+		} while (level.terrainAt(pos) != Terrain.EMPTY_SP || level.heaps.get( pos ) != null);
 		level.drop( new EnergyCrystal().quantity(Random.IntRange(3, 5)), pos );
 
 		int n = Random.IntRange( 2, 3 );
@@ -92,7 +93,7 @@ public class SecretLaboratoryRoom extends SecretRoom {
 		for (int i=0; i < n; i++) {
 			do {
 				pos = level.pointToCell(random());
-			} while (level.map[pos] != Terrain.EMPTY_SP || level.heaps.get( pos ) != null);
+			} while (level.terrainAt(pos) != Terrain.EMPTY_SP || level.heaps.get( pos ) != null);
 			
 			Class<?extends Potion> potionCls = Random.chances(chances);
 			chances.put(potionCls, 0f);

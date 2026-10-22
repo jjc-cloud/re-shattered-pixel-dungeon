@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
@@ -367,8 +369,8 @@ public class SpiritBow extends Weapon {
 		@Override
 		protected void onThrow( int cell ) {
 			if (Dungeon.level.terrainInteractions != null && Actor.findChar(cell) == null
-					&& Dungeon.level.terrainInteractions.ruleAt(cell).allows(TerrainInteractions.Source.MISSILE)) {
-				if (Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.MISSILE)) {
+					&& Dungeon.level.terrainInteractions.allows(cell, CellContent.BREAKABLE)) {
+				if (Dungeon.level.affectTerrain(cell, CellContent.BREAKABLE)) {
 					hitSound(Random.Float(0.87f, 1.15f));
 					Invisibility.dispel();
 					Dungeon.observe();

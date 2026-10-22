@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -213,7 +215,7 @@ abstract public class MissileWeapon extends Weapon {
 		} else {
 			Ballistica shot = new Ballistica(user.pos, dst, Ballistica.PROJECTILE);
 			int surface = shot.collisionPos == dst && !Dungeon.level.solid[dst] ? shot.collisionPos
-					: TerrainPropagation.impactCell(Dungeon.level, shot, TerrainInteractions.Source.MISSILE);
+					: TerrainPropagation.impactCell(Dungeon.level, shot, CellContent.BREAKABLE);
 			return surface;
 		}
 	}
@@ -278,8 +280,8 @@ abstract public class MissileWeapon extends Weapon {
 	@Override
 	protected void onThrow( int cell ) {
 		if (Dungeon.level.terrainInteractions != null && Actor.findChar(cell) == null
-				&& Dungeon.level.terrainInteractions.ruleAt(cell).allows(TerrainInteractions.Source.MISSILE)) {
-			if (Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.MISSILE)) {
+				&& Dungeon.level.terrainInteractions.allows(cell, CellContent.BREAKABLE)) {
+			if (Dungeon.level.affectTerrain(cell, CellContent.BREAKABLE)) {
 				hitSound(Random.Float(0.87f, 1.15f));
 				Invisibility.dispel();
 				Dungeon.observe();

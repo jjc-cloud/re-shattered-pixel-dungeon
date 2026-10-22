@@ -42,6 +42,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.IronKey;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.HeavyBoomerang;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.TenguDartTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
@@ -180,35 +181,35 @@ public class PrisonBossLevel extends Level {
 	private void setMapStart(){
 		transitions.add(new LevelTransition(this, ENTRANCE_POS, LevelTransition.Type.REGULAR_ENTRANCE));
 		
-		Painter.fill(this, 0, 0, 32, 32, Terrain.WALL);
+		Painter.fill(this, 0, 0, 32, 32, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 		
 		//Start
-		Painter.fill(this, entranceRoom, Terrain.WALL);
-		Painter.fill(this, entranceRoom, 1, Terrain.EMPTY);
-		Painter.set(this, ENTRANCE_POS, Terrain.ENTRANCE);
+		Painter.fill(this, entranceRoom, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
+		Painter.fill(this, entranceRoom, 1, CellPlacement.reset(Terrain.EMPTY));
+		Painter.set(this, ENTRANCE_POS, CellPlacement.reset(Terrain.ENTRANCE));
 		
-		Painter.fill(this, startHallway, Terrain.WALL);
-		Painter.fill(this, startHallway, 1, Terrain.EMPTY);
+		Painter.fill(this, startHallway, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
+		Painter.fill(this, startHallway, 1, CellPlacement.reset(Terrain.EMPTY));
 		
-		Painter.set(this, startHallway.left+1, startHallway.top, Terrain.DOOR);
+		Painter.set(this, startHallway.left+1, startHallway.top, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR));
 		
 		for (Rect r : startCells){
-			Painter.fill(this, r, Terrain.WALL);
-			Painter.fill(this, r, 1, Terrain.EMPTY);
+			Painter.fill(this, r, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
+			Painter.fill(this, r, 1, CellPlacement.reset(Terrain.EMPTY));
 		}
 		
-		Painter.set(this, startHallway.left, startHallway.top+5, Terrain.DOOR);
-		Painter.set(this, startHallway.right-1, startHallway.top+5, Terrain.DOOR);
-		Painter.set(this, startHallway.left, startHallway.top+11, Terrain.DOOR);
-		Painter.set(this, startHallway.right-1, startHallway.top+11, Terrain.DOOR);
+		Painter.set(this, startHallway.left, startHallway.top+5, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR));
+		Painter.set(this, startHallway.right-1, startHallway.top+5, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR));
+		Painter.set(this, startHallway.left, startHallway.top+11, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR));
+		Painter.set(this, startHallway.right-1, startHallway.top+11, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR));
 		
-		Painter.fill(this, tenguCell, Terrain.WALL);
-		Painter.fill(this, tenguCell, 1, Terrain.EMPTY);
+		Painter.fill(this, tenguCell, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
+		Painter.fill(this, tenguCell, 1, CellPlacement.reset(Terrain.EMPTY));
 		
-		Painter.set(this, tenguCell.left+4, tenguCell.top, Terrain.LOCKED_DOOR);
+		Painter.set(this, tenguCell.left+4, tenguCell.top, CellPlacement.reset(Terrain.EMPTY, Terrain.LOCKED_DOOR));
 		
 		for (Point p : startTorches){
-			Painter.set(this, p, Terrain.WALL_DECO);
+			Painter.set(this, p, CellPlacement.content(Terrain.WALL_DECO));
 		}
 
 		addCagesToCells();
@@ -227,14 +228,14 @@ public class PrisonBossLevel extends Level {
 		setMapStart();
 		transitions.clear();
 
-		Painter.set(this, tenguCell.left+4, tenguCell.top, Terrain.DOOR);
+		Painter.set(this, tenguCell.left+4, tenguCell.top, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR));
 
-		Painter.fill(this, startCells[1].left, startCells[1].top+3, 1, 7, Terrain.EMPTY);
-		Painter.fill(this, startCells[1].left+2, startCells[1].top+2, 3, 10, Terrain.EMPTY);
+		Painter.fill(this, startCells[1].left, startCells[1].top+3, 1, 7, CellPlacement.reset(Terrain.EMPTY));
+		Painter.fill(this, startCells[1].left+2, startCells[1].top+2, 3, 10, CellPlacement.reset(Terrain.EMPTY));
 
-		Painter.fill(this, entranceRoom, Terrain.WALL);
-		Painter.set(this, startHallway.left+1, startHallway.top, Terrain.EMPTY);
-		Painter.set(this, startHallway.left+1, startHallway.top+1, Terrain.DOOR);
+		Painter.fill(this, entranceRoom, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
+		Painter.set(this, startHallway.left+1, startHallway.top, CellPlacement.reset(Terrain.EMPTY));
+		Painter.set(this, startHallway.left+1, startHallway.top+1, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR));
 
 		addCagesToCells();
 
@@ -245,22 +246,22 @@ public class PrisonBossLevel extends Level {
 	private void setMapArena(){
 		transitions.clear();
 
-		Painter.fill(this, 0, 0, 32, 32, Terrain.WALL);
+		Painter.fill(this, 0, 0, 32, 32, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 		
-		Painter.fill(this, arena, Terrain.WALL);
-		Painter.fillEllipse(this, arena, 1, Terrain.EMPTY);
+		Painter.fill(this, arena, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
+		Painter.fillEllipse(this, arena, 1, CellPlacement.reset(Terrain.EMPTY));
 	
 	}
 	
-	private static int W = Terrain.WALL;
-	private static int D = Terrain.WALL_DECO;
-	private static int e = Terrain.EMPTY;
-	private static int E = Terrain.EXIT;
-	private static int C = Terrain.CHASM;
+	private static final CellPlacement W = CellPlacement.reset(Terrain.EMPTY, Terrain.WALL);
+	private static final CellPlacement D = CellPlacement.reset(Terrain.EMPTY, Terrain.WALL_DECO);
+	private static final CellPlacement e = CellPlacement.reset(Terrain.EMPTY);
+	private static final CellPlacement E = CellPlacement.reset(Terrain.EXIT);
+	private static final CellPlacement C = CellPlacement.reset(Terrain.CHASM);
 	
 	private static final Point endStart = new Point( startHallway.left+2, startHallway.top+2);
 	private static final Point levelExit = new Point( endStart.x+11, endStart.y+6);
-	private static final int[] endMap = new int[]{
+	private static final CellPlacement[] endMap = new CellPlacement[]{
 			W, W, D, W, W, W, W, W, W, W, W, W, W, W,
 			W, e, e, e, W, W, W, W, W, W, W, W, W, W,
 			W, e, e, e, e, e, e, e, e, W, W, W, W, W,
@@ -288,7 +289,7 @@ public class PrisonBossLevel extends Level {
 	
 	private void setMapEnd(){
 		
-		Painter.fill(this, 0, 0, 32, 32, Terrain.WALL);
+		Painter.fill(this, 0, 0, 32, 32, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 		
 		setMapStart();
 		
@@ -308,12 +309,12 @@ public class PrisonBossLevel extends Level {
 		customWalls.add(vis);
 		GameScene.add(vis, true);
 		
-		Painter.set(this, tenguCell.left+4, tenguCell.top, Terrain.DOOR);
+		Painter.set(this, tenguCell.left+4, tenguCell.top, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR));
 		
 		int cell = pointToCell(endStart);
 		int i = 0;
 		while (cell < length()){
-			System.arraycopy(endMap, i, map, cell, 14);
+			for (int j = 0; j < 14; j++) endMap[i + j].apply(this, cell + j);
 			i += 14;
 			cell += width();
 		}
@@ -387,12 +388,12 @@ public class PrisonBossLevel extends Level {
 				int cell = randomPrisonCellPos();
 				boolean valid = false;
 				for (int j : PathFinder.NEIGHBOURS4){
-					if (map[cell+j] == Terrain.WALL){
+					if (hasTerrain(cell+j, Terrain.WALL)){
 						valid = true;
 					}
 				}
 				if (valid){
-					Painter.set(this, cell, Terrain.REGION_DECO);
+					Painter.set(this, cell, CellPlacement.content(Terrain.REGION_DECO));
 				}
 			}
 
@@ -656,7 +657,7 @@ public class PrisonBossLevel extends Level {
 	public void cleanTenguCell(){
 		
 		traps.clear();
-		Painter.fill(this, tenguCell, 1, Terrain.EMPTY);
+		Painter.fill(this, tenguCell, 1, CellPlacement.reset(Terrain.EMPTY));
 		buildFlagMaps();
 
 		for (CustomTilemap vis : customTiles.toArray(new CustomTilemap[0])){

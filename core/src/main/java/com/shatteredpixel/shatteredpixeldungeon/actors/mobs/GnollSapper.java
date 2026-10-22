@@ -130,7 +130,7 @@ public class GnollSapper extends Mob {
 	protected boolean act() {
 		if (throwingRockFromPos != -1){
 
-			boolean attacked = Dungeon.level.map[throwingRockFromPos] == Terrain.MINE_BOULDER;
+			boolean attacked = Dungeon.level.hasTerrain(throwingRockFromPos, Terrain.MINE_BOULDER);
 
 			if (attacked) {
 				GnollGeomancer.doRockThrowAttack(this, throwingRockFromPos, throwingRockToPos);
@@ -180,8 +180,8 @@ public class GnollSapper extends Mob {
 				if (abilityCooldown-- <= 0){
 					boolean targetNextToBarricade = false;
 					for (int i : PathFinder.NEIGHBOURS8){
-						if (Dungeon.level.map[enemy.pos+i] == Terrain.BARRICADE
-							|| Dungeon.level.map[enemy.pos+i] == Terrain.ENTRANCE){
+						if (Dungeon.level.hasTerrain(enemy.pos+i, Terrain.BARRICADE)
+							|| Dungeon.level.terrainAt(enemy.pos+i) == Terrain.ENTRANCE){
 							targetNextToBarricade = true;
 							break;
 						}

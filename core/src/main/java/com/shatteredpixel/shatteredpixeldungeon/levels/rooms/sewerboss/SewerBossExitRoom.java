@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.exit.ExitRoom;
@@ -47,8 +48,8 @@ public class SewerBossExitRoom extends ExitRoom {
 	
 	public void paint(Level level) {
 		
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY) );
 		
 		for (Room.Door door : connected.values()) {
 			door.set( Room.Door.Type.REGULAR );
@@ -56,11 +57,11 @@ public class SewerBossExitRoom extends ExitRoom {
 		
 		Point c = center();
 		
-		Painter.fill( level, c.x-1, c.y-1, 3, 2, Terrain.WALL );
-		Painter.fill( level, c.x-1, c.y+1, 3, 1, Terrain.EMPTY_SP );
+		Painter.fill( level, c.x-1, c.y-1, 3, 2, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, c.x-1, c.y+1, 3, 1, CellPlacement.reset(Terrain.EMPTY_SP) );
 		
 		int exitCell = level.pointToCell(c);
-		Painter.set( level, exitCell, Terrain.LOCKED_EXIT );
+		Painter.set( level, exitCell, CellPlacement.reset(Terrain.LOCKED_EXIT) );
 		LevelTransition exit = new LevelTransition(level, exitCell, LevelTransition.Type.REGULAR_EXIT);
 		exit.top--;
 		exit.left--;

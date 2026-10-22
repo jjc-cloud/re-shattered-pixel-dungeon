@@ -181,8 +181,8 @@ public class MiningLevel extends CavesLevel {
 			ArrayList<Item> bonesItems = Bones.get();
 			if (bonesItems != null) {
 				int cell = randomDropCell();
-				if (map[cell] == Terrain.HIGH_GRASS || map[cell] == Terrain.FURROWED_GRASS) {
-					map[cell] = Terrain.GRASS;
+				if (hasTerrain(cell, Terrain.HIGH_GRASS) || hasTerrain(cell, Terrain.FURROWED_GRASS)) {
+					cellAt(cell).place(Terrain.GRASS);
 					losBlocking[cell] = false;
 				}
 				for (Item i : bonesItems) {
@@ -192,16 +192,16 @@ public class MiningLevel extends CavesLevel {
 		Random.popGenerator();
 
 		int cell = randomDropCell();
-		if (map[cell] == Terrain.HIGH_GRASS || map[cell] == Terrain.FURROWED_GRASS) {
-			map[cell] = Terrain.GRASS;
+		if (hasTerrain(cell, Terrain.HIGH_GRASS) || hasTerrain(cell, Terrain.FURROWED_GRASS)) {
+			cellAt(cell).place(Terrain.GRASS);
 			losBlocking[cell] = false;
 		}
 		drop( Generator.randomUsingDefaults(Generator.Category.FOOD), cell );
 		if (Blacksmith.Quest.Type() == Blacksmith.Quest.GNOLL){
 			//drop a second ration for the gnoll quest type, more mining required!
 			cell = randomDropCell();
-			if (map[cell] == Terrain.HIGH_GRASS || map[cell] == Terrain.FURROWED_GRASS) {
-				map[cell] = Terrain.GRASS;
+			if (hasTerrain(cell, Terrain.HIGH_GRASS) || hasTerrain(cell, Terrain.FURROWED_GRASS)) {
+				cellAt(cell).place(Terrain.GRASS);
 				losBlocking[cell] = false;
 			}
 			drop( Generator.randomUsingDefaults(Generator.Category.FOOD), cell );
@@ -209,8 +209,8 @@ public class MiningLevel extends CavesLevel {
 
 		if (Dungeon.isChallenged(Challenges.DARKNESS)){
 			cell = randomDropCell();
-			if (map[cell] == Terrain.HIGH_GRASS || map[cell] == Terrain.FURROWED_GRASS) {
-				map[cell] = Terrain.GRASS;
+			if (hasTerrain(cell, Terrain.HIGH_GRASS) || hasTerrain(cell, Terrain.FURROWED_GRASS)) {
+				cellAt(cell).place(Terrain.GRASS);
 				losBlocking[cell] = false;
 			}
 			drop( new Torch(), cell );

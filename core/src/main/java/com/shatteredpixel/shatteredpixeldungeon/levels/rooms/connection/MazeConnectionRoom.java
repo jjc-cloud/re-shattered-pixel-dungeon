@@ -24,13 +24,14 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Maze;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 
 public class MazeConnectionRoom extends ConnectionRoom {
 	
 	@Override
 	public void paint(Level level) {
-		Painter.fill(level, this, 1, Terrain.EMPTY);
+		Painter.fill(level, this, 1, CellPlacement.reset(Terrain.EMPTY));
 
 		//true = space, false = wall
 		Maze.allowDiagonals = false;
@@ -44,11 +45,11 @@ public class MazeConnectionRoom extends ConnectionRoom {
 			maze = Maze.generate(this);
 		}
 
-		Painter.fill(level, this, 1, Terrain.EMPTY);
+		Painter.fill(level, this, 1, CellPlacement.reset(Terrain.EMPTY));
 		for (int x = 0; x < maze.length; x++){
 			for (int y = 0; y < maze[0].length; y++) {
 				if (maze[x][y] == Maze.FILLED) {
-					Painter.fill(level, x + left, y + top, 1, 1, Terrain.WALL);
+					Painter.fill(level, x + left, y + top, 1, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 				}
 			}
 		}

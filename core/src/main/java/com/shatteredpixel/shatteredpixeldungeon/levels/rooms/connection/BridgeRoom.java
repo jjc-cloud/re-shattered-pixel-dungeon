@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.watabou.utils.Point;
@@ -34,7 +35,7 @@ public class BridgeRoom extends TunnelRoom {
 	public void paint(Level level) {
 		
 		if (Math.min(width(), height()) > 3) {
-			Painter.fill(level, this, 1, Terrain.CHASM);
+			Painter.fill(level, this, 1, CellPlacement.reset(Terrain.CHASM));
 		}
 		
 		super.paint(level);
@@ -49,13 +50,13 @@ public class BridgeRoom extends TunnelRoom {
 					i.top++;
 					i.bottom--;
 				}
-				Painter.fill(level, i.left, i.top, i.width()+1, i.height()+1, Terrain.CHASM);
+				Painter.fill(level, i.left, i.top, i.width()+1, i.height()+1, CellPlacement.reset(Terrain.CHASM));
 			}
 		}
 	}
 
 	@Override
-	public boolean canMerge(Level l, Room other, Point p, int mergeTerrain) {
-		return mergeTerrain == Terrain.CHASM;
+	public boolean canMerge(Level l, Room other, Point p, CellPlacement mergeTerrain) {
+		return mergeTerrain.isGround(Terrain.CHASM);
 	}
 }

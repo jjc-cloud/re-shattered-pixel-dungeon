@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.exit;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.RegionDecoBridgeRoom;
 import com.watabou.utils.PathFinder;
@@ -60,7 +61,7 @@ public class RegionDecoBridgeExitRoom extends RegionDecoBridgeRoom {
 				valid = false;
 			} else {
 				for (int i : PathFinder.NEIGHBOURS8){
-					if (level.map[exit+i] == Terrain.REGION_DECO_ALT){
+					if (level.hasTerrain(exit+i, Terrain.REGION_DECO_ALT)){
 						valid = false;
 					}
 				}
@@ -68,7 +69,7 @@ public class RegionDecoBridgeExitRoom extends RegionDecoBridgeRoom {
 
 		} while (!valid);
 
-		Painter.set( level, exit, Terrain.EXIT );
+		Painter.set( level, exit, CellPlacement.reset(Terrain.EXIT) );
 		level.transitions.add(new LevelTransition(level, exit, LevelTransition.Type.REGULAR_EXIT));
 	}
 

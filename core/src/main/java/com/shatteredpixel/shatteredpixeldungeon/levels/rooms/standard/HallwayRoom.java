@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.Carpet;
@@ -45,22 +46,22 @@ public class HallwayRoom extends StandardRoom {
 	}
 
 	@Override
-	public boolean canMerge(Level l, Room other, Point p, int mergeTerrain) {
+	public boolean canMerge(Level l, Room other, Point p, CellPlacement mergeTerrain) {
 		return other instanceof HallwayRoom && super.canMerge(l, other, p, mergeTerrain);
 	}
 
 	@Override
-	public void merge(Level l, Room other, Rect merge, int mergeTerrain) {
+	public void merge(Level l, Room other, Rect merge, CellPlacement mergeTerrain) {
 		super.merge(l, other, merge, mergeTerrain);
-		Painter.set(l, connected.get(other), Terrain.EMPTY_SP);
+		Painter.set(l, connected.get(other), CellPlacement.reset(Terrain.EMPTY_SP));
 	}
 
 	//FIXME lots of copy-pasta from tunnel rooms here
 	@Override
 	public void paint(Level level) {
 
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1 , Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1 , CellPlacement.reset(Terrain.EMPTY) );
 
 		Rect c = getConnectionSpace();
 
@@ -98,25 +99,25 @@ public class HallwayRoom extends StandardRoom {
 
 			}
 
-			Painter.drawLine( level, start, mid, Terrain.EMPTY_SP );
-			Painter.drawLine( level, mid, end, Terrain.EMPTY_SP );
+			Painter.drawLine( level, start, mid, CellPlacement.reset(Terrain.EMPTY_SP) );
+			Painter.drawLine( level, mid, end, CellPlacement.reset(Terrain.EMPTY_SP) );
 
 		}
 
-		Painter.fill( level, c.left, c.top, 3, 3, Terrain.EMPTY_SP );
+		Painter.fill( level, c.left, c.top, 3, 3, CellPlacement.reset(Terrain.EMPTY_SP) );
 		Carpet carpet = new Carpet();
 		carpet.setRect(c.left, c.top, 3, 3);
 		if (isEntrance()){
-			Painter.fill(level, c.left + 1, c.top + 1, 1, 1, Terrain.ENTRANCE_SP);
+			Painter.fill(level, c.left + 1, c.top + 1, 1, 1, CellPlacement.reset(Terrain.ENTRANCE_SP));
 			carpet.overrideTile(1, 1, Carpet.CITY_ENTRANCE);
 		} else if (isExit()){
-			Painter.fill(level, c.left + 1, c.top + 1, 1, 1, Terrain.EXIT);
+			Painter.fill(level, c.left + 1, c.top + 1, 1, 1, CellPlacement.reset(Terrain.EXIT));
 			carpet.overrideTile(1, 1, Carpet.SKIP);
 		} else if (Random.Int(2) == 0) {
-			Painter.fill(level, c.left + 1, c.top + 1, 1, 1, Terrain.STATUE_SP);
+			Painter.fill(level, c.left + 1, c.top + 1, 1, 1, CellPlacement.ground(Terrain.EMPTY_SP, Terrain.STATUE_SP));
 			carpet.overrideTile(1, 1, Carpet.CITY_STATUE);
 		} else {
-			Painter.fill(level, c.left + 1, c.top + 1, 1, 1, Terrain.REGION_DECO_ALT);
+			Painter.fill(level, c.left + 1, c.top + 1, 1, 1, CellPlacement.content(Terrain.REGION_DECO_ALT));
 			carpet.overrideTile(1, 1, Carpet.CITY_PEDESTAL);
 		}
 		level.customTiles.add(carpet);

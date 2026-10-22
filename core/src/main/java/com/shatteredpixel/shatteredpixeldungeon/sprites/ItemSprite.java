@@ -112,7 +112,7 @@ public class ItemSprite extends MovieClip {
 		this.heap = heap;
 		view(heap);
 		renderShadow = true;
-		visible = heap.seen && (Dungeon.level == null || Dungeon.level.map[heap.pos] != Terrain.COLLAPSE_WALL);
+		visible = heap.seen && (Dungeon.level == null || !Dungeon.level.hasTerrain(heap.pos, Terrain.COLLAPSE_WALL));
 		place(heap.pos);
 	}
 	
@@ -373,7 +373,7 @@ public class ItemSprite extends MovieClip {
 	public synchronized void update() {
 		super.update();
 
-		visible = (heap == null || (heap.seen && (Dungeon.level == null || Dungeon.level.map[heap.pos] != Terrain.COLLAPSE_WALL)));
+		visible = (heap == null || (heap.seen && (Dungeon.level == null || !Dungeon.level.hasTerrain(heap.pos, Terrain.COLLAPSE_WALL))));
 
 		if (emitter != null){
 			emitter.visible = visible;
@@ -397,14 +397,14 @@ public class ItemSprite extends MovieClip {
 
 					if (Dungeon.level.water[heap.pos]) {
 						Sample.INSTANCE.play( Assets.Sounds.WATER, 0.8f, Random.Float( 1f, 1.45f ) );
-					} else if (Dungeon.level.map[heap.pos] == Terrain.EMPTY_SP) {
+					} else if (Dungeon.level.terrainAt(heap.pos) == Terrain.EMPTY_SP) {
 						Sample.INSTANCE.play( Assets.Sounds.STURDY, 0.8f, Random.Float( 1.16f, 1.25f ) );
-					} else if (Dungeon.level.map[heap.pos] == Terrain.GRASS
-							|| Dungeon.level.map[heap.pos] == Terrain.EMBERS
-							|| Dungeon.level.map[heap.pos] == Terrain.EMBERS_SP
-							|| Dungeon.level.map[heap.pos] == Terrain.FURROWED_GRASS){
+					} else if (Dungeon.level.hasTerrain(heap.pos, Terrain.GRASS)
+							|| Dungeon.level.hasTerrain(heap.pos, Terrain.EMBERS)
+							|| Dungeon.level.hasTerrain(heap.pos, Terrain.EMBERS)
+							|| Dungeon.level.hasTerrain(heap.pos, Terrain.FURROWED_GRASS)){
 						Sample.INSTANCE.play( Assets.Sounds.GRASS, 0.8f, Random.Float( 1.16f, 1.25f ) );
-					} else if (Dungeon.level.map[heap.pos] == Terrain.HIGH_GRASS) {
+					} else if (Dungeon.level.hasTerrain(heap.pos, Terrain.HIGH_GRASS)) {
 						Sample.INSTANCE.play( Assets.Sounds.STEP, 0.8f, Random.Float( 1.16f, 1.25f ) );
 					} else {
 						Sample.INSTANCE.play( Assets.Sounds.STEP, 0.8f, Random.Float( 1.16f, 1.25f ));

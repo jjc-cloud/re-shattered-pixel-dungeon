@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.RotLasher;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.IronKey;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.SpecialRoom;
 import com.watabou.utils.PathFinder;
@@ -52,28 +53,28 @@ public class RotGardenRoom extends SpecialRoom {
 		level.addItemToSpawn(new IronKey(Dungeon.depth));
 
 		//define basic terrain, mostly high grass with some chaotically placed wall tiles
-		Painter.fill(level, this, Terrain.WALL);
-		Painter.set(level, entrance, Terrain.LOCKED_DOOR);
+		Painter.fill(level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL));
+		Painter.set(level, entrance, CellPlacement.reset(Terrain.EMPTY, Terrain.LOCKED_DOOR));
 
 		ArrayList<Integer> candidates = new ArrayList<>();
 		boolean[] passable = new boolean[level.length()];
 		int entryPos = level.pointToCell(entrance());
 		int openCells;
 		do {
-			Painter.fill(level, this, 1, Terrain.HIGH_GRASS);
+			Painter.fill(level, this, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.HIGH_GRASS));
 			for (int i = 0; i < 12; i++) {
-				Painter.set(level, random(1), Terrain.WALL);
+				Painter.set(level, random(1), CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 			}
 			for (int i = 0; i < 8; i++) {
-				Painter.set(level, random(2), Terrain.WALL);
+				Painter.set(level, random(2), CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 			}
 			for (int i = 0; i < 4; i++) {
-				Painter.set(level, random(3), Terrain.WALL);
+				Painter.set(level, random(3), CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 			}
-			Painter.drawInside(level, this, entrance, 3, Terrain.HIGH_GRASS);
+			Painter.drawInside(level, this, entrance, 3, CellPlacement.reset(Terrain.EMPTY, Terrain.HIGH_GRASS));
 
 			for (int i = 0; i < passable.length; i++) {
-				passable[i] = level.map[i] != Terrain.WALL;
+				passable[i] = !level.hasTerrain(i, Terrain.WALL);
 			}
 
 			//place the heart in a slightly random location sufficiently far from the entrance
@@ -89,8 +90,8 @@ public class RotGardenRoom extends SpecialRoom {
 					}
 				} else {
 					//fill in grass tiles that are enclosed
-					if (level.map[i] == Terrain.HIGH_GRASS) {
-						level.map[i] = Terrain.WALL;
+					if (level.hasTerrain(i, Terrain.HIGH_GRASS)) {
+						level.cellAt(i).place(Terrain.WALL);
 					}
 				}
 			}
@@ -129,15 +130,15 @@ public class RotGardenRoom extends SpecialRoom {
 		//look for open diagonals near the hard and create open cardinals near them.
 		//This is important so that the heart can spread gas
 		for (int i = 0; i < PathFinder.CIRCLE8.length; i+=2){
-			if (level.map[heartPos + PathFinder.CIRCLE8[i]] != Terrain.WALL){
-				Painter.set(level, heartPos + PathFinder.CIRCLE8[i+1], Terrain.HIGH_GRASS);
+			if (!level.hasTerrain(heartPos + PathFinder.CIRCLE8[i], Terrain.WALL)){
+				Painter.set(level, heartPos + PathFinder.CIRCLE8[i+1], CellPlacement.content(Terrain.HIGH_GRASS));
 			}
 		}
 
 	}
 
 	private static boolean validPlantPos(boolean[] passable, boolean[] newPassable, Level level, int pos, int heartPos, int entryPos){
-		if (level.map[pos] != Terrain.HIGH_GRASS){
+		if (!level.hasTerrain(pos, Terrain.HIGH_GRASS)){
 			return false;
 		}
 
@@ -177,6 +178,6 @@ public class RotGardenRoom extends SpecialRoom {
 		plant.pos = pos;
 		level.mobs.add( plant );
 
-		Painter.set(level, pos, Terrain.GRASS);
+		Painter.set(level, pos, CellPlacement.content(Terrain.GRASS));
 	}
 }

@@ -35,19 +35,19 @@ public class CityPainter extends RegularPainter {
 	@Override
 	protected void decorate(Level level, ArrayList<Room> rooms) {
 		
-		int[] map = level.map;
+		int[] map = level.terrainVisuals();
 		int w = level.width();
 		int l = level.length();
 		
 		for (int i=0; i < l - w; i++) {
 			
-			if (map[i] == Terrain.EMPTY && Random.Int( 10 ) == 0) {
-				map[i] = Terrain.EMPTY_DECO;
+			if (level.terrainAt(i) == Terrain.EMPTY && Random.Int( 10 ) == 0) {
+				level.cellAt(i).setGround(Terrain.EMPTY_DECO);
 				
-			} else if (map[i] == Terrain.WALL
-					&& !DungeonTileSheet.wallStitcheable(map[i + w])
+			} else if (level.hasTerrain(i, Terrain.WALL)
+					&& !DungeonTileSheet.wallStitcheable(level.terrainAt(i + w))
 					&& Random.Int( 21 - Dungeon.depth ) == 0) {
-				map[i] = Terrain.WALL_DECO;
+				level.cellAt(i).place(Terrain.WALL_DECO);
 			}
 		}
 		

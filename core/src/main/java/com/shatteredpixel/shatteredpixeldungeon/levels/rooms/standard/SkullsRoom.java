@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 
 public class SkullsRoom extends StandardRoom {
@@ -45,21 +46,21 @@ public class SkullsRoom extends StandardRoom {
 	@Override
 	public void paint(Level level) {
 
-		Painter.fill( level, this, Terrain.WALL );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
 
-		Painter.fillEllipse(level, this, 2, Terrain.EMPTY);
+		Painter.fillEllipse(level, this, 2, CellPlacement.reset(Terrain.EMPTY));
 
 		for (Door door : connected.values()) {
 			door.set( Door.Type.REGULAR );
 			if (door.x == left || door.x == right){
-				Painter.drawInside(level, this, door, width()/2, Terrain.EMPTY);
+				Painter.drawInside(level, this, door, width()/2, CellPlacement.reset(Terrain.EMPTY));
 			} else {
-				Painter.drawInside(level, this, door, height()/2, Terrain.EMPTY);
+				Painter.drawInside(level, this, door, height()/2, CellPlacement.reset(Terrain.EMPTY));
 			}
 		}
 
-		Painter.fillEllipse(level, this, 4, Terrain.STATUE);
-		Painter.fillEllipse(level, this, 6, Terrain.WALL);
+		Painter.fillEllipse(level, this, 4, CellPlacement.content(Terrain.STATUE));
+		Painter.fillEllipse(level, this, 6, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 
 	}
 }

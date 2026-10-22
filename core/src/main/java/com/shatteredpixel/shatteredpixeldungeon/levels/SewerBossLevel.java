@@ -55,7 +55,7 @@ public class SewerBossLevel extends SewerLevel {
 
 	@Override
 	protected int staticEnvironmentalLightRadius( int cell ) {
-		return (map[cell] != Terrain.WALL_DECO && (cell == exit() - 1 || cell == exit() + 1)) ? 1 : -1;
+		return (!hasTerrain(cell, Terrain.WALL_DECO) && (cell == exit() - 1 || cell == exit() + 1)) ? 1 : -1;
 	}
 
 	{
@@ -204,6 +204,7 @@ public class SewerBossLevel extends SewerLevel {
 
 			super.unseal();
 
+			cellAt(entrance()).removeTerrain(Terrain.WATER);
 			set( entrance(), Terrain.ENTRANCE );
 			GameScene.updateMap( entrance() );
 
@@ -224,8 +225,8 @@ public class SewerBossLevel extends SewerLevel {
 	@Override
 	public Group addVisuals() {
 		super.addVisuals();
-		if (map[exit()-1] != Terrain.WALL_DECO) visuals.add(new PrisonLevel.Torch(exit()-1));
-		if (map[exit()+1] != Terrain.WALL_DECO) visuals.add(new PrisonLevel.Torch(exit()+1));
+		if (!hasTerrain(exit()-1, Terrain.WALL_DECO)) visuals.add(new PrisonLevel.Torch(exit()-1));
+		if (!hasTerrain(exit()+1, Terrain.WALL_DECO)) visuals.add(new PrisonLevel.Torch(exit()+1));
 		return visuals;
 	}
 	

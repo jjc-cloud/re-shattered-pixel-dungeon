@@ -32,6 +32,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfPetrification;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.CustomTilemap;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTileSheet;
@@ -96,8 +97,8 @@ public class SecretPetrifiedRoom extends SecretRoom {
 
 	@Override
 	public void paint(Level level) {
-		Painter.fill(level, this, Terrain.WALL);
-		Painter.fill(level, this, 1, Terrain.EMPTY);
+		Painter.fill(level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL));
+		Painter.fill(level, this, 1, CellPlacement.reset(Terrain.EMPTY));
 
 		int direction = entranceDirection();
 		for (int templateY = 0; templateY < ROOM_SIZE; templateY++) {
@@ -106,7 +107,7 @@ public class SecretPetrifiedRoom extends SecretRoom {
 				if (tile == '.') continue;
 				Point p = templateToRoom(templateX, templateY, direction);
 				if (inside(p) || p.equals(entrance())) {
-					Painter.set(level, p, tile == 'P' ? Terrain.PEDESTAL : Terrain.EMPTY);
+					Painter.set(level, p, tile == 'P' ? CellPlacement.reset(Terrain.PEDESTAL) : CellPlacement.reset(Terrain.EMPTY));
 				}
 			}
 		}
@@ -114,15 +115,15 @@ public class SecretPetrifiedRoom extends SecretRoom {
 			if (!inside(p) || isFixedPoint(p)) continue;
 			int roll = Random.Int(100);
 			if (roll < 20) {
-				Painter.set(level, p, Terrain.CHASM);
+				Painter.set(level, p, CellPlacement.reset(Terrain.CHASM));
 			} else if (roll < 35) {
 				if (Dungeon.depth >= 6 && Dungeon.depth <= 10) {
 					int prisonDecoration = Random.Int(3);
-					Painter.set(level, p, prisonDecoration == 0 ? Terrain.REGION_DECO
-							: prisonDecoration == 1 ? Terrain.REGION_DECO_ALT : Terrain.STATUE);
+					Painter.set(level, p, prisonDecoration == 0 ? CellPlacement.content(Terrain.REGION_DECO)
+							: prisonDecoration == 1 ? CellPlacement.content(Terrain.REGION_DECO_ALT) : CellPlacement.content(Terrain.STATUE));
 				} else {
 					Painter.set(level, p, Random.Int(2) == 0
-							? Terrain.REGION_DECO : Terrain.STATUE);
+							? CellPlacement.content(Terrain.REGION_DECO) : CellPlacement.content(Terrain.STATUE));
 				}
 			}
 		}
@@ -265,7 +266,7 @@ public class SecretPetrifiedRoom extends SecretRoom {
 					int cell = tileX + x + (tileY + y) * Dungeon.level.width();
 					if (tile == '.' || templateX == ROOM_SIZE - 1 && templateY == CENTER
 							|| (x == 0 || y == 0 || x == ROOM_SIZE - 1 || y == ROOM_SIZE - 1)
-								&& Dungeon.level.map[cell] != Terrain.EMPTY) {
+								&& Dungeon.level.terrainAt(cell) != Terrain.EMPTY) {
 						data[index] = DungeonTileSheet.NULL_TILE;
 					} else if (tile == 'D' || tile == 'S') {
 						data[index] = DungeonTileSheet.getVisualWithAlts(DungeonTileSheet.FLOOR_DECO, cell);

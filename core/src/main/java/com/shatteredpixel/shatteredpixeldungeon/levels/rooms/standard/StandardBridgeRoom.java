@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.watabou.utils.Point;
@@ -46,9 +47,9 @@ public abstract class StandardBridgeRoom extends StandardRoom {
 	}
 
 	@Override
-	public boolean canMerge(Level l, Room other, Point p, int mergeTerrain) {
-		int cell = l.pointToCell(pointInside(p, 1));
-		return l.map[cell] != spaceTile();
+	public boolean canMerge(Level l, Room other, Point p, CellPlacement mergeTerrain) {
+		Point inside = pointInside(p, 1);
+		return spaceRect == null || !spaceRect.inside(inside) || bridgeRect.inside(inside);
 	}
 
 	@Override
@@ -67,8 +68,8 @@ public abstract class StandardBridgeRoom extends StandardRoom {
 
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1 , Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1 , CellPlacement.reset(Terrain.EMPTY) );
 
 		//prefer to place the bridge space to segment the most doors, or the most space in the room
 		int doorsXY = 0;
@@ -169,13 +170,13 @@ public abstract class StandardBridgeRoom extends StandardRoom {
 		}
 
 		Painter.fill(level, spaceRect, spaceTile());
-		Painter.fill(level, bridgeRect, bridgeTile());
+		Painter.fill(level, bridgeRect, CellPlacement.reset(bridgeTile()));
 
 	}
 
 	protected abstract int maxBridgeWidth( int roomDimension );
 
-	protected abstract int spaceTile();
+	protected abstract CellPlacement spaceTile();
 
 	//defaults to special terrain
 	protected int bridgeTile(){

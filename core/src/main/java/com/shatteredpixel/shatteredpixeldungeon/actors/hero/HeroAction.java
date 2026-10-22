@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 
 public class HeroAction {
@@ -79,10 +81,12 @@ public class HeroAction {
 	public static class InteractTerrain extends HeroAction {
 		public final com.shatteredpixel.shatteredpixeldungeon.levels.Level level;
 		public final int terrain;
+		public final com.shatteredpixel.shatteredpixeldungeon.levels.CellContent content;
 		public InteractTerrain(int cell) {
 			dst = cell;
 			level = com.shatteredpixel.shatteredpixeldungeon.Dungeon.level;
-			terrain = level.map[cell];
+			content = level.cellAt(cell).firstWith(com.shatteredpixel.shatteredpixeldungeon.levels.CellContent.BREAKABLE);
+			terrain = content == null ? level.terrainAt(cell) : content.type();
 		}
 	}
 	

@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.watabou.utils.GameMath;
@@ -52,7 +53,7 @@ public class SewerPipeRoom extends StandardRoom {
 	}
 
 	@Override
-	public boolean canMerge(Level l, Room other, Point p, int mergeTerrain) {
+	public boolean canMerge(Level l, Room other, Point p, CellPlacement mergeTerrain) {
 		return false;
 	}
 
@@ -66,7 +67,7 @@ public class SewerPipeRoom extends StandardRoom {
 	@Override
 	public void paint(Level level) {
 
-		Painter.fill( level, this, Terrain.WALL );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
 
 		Rect c = getConnectionSpace();
 
@@ -106,8 +107,8 @@ public class SewerPipeRoom extends StandardRoom {
 					
 				}
 				
-				Painter.drawLine(level, start, mid, Terrain.WATER);
-				Painter.drawLine(level, mid, end, Terrain.WATER);
+				Painter.drawLine(level, start, mid, CellPlacement.reset(Terrain.EMPTY, Terrain.WATER));
+				Painter.drawLine(level, mid, end, CellPlacement.reset(Terrain.EMPTY, Terrain.WATER));
 				
 			}
 		} else {
@@ -171,7 +172,7 @@ public class SewerPipeRoom extends StandardRoom {
 						}
 					}
 				}
-				fillBetweenPoints(level, from, to, Terrain.WATER);
+				fillBetweenPoints(level, from, to, CellPlacement.reset(Terrain.EMPTY, Terrain.WATER));
 				pointsFilled.add(to);
 				pointsToFill.remove(to);
 			}
@@ -179,10 +180,10 @@ public class SewerPipeRoom extends StandardRoom {
 
 		for(Point p : getPoints()){
 			int cell = level.pointToCell(p);
-			if (level.map[cell] == Terrain.WATER){
+			if (level.hasTerrain(cell, Terrain.WATER)){
 				for (int i : PathFinder.NEIGHBOURS8){
-					if (level.map[cell + i] == Terrain.WALL){
-						Painter.set(level, cell + i, Terrain.EMPTY);
+					if (level.hasTerrain(cell + i, Terrain.WALL)){
+						Painter.set(level, cell + i, CellPlacement.reset(Terrain.EMPTY));
 					}
 				}
 			}
@@ -191,11 +192,11 @@ public class SewerPipeRoom extends StandardRoom {
 		for (Room r : connected.keySet()) {
 			if (r instanceof SewerPipeRoom){
 				Point door = connected.get(r);
-				Painter.fill(level, door.x-1, door.y-1, 3, 3, Terrain.EMPTY);
+				Painter.fill(level, door.x-1, door.y-1, 3, 3, CellPlacement.reset(Terrain.EMPTY));
 				if (door.x == left || door.x == right){
-					Painter.fill(level, door.x-1, door.y, 3, 1, Terrain.WATER);
+					Painter.fill(level, door.x-1, door.y, 3, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.WATER));
 				} else {
-					Painter.fill(level, door.x, door.y-1, 1, 3, Terrain.WATER);
+					Painter.fill(level, door.x, door.y-1, 1, 3, CellPlacement.reset(Terrain.EMPTY, Terrain.WATER));
 				}
 				connected.get(r).set( Door.Type.WATER );
 			} else {
@@ -262,7 +263,7 @@ public class SewerPipeRoom extends StandardRoom {
 	private Point[] corners;
 
 	//picks the smallest path to fill between two points
-	private void fillBetweenPoints(Level level, Point from, Point to, int floor){
+	private void fillBetweenPoints(Level level, Point from, Point to, CellPlacement floor){
 
 		//doors are along the same side
 		if (((from.x == left+2 || from.x == right-2) && from.x == to.x)

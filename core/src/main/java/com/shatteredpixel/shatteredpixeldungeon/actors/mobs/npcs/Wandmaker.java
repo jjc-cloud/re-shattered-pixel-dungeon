@@ -315,13 +315,13 @@ public class Wandmaker extends NPC {
 						validPos = false;
 					}
 					for (int i : PathFinder.NEIGHBOURS4){
-						if (level.map[npc.pos+i] == Terrain.DOOR){
+						if (level.hasTerrain(npc.pos+i, Terrain.DOOR)){
 							validPos = false;
 						}
 					}
 					if (level.traps.get(npc.pos) != null
 							|| !level.passable[npc.pos]
-							|| level.map[npc.pos] == Terrain.EMPTY_SP){
+							|| level.terrainAt(npc.pos) == Terrain.EMPTY_SP){
 						validPos = false;
 					}
 					tries++;

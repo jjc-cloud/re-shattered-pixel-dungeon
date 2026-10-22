@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Random;
 
@@ -45,8 +46,8 @@ public class PillarsRoom extends StandardRoom {
 	
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1 , Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1 , CellPlacement.reset(Terrain.EMPTY) );
 		
 		for (Door door : connected.values()) {
 			door.set( Door.Type.REGULAR );
@@ -70,12 +71,12 @@ public class PillarsRoom extends StandardRoom {
 			}
 			
 			//first pillar
-			Painter.fill(level, pillarX, pillarY, pillarSize, pillarSize, Terrain.WALL);
+			Painter.fill(level, pillarX, pillarY, pillarSize, pillarSize, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 			
 			//invert for second pillar
 			pillarX = right - (pillarX - left + pillarSize - 1);
 			pillarY = bottom - (pillarY - top + pillarSize - 1);
-			Painter.fill(level, pillarX, pillarY, pillarSize, pillarSize, Terrain.WALL);
+			Painter.fill(level, pillarX, pillarY, pillarSize, pillarSize, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 		
 		//4 pillars
 		} else {
@@ -90,16 +91,16 @@ public class PillarsRoom extends StandardRoom {
 			float percentSkew = Math.round(Random.Float() * minSpaces) / minSpaces;
 			
 			//top-left, skews right
-			Painter.fill(level, left + 1 + pillarInset + Math.round(percentSkew*xSpaces), top + 1 + pillarInset, pillarSize, pillarSize, Terrain.WALL);
+			Painter.fill(level, left + 1 + pillarInset + Math.round(percentSkew*xSpaces), top + 1 + pillarInset, pillarSize, pillarSize, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 			
 			//top-right, skews down
-			Painter.fill(level, right - pillarSize - pillarInset, top + 1 + pillarInset + Math.round(percentSkew*ySpaces), pillarSize, pillarSize, Terrain.WALL);
+			Painter.fill(level, right - pillarSize - pillarInset, top + 1 + pillarInset + Math.round(percentSkew*ySpaces), pillarSize, pillarSize, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 			
 			//bottom-right, skews left
-			Painter.fill(level, right - pillarSize - pillarInset - Math.round(percentSkew*xSpaces), bottom - pillarSize - pillarInset, pillarSize, pillarSize, Terrain.WALL);
+			Painter.fill(level, right - pillarSize - pillarInset - Math.round(percentSkew*xSpaces), bottom - pillarSize - pillarInset, pillarSize, pillarSize, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 			
 			//bottom-left, skews up
-			Painter.fill(level, left + 1 + pillarInset, bottom - pillarSize - pillarInset - Math.round(percentSkew*ySpaces), pillarSize, pillarSize, Terrain.WALL);
+			Painter.fill(level, left + 1 + pillarInset, bottom - pillarSize - pillarInset - Math.round(percentSkew*ySpaces), pillarSize, pillarSize, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 			
 		}
 	}

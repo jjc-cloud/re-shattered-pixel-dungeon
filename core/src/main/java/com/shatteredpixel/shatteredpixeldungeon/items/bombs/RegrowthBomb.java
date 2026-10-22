@@ -72,7 +72,7 @@ public class RegrowthBomb extends Bomb {
 		for (int i = 0; i < PathFinder.distance.length; i++) {
 			if (PathFinder.distance[i] < Integer.MAX_VALUE) {
 				Char ch = Actor.findChar(i);
-				int t = Dungeon.level.map[i];
+				int t = Dungeon.level.terrainAt(i);
 				if (ch != null){
 					if (ch.alignment == Dungeon.hero.alignment) {
 						//same as a healing potion

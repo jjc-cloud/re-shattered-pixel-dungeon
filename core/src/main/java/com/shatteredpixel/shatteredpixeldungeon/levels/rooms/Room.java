@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels.rooms;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Bundlable;
 import com.watabou.utils.Bundle;
@@ -244,12 +245,12 @@ public abstract class Room extends Rect implements Graph.Node, Bundlable {
 			return false;
 	}
 
-	public boolean canMerge(Level l, Room other, Point p, int mergeTerrain){
+	public boolean canMerge(Level l, Room other, Point p, CellPlacement mergeTerrain){
 		return false;
 	}
 
 	//can be overridden for special merge logic between rooms
-	public void merge(Level l, Room other, Rect merge, int mergeTerrain){
+	public void merge(Level l, Room other, Rect merge, CellPlacement mergeTerrain){
 		Painter.fill(l, merge, mergeTerrain);
 	}
 	

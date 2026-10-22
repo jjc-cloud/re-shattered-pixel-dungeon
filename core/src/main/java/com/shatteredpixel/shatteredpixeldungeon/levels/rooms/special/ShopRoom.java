@@ -57,6 +57,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWea
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.TippedDart;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.watabou.utils.Point;
@@ -102,8 +103,8 @@ public class ShopRoom extends SpecialRoom {
 	
 	public void paint( Level level ) {
 		
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY_SP );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY_SP) );
 
 		placeShopkeeper( level );
 
@@ -149,7 +150,7 @@ public class ShopRoom extends SpecialRoom {
 			Point point = level.cellToPoint(cell);
 			//订单必须紧挨店主并位于房间内部，不能落在最外圈墙边
 			if (point.x <= left || point.x >= right || point.y <= top || point.y >= bottom) continue;
-			if ((Terrain.flags[level.map[cell]] & Terrain.PASSABLE) == 0 || level.findMob(cell) != null) continue;
+			if ((level.cellAt(cell).flags() & Terrain.PASSABLE) == 0 || level.findMob(cell) != null) continue;
 			if (level.heaps.get(cell) == null) emptyCells.add(cell);
 			else occupiedCells.add(cell);
 		}
@@ -226,7 +227,7 @@ public class ShopRoom extends SpecialRoom {
 
 			int cell = level.pointToCell(curItemPlace);
 			//prevents high grass from being trampled, potentially dropping dew/seeds onto shop items
-			if (level.map[cell] == Terrain.HIGH_GRASS){
+			if (level.hasTerrain(cell, Terrain.HIGH_GRASS)){
 				Level.set(cell, Terrain.GRASS, level);
 				GameScene.updateMap(cell);
 			}
@@ -238,7 +239,7 @@ public class ShopRoom extends SpecialRoom {
 		if (!itemsToSpawn.isEmpty()){
 			for (Point p : getPoints()){
 				int cell = level.pointToCell(p);
-				if ((level.map[cell] == Terrain.EMPTY_SP || level.map[cell] == Terrain.EMPTY)
+				if ((level.terrainAt(cell) == Terrain.EMPTY_SP || level.terrainAt(cell) == Terrain.EMPTY)
 						&& level.heaps.get(cell) == null && level.findMob(cell) == null){
 					level.drop( itemsToSpawn.remove(0), level.pointToCell(p) ).type = Heap.Type.FOR_SALE;
 				}

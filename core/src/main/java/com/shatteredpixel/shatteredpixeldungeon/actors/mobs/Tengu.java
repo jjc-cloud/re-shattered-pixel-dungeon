@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
@@ -892,7 +894,7 @@ public class Tengu extends Mob {
 								plant.wither();
 							}
 							
-							observe |= Dungeon.level.affectTerrain(cell, TerrainInteractions.Source.FIRE);
+							observe |= Dungeon.level.affectTerrain(cell, CellContent.BURNABLE);
 							
 							burned = true;
 							CellEmitter.get(cell).start(FlameParticle.FACTORY, 0.03f, 10);
@@ -1046,7 +1048,7 @@ public class Tengu extends Mob {
 			
 			@Override
 			protected void evolve() {
-				TerrainPropagation propagation = TerrainPropagation.event(Dungeon.level, TerrainInteractions.Source.ELECTRIC);
+				TerrainPropagation propagation = TerrainPropagation.event(Dungeon.level, CellContent.CONDUCTIVE);
 				java.util.ArrayList<Integer> shocks = propagation == null ? null : new java.util.ArrayList<>();
 
 

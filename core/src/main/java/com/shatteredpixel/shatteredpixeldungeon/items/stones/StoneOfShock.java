@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.stones;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
@@ -53,7 +55,7 @@ public class StoneOfShock extends Runestone {
 		
 		ArrayList<Lightning.Arc> arcs = new ArrayList<>();
 		int hits = 0;
-		TerrainPropagation propagation = TerrainPropagation.event(Dungeon.level, TerrainInteractions.Source.ELECTRIC);
+		TerrainPropagation propagation = TerrainPropagation.event(Dungeon.level, CellContent.CONDUCTIVE);
 		ArrayList<Char> targets = propagation == null ? null : new ArrayList<>();
 		
 		PathFinder.buildDistanceMap( cell, BArray.not( Dungeon.level.solid, null ), 2 );

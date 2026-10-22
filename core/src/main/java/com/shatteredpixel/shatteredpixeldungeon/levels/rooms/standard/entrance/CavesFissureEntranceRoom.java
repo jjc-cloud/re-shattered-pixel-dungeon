@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.entrance;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.CavesFissureRoom;
 import com.watabou.utils.PathFinder;
@@ -48,16 +49,16 @@ public class CavesFissureEntranceRoom extends CavesFissureRoom {
 		do {
 			entrance = level.pointToCell(random(2));
 
-		} while (level.map[entrance] == Terrain.CHASM || level.map[entrance] == Terrain.EMPTY_SP || level.findMob(entrance) != null);
+		} while (level.terrainAt(entrance) == Terrain.CHASM || level.terrainAt(entrance) == Terrain.EMPTY_SP || level.findMob(entrance) != null);
 
 
 		for (int i : PathFinder.NEIGHBOURS4){
-			if (level.map[entrance+i] == Terrain.CHASM) {
-				Painter.set(level, entrance + i, Terrain.EMPTY);
+			if (level.terrainAt(entrance+i) == Terrain.CHASM) {
+				Painter.set(level, entrance + i, CellPlacement.reset(Terrain.EMPTY));
 			}
 		}
 
-		Painter.set( level, entrance, Terrain.ENTRANCE );
+		Painter.set( level, entrance, CellPlacement.reset(Terrain.ENTRANCE) );
 		level.transitions.add(new LevelTransition(level, entrance, LevelTransition.Type.REGULAR_ENTRANCE));
 
 	}

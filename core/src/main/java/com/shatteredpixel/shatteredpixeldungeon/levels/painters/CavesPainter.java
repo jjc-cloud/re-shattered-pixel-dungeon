@@ -40,12 +40,12 @@ public class CavesPainter extends RegularPainter {
 		
 		int w = level.width();
 		int l = level.length();
-		int[] map = level.map;
+		int[] map = level.terrainVisuals();
 
 		for (Room r : rooms) {
 			for (Room n : r.neigbours) {
 				if (!r.connected.containsKey( n )) {
-					mergeRooms(level, r, n, null, Random.Int(3) == 0 ? Terrain.REGION_DECO : Terrain.CHASM);
+					mergeRooms(level, r, n, null, Random.Int(3) == 0 ? CellPlacement.reset(Terrain.EMPTY, Terrain.REGION_DECO) : CellPlacement.reset(Terrain.CHASM));
 				}
 			}
 		}
@@ -65,44 +65,44 @@ public class CavesPainter extends RegularPainter {
 			//but not if filling that corner replaces solid terrain, blocks a connection, or places a visible trap next to a wall
 			if (Random.Int( s ) > 8) {
 				int corner = (room.left + 1) + (room.top + 1) * w;
-				if ((Terrain.flags[map[corner]] & Terrain.SOLID) == 0
-						&& map[corner-1] == Terrain.WALL && !room.connected.containsValue(level.cellToPoint(corner-1))
-						&& map[corner-w] == Terrain.WALL && !room.connected.containsValue(level.cellToPoint(corner-w))
-						&& map[corner+1] != Terrain.TRAP && map[corner+w] != Terrain.TRAP) {
-					map[corner] = Terrain.WALL;
+				if ((level.cellAt(corner).flags() & Terrain.SOLID) == 0
+						&& level.hasTerrain(corner-1, Terrain.WALL) && !room.connected.containsValue(level.cellToPoint(corner-1))
+						&& level.hasTerrain(corner-w, Terrain.WALL) && !room.connected.containsValue(level.cellToPoint(corner-w))
+						&& !level.hasTerrain(corner+1, Terrain.TRAP) && !level.hasTerrain(corner+w, Terrain.TRAP)) {
+					level.cellAt(corner).place(Terrain.WALL);
 					level.traps.remove(corner);
 				}
 			}
 			
 			if (Random.Int( s ) > 8) {
 				int corner = (room.right - 1) + (room.top + 1) * w;
-				if ((Terrain.flags[map[corner]] & Terrain.SOLID) == 0
-						&& map[corner+1] == Terrain.WALL && !room.connected.containsValue(level.cellToPoint(corner+1))
-						&& map[corner-w] == Terrain.WALL && !room.connected.containsValue(level.cellToPoint(corner-w))
-						&& map[corner-1] != Terrain.TRAP && map[corner+w] != Terrain.TRAP) {
-					map[corner] = Terrain.WALL;
+				if ((level.cellAt(corner).flags() & Terrain.SOLID) == 0
+						&& level.hasTerrain(corner+1, Terrain.WALL) && !room.connected.containsValue(level.cellToPoint(corner+1))
+						&& level.hasTerrain(corner-w, Terrain.WALL) && !room.connected.containsValue(level.cellToPoint(corner-w))
+						&& !level.hasTerrain(corner-1, Terrain.TRAP) && !level.hasTerrain(corner+w, Terrain.TRAP)) {
+					level.cellAt(corner).place(Terrain.WALL);
 					level.traps.remove(corner);
 				}
 			}
 			
 			if (Random.Int( s ) > 8) {
 				int corner = (room.left + 1) + (room.bottom - 1) * w;
-				if ((Terrain.flags[map[corner]] & Terrain.SOLID) == 0
-						&& map[corner-1] == Terrain.WALL && !room.connected.containsValue(level.cellToPoint(corner-1))
-						&& map[corner+w] == Terrain.WALL && !room.connected.containsValue(level.cellToPoint(corner+w))
-						&& map[corner+1] != Terrain.TRAP && map[corner-w] != Terrain.TRAP) {
-					map[corner] = Terrain.WALL;
+				if ((level.cellAt(corner).flags() & Terrain.SOLID) == 0
+						&& level.hasTerrain(corner-1, Terrain.WALL) && !room.connected.containsValue(level.cellToPoint(corner-1))
+						&& level.hasTerrain(corner+w, Terrain.WALL) && !room.connected.containsValue(level.cellToPoint(corner+w))
+						&& !level.hasTerrain(corner+1, Terrain.TRAP) && !level.hasTerrain(corner-w, Terrain.TRAP)) {
+					level.cellAt(corner).place(Terrain.WALL);
 					level.traps.remove(corner);
 				}
 			}
 			
 			if (Random.Int( s ) > 8) {
 				int corner = (room.right - 1) + (room.bottom - 1) * w;
-				if ((Terrain.flags[map[corner]] & Terrain.SOLID) == 0
-						&& map[corner+1] == Terrain.WALL && !room.connected.containsValue(level.cellToPoint(corner+1))
-						&& map[corner+w] == Terrain.WALL && !room.connected.containsValue(level.cellToPoint(corner+w))
-						&& map[corner-1] != Terrain.TRAP && map[corner-w] != Terrain.TRAP) {
-					map[corner] = Terrain.WALL;
+				if ((level.cellAt(corner).flags() & Terrain.SOLID) == 0
+						&& level.hasTerrain(corner+1, Terrain.WALL) && !room.connected.containsValue(level.cellToPoint(corner+1))
+						&& level.hasTerrain(corner+w, Terrain.WALL) && !room.connected.containsValue(level.cellToPoint(corner+w))
+						&& !level.hasTerrain(corner-1, Terrain.TRAP) && !level.hasTerrain(corner-w, Terrain.TRAP)) {
+					level.cellAt(corner).place(Terrain.WALL);
 					level.traps.remove(corner);
 				}
 			}
@@ -115,22 +115,22 @@ public class CavesPainter extends RegularPainter {
 		}
 
 		for (int i=w + 1; i < l - w; i++) {
-			if (map[i] == Terrain.EMPTY) {
+			if (level.terrainAt(i) == Terrain.EMPTY) {
 				int n = 0;
-				if (map[i+1] == Terrain.WALL || map[i+1] == Terrain.COLLAPSE_WALL) {
+				if (level.hasTerrain(i+1, Terrain.WALL) || level.hasTerrain(i+1, Terrain.COLLAPSE_WALL)) {
 					n++;
 				}
-				if (map[i-1] == Terrain.WALL || map[i-1] == Terrain.COLLAPSE_WALL) {
+				if (level.hasTerrain(i-1, Terrain.WALL) || level.hasTerrain(i-1, Terrain.COLLAPSE_WALL)) {
 					n++;
 				}
-				if (map[i+w] == Terrain.WALL || map[i+w] == Terrain.COLLAPSE_WALL) {
+				if (level.hasTerrain(i+w, Terrain.WALL) || level.hasTerrain(i+w, Terrain.COLLAPSE_WALL)) {
 					n++;
 				}
-				if (map[i-w] == Terrain.WALL || map[i-w] == Terrain.COLLAPSE_WALL) {
+				if (level.hasTerrain(i-w, Terrain.WALL) || level.hasTerrain(i-w, Terrain.COLLAPSE_WALL)) {
 					n++;
 				}
 				if (Random.Int( 6 ) <= n) {
-					map[i] = Terrain.EMPTY_DECO;
+					level.cellAt(i).setGround(Terrain.EMPTY_DECO);
 				}
 			}
 		}
@@ -142,14 +142,14 @@ public class CavesPainter extends RegularPainter {
 	protected void generateGold(Level level, ArrayList<Room> rooms){
 		int w = level.width();
 		int l = level.length();
-		int[] map = level.map;
+		int[] map = level.terrainVisuals();
 
 		for (int i=0; i < l - w; i++) {
-			if ((map[i] == Terrain.WALL || map[i] == Terrain.COLLAPSE_WALL) &&
-					DungeonTileSheet.floorTile(map[i + w])
+			if ((level.hasTerrain(i, Terrain.WALL) || level.hasTerrain(i, Terrain.COLLAPSE_WALL)) &&
+					DungeonTileSheet.floorTile(level.terrainAt(i + w))
 					&& Random.Int( 4 ) == 0) {
-				if (map[i] == Terrain.COLLAPSE_WALL) level.caveCollapse.goldVeins.add(i);
-				else map[i] = Terrain.WALL_DECO;
+				if (level.hasTerrain(i, Terrain.COLLAPSE_WALL)) level.caveCollapse.goldVeins.add(i);
+				else level.cellAt(i).place(Terrain.WALL_DECO);
 			}
 		}
 	}

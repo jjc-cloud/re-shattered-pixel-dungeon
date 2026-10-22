@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.GnollSapper;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretRoom;
@@ -74,8 +75,8 @@ public class MineLargeRoom extends CaveRoom {
 		super.paint(level);
 
 		if (Blacksmith.Quest.Type() == Blacksmith.Quest.CRYSTAL){
-			Painter.fillEllipse(level, this, 3, Terrain.MINE_CRYSTAL);
-			Painter.fillEllipse(level, this, 4, Terrain.EMPTY);
+			Painter.fillEllipse(level, this, 3, CellPlacement.reset(Terrain.EMPTY, Terrain.MINE_CRYSTAL));
+			Painter.fillEllipse(level, this, 4, CellPlacement.reset(Terrain.EMPTY));
 
 			Point p = random(5);
 			ArrayList<Integer> internalcells = new ArrayList<>();
@@ -84,8 +85,8 @@ public class MineLargeRoom extends CaveRoom {
 			//we want to ensure that every internal cell has no way out, even diagonally
 			for (int i : internalcells){
 				for (int j : PathFinder.CIRCLE8){
-					if (!internalcells.contains(i+j) && level.map[i+j] != Terrain.MINE_CRYSTAL){
-						level.map[i] = Terrain.MINE_CRYSTAL;
+					if (!internalcells.contains(i+j) && !level.hasTerrain(i+j, Terrain.MINE_CRYSTAL)){
+						level.cellAt(i).place(Terrain.MINE_CRYSTAL);
 						break;
 					}
 				}
@@ -93,18 +94,18 @@ public class MineLargeRoom extends CaveRoom {
 
 			for (int i = 0; i < width()*height()/4; i ++){
 				Point r = random(1);
-				if (level.map[level.pointToCell(r)] != Terrain.WALL) {
-					Painter.set(level, r, Terrain.MINE_CRYSTAL);
+				if (!level.hasTerrain(level.pointToCell(r), Terrain.WALL)) {
+					Painter.set(level, r, CellPlacement.content(Terrain.MINE_CRYSTAL));
 				}
 			}
 
 			CrystalGuardian m = new CrystalGuardian();
 			m.pos = level.pointToCell(p);
 			level.mobs.add(m);
-			Painter.set(level, p, Terrain.EMPTY);
+			Painter.set(level, p, CellPlacement.reset(Terrain.EMPTY));
 
 		} else if (Blacksmith.Quest.Type() == Blacksmith.Quest.GNOLL){
-			Painter.fillEllipse(level, this, 3, Terrain.EMPTY);
+			Painter.fillEllipse(level, this, 3, CellPlacement.reset(Terrain.EMPTY));
 
 			//connections to non-secret rooms have a 9/10 chance to become empty, otherwise wall
 			for (Room n : connected.keySet()){
@@ -134,7 +135,7 @@ public class MineLargeRoom extends CaveRoom {
 			int guardPos;
 			do {
 				guardPos = sapperPos+PathFinder.NEIGHBOURS8[Random.Int(8)];
-			} while (level.map[guardPos] != Terrain.EMPTY);
+			} while (level.terrainAt(guardPos) != Terrain.EMPTY);
 			GnollGuard g = new GnollGuard();
 			g.pos = guardPos;
 			level.mobs.add(g);
@@ -143,8 +144,8 @@ public class MineLargeRoom extends CaveRoom {
 			int barricades = Random.Int(2) == 0 ? 2 : 1;
 			for (int i = 0; i < barricades; i ++){
 				int barricadePos = sapperPos+PathFinder.NEIGHBOURS8[Random.Int(8)];
-				if (level.map[barricadePos] == Terrain.EMPTY && barricadePos != guardPos){
-					Painter.set(level, barricadePos, Terrain.BARRICADE);
+				if (level.terrainAt(barricadePos) == Terrain.EMPTY && barricadePos != guardPos){
+					Painter.set(level, barricadePos, CellPlacement.content(Terrain.BARRICADE));
 				} else {
 					i--;
 				}
@@ -155,16 +156,16 @@ public class MineLargeRoom extends CaveRoom {
 				Point r;
 				do {
 					r = random(2);
-				} while (level.map[level.pointToCell(r)] != Terrain.EMPTY
+				} while (level.terrainAt(level.pointToCell(r)) != Terrain.EMPTY
 						|| level.pointToCell(r) == sapperPos
 						|| level.pointToCell(r) == guardPos);
-				Painter.set(level, r, Terrain.TRAP);
+				Painter.set(level, r, CellPlacement.content(Terrain.TRAP));
 				level.setTrap(new GnollRockfallTrap().reveal(), level.pointToCell(r));
 			}
 
 			for (Point p : getPoints()){
 				int cell = level.pointToCell(p);
-				if (level.map[cell] == Terrain.EMPTY
+				if (level.terrainAt(cell) == Terrain.EMPTY
 						&& cell != sapperPos
 						&& cell != guardPos){
 					float dist = 1000;
@@ -174,9 +175,9 @@ public class MineLargeRoom extends CaveRoom {
 					dist = GameMath.gate(1f, dist-0.5f, 4f);
 					float val = Random.Float((float) Math.pow(dist, 2));
 					if (val <= 0.75f || dist <= 1) {
-						Painter.set(level, cell, Terrain.MINE_BOULDER);
+						Painter.set(level, cell, CellPlacement.content(Terrain.MINE_BOULDER));
 					} else if (val <= 5f && dist <= 3){
-						Painter.set(level, cell, Terrain.EMPTY_DECO);
+						Painter.set(level, cell, CellPlacement.ground(Terrain.EMPTY_DECO));
 					}
 				}
 			}
@@ -184,17 +185,17 @@ public class MineLargeRoom extends CaveRoom {
 
 			for (Point p : getPoints()){
 				int cell = level.pointToCell(p);
-				if (level.map[cell] == Terrain.EMPTY){
-					level.map[cell] = Terrain.HIGH_GRASS;
+				if (level.terrainAt(cell) == Terrain.EMPTY){
+					level.cellAt(cell).place(Terrain.HIGH_GRASS);
 				}
 			}
 
-			Painter.fillEllipse(level, this, 3, Terrain.GRASS);
+			Painter.fillEllipse(level, this, 3, CellPlacement.reset(Terrain.EMPTY, Terrain.GRASS));
 
 			for (int i = 0; i < width() * height() / 6; i++) {
 				Point r = random(1);
-				if (level.map[level.pointToCell(r)] != Terrain.WALL) {
-					Painter.set(level, r, Terrain.HIGH_GRASS);
+				if (!level.hasTerrain(level.pointToCell(r), Terrain.WALL)) {
+					Painter.set(level, r, CellPlacement.content(Terrain.HIGH_GRASS));
 				}
 			}
 
@@ -202,21 +203,21 @@ public class MineLargeRoom extends CaveRoom {
 			FungalSentry m = new FungalSentry();
 			m.pos = level.pointToCell(p);
 			level.mobs.add(m);
-			Painter.set(level, p, Terrain.GRASS);
+			Painter.set(level, p, CellPlacement.reset(Terrain.EMPTY, Terrain.GRASS));
 
 			//no high grass directly above the sentry
 			p.y--;
-			Painter.set(level, p, Terrain.GRASS);
+			Painter.set(level, p, CellPlacement.reset(Terrain.EMPTY, Terrain.GRASS));
 
 		} else {
-			Painter.fillEllipse(level, this, 3, Terrain.EMPTY);
+			Painter.fillEllipse(level, this, 3, CellPlacement.reset(Terrain.EMPTY));
 		}
 
 	}
 
 	private void findInternalCells(Level level, int cell, ArrayList<Integer> internalCells){
 		for (int i : PathFinder.NEIGHBOURS4){
-			if (!internalCells.contains(cell+i) && level.map[cell+i] != Terrain.MINE_CRYSTAL){
+			if (!internalCells.contains(cell+i) && !level.hasTerrain(cell+i, Terrain.MINE_CRYSTAL)){
 				internalCells.add(cell+i);
 				findInternalCells(level, cell+i, internalCells);
 			}

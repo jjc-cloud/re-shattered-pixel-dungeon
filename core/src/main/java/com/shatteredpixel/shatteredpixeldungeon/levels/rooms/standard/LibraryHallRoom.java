@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
@@ -48,8 +49,8 @@ public class LibraryHallRoom extends StandardRoom {
 
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1 , Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1 , CellPlacement.reset(Terrain.EMPTY) );
 
 		//we decide which way to lay out the room based on a few factors:
 		float topBottomBooks = 0;
@@ -87,11 +88,11 @@ public class LibraryHallRoom extends StandardRoom {
 		//if room is sufficiently small/big, place row of bookcases along edges
 		if (majorDim >= 11 || majorDim < 9){
 			if (layingOutLeftToRight) {
-				Painter.drawLine(level, new Point(left + 1, top + 1), new Point(right - 1, top + 1), Terrain.BOOKSHELF);
-				Painter.drawLine(level, new Point(left + 1, bottom - 1), new Point(right - 1, bottom - 1), Terrain.BOOKSHELF);
+				Painter.drawLine(level, new Point(left + 1, top + 1), new Point(right - 1, top + 1), CellPlacement.content(Terrain.BOOKSHELF));
+				Painter.drawLine(level, new Point(left + 1, bottom - 1), new Point(right - 1, bottom - 1), CellPlacement.content(Terrain.BOOKSHELF));
 			} else {
-				Painter.drawLine(level, new Point(left+1, top+1), new Point(left+1, bottom-1), Terrain.BOOKSHELF);
-				Painter.drawLine(level, new Point(right-1, top+1), new Point(right-1, bottom-1), Terrain.BOOKSHELF);
+				Painter.drawLine(level, new Point(left+1, top+1), new Point(left+1, bottom-1), CellPlacement.content(Terrain.BOOKSHELF));
+				Painter.drawLine(level, new Point(right-1, top+1), new Point(right-1, bottom-1), CellPlacement.content(Terrain.BOOKSHELF));
 			}
 
 		}
@@ -106,16 +107,16 @@ public class LibraryHallRoom extends StandardRoom {
 			}
 
 			if (layingOutLeftToRight) {
-				Painter.drawLine(level, new Point(left + lengthInset, center.y - 2), new Point(right - lengthInset, center.y - 2), Terrain.BOOKSHELF);
-				Painter.drawLine(level, new Point(left + lengthInset, center.y + 2), new Point(right - lengthInset, center.y + 2), Terrain.BOOKSHELF);
+				Painter.drawLine(level, new Point(left + lengthInset, center.y - 2), new Point(right - lengthInset, center.y - 2), CellPlacement.content(Terrain.BOOKSHELF));
+				Painter.drawLine(level, new Point(left + lengthInset, center.y + 2), new Point(right - lengthInset, center.y + 2), CellPlacement.content(Terrain.BOOKSHELF));
 			} else {
-				Painter.drawLine(level, new Point(center.x-2, top+lengthInset), new Point(center.x-2, bottom-lengthInset), Terrain.BOOKSHELF);
-				Painter.drawLine(level, new Point(center.x+2, top+lengthInset), new Point(center.x+2, bottom-lengthInset), Terrain.BOOKSHELF);
+				Painter.drawLine(level, new Point(center.x-2, top+lengthInset), new Point(center.x-2, bottom-lengthInset), CellPlacement.content(Terrain.BOOKSHELF));
+				Painter.drawLine(level, new Point(center.x+2, top+lengthInset), new Point(center.x+2, bottom-lengthInset), CellPlacement.content(Terrain.BOOKSHELF));
 			}
 		}
 
 		if (minorDim % 2 == 1 && minorDim < 9){
-			Painter.set(level, center, Terrain.REGION_DECO);
+			Painter.set(level, center, CellPlacement.content(Terrain.REGION_DECO));
 		} else {
 			int pedestalInset = 2;
 			if (minorDim >= 10){
@@ -125,17 +126,17 @@ public class LibraryHallRoom extends StandardRoom {
 				}
 			}
 			if (layingOutLeftToRight) {
-				Painter.set(level, left+pedestalInset, center.y, Terrain.REGION_DECO);
-				Painter.set(level, right-pedestalInset, center.y, Terrain.REGION_DECO);
+				Painter.set(level, left+pedestalInset, center.y, CellPlacement.content(Terrain.REGION_DECO));
+				Painter.set(level, right-pedestalInset, center.y, CellPlacement.content(Terrain.REGION_DECO));
 			} else {
-				Painter.set(level, center.x, top+pedestalInset, Terrain.REGION_DECO);
-				Painter.set(level, center.x, bottom-pedestalInset, Terrain.REGION_DECO);
+				Painter.set(level, center.x, top+pedestalInset, CellPlacement.content(Terrain.REGION_DECO));
+				Painter.set(level, center.x, bottom-pedestalInset, CellPlacement.content(Terrain.REGION_DECO));
 			}
 		}
 
 		//ensure doors can still be accessed
 		for (Door door : connected.values()) {
-			Painter.drawInside(level, this, door, 1, Terrain.EMPTY);
+			Painter.drawInside(level, this, door, 1, CellPlacement.reset(Terrain.EMPTY));
 			door.set( Door.Type.REGULAR );
 		}
 

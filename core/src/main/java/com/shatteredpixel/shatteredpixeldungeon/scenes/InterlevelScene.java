@@ -838,8 +838,8 @@ if (error != null) {
 					|| level.trueDistance(invPos, Dungeon.hero.pos) <= 30 - (tries/10));
 
 			//directly trample grass
-			if (level.map[Dungeon.hero.pos] == Terrain.HIGH_GRASS || level.map[Dungeon.hero.pos] == Terrain.FURROWED_GRASS){
-				level.map[Dungeon.hero.pos] = Terrain.GRASS;
+			if (level.hasTerrain(Dungeon.hero.pos, Terrain.HIGH_GRASS) || level.hasTerrain(Dungeon.hero.pos, Terrain.FURROWED_GRASS)){
+				level.cellAt(Dungeon.hero.pos).place(Terrain.GRASS);
 			}
 			Dungeon.hero.resurrect();
 			level.drop(new LostBackpack(), invPos);

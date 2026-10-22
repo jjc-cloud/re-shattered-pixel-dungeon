@@ -31,6 +31,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Maze;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Point;
@@ -60,19 +61,19 @@ public class SecretMazeRoom extends SecretRoom {
 	
 	@Override
 	public void paint(Level level) {
-		Painter.fill(level, this, Terrain.WALL);
-		Painter.fill(level, this, 1, Terrain.EMPTY);
+		Painter.fill(level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL));
+		Painter.fill(level, this, 1, CellPlacement.reset(Terrain.EMPTY));
 		
 		//true = space, false = wall
 		Maze.allowDiagonals = false;
 		boolean[][] maze = Maze.generate(this);
 		boolean[] passable = new boolean[width()*height()];
 		
-		Painter.fill(level, this, 1, Terrain.EMPTY);
+		Painter.fill(level, this, 1, CellPlacement.reset(Terrain.EMPTY));
 		for (int x = 0; x < maze.length; x++) {
 			for (int y = 0; y < maze[0].length; y++) {
 				if (maze[x][y] == Maze.FILLED) {
-					Painter.fill(level, x + left, y + top, 1, 1, Terrain.WALL);
+					Painter.fill(level, x + left, y + top, 1, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 				}
 				passable[x + width()*y] = maze[x][y] == Maze.EMPTY;
 			}

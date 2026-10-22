@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
@@ -46,20 +47,20 @@ public class CirclePitRoom extends StandardRoom {
 
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
 
-		Painter.fillEllipse( level, this, 1 , Terrain.EMPTY );
+		Painter.fillEllipse( level, this, 1 , CellPlacement.reset(Terrain.EMPTY) );
 
 		for (Door door : connected.values()) {
 			door.set( Door.Type.REGULAR );
 			if (door.x == left || door.x == right){
-				Painter.drawInside(level, this, door, width()/2, Terrain.EMPTY);
+				Painter.drawInside(level, this, door, width()/2, CellPlacement.reset(Terrain.EMPTY));
 			} else {
-				Painter.drawInside(level, this, door, height()/2, Terrain.EMPTY);
+				Painter.drawInside(level, this, door, height()/2, CellPlacement.reset(Terrain.EMPTY));
 			}
 		}
 
-		Painter.fillEllipse( level, this, 3 , Terrain.CHASM );
+		Painter.fillEllipse( level, this, 3 , CellPlacement.reset(Terrain.CHASM) );
 
 		//50/100% chance based on size
 		if (sizeCat != SizeCategory.NORMAL && Random.Int(4-sizeFactor()) == 0) {
@@ -93,9 +94,9 @@ public class CirclePitRoom extends StandardRoom {
 				}
 
 				if (valid) {
-					Painter.drawLine(level, edge, center, Terrain.REGION_DECO_ALT);
-					Painter.drawInside(level, this, edge, 1, Terrain.EMPTY_SP);
-					Painter.set(level, edge, Terrain.WALL);
+					Painter.drawLine(level, edge, center, CellPlacement.reset(Terrain.EMPTY, Terrain.REGION_DECO_ALT));
+					Painter.drawInside(level, this, edge, 1, CellPlacement.reset(Terrain.EMPTY_SP));
+					Painter.set(level, edge, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 
 					//TODO pick a random cell to make empty_sp?
 				}

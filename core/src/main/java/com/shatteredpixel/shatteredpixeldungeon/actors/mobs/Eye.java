@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
@@ -185,7 +187,7 @@ public class Eye extends Mob {
 		Invisibility.dispel(this);
 		for (int pos : beam.subPath(1, beam.dist)) {
 
-			terrainAffected |= Dungeon.level.affectTerrain(pos, TerrainInteractions.Source.DISINTEGRATION);
+			terrainAffected |= Dungeon.level.affectTerrain(pos, (CellContent.BREAKABLE | CellContent.BURNABLE));
 
 			Char ch = Actor.findChar( pos );
 			if (ch == null) {

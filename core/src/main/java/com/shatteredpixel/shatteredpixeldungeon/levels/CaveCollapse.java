@@ -9,6 +9,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.RoomProtection;
@@ -43,20 +44,12 @@ public final class CaveCollapse implements Hero.Doom {
 	// 矿脉是初始岩壁的外观，挖掉后不随塌方重新生成。
 	public final IntSet goldVeins = new IntSet();
 	// 由 Level.set 在覆盖地形前记录、开墙前取回；只对危险区内的格子使用。
-	final int[] buriedTerrain;
-	final SparseArray<Trap> buriedTraps = new SparseArray<>();
 	private boolean collapsing;
 
 	public CaveCollapse(Level level) {
 		this.level = level;
 		regionAt = new int[level.length()];
-		buriedTerrain = level.map.clone();
 		Arrays.fill(regionAt, -1);
-		level.interactions().setDefault(Terrain.COLLAPSE_WALL, TerrainInteractions.Rule.NONE
-				.on(TerrainInteractions.Source.CLICK, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
-				.on(TerrainInteractions.Source.MISSILE, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
-				.on(TerrainInteractions.Source.SHOCKWAVE, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
-				.on(TerrainInteractions.Source.WAND, TerrainInteractions.Response.replaceWith(Terrain.EMPTY)));
 	}
 
 	public boolean contains(int cell) {
@@ -69,7 +62,7 @@ public final class CaveCollapse implements Hero.Doom {
 	}
 
 	public boolean hasGold(int cell) {
-		return contains(cell) && level.map[cell] == Terrain.COLLAPSE_WALL && goldVeins.contains(cell);
+		return contains(cell) && level.hasTerrain(cell, Terrain.COLLAPSE_WALL) && goldVeins.contains(cell);
 	}
 
 	/** 洞穴结构绘制时生成薄隔墙，与实际门直接相邻的墙格不参与。 */
@@ -89,8 +82,8 @@ public final class CaveCollapse implements Hero.Doom {
 					if (protectedRoom) {
 						protectedCells[cell] = true;
 					} else {
-						int tile = level.map[cell];
-						int flags = Terrain.flags[tile];
+						int tile = level.terrainAt(cell);
+						int flags = level.cellAt(cell).flags();
 						if ((flags & (Terrain.PASSABLE | Terrain.AVOID)) != 0
 								&& (flags & Terrain.SOLID) == 0 && !DungeonTileSheet.doorTile(tile)) {
 							owner[cell] = i + 1;
@@ -101,11 +94,11 @@ public final class CaveCollapse implements Hero.Doom {
 		}
 		// Room.Door 也表示开放连接，保护范围以已经绘制出的实体门为准。
 		for (int cell = 0; cell < level.length(); cell++) {
-			if (DungeonTileSheet.doorTile(level.map[cell]) || level.map[cell] == Terrain.SECRET_DOOR) {
+			if (DungeonTileSheet.doorTile(level.terrainAt(cell)) || level.hasTerrain(cell, Terrain.SECRET_DOOR)) {
 				for (int offset : PathFinder.NEIGHBOURS4) {
 					int next = cell + offset;
 					if (level.insideMap(next) && level.distance(cell, next) <= 1
-							&& (level.map[next] == Terrain.WALL || level.map[next] == Terrain.WALL_DECO)) {
+							&& (level.hasTerrain(next, Terrain.WALL) || level.hasTerrain(next, Terrain.WALL_DECO))) {
 						protectedCells[next] = true;
 					}
 				}
@@ -119,7 +112,7 @@ public final class CaveCollapse implements Hero.Doom {
 				int end = cell + offset;
 				int thickness = 0;
 				while (level.insideMap(end) && (offset != 1 || end / width == cell / width)
-						&& (level.map[end] == Terrain.WALL || level.map[end] == Terrain.WALL_DECO)) {
+						&& (level.hasTerrain(end, Terrain.WALL) || level.hasTerrain(end, Terrain.WALL_DECO))) {
 					thickness++;
 					if (thickness > 2) break;
 					end += offset;
@@ -154,10 +147,8 @@ public final class CaveCollapse implements Hero.Doom {
 			walls.add(cells.size);
 			for (int i = 0; i < cells.size; i++) {
 				int cell = cells.get(i);
-				if (level.map[cell] == Terrain.WALL_DECO) goldVeins.add(cell);
-				buriedTerrain[cell] = Terrain.EMPTY;
-				level.interactions().clearOverride(cell);
-				Painter.set(level, cell, Terrain.COLLAPSE_WALL);
+				if (level.hasTerrain(cell, Terrain.WALL_DECO)) goldVeins.add(cell);
+				Painter.set(level, cell, CellPlacement.content(Terrain.COLLAPSE_WALL));
 			}
 		}
 	}
@@ -181,8 +172,8 @@ public final class CaveCollapse implements Hero.Doom {
 			for (int y = room.top + 1; y < room.bottom; y++) {
 				for (int x = room.left + 1; x < room.right; x++) {
 					int cell = x + y * level.width();
-					int tile = level.map[cell];
-					int flags = Terrain.flags[tile];
+					int tile = level.terrainAt(cell);
+					int flags = level.cellAt(cell).flags();
 					if ((flags & (Terrain.PASSABLE | Terrain.AVOID)) == 0
 							|| (flags & (Terrain.SOLID | Terrain.PIT)) != 0
 							|| tile == Terrain.WELL || tile == Terrain.OPEN_DOOR) continue;
@@ -226,7 +217,7 @@ public final class CaveCollapse implements Hero.Doom {
 				if ((right - left + 1) * (bottom - top + 1) == cells.size()) continue;
 				boolean[] passable = new boolean[level.length()];
 				for (int i = 0; i < passable.length; i++) {
-					int flags = Terrain.flags[level.map[i]];
+					int flags = level.cellAt(i).flags();
 					passable[i] = (flags & (Terrain.PASSABLE | Terrain.AVOID)) != 0 && (flags & Terrain.PIT) == 0;
 				}
 				PathFinder.buildDistanceMap(seed, passable);
@@ -239,7 +230,7 @@ public final class CaveCollapse implements Hero.Doom {
 					boolean nearWall = false;
 					for (int offset : PathFinder.NEIGHBOURS8) {
 						int next = cell + offset;
-						if (!level.insideMap(next) || DungeonTileSheet.wallStitcheable(level.map[next])
+						if (!level.insideMap(next) || DungeonTileSheet.wallStitcheable(level.terrainAt(next))
 								|| supports.contains(next)) {
 							nearWall = true;
 							break;
@@ -272,15 +263,7 @@ public final class CaveCollapse implements Hero.Doom {
 				regions.add(region);
 				walls.add(supports.size());
 				for (int cell : supports) {
-					int groundTile = level.map[cell];
-					// 高草压扁、水面填平；在覆盖时确定结果，挖开与读档不再重抽。
-					if (groundTile == Terrain.HIGH_GRASS || groundTile == Terrain.FURROWED_GRASS) groundTile = Terrain.GRASS;
-					else if (groundTile == Terrain.WATER) groundTile = Random.Int(2) == 0 ? Terrain.EMPTY : Terrain.EMPTY_DECO;
-					buriedTerrain[cell] = groundTile;
-					Trap trap = level.traps.remove(cell);
-					if (trap != null) buriedTraps.put(cell, trap);
-					level.interactions().clearOverride(cell);
-					Painter.set(level, cell, Terrain.COLLAPSE_WALL);
+					Painter.set(level, cell, CellPlacement.content(Terrain.COLLAPSE_WALL));
 				}
 				break;
 			}
@@ -351,8 +334,6 @@ public final class CaveCollapse implements Hero.Doom {
 
 	public void storeInBundle(Bundle bundle) {
 		bundle.put("gold_veins", goldVeins.iterator().toArray().toArray());
-		bundle.put("buried_terrain", buriedTerrain);
-		bundle.put("buried_traps", buriedTraps.valueList());
 		bundle.put("count", regions.size());
 		for (int i = 0; i < regions.size(); i++) bundle.put("region_" + i, regions.get(i));
 	}
@@ -361,19 +342,12 @@ public final class CaveCollapse implements Hero.Doom {
 		regions.clear(); walls.clear(); Arrays.fill(regionAt, -1);
 		goldVeins.clear();
 		for (int cell : bundle.getIntArray("gold_veins")) goldVeins.add(cell);
-		int[] terrain = bundle.getIntArray("buried_terrain");
-		System.arraycopy(terrain, 0, buriedTerrain, 0, buriedTerrain.length);
-		buriedTraps.clear();
-		for (Bundlable b : bundle.getCollection("buried_traps")) {
-			Trap trap = (Trap)b;
-			buriedTraps.put(trap.pos, trap);
-		}
 		for (int i = 0; i < bundle.getInt("count"); i++) {
 			int[] cells = bundle.getIntArray("region_" + i);
 			int remaining = 0;
 			for (int cell : cells) {
 				regionAt[cell] = i;
-				if (level.map[cell] == Terrain.COLLAPSE_WALL) remaining++;
+				if (level.hasTerrain(cell, Terrain.COLLAPSE_WALL)) remaining++;
 			}
 			regions.add(cells); walls.add(remaining);
 		}

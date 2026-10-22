@@ -40,6 +40,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Amulet;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -85,7 +86,7 @@ public class HallsBossLevel extends Level {
 				Music.INSTANCE.play(Assets.Music.HALLS_BOSS, true);
 			}
 		//if exit isn't unlocked
-		} else if (map[exit()] != Terrain.EXIT || Statistics.amuletObtained){
+		} else if (terrainAt(exit()) != Terrain.EXIT || Statistics.amuletObtained){
 			Music.INSTANCE.end();
 		} else {
 			Music.INSTANCE.playTracks(HallsLevel.HALLS_TRACK_LIST, HallsLevel.HALLS_TRACK_CHANCES, false);
@@ -123,7 +124,7 @@ public class HallsBossLevel extends Level {
 				bottom = Random.IntRange(ROOM_BOTTOM+8, ROOM_BOTTOM+12);
 			}
 
-			Painter.fill(this, 4 + i * 5, top, 5, bottom - top + 1, Terrain.EMPTY);
+			Painter.fill(this, 4 + i * 5, top, 5, bottom - top + 1, CellPlacement.reset(Terrain.EMPTY));
 
 			if (i == 2) {
 				int entrance = (6 + i * 5) + (bottom - 1) * width();
@@ -137,35 +138,35 @@ public class HallsBossLevel extends Level {
 
 		boolean[] patch = Patch.generate(width, height, 0.20f, 0, true);
 		for (int i = 0; i < length(); i++) {
-			if (map[i] == Terrain.EMPTY && patch[i]) {
-				map[i] = distance(i, bossPos)+Random.Int(5) >= 10 ? Terrain.REGION_DECO : Terrain.STATUE;
+			if (terrainAt(i) == Terrain.EMPTY && patch[i]) {
+				cellAt(i).place(distance(i, bossPos)+Random.Int(5) >= 10 ? Terrain.REGION_DECO : Terrain.STATUE);
 			}
 		}
 
-		map[entrance()] = Terrain.ENTRANCE;
+		cellAt(entrance()).setGround(Terrain.ENTRANCE);
 
-		Painter.fill(this, ROOM_LEFT-1, ROOM_TOP-1, 11, 11, Terrain.EMPTY );
+		Painter.fill(this, ROOM_LEFT-1, ROOM_TOP-1, 11, 11, CellPlacement.reset(Terrain.EMPTY) );
 
 		patch = Patch.generate(width, height, 0.30f, 3, true);
 		for (int i = 0; i < length(); i++) {
-			if ((map[i] == Terrain.EMPTY || map[i] == Terrain.STATUE || map[i] == Terrain.REGION_DECO) && patch[i]) {
-				map[i] = Terrain.WATER;
+			if ((terrainAt(i) == Terrain.EMPTY || hasTerrain(i, Terrain.STATUE) || hasTerrain(i, Terrain.REGION_DECO)) && patch[i]) {
+				cellAt(i).place(Terrain.WATER);
 			}
 		}
 
 		for (int i = 0; i < length(); i++) {
-			if (map[i] == Terrain.EMPTY && Random.Int(4) == 0) {
-				map[i] = Terrain.EMPTY_DECO;
+			if (terrainAt(i) == Terrain.EMPTY && Random.Int(4) == 0) {
+				cellAt(i).setGround(Terrain.EMPTY_DECO);
 			}
 		}
 
-		Painter.fill(this, ROOM_LEFT, ROOM_TOP, 9, 9, Terrain.EMPTY_SP );
+		Painter.fill(this, ROOM_LEFT, ROOM_TOP, 9, 9, CellPlacement.reset(Terrain.EMPTY_SP) );
 
-		Painter.fill(this, ROOM_LEFT, ROOM_TOP, 9, 2, Terrain.WALL_DECO );
-		Painter.fill(this, ROOM_LEFT, ROOM_BOTTOM-1, 2, 2, Terrain.WALL_DECO );
-		Painter.fill(this, ROOM_RIGHT-1, ROOM_BOTTOM-1, 2, 2, Terrain.WALL_DECO );
+		Painter.fill(this, ROOM_LEFT, ROOM_TOP, 9, 2, CellPlacement.content(Terrain.WALL_DECO) );
+		Painter.fill(this, ROOM_LEFT, ROOM_BOTTOM-1, 2, 2, CellPlacement.content(Terrain.WALL_DECO) );
+		Painter.fill(this, ROOM_RIGHT-1, ROOM_BOTTOM-1, 2, 2, CellPlacement.content(Terrain.WALL_DECO) );
 
-		Painter.fill(this, ROOM_LEFT+3, ROOM_TOP+2, 3, 4, Terrain.EMPTY );
+		Painter.fill(this, ROOM_LEFT+3, ROOM_TOP+2, 3, 4, CellPlacement.reset(Terrain.EMPTY) );
 
 		LevelTransition exit = new LevelTransition(this, exitCell, LevelTransition.Type.REGULAR_EXIT);
 		exit.top--;
@@ -182,14 +183,14 @@ public class HallsBossLevel extends Level {
 		customWalls.add(vis);
 
 		for (int i = 0; i < length(); i++) {
-			if (map[i] == Terrain.REGION_DECO && Random.Int(2) == 0) {
-				map[i] = Terrain.REGION_DECO_ALT;
+			if (hasTerrain(i, Terrain.REGION_DECO) && Random.Int(2) == 0) {
+				cellAt(i).place(Terrain.REGION_DECO_ALT);
 			}
 		}
 
 		//basic version of building flag maps for the pathfinder test
 		for (int i = 0; i < length; i++){
-			passable[i]	= ( Terrain.flags[map[i]] & Terrain.PASSABLE) != 0;
+			passable[i]	= ( cellAt(i).flags() & Terrain.PASSABLE) != 0;
 		}
 
 		//ensures a path to the exit exists
@@ -241,7 +242,7 @@ public class HallsBossLevel extends Level {
 
 	@Override
 	public void occupyCell( Char ch ) {
-		if (map[entrance()] == Terrain.ENTRANCE && map[exit()] != Terrain.EXIT
+		if (terrainAt(entrance()) == Terrain.ENTRANCE && terrainAt(exit()) != Terrain.EXIT
 				&& ch == Dungeon.hero && Dungeon.level.distance(ch.pos, entrance()) >= 2) {
 			seal();
 		}
@@ -438,7 +439,7 @@ public class HallsBossLevel extends Level {
 		private void updateState(){
 			if (vis != null){
 				int[] data = map.clone();
-				if (Dungeon.level.map[Dungeon.level.exit()] == Terrain.EXIT) {
+				if (Dungeon.level.terrainAt(Dungeon.level.exit()) == Terrain.EXIT) {
 					data[4] = 19;
 					data[12] = data[14] = 31;
 				}
@@ -477,7 +478,7 @@ public class HallsBossLevel extends Level {
 		private void updateState(){
 			if (vis != null){
 				int[] data = map.clone();
-				if (Dungeon.level.map[Dungeon.level.exit()] == Terrain.EXIT) {
+				if (Dungeon.level.terrainAt(Dungeon.level.exit()) == Terrain.EXIT) {
 					data[3] = 1;
 					data[4] = 0;
 					data[5] = 2;

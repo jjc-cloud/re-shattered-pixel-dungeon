@@ -9,6 +9,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -26,7 +27,7 @@ public class HiddenLevel extends Level {
 		viewDistance = 1;
 	}
 
-	private int region() {
+	@Override public int region() {
 		return (Dungeon.depth - 1) / 5;
 	}
 
@@ -36,8 +37,8 @@ public class HiddenLevel extends Level {
 		int w = 13 + 2 * Random.Int(5);
 		int h = 13 + 2 * Random.Int(5);
 		setSize(w, h);
-		Painter.fill(this, 0, 0, w, h, Terrain.WALL);
-		Painter.fill(this, 1, 1, w - 2, h - 2, Terrain.EMPTY);
+		Painter.fill(this, 0, 0, w, h, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
+		Painter.fill(this, 1, 1, w - 2, h - 2, CellPlacement.reset(Terrain.EMPTY));
 
 		//随机形状：切四角 + 边缘浅凹口；底边正中留给入口，不动
 		int maxCut = region == 2 ? 5 : 3; //矿洞的房间最不规则
@@ -51,20 +52,20 @@ public class HiddenLevel extends Level {
 			int depth = 1 + Random.Int(2);
 			switch (Random.Int(3)) { //0上 1左 2右
 				case 0:
-					Painter.fill(this, 2 + Random.Int(w - 4 - len), 1, len, depth, Terrain.WALL);
+					Painter.fill(this, 2 + Random.Int(w - 4 - len), 1, len, depth, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 					break;
 				case 1:
-					Painter.fill(this, 1, 2 + Random.Int(h - 4 - depth), depth, len, Terrain.WALL);
+					Painter.fill(this, 1, 2 + Random.Int(h - 4 - depth), depth, len, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 					break;
 				default:
-					Painter.fill(this, w - 1 - depth, 2 + Random.Int(h - 4 - depth), depth, len, Terrain.WALL);
+					Painter.fill(this, w - 1 - depth, 2 + Random.Int(h - 4 - depth), depth, len, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 					break;
 			}
 		}
 
 		//入口放 h-3 行（老布局约定）：更新其邻格地形时不会探到地图外
 		int entrance = w / 2 + (h - 3) * width();
-		Painter.set(this, entrance, Terrain.ENTRANCE);
+		Painter.set(this, entrance, CellPlacement.reset(Terrain.ENTRANCE));
 		transitions.add(new LevelTransition(this, entrance, LevelTransition.Type.BRANCH_ENTRANCE,
 				Dungeon.depth, 0, LevelTransition.Type.BRANCH_EXIT));
 
@@ -85,8 +86,8 @@ public class HiddenLevel extends Level {
 		ArrayList<Integer> pedestals = new ArrayList<>();
 		ArrayList<Integer> candidates = new ArrayList<>();
 		for (int cell = 0; cell < length(); cell++) {
-			if (map[cell] != Terrain.EMPTY && map[cell] != Terrain.EMPTY_DECO
-					&& map[cell] != Terrain.GRASS) continue;
+			if (terrainAt(cell) != Terrain.EMPTY && terrainAt(cell) != Terrain.EMPTY_DECO
+					&& !hasTerrain(cell, Terrain.GRASS)) continue;
 			int dist = distance(entrance, cell);
 			if (dist <= 2 || dist == Integer.MAX_VALUE) continue;
 			candidates.add(cell);
@@ -102,7 +103,7 @@ public class HiddenLevel extends Level {
 			}
 			if (separated) {
 				pedestals.add(cell);
-				Painter.set(this, cell, Terrain.PEDESTAL);
+				Painter.set(this, cell, CellPlacement.reset(Terrain.PEDESTAL));
 				if (pedestals.size() == 3) break;
 			}
 		}
@@ -111,8 +112,8 @@ public class HiddenLevel extends Level {
 		if (region == 3) layCarpets(pedestals);
 		for (Trap trap : traps.valueList()) {
 			trap.reveal();
-			if (map[trap.pos] == Terrain.SECRET_TRAP) {
-				Painter.set(this, trap.pos, Terrain.TRAP);
+			if (hasTerrain(trap.pos, Terrain.SECRET_TRAP)) {
+				Painter.set(this, trap.pos, CellPlacement.content(Terrain.TRAP));
 			}
 		}
 		return true;
@@ -122,7 +123,7 @@ public class HiddenLevel extends Level {
 	private void cutCorner(int cx, int cy, int dx, int dy, int c) {
 		for (int i = 0; i < c; i++) {
 			for (int j = 0; j < c - i; j++) {
-				Painter.set(this, cx + dx * i, cy + dy * j, Terrain.WALL);
+				Painter.set(this, cx + dx * i, cy + dy * j, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 			}
 		}
 	}
@@ -131,10 +132,10 @@ public class HiddenLevel extends Level {
 	private void scatterRegionDeco(int region, int entrance) {
 		ArrayList<Integer> edgeCells = new ArrayList<>();
 		for (int cell = 0; cell < length(); cell++) {
-			if (map[cell] != Terrain.EMPTY) continue;
+			if (terrainAt(cell) != Terrain.EMPTY) continue;
 			if (distance(entrance, cell) <= 2) continue;
-			if (map[cell - 1] == Terrain.WALL || map[cell + 1] == Terrain.WALL
-					|| map[cell - width()] == Terrain.WALL || map[cell + width()] == Terrain.WALL) {
+			if (hasTerrain(cell - 1, Terrain.WALL) || hasTerrain(cell + 1, Terrain.WALL)
+					|| hasTerrain(cell - width(), Terrain.WALL) || hasTerrain(cell + width(), Terrain.WALL)) {
 				edgeCells.add(cell);
 			}
 		}
@@ -145,21 +146,21 @@ public class HiddenLevel extends Level {
 			int statues = 3 + Random.Int(4);
 			for (int i = 0; i < statues && !edgeCells.isEmpty(); i++) {
 				int pos = edgeCells.remove(Random.Int(edgeCells.size()));
-				Painter.set(this, pos, Random.Int(3) == 0 ? Terrain.STATUE_SP : Terrain.STATUE);
+				Painter.set(this, pos, Random.Int(3) == 0 ? CellPlacement.ground(Terrain.EMPTY_SP, Terrain.STATUE_SP) : CellPlacement.content(Terrain.STATUE));
 			}
 		} else {
 			//下水道木桶 / 监狱铁笼 / 矿洞金属架构 / 恶魔大厅岩石瓦砾，全是 REGION_DECO
 			int placed = 0;
 			for (int cell : new ArrayList<>(edgeCells)) {
 				if (Random.Int(3) == 0) {
-					Painter.set(this, cell, Random.Int(3) == 0 ? Terrain.REGION_DECO_ALT : Terrain.REGION_DECO);
+					Painter.set(this, cell, Random.Int(3) == 0 ? CellPlacement.content(Terrain.REGION_DECO_ALT) : CellPlacement.content(Terrain.REGION_DECO));
 					placed++;
 				}
 			}
 			//小房间贴墙空地少时按概率可能一个都出不来，保底铺三个
 			while (placed < 3 && !edgeCells.isEmpty()) {
 				int pos = edgeCells.remove(Random.Int(edgeCells.size()));
-				Painter.set(this, pos, Random.Int(3) == 0 ? Terrain.REGION_DECO_ALT : Terrain.REGION_DECO);
+				Painter.set(this, pos, Random.Int(3) == 0 ? CellPlacement.content(Terrain.REGION_DECO_ALT) : CellPlacement.content(Terrain.REGION_DECO));
 				placed++;
 			}
 		}
@@ -175,14 +176,14 @@ public class HiddenLevel extends Level {
 			int cur = queue.removeFirst();
 			for (int n : new int[]{cur - 1, cur + 1, cur - width(), cur + width()}) {
 				if (seen[n]) continue;
-				if ((Terrain.flags[map[n]] & Terrain.PASSABLE) == 0) continue;
+				if ((cellAt(n).flags() & Terrain.PASSABLE) == 0) continue;
 				seen[n] = true;
 				queue.add(n);
 			}
 		}
 		for (int cell = 0; cell < length(); cell++) {
-			if (!seen[cell] && (Terrain.flags[map[cell]] & Terrain.PASSABLE) != 0) {
-				Painter.set(this, cell, Terrain.WALL);
+			if (!seen[cell] && (cellAt(cell).flags() & Terrain.PASSABLE) != 0) {
+				Painter.set(this, cell, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 			}
 		}
 	}
@@ -200,7 +201,7 @@ public class HiddenLevel extends Level {
 				for (int yy = y; yy < y + ch && ok; yy++) {
 					for (int xx = x; xx < x + cw && ok; xx++) {
 						int cell = xx + yy * width();
-						if (map[cell] != Terrain.EMPTY || pedestals.contains(cell)) ok = false;
+						if (terrainAt(cell) != Terrain.EMPTY || pedestals.contains(cell)) ok = false;
 					}
 				}
 				if (ok) {
@@ -220,7 +221,7 @@ public class HiddenLevel extends Level {
 	@Override
 	protected void createItems() {
 		for (int cell = 0; cell < length(); cell++) {
-			if (map[cell] != Terrain.PEDESTAL) continue;
+			if (terrainAt(cell) != Terrain.PEDESTAL) continue;
 			Item item;
 			switch (Random.Int(4)) {
 				case 0:
@@ -328,15 +329,15 @@ public class HiddenLevel extends Level {
 
 	@Override
 	protected int staticEnvironmentalLightRadius(int cell) {
-		return map[cell] == Terrain.PEDESTAL ? 1 : super.staticEnvironmentalLightRadius(cell);
+		return terrainAt(cell) == Terrain.PEDESTAL ? 1 : super.staticEnvironmentalLightRadius(cell);
 	}
 
 	@Override
 	public Group addVisuals() {
 		super.addVisuals();
 		for (int cell = 0; cell < length(); cell++) {
-			if (map[cell] == Terrain.PEDESTAL
-					|| (Dungeon.depth >= 6 && Dungeon.depth <= 10 && map[cell] == Terrain.WALL_DECO)) {
+			if (terrainAt(cell) == Terrain.PEDESTAL
+					|| (Dungeon.depth >= 6 && Dungeon.depth <= 10 && hasTerrain(cell, Terrain.WALL_DECO))) {
 				PrisonLevel.Torch halo = new PrisonLevel.Torch(cell);
 				halo.on = false;
 				halo.autoKill = false;

@@ -41,7 +41,7 @@ public class Bulk extends Armor.Glyph {
 	//more of a reduction really
 	public static float speedBoost( Char owner, int level ){
 		if (level == -1 ||
-				(Dungeon.level.map[owner.pos] != Terrain.DOOR && Dungeon.level.map[owner.pos] != Terrain.OPEN_DOOR )) {
+				(!Dungeon.level.hasTerrain(owner.pos, Terrain.DOOR) && !Dungeon.level.hasTerrain(owner.pos, Terrain.OPEN_DOOR) )) {
 			return 1;
 		} else {
 			if (owner.sprite != null){

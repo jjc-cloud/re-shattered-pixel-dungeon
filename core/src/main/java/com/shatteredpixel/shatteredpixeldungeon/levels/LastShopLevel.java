@@ -67,8 +67,8 @@ public class LastShopLevel extends RegularLevel {
 		if (super.build()){
 			
 			for (int i=0; i < length(); i++) {
-				if (map[i] == Terrain.SECRET_DOOR) {
-					map[i] = Terrain.DOOR;
+				if (hasTerrain(i, Terrain.SECRET_DOOR)) {
+					cellAt(i).place(Terrain.DOOR);
 				}
 			}
 			

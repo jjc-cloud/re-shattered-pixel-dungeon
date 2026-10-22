@@ -34,6 +34,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.TrinketCatalyst;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Document;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
@@ -45,8 +46,8 @@ public class LaboratoryRoom extends SpecialRoom {
 
 	public void paint( Level level ) {
 		
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY_SP );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY_SP) );
 		
 		Door entrance = entrance();
 		
@@ -60,7 +61,7 @@ public class LaboratoryRoom extends SpecialRoom {
 		} else if (entrance.y == bottom) {
 			pot = new Point( Random.Int( 2 ) == 0 ? left + 1 : right - 1, top+1 );
 		}
-		Painter.set( level, pot, Terrain.ALCHEMY );
+		Painter.set( level, pot, CellPlacement.content(Terrain.ALCHEMY) );
 		
 		int chapter = 1 + Dungeon.depth/5;
 		Blob.seed( pot.x + level.width() * pot.y, 1, Alchemy.class, level );
@@ -69,7 +70,7 @@ public class LaboratoryRoom extends SpecialRoom {
 		do {
 			pos = level.pointToCell(random());
 		} while (
-				level.map[pos] != Terrain.EMPTY_SP ||
+				level.terrainAt(pos) != Terrain.EMPTY_SP ||
 						level.heaps.get( pos ) != null);
 		level.drop( new EnergyCrystal().quantity(5), pos );
 
@@ -78,7 +79,7 @@ public class LaboratoryRoom extends SpecialRoom {
 			do {
 				pos = level.pointToCell(random());
 			} while (
-				level.map[pos] != Terrain.EMPTY_SP ||
+				level.terrainAt(pos) != Terrain.EMPTY_SP ||
 				level.heaps.get( pos ) != null);
 			level.drop( prize( level ), pos );
 		}
@@ -111,7 +112,7 @@ public class LaboratoryRoom extends SpecialRoom {
 				do {
 					pos = level.pointToCell(random());
 				} while (
-						level.map[pos] != Terrain.EMPTY_SP ||
+						level.terrainAt(pos) != Terrain.EMPTY_SP ||
 								level.heaps.get(pos) != null);
 				level.drop(p, pos);
 			}

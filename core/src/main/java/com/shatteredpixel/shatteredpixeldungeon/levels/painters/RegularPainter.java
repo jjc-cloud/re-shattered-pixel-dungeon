@@ -29,6 +29,9 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.TrapMechanism;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Document;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.CustomTilemap;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.Carpet;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Patch;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
@@ -141,6 +144,10 @@ public abstract class RegularPainter extends Painter {
 		}
 		
 		paintDoors( level, rooms );
+		decorate( level, rooms );
+		for (CustomTilemap tile : level.customTiles) {
+			if (tile instanceof Carpet) ((Carpet) tile).registerContents(level);
+		}
 
 		//use a separate RNG here so that extra painting variance doesn't affect the rest of levelgen
 		//e.g. this minimizes mossy clump's effect on levelgen
@@ -158,7 +165,6 @@ public abstract class RegularPainter extends Painter {
 				paintTraps( level, rooms );
 			}
 		
-			decorate( level, rooms );
 
 		Random.popGenerator();
 		
@@ -219,7 +225,7 @@ public abstract class RegularPainter extends Painter {
 				if (roomMerges.get(r) == n || roomMerges.get(n) == r){
 					continue;
 				} else if (!roomMerges.containsKey(r) && !roomMerges.containsKey(n) &&
-						mergeRooms(l, r, n, r.connected.get(n), Terrain.EMPTY)) {
+						mergeRooms(l, r, n, r.connected.get(n), CellPlacement.reset(Terrain.EMPTY))) {
 					if (((StandardRoom) r).sizeCat == StandardRoom.SizeCategory.NORMAL) roomMerges.put(r, n);
 					if (((StandardRoom) n).sizeCat == StandardRoom.SizeCategory.NORMAL) roomMerges.put(n, r);
 					continue;
@@ -286,38 +292,38 @@ public abstract class RegularPainter extends Painter {
 
 				switch (d.type) {
 					case EMPTY:
-						l.map[door] = Terrain.EMPTY;
+						l.cellAt(door).reset(Terrain.EMPTY);
 						break;
 					case TUNNEL:
-						l.map[door] = l.tunnelTile();
+						l.cellAt(door).reset(l.tunnelTile());
 						break;
 					case WATER:
-						l.map[door] = Terrain.WATER;
+						l.cellAt(door).reset(Terrain.EMPTY, Terrain.WATER);
 						break;
 					case UNLOCKED:
-						l.map[door] = Terrain.DOOR;
+						l.cellAt(door).reset(Terrain.EMPTY, Terrain.DOOR);
 						break;
 					case HIDDEN:
-						l.map[door] = Terrain.SECRET_DOOR;
+						l.cellAt(door).reset(Terrain.EMPTY, Terrain.SECRET_DOOR);
 						break;
 					case BARRICADE:
-						l.map[door] = Terrain.BARRICADE;
+						l.cellAt(door).reset(Terrain.EMPTY, Terrain.BARRICADE);
 						break;
 					case LOCKED:
-						l.map[door] = Terrain.LOCKED_DOOR;
+						l.cellAt(door).reset(Terrain.EMPTY, Terrain.LOCKED_DOOR);
 						break;
 					case CRYSTAL:
-						l.map[door] = Terrain.CRYSTAL_DOOR;
+						l.cellAt(door).reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR);
 						break;
 					case WALL:
-						l.map[door] = Terrain.WALL;
+						l.cellAt(door).place(Terrain.WALL);
 						break;
 				}
 			}
 		}
 	}
 
-	protected boolean mergeRooms( Level l, Room r, Room n, Point start, int mergeTerrain){
+	protected boolean mergeRooms( Level l, Room r, Room n, Point start, CellPlacement mergeTerrain){
 
 		Rect intersect = r.intersect( n );
 		if (intersect.left == intersect.right) {
@@ -374,21 +380,22 @@ public abstract class RegularPainter extends Painter {
 	}
 	
 	protected void paintWater( Level l, ArrayList<Room> rooms ){
+		CellContent water = new CellContent(Terrain.WATER, l.region());
 		boolean[] lake = Patch.generate( l.width(), l.height(), waterFill, waterSmoothness, true );
 		
 		if (!rooms.isEmpty()){
 			for (Room r : rooms){
 				for (Point p : r.waterPlaceablePoints()){
 					int i = l.pointToCell(p);
-					if (lake[i] && l.map[i] == Terrain.EMPTY){
-						l.map[i] = Terrain.WATER;
+					if (lake[i] && l.cellAt(i).canPlace(water)){
+						l.cellAt(i).place(Terrain.WATER);
 					}
 				}
 			}
 		} else {
 			for (int i = 0; i < l.length(); i ++) {
-				if (lake[i] && l.map[i] == Terrain.EMPTY){
-					l.map[i] = Terrain.WATER;
+				if (lake[i] && l.cellAt(i).canPlace(water)){
+					l.cellAt(i).place(Terrain.WATER);
 				}
 			}
 		}
@@ -396,6 +403,7 @@ public abstract class RegularPainter extends Painter {
 	}
 	
 	protected void paintGrass( Level l, ArrayList<Room> rooms ) {
+		CellContent vegetation = new CellContent(Terrain.GRASS, l.region());
 		boolean[] grass = Patch.generate( l.width(), l.height(), grassFill, grassSmoothness, true );
 		
 		ArrayList<Integer> grassCells = new ArrayList<>();
@@ -404,14 +412,14 @@ public abstract class RegularPainter extends Painter {
 			for (Room r : rooms){
 				for (Point p : r.grassPlaceablePoints()){
 					int i = l.pointToCell(p);
-					if (grass[i] && l.map[i] == Terrain.EMPTY){
+					if (grass[i] && l.cellAt(i).canPlace(vegetation)){
 						grassCells.add(i);
 					}
 				}
 			}
 		} else {
 			for (int i = 0; i < l.length(); i ++) {
-				if (grass[i] && l.map[i] == Terrain.EMPTY){
+				if (grass[i] && l.cellAt(i).canPlace(vegetation)){
 					grassCells.add(i);
 				}
 			}
@@ -422,7 +430,7 @@ public abstract class RegularPainter extends Painter {
 		//low smoothing, or very low fill, will begin to push the ratio down, normally to 50-30%
 		for (int i : grassCells) {
 			if (l.heaps.get(i) != null || l.findMob(i) != null) {
-				l.map[i] = Terrain.GRASS;
+				l.cellAt(i).place(Terrain.GRASS);
 				continue;
 			}
 			
@@ -432,26 +440,27 @@ public abstract class RegularPainter extends Painter {
 					count++;
 				}
 			}
-			l.map[i] = (Random.Float() < count / 12f) ? Terrain.HIGH_GRASS : Terrain.GRASS;
+			l.cellAt(i).place((Random.Float() < count / 12f) ? Terrain.HIGH_GRASS : Terrain.GRASS);
 		}
 	}
 	
 	protected void paintTraps( Level l, ArrayList<Room> rooms ) {
 
+		CellContent mechanism = new CellContent(Terrain.TRAP, l.region());
 		ArrayList<Integer> validCells = new ArrayList<>();
 		
 		if (!rooms.isEmpty()){
 			for (Room r : rooms){
 				for (Point p : r.trapPlaceablePoints()){
 					int i = l.pointToCell(p);
-					if (l.map[i] == Terrain.EMPTY){
+					if (l.cellAt(i).canPlace(mechanism)){
 						validCells.add(i);
 					}
 				}
 			}
 		} else {
 			for (int i = 0; i < l.length(); i ++) {
-				if (l.map[i] == Terrain.EMPTY){
+				if (l.cellAt(i).canPlace(mechanism)){
 					validCells.add(i);
 				}
 			}
@@ -465,7 +474,7 @@ public abstract class RegularPainter extends Painter {
 
 		//temporarily use the passable array for the next step
 		for (int i = 0; i < l.length(); i++){
-			l.passable[i] = (Terrain.flags[l.map[i]] & Terrain.PASSABLE) != 0;
+			l.passable[i] = (l.cellAt(i).flags() & Terrain.PASSABLE) != 0;
 		}
 
 		//basically an open space calculation
@@ -528,8 +537,6 @@ public abstract class RegularPainter extends Painter {
 			if (!trap.visible) trap.rollOutdated( l );
 
 			l.setTrap( trap, trapPos );
-			//some traps will not be hidden
-			l.map[trapPos] = trap.visible ? Terrain.TRAP : Terrain.SECRET_TRAP;
 
 			//outdated design challenge: the visible traps are now settled, so the hidden ones can be
 			//doubled. Capped by the remaining cells, as the base traps can already fill the whole level

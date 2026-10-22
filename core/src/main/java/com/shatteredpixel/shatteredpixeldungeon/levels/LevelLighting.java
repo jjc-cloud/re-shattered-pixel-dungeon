@@ -195,7 +195,7 @@ public final class LevelLighting {
 	}
 
 	private boolean blocksSight(int cell, int policy, Blob smoke, Blob vapor) {
-		boolean grass = level.map[cell] == Terrain.HIGH_GRASS || level.map[cell] == Terrain.FURROWED_GRASS;
+		boolean grass = level.hasTerrain(cell, Terrain.HIGH_GRASS) || level.hasTerrain(cell, Terrain.FURROWED_GRASS);
 		return (level.losBlocking[cell] && ((policy & 1) == 0 || !grass))
 				|| ((policy & 2) == 0 && smoke != null && smoke.cur != null && smoke.cur[cell] > 0)
 				|| (vapor != null && vapor.cur != null && vapor.cur[cell] > 0);

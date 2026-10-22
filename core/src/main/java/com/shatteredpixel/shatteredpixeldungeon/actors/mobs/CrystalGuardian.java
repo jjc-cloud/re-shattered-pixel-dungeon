@@ -213,8 +213,8 @@ public class CrystalGuardian extends Mob{
 	@Override
 	public void move(int step, boolean travelling) {
 		super.move(step, travelling);
-		if (Dungeon.level.map[pos] == Terrain.MINE_CRYSTAL){
-			Level.set(pos, Terrain.EMPTY);
+		if (Dungeon.level.hasTerrain(pos, Terrain.MINE_CRYSTAL)){
+			Dungeon.level.cellAt(pos).removeTerrain(Terrain.MINE_CRYSTAL);
 			GameScene.updateMap(pos);
 			if (Dungeon.level.heroFOV[pos]){
 				Splash.at(pos, 0xFFFFFF, 5);
@@ -233,7 +233,7 @@ public class CrystalGuardian extends Mob{
 
 			if (PathFinder.distance[pos] > 2*Dungeon.level.distance(pos, target)) {
 				for (int i = 0; i < Dungeon.level.length(); i++) {
-					passable[i] = passable[i] || Dungeon.level.map[i] == Terrain.MINE_CRYSTAL;
+					passable[i] = passable[i] || Dungeon.level.hasTerrain(i, Terrain.MINE_CRYSTAL);
 				}
 			}
 		}

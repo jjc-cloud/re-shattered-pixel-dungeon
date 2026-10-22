@@ -27,6 +27,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.DemonSpawner;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.CustomTilemap;
@@ -37,8 +38,8 @@ public class DemonSpawnerRoom extends SpecialRoom {
 	@Override
 	public void paint(Level level) {
 
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY) );
 
 		Point c = center();
 		int cx = c.x;
@@ -91,7 +92,7 @@ public class DemonSpawnerRoom extends SpecialRoom {
 		public Tilemap create() {
 			Tilemap v = super.create();
 			int cell = tileX + tileY * Dungeon.level.width();
-			int[] map = Dungeon.level.map;
+			int[] map = Dungeon.level.terrainVisuals();
 			int[] data = new int[tileW*tileH];
 			for (int i = 0; i < data.length; i++){
 				if (i % tileW == 0){

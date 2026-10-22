@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.Carpet;
 import com.watabou.utils.Point;
@@ -39,14 +40,14 @@ public class SegmentedLibraryRoom extends StandardRoom {
 
 	@Override
 	public void paint( Level level ) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1 , Terrain.BOOKSHELF );
-		Painter.fill( level, this, 2 , Terrain.EMPTY_SP );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1 , CellPlacement.reset(Terrain.EMPTY, Terrain.BOOKSHELF) );
+		Painter.fill( level, this, 2 , CellPlacement.reset(Terrain.EMPTY_SP) );
 
 		for (Door door : connected.values()) {
 			door.set( Door.Type.REGULAR );
 			//set door areas to be empty to help with create walls logic
-			Painter.drawInside(level, this, door, 2, Terrain.EMPTY_SP);
+			Painter.drawInside(level, this, door, 2, CellPlacement.reset(Terrain.EMPTY_SP));
 		}
 
 		createWalls( level, new Rect(left+2, top+2, right-2, bottom-2));
@@ -54,13 +55,13 @@ public class SegmentedLibraryRoom extends StandardRoom {
 		for (int x = left+1; x < right-2; x++){
 			for (int y = top+1; y < bottom-2; y++){
 				int cell = x + y*level.width();
-				if (level.map[cell] == Terrain.EMPTY_SP
-						&& (level.map[cell-1] == Terrain.BOOKSHELF || level.map[cell-1+level.width()] == Terrain.BOOKSHELF)){
+				if (level.terrainAt(cell) == Terrain.EMPTY_SP
+						&& (level.hasTerrain(cell-1, Terrain.BOOKSHELF) || level.hasTerrain(cell-1+level.width(), Terrain.BOOKSHELF))){
 					int width = 1, height = 1;
-					while (level.map[cell+width] == Terrain.EMPTY_SP && level.map[cell+width+level.width()] == Terrain.EMPTY_SP) {
+					while (level.terrainAt(cell+width) == Terrain.EMPTY_SP && level.terrainAt(cell+width+level.width()) == Terrain.EMPTY_SP) {
 						width++;
 					}
-					while (level.map[cell+(height*level.width())] == Terrain.EMPTY_SP && level.map[cell+(height*level.width())+1] == Terrain.EMPTY_SP) {
+					while (level.terrainAt(cell+(height*level.width())) == Terrain.EMPTY_SP && level.terrainAt(cell+(height*level.width())+1) == Terrain.EMPTY_SP) {
 						height++;
 					}
 					if (width > 1 && height > 1){
@@ -85,14 +86,14 @@ public class SegmentedLibraryRoom extends StandardRoom {
 				do {
 					int splitX = Random.IntRange(area.left + 2, area.right - 2);
 
-					if (level.map[splitX + level.width() * (area.top - 1)] == Terrain.BOOKSHELF
-							&& level.map[splitX + level.width() * (area.bottom + 1)] == Terrain.BOOKSHELF) {
+					if (level.hasTerrain(splitX + level.width() * (area.top - 1), Terrain.BOOKSHELF)
+							&& level.hasTerrain(splitX + level.width() * (area.bottom + 1), Terrain.BOOKSHELF)) {
 
-						Painter.drawLine(level, new Point(splitX, area.top), new Point(splitX, area.bottom), Terrain.BOOKSHELF);
+						Painter.drawLine(level, new Point(splitX, area.top), new Point(splitX, area.bottom), CellPlacement.content(Terrain.BOOKSHELF));
 
 						int spaceTop = Random.IntRange(area.top, area.bottom - 1);
-						Painter.set(level, splitX, spaceTop, Terrain.EMPTY_SP);
-						//Painter.set(level, splitX, spaceTop+1, Terrain.EMPTY);
+						Painter.set(level, splitX, spaceTop, CellPlacement.reset(Terrain.EMPTY_SP));
+						//Painter.set(level, splitX, spaceTop+1, CellPlacement.reset(Terrain.EMPTY));
 
 						createWalls(level, new Rect(area.left, area.top, splitX - 1, area.bottom));
 						createWalls(level, new Rect(splitX + 1, area.top, area.right, area.bottom));
@@ -107,14 +108,14 @@ public class SegmentedLibraryRoom extends StandardRoom {
 				do {
 					int splitY = Random.IntRange(area.top + 2, area.bottom - 2);
 
-					if (level.map[area.left - 1 + level.width() * splitY] == Terrain.BOOKSHELF
-							&& level.map[area.right + 1 + level.width() * splitY] == Terrain.BOOKSHELF) {
+					if (level.hasTerrain(area.left - 1 + level.width() * splitY, Terrain.BOOKSHELF)
+							&& level.hasTerrain(area.right + 1 + level.width() * splitY, Terrain.BOOKSHELF)) {
 
-						Painter.drawLine(level, new Point(area.left, splitY), new Point(area.right, splitY), Terrain.BOOKSHELF);
+						Painter.drawLine(level, new Point(area.left, splitY), new Point(area.right, splitY), CellPlacement.content(Terrain.BOOKSHELF));
 
 						int spaceLeft = Random.IntRange(area.left, area.right - 1);
-						Painter.set(level, spaceLeft, splitY, Terrain.EMPTY_SP);
-						//Painter.set(level, spaceLeft+1, splitY, Terrain.EMPTY);
+						Painter.set(level, spaceLeft, splitY, CellPlacement.reset(Terrain.EMPTY_SP));
+						//Painter.set(level, spaceLeft+1, splitY, CellPlacement.reset(Terrain.EMPTY));
 
 						createWalls(level, new Rect(area.left, area.top, area.right, splitY - 1));
 						createWalls(level, new Rect(area.left, splitY + 1, area.right, area.bottom));

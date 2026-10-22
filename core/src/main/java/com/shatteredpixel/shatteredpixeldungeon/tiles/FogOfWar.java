@@ -287,7 +287,7 @@ public class FogOfWar extends Image {
 				for (int y = Math.max(1, update.top); y < Math.min(mapHeight, update.bottom + 1); y++) {
 					for (int x = update.left; x < update.right; x++) {
 						int pos = x + y * mapWidth;
-						if (visible[pos] && Dungeon.level.map[pos] == Terrain.BOOKSHELF && fire.cur[pos] > 0) {
+						if (visible[pos] && Dungeon.level.hasTerrain(pos, Terrain.BOOKSHELF) && fire.cur[pos] > 0) {
 							fog.setColor(0);
 							fog.fillRectangle(x * PIX_PER_TILE, y * PIX_PER_TILE - PIX_PER_TILE / 2,
 									PIX_PER_TILE, PIX_PER_TILE + PIX_PER_TILE / 2);
@@ -301,7 +301,7 @@ public class FogOfWar extends Image {
 	}
 	
 	private boolean wall(int cell) {
-		return DungeonTileSheet.wallStitcheable(Dungeon.level.map[cell]);
+		return DungeonTileSheet.wallStitcheable(Dungeon.level.terrainAt(cell));
 	}
 
 	private int getCellFog( int cell ){

@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.Carpet;
 import com.watabou.utils.Random;
@@ -46,8 +47,8 @@ public class StatuesRoom extends StandardRoom {
 
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1 , Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1 , CellPlacement.reset(Terrain.EMPTY) );
 
 		for (Door door : connected.values()) {
 			door.set( Door.Type.REGULAR );
@@ -67,12 +68,12 @@ public class StatuesRoom extends StandardRoom {
 				int left = this.left + 2 + (x * (w + Wspacing));
 				int top = this.top + 2 + (y * (h + Hspacing));
 
-				Painter.fill(level, left, top, w, h, Terrain.CUSTOM_DECO_EMPTY);
+				Painter.fill(level, left, top, w, h, CellPlacement.reset(Terrain.CUSTOM_DECO_EMPTY));
 
-				Painter.set(level, left, top, Terrain.STATUE);
-				Painter.set(level, left + w-1, top, Terrain.STATUE);
-				Painter.set(level, left, top + h-1, Terrain.STATUE);
-				Painter.set(level, left + w-1, top + h-1, Terrain.STATUE);
+				Painter.set(level, left, top, CellPlacement.content(Terrain.STATUE));
+				Painter.set(level, left + w-1, top, CellPlacement.content(Terrain.STATUE));
+				Painter.set(level, left, top + h-1, CellPlacement.content(Terrain.STATUE));
+				Painter.set(level, left + w-1, top + h-1, CellPlacement.content(Terrain.STATUE));
 
 				Carpet carpet = new Carpet();
 				carpet.setRect(left, top, w, h);
@@ -93,13 +94,13 @@ public class StatuesRoom extends StandardRoom {
 						cy--;
 					}
 					if (isEntrance() && rows == 1 && cols == 1){
-						Painter.set(level, cx, cy, Terrain.ENTRANCE);
+						Painter.set(level, cx, cy, CellPlacement.reset(Terrain.ENTRANCE));
 						carpet.overrideTile(level, cx, cy, Carpet.CITY_ENTRANCE);
 					} else if (isExit() && rows == 1 && cols == 1){
-						Painter.set(level, cx, cy, Terrain.EXIT);
+						Painter.set(level, cx, cy, CellPlacement.reset(Terrain.EXIT));
 						carpet.overrideTile(level, cx, cy, Carpet.SKIP);
 					} else {
-						Painter.set(level, cx, cy, Terrain.REGION_DECO);
+						Painter.set(level, cx, cy, CellPlacement.content(Terrain.REGION_DECO));
 						carpet.overrideTile(level, cx, cy, Carpet.CITY_PEDESTAL);
 					}
 				}

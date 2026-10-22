@@ -219,7 +219,7 @@ public class ElementalBlast extends ArmorAbility {
 
 							//*** Wand of Fireblast ***
 							} else if (finalWandCls == WandOfFireblast.class){
-								if (Dungeon.level.map[cell] == Terrain.DOOR){
+								if (Dungeon.level.hasTerrain(cell, Terrain.DOOR)){
 									Level.set(cell, Terrain.OPEN_DOOR);
 									GameScene.updateMap(cell);
 								}
@@ -245,8 +245,8 @@ public class ElementalBlast extends ArmorAbility {
 										Dungeon.level.mapped[c] = true;
 									}
 
-									int terr = Dungeon.level.map[c];
-									if ((Terrain.flags[terr] & Terrain.SECRET) != 0) {
+									int terr = Dungeon.level.terrainAt(c);
+									if ((Dungeon.level.cellAt(c).flags() & Terrain.SECRET) != 0) {
 
 										Dungeon.level.discover(c);
 
@@ -259,7 +259,7 @@ public class ElementalBlast extends ArmorAbility {
 							//*** Wand of Regrowth ***
 							} else if (finalWandCls == WandOfRegrowth.class){
 								//TODO: spend 3 charges worth of regrowth energy from staff?
-								int t = Dungeon.level.map[cell];
+								int t = Dungeon.level.terrainAt(cell);
 								if (Random.Float() < 0.33f*effectMulti) {
 									if ((t == Terrain.EMPTY || t == Terrain.EMPTY_DECO || t == Terrain.EMBERS
 											|| t == Terrain.GRASS || t == Terrain.FURROWED_GRASS)

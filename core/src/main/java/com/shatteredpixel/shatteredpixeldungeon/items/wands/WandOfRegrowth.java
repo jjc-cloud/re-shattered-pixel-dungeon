@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
@@ -100,9 +102,8 @@ public class WandOfRegrowth extends Wand {
 		//ignore cells which can't have anything grow in them.
 		for (Iterator<Integer> i = cells.iterator(); i.hasNext();) {
 			int cell = i.next();
-			int terr = Dungeon.level.map[cell];
-			if (!(terr == Terrain.EMPTY || terr == Terrain.EMBERS || terr == Terrain.EMPTY_DECO ||
-					terr == Terrain.GRASS || terr == Terrain.HIGH_GRASS || terr == Terrain.FURROWED_GRASS)) {
+			int terr = Dungeon.level.terrainAt(cell);
+			if (!Dungeon.level.cellAt(cell).supports(CellContent.GROWABLE) || Dungeon.level.solid[cell]) {
 				i.remove();
 			} else if (Char.hasProp(Actor.findChar(cell), Char.Property.IMMOVABLE)) {
 				i.remove();
@@ -182,7 +183,7 @@ public class WandOfRegrowth extends Wand {
 		for (int cell : cells){
 			if (grassToPlace <= 0 || bolt.path.contains(cell)) break;
 
-			if (Dungeon.level.map[cell] == Terrain.HIGH_GRASS) continue;
+			if (Dungeon.level.hasTerrain(cell, Terrain.HIGH_GRASS)) continue;
 
 			if (Random.Float() > furrowedChance) {
 				Level.set(cell, Terrain.HIGH_GRASS);
@@ -225,11 +226,11 @@ public class WandOfRegrowth extends Wand {
 	public void onHit(MagesStaff staff, Char attacker, Char defender, int damage) {
 		//like pre-nerf vampiric enchantment, except with herbal healing buff, only in grass
 		boolean grass = false;
-		int terr = Dungeon.level.map[attacker.pos];
+		int terr = Dungeon.level.terrainAt(attacker.pos);
 		if (terr == Terrain.GRASS || terr == Terrain.HIGH_GRASS || terr == Terrain.FURROWED_GRASS){
 			grass = true;
 		}
-		terr = Dungeon.level.map[defender.pos];
+		terr = Dungeon.level.terrainAt(defender.pos);
 		if (terr == Terrain.GRASS || terr == Terrain.HIGH_GRASS || terr == Terrain.FURROWED_GRASS){
 			grass = true;
 		}

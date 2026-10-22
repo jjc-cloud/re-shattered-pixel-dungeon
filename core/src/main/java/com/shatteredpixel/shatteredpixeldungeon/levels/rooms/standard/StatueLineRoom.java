@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
@@ -47,8 +48,8 @@ public class StatueLineRoom extends StandardRoom {
 
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1 , Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1 , CellPlacement.reset(Terrain.EMPTY) );
 
 		float[] sidePreferences = new float[]{1, 1, 1, 1};
 
@@ -81,7 +82,7 @@ public class StatueLineRoom extends StandardRoom {
 		fillAlongSide(chosenSide, level);
 		for (Door door : connected.values()) {
 			door.set( Door.Type.REGULAR );
-			Painter.drawInside(level, this, door, 1, Terrain.EMPTY);
+			Painter.drawInside(level, this, door, 1, CellPlacement.reset(Terrain.EMPTY));
 		}
 	}
 
@@ -92,16 +93,16 @@ public class StatueLineRoom extends StandardRoom {
 	private void fillAlongSide(Integer side, Level level){
 		switch (side){
 			case 0: //N
-				Painter.drawLine(level, new Point(left+1, top+1), new Point(right-1, top+1), decoTerrain());
+				Painter.drawLine(level, new Point(left+1, top+1), new Point(right-1, top+1), CellPlacement.content(decoTerrain()));
 				break;
 			case 1: //E
-				Painter.drawLine(level, new Point(right-1, top+1), new Point(right-1, bottom-1), decoTerrain());
+				Painter.drawLine(level, new Point(right-1, top+1), new Point(right-1, bottom-1), CellPlacement.content(decoTerrain()));
 				break;
 			case 2: //S
-				Painter.drawLine(level, new Point(left+1, bottom-1), new Point(right-1, bottom-1), decoTerrain());
+				Painter.drawLine(level, new Point(left+1, bottom-1), new Point(right-1, bottom-1), CellPlacement.content(decoTerrain()));
 				break;
 			case 3: //W
-				Painter.drawLine(level, new Point(left+1, top+1), new Point(left+1, bottom-1), decoTerrain());
+				Painter.drawLine(level, new Point(left+1, top+1), new Point(left+1, bottom-1), CellPlacement.content(decoTerrain()));
 				break;
 		}
 	}

@@ -34,7 +34,6 @@ public class Terrain {
 	public static final int ENTRANCE_SP		= 37;
 	public static final int EXIT			= 8;
 	public static final int EMBERS			= 9;
-	public static final int EMBERS_SP        = 42;
 	public static final int LOCKED_DOOR		= 10;
 	public static final int HERO_LKD_DR     = 38; //a door that was locked by the skeleton key
 	public static final int CRYSTAL_DOOR	= 31;
@@ -64,9 +63,6 @@ public class Terrain {
 	public static final int CUSTOM_DECO_SP = 47; // 特殊地砖上的自定义实体，仅阻挡通行。
 	public static final int STATUE			= 25;
 	public static final int STATUE_SP		= 26;
-	public static final int STATUE_EMBERS   = 43;
-	public static final int STATUE_SP_EMBERS= 44;
-	public static final int CUSTOM_DECO_EMBERS_SP = 45;
 	//These decorations are environment-specific
 	public static final int REGION_DECO		= 33;
 	public static final int REGION_DECO_ALT = 34; //alt visual for region deco, sometimes SP, sometimes other
@@ -88,6 +84,11 @@ public class Terrain {
 	public static final int AVOID			= 0x20;
 	public static final int LIQUID			= 0x40;
 	public static final int PIT				= 0x80;
+	public static final int SUPPORTS_COVER = 0x100;
+	public static final int GROWABLE = 0x200;
+	public static final int FLOODABLE = 0x400;
+	public static final int RESERVED = 0x800;
+	public static final int SCATTERABLE = 0x1000;
 	
 	public static final int[] flags = new int[256];
 	static {
@@ -103,7 +104,6 @@ public class Terrain {
 		flags[ENTRANCE_SP]	= flags[ENTRANCE];
 		flags[EXIT]			= PASSABLE;
 		flags[EMBERS]		= PASSABLE;
-		flags[EMBERS_SP] = flags[EMBERS];
 		flags[LOCKED_DOOR]	= LOS_BLOCKING | SOLID;
 		flags[HERO_LKD_DR]  = flags[LOCKED_DOOR];
 		flags[CRYSTAL_DOOR]	= SOLID;
@@ -129,12 +129,9 @@ public class Terrain {
 		flags[CUSTOM_DECO_EMPTY] = flags[EMPTY];
 		flags[CUSTOM_DECO] = SOLID;
 		flags[CUSTOM_DECO_SP] = flags[CUSTOM_DECO];
-		flags[CUSTOM_DECO_EMBERS_SP] = flags[CUSTOM_DECO];
 		flags[CUSTOM_DECO_WTR] = SOLID;
 		flags[STATUE] = SOLID;
 		flags[STATUE_SP] = flags[STATUE];
-		flags[STATUE_EMBERS] = flags[STATUE];
-		flags[STATUE_SP_EMBERS] = flags[STATUE_SP];
 
 		flags[REGION_DECO] = flags[STATUE];
 		flags[REGION_DECO_ALT] = flags[STATUE_SP];
@@ -143,6 +140,16 @@ public class Terrain {
 		flags[MINE_CRYSTAL] = SOLID;
 		flags[MINE_BOULDER] = SOLID;
 		flags[COLLAPSE_WALL] = flags[WALL];
+
+		for (int ground : new int[]{EMPTY, EMPTY_SP, EMPTY_DECO, EMPTY_WELL,
+				CUSTOM_DECO_EMPTY, ENTRANCE, ENTRANCE_SP, EXIT, UNLOCKED_EXIT, PEDESTAL}) {
+			flags[ground] |= SUPPORTS_COVER;
+		}
+		// 随机水、草和陷阱只布置在普通地板上；特殊地板和装饰地板保持固定结构。
+		flags[EMPTY] |= GROWABLE | FLOODABLE | SCATTERABLE;
+		// 固定设施所在的地面不参与随机环境布置，但仍可承载运行时产生的覆盖物。
+		for (int ground : new int[]{EMPTY_WELL, CUSTOM_DECO_EMPTY, ENTRANCE, ENTRANCE_SP,
+				EXIT, LOCKED_EXIT, UNLOCKED_EXIT, PEDESTAL, WELL}) flags[ground] |= RESERVED;
 
 	}
 

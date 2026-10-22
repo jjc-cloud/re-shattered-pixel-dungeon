@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.GnollGeomancer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretRoom;
@@ -63,12 +64,12 @@ public class MineGiantRoom extends CaveRoom {
 		super.paint(level);
 
 		if (Blacksmith.Quest.Type() == Blacksmith.Quest.CRYSTAL){
-			Painter.fillEllipse(level, this, 3, Terrain.EMPTY);
+			Painter.fillEllipse(level, this, 3, CellPlacement.reset(Terrain.EMPTY));
 
 			for (int i = 0; i < width()*height()/2; i ++){
 				Point r = random(1);
-				if (level.map[level.pointToCell(r)] != Terrain.WALL) {
-					Painter.set(level, r, Terrain.MINE_CRYSTAL);
+				if (!level.hasTerrain(level.pointToCell(r), Terrain.WALL)) {
+					Painter.set(level, r, CellPlacement.content(Terrain.MINE_CRYSTAL));
 				}
 			}
 
@@ -76,10 +77,10 @@ public class MineGiantRoom extends CaveRoom {
 			CrystalSpire m = new CrystalSpire();
 			m.pos = level.pointToCell(p);
 			level.mobs.add(m);
-			Painter.set(level, p, Terrain.EMPTY);
+			Painter.set(level, p, CellPlacement.reset(Terrain.EMPTY));
 
 		} else if (Blacksmith.Quest.Type() == Blacksmith.Quest.GNOLL){
-			Painter.fillEllipse(level, this, 3, Terrain.EMPTY);
+			Painter.fillEllipse(level, this, 3, CellPlacement.reset(Terrain.EMPTY));
 
 			//connections to non-secret rooms have a 9/10 chance to become empty, otherwise wall
 			for (Room n : connected.keySet()){
@@ -102,7 +103,7 @@ public class MineGiantRoom extends CaveRoom {
 
 			for (Point p : getPoints()){
 				int cell = level.pointToCell(p);
-				if (level.map[cell] == Terrain.EMPTY){
+				if (level.terrainAt(cell) == Terrain.EMPTY){
 					float dist = 1000;
 					for (Door d : doors){
 						dist = Math.min(dist, Point.distance(p, d));
@@ -110,17 +111,17 @@ public class MineGiantRoom extends CaveRoom {
 					dist = GameMath.gate(1f, dist-0.5f, 3.1f);
 					float val = Random.Float((float) Math.pow(dist, 2));
 					if (val <= 0.75f || dist <= 1) {
-						Painter.set(level, cell, Terrain.MINE_BOULDER);
+						Painter.set(level, cell, CellPlacement.content(Terrain.MINE_BOULDER));
 					} else if (val <= 5f && dist <= 3){
-						Painter.set(level, cell, Terrain.EMPTY_DECO);
+						Painter.set(level, cell, CellPlacement.ground(Terrain.EMPTY_DECO));
 					}
 				}
 			}
 
 			Point center = center();
 			Rect centerArea = new Rect(center.x-2, center.y-2, center.x+3, center.y+3);
-			Painter.fillEllipse(level, centerArea, 0, Terrain.MINE_BOULDER);
-			Painter.fill(level, centerArea, 2, Terrain.EMPTY_DECO);
+			Painter.fillEllipse(level, centerArea, 0, CellPlacement.content(Terrain.MINE_BOULDER));
+			Painter.fill(level, centerArea, 2, CellPlacement.ground(Terrain.EMPTY_DECO));
 
 			GnollGeomancer g = new GnollGeomancer();
 			g.pos = level.pointToCell(center);
@@ -128,12 +129,12 @@ public class MineGiantRoom extends CaveRoom {
 			level.mobs.add(g);
 
 		} else if (Blacksmith.Quest.Type() == Blacksmith.Quest.FUNGI){
-			Painter.fillEllipse(level, this, 2, Terrain.HIGH_GRASS);
+			Painter.fillEllipse(level, this, 2, CellPlacement.reset(Terrain.EMPTY, Terrain.HIGH_GRASS));
 
-			Painter.fillEllipse(level, this, 3, Terrain.GRASS);
+			Painter.fillEllipse(level, this, 3, CellPlacement.reset(Terrain.EMPTY, Terrain.GRASS));
 
-			Painter.fillEllipse(level, this, 4, Terrain.HIGH_GRASS);
-			Painter.fillEllipse(level, this, 5, Terrain.GRASS);
+			Painter.fillEllipse(level, this, 4, CellPlacement.reset(Terrain.EMPTY, Terrain.HIGH_GRASS));
+			Painter.fillEllipse(level, this, 5, CellPlacement.reset(Terrain.EMPTY, Terrain.GRASS));
 
 			Point p = center();
 			FungalCore m = new FungalCore();
@@ -141,7 +142,7 @@ public class MineGiantRoom extends CaveRoom {
 			level.mobs.add(m);
 
 		} else {
-			Painter.fillEllipse(level, this, 3, Terrain.EMPTY);
+			Painter.fillEllipse(level, this, 3, CellPlacement.reset(Terrain.EMPTY));
 		}
 
 	}

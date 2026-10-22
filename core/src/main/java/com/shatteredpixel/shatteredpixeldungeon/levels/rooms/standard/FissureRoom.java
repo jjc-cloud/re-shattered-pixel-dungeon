@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
@@ -47,16 +48,16 @@ public class FissureRoom extends StandardRoom {
 	
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
 		for (Door door : connected.values()) {
 			door.set( Door.Type.REGULAR );
 		}
-		Painter.fill( level, this, 1, Terrain.EMPTY );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY) );
 		
 		if (square() <= 25){
 			//just fill in one tile if the room is tiny
 			Point p = center();
-			Painter.set( level, p.x, p.y, Terrain.CHASM);
+			Painter.set( level, p.x, p.y, CellPlacement.reset(Terrain.CHASM));
 			
 		} else {
 			int smallestDim = Math.min(width(), height());
@@ -72,7 +73,7 @@ public class FissureRoom extends StandardRoom {
 					int h = Math.min( j - left, right - j );
 					if (Math.min( v, h ) > floorW
 							|| (Math.min( v, h ) == floorW && Random.Float() > edgeFloorChance)) {
-						Painter.set( level, j, i, Terrain.CHASM );
+						Painter.set( level, j, i, CellPlacement.reset(Terrain.CHASM) );
 					}
 				}
 			}

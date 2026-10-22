@@ -128,14 +128,14 @@ public class VaultLevel extends CityLevel {
 				try {
 					for (Point p : corridor.waterPlaceablePoints()) {
 						int cell = level.pointToCell(p);
-						if (level.map[cell] == Terrain.EMPTY_DECO) level.map[cell] = Terrain.EMPTY;
+						if (level.terrainAt(cell) == Terrain.EMPTY_DECO) level.cellAt(cell).setGround(Terrain.EMPTY);
 					}
 					paintWater(level, corridorRooms);
 					paintGrass(level, corridorRooms);
 					for (Point p : corridor.waterPlaceablePoints()) {
 						int cell = level.pointToCell(p);
-						if (level.map[cell] == Terrain.EMPTY && Random.Int(10) == 0) {
-							level.map[cell] = Terrain.EMPTY_DECO;
+						if (level.terrainAt(cell) == Terrain.EMPTY && Random.Int(10) == 0) {
+							level.cellAt(cell).setGround(Terrain.EMPTY_DECO);
 						}
 					}
 				} finally {
@@ -278,7 +278,7 @@ public class VaultLevel extends CityLevel {
 
 	public boolean customStatueCell(int cell) {
 		return VaultLayout.tile(cell % width(), cell / width()) == 's'
-				&& (map[cell] == Terrain.STATUE || map[cell] == Terrain.STATUE_EMBERS);
+				&& (hasTerrain(cell, Terrain.STATUE));
 	}
 
 	@Override
@@ -289,7 +289,7 @@ public class VaultLevel extends CityLevel {
 
 	@Override
 	public String tileDesc(int tile) {
-		if (tile == Terrain.STATUE || tile == Terrain.STATUE_SP || tile == Terrain.STATUE_EMBERS || tile == Terrain.STATUE_SP_EMBERS) {
+		if (tile == Terrain.STATUE || tile == Terrain.STATUE_SP) {
 			return Messages.get(CityLevel.class, "statue_desc");
 		}
 		if (tile == Terrain.REGION_DECO || tile == Terrain.REGION_DECO_ALT) return Messages.get(CityLevel.class, "region_deco_desc");

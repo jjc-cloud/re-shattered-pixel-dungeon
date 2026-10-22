@@ -31,6 +31,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfPurity;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.TrinketCatalyst;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -48,14 +49,14 @@ public class ToxicGasRoom extends SpecialRoom {
 	@Override
 	public void paint(Level level) {
 
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY) );
 
-		Painter.set( level, center(), Terrain.STATUE );
+		Painter.set( level, center(), CellPlacement.content(Terrain.STATUE) );
 
 		for (Point p : getPoints()){
 			int cell = level.pointToCell(p);
-			if (level.map[cell] == Terrain.EMPTY) {
+			if (level.terrainAt(cell) == Terrain.EMPTY) {
 				//as if gas has been spreading in the room for a while
 				Blob.seed(cell, 30, ToxicGas.class, level);
 			}
@@ -67,10 +68,10 @@ public class ToxicGasRoom extends SpecialRoom {
 			int cell;
 			do {
 				cell = level.pointToCell(random(2));
-			} while (level.map[cell] != Terrain.EMPTY);
+			} while (level.terrainAt(cell) != Terrain.EMPTY);
 			level.setTrap(new ToxicVent().reveal(), cell);
 			Blob.seed(cell, 12, ToxicGasSeed.class, level);
-			Painter.set(level, cell, Terrain.INACTIVE_TRAP);
+			Painter.set(level, cell, CellPlacement.content(Terrain.INACTIVE_TRAP));
 		}
 
 		//skeleton with 2x gold, somewhat far from entry
@@ -81,7 +82,7 @@ public class ToxicGasRoom extends SpecialRoom {
 			int posToAdd;
 			do {
 				posToAdd = level.pointToCell(random(2));
-			} while (level.map[posToAdd] == Terrain.STATUE || goldPositions.contains(posToAdd));
+			} while (level.hasTerrain(posToAdd, Terrain.STATUE) || goldPositions.contains(posToAdd));
 			goldPositions.add(posToAdd);
 		}
 
@@ -134,7 +135,7 @@ public class ToxicGasRoom extends SpecialRoom {
 				for (int j = area.left-1; j <= area.right; j++) {
 					cell = j + i* Dungeon.level.width();
 					if (Dungeon.level.insideMap(cell)) {
-						if (Dungeon.level.map[cell] != Terrain.INACTIVE_TRAP){
+						if (!Dungeon.level.hasTerrain(cell, Terrain.INACTIVE_TRAP)){
 							off[cell] = 0;
 							continue;
 						}

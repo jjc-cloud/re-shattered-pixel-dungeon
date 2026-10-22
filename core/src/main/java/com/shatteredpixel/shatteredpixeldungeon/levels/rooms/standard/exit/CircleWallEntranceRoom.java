@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.exit;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.CircleWallRoom;
 import com.watabou.utils.PathFinder;
@@ -60,11 +61,11 @@ public class CircleWallEntranceRoom extends CircleWallRoom {
 
 		int cell = level.pointToCell(p);
 		for (int i : PathFinder.NEIGHBOURS8){
-			if (level.map[cell+2*i] == Terrain.WALL){
-				Painter.set(level, cell+i, Terrain.EMPTY);
+			if (level.hasTerrain(cell+2*i, Terrain.WALL)){
+				Painter.set(level, cell+i, CellPlacement.reset(Terrain.EMPTY));
 			}
 		}
-		Painter.set(level, p, Terrain.ENTRANCE);
+		Painter.set(level, p, CellPlacement.reset(Terrain.ENTRANCE));
 		level.transitions.add(new LevelTransition(level, level.pointToCell(p), LevelTransition.Type.REGULAR_ENTRANCE));
 
 		int xDir = 0, yDir = 0;
@@ -77,8 +78,8 @@ public class CircleWallEntranceRoom extends CircleWallRoom {
 		p.x += 2*xDir;
 		p.y += 2*yDir;
 
-		while (level.map[level.pointToCell(p)] == Terrain.WALL){
-			Painter.set(level, p, Terrain.EMPTY);
+		while (level.hasTerrain(level.pointToCell(p), Terrain.WALL)){
+			Painter.set(level, p, CellPlacement.reset(Terrain.EMPTY));
 			p.x += xDir;
 			p.y += yDir;
 		}

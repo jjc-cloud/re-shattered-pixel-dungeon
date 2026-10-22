@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.exit;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.ChasmBridgeRoom;
 import com.watabou.utils.PathFinder;
@@ -57,10 +58,10 @@ public class ChasmBridgeExitRoom extends ChasmBridgeRoom {
 		} while (spaceRect.inside(level.cellToPoint(exit)) || level.findMob(exit) != null);
 
 		for (int i : PathFinder.NEIGHBOURS8){
-			Painter.set(level, exit + i, Terrain.EMPTY);
+			Painter.set(level, exit + i, CellPlacement.reset(Terrain.EMPTY));
 		}
 
-		Painter.set( level, exit, Terrain.EXIT );
+		Painter.set( level, exit, CellPlacement.reset(Terrain.EXIT) );
 		level.transitions.add(new LevelTransition(level, exit, LevelTransition.Type.REGULAR_EXIT));
 	}
 

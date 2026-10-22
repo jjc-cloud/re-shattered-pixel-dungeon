@@ -135,21 +135,21 @@ public final class VaultLayout {
 			for (int x = 0; x < WIDTH; x++) {
 				int cell = x + y * WIDTH;
 				switch (tile(x, y)) {
-					case '#': level.map[cell] = Terrain.WALL; break;
-					case ':': case 'g': level.map[cell] = Terrain.EMPTY_SP; break;
+					case '#': level.cellAt(cell).reset(Terrain.EMPTY, Terrain.WALL); break;
+					case ':': case 'g': level.cellAt(cell).reset(Terrain.EMPTY_SP); break;
 					case 'p':
-						level.map[cell] = Terrain.PEDESTAL;
+						level.cellAt(cell).reset(Terrain.PEDESTAL);
 						treasureSpots.add(cell);
 						break;
-					case 'c': level.map[cell] = Terrain.CUSTOM_DECO_EMPTY; break;
-					case 's': level.map[cell] = Terrain.STATUE; break;
-					case 'o': level.map[cell] = Terrain.REGION_DECO; break;
-					case 'D': level.map[cell] = Terrain.CUSTOM_DECO; break;
-					case 'd': level.map[cell] = Terrain.LOCKED_DOOR; break;
+					case 'c': level.cellAt(cell).reset(Terrain.CUSTOM_DECO_EMPTY); break;
+					case 's': level.cellAt(cell).reset(Terrain.EMPTY, Terrain.STATUE); break;
+					case 'o': level.cellAt(cell).reset(Terrain.EMPTY, Terrain.REGION_DECO); break;
+					case 'D': level.cellAt(cell).reset(Terrain.EMPTY, Terrain.CUSTOM_DECO); break;
+					case 'd': level.cellAt(cell).reset(Terrain.EMPTY, Terrain.LOCKED_DOOR); break;
 					default:
 						//Boss 房的无圆点地砖同样属于特殊地板，不允许被草覆盖。
-						level.map[cell] = y < GATE_Y ? Terrain.EMPTY_SP
-								: Random.Int(10) == 0 ? Terrain.EMPTY_DECO : Terrain.EMPTY;
+						level.cellAt(cell).reset(y < GATE_Y ? Terrain.EMPTY_SP
+								: Random.Int(10) == 0 ? Terrain.EMPTY_DECO : Terrain.EMPTY);
 						break;
 				}
 			}
@@ -190,7 +190,7 @@ public final class VaultLayout {
 		smallDoor.setRect(TREASURE_DOOR_X, TREASURE_DOOR_Y - 1, 1, 2);
 		level.customTerrain.add(smallDoor);
 
-		level.map[ENTRANCE_X + ENTRANCE_Y * WIDTH] = Terrain.ENTRANCE;
+		level.cellAt(ENTRANCE_X + ENTRANCE_Y * WIDTH).reset(Terrain.ENTRANCE);
 		level.transitions.add(new LevelTransition(level, ENTRANCE_X + ENTRANCE_Y * WIDTH,
 				LevelTransition.Type.BRANCH_ENTRANCE, Dungeon.depth, 0, LevelTransition.Type.BRANCH_EXIT));
 	}

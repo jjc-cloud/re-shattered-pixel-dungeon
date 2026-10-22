@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.watabou.utils.Point;
@@ -122,7 +123,7 @@ public class PerimeterRoom extends ConnectionRoom {
 					Math.min(from.y, to.y),
 					spaceBetween(from.x, to.x) + 2,
 					spaceBetween(from.y, to.y) + 2,
-					floor);
+					CellPlacement.reset(floor));
 			return;
 		}
 		
@@ -138,8 +139,8 @@ public class PerimeterRoom extends ConnectionRoom {
 		//doors on adjacent sides
 		for (Point c : corners){
 			if ((c.x == from.x || c.y == from.y) && (c.x == to.x || c.y == to.y)){
-				Painter.drawLine(level, from, c, floor);
-				Painter.drawLine(level, c, to, floor);
+				Painter.drawLine(level, from, c, CellPlacement.reset(floor));
+				Painter.drawLine(level, c, to, CellPlacement.reset(floor));
 				return;
 			}
 		}

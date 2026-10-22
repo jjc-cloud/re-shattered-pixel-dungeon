@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.RegionDecoPatchRoom;
@@ -49,7 +50,7 @@ public class RegionDecoPatchEntranceRoom extends RegionDecoPatchRoom {
 	}
 
 	@Override
-	public boolean canMerge(Level l, Room other, Point p, int mergeTerrain) {
+	public boolean canMerge(Level l, Room other, Point p, CellPlacement mergeTerrain) {
 		if (Dungeon.depth <= 2) {
 			return false;
 		} else {
@@ -78,21 +79,21 @@ public class RegionDecoPatchEntranceRoom extends RegionDecoPatchRoom {
 
 			//need extra logic here as these rooms can spawn small and cramped in very rare cases
 			if (tries-- > 0){
-				valid = level.map[entrance] != Terrain.REGION_DECO && level.findMob(entrance) == null;
+				valid = !level.hasTerrain(entrance, Terrain.REGION_DECO) && level.findMob(entrance) == null;
 			} else {
 				valid = false;
 				for (int i : PathFinder.NEIGHBOURS4){
-					if (level.map[entrance+i] != Terrain.REGION_DECO){
+					if (!level.hasTerrain(entrance+i, Terrain.REGION_DECO)){
 						valid = true;
 					}
 				}
 				valid = valid && level.findMob(entrance) == null;
 			}
 		} while (!valid);
-		Painter.set( level, entrance, Terrain.ENTRANCE );
+		Painter.set( level, entrance, CellPlacement.reset(Terrain.ENTRANCE) );
 
 		for (int i : PathFinder.NEIGHBOURS8){
-			Painter.set( level, entrance+i, Terrain.EMPTY );
+			Painter.set( level, entrance+i, CellPlacement.reset(Terrain.EMPTY) );
 		}
 
 		if (Dungeon.depth == 1){

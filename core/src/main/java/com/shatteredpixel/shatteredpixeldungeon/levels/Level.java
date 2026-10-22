@@ -157,7 +157,34 @@ public abstract class Level implements Bundlable {
 
 	public int version;
 	
-	public int[] map;
+	private CellState[] cells;
+	private int[] terrainVisuals;
+	private boolean flagsReady;
+
+	public CellState cellAt(int cell) { return cells[cell]; }
+	public int region() { return Dungeon.depth >= 1 ? (Dungeon.depth - 1) / 5 : -1; }
+	public int terrainAt(int cell) { return cells[cell].terrain(); }
+	public boolean hasTerrain(int cell, int terrain) {
+		CellState state = cells[cell];
+		if (!state.hasTerrain(terrain)) return false;
+		CellContent content = state.content(terrain);
+		return CellState.isGround(terrain) || (content != null ? state.exposed(content) : !state.buried());
+	}
+	/** 只供地图素材拼接使用，不是可写的世界状态。 */
+	public int[] terrainVisuals() { return terrainVisuals; }
+
+	public void cellChanged(int cell) {
+		int previous = terrainVisuals[cell];
+		terrainVisuals[cell] = cells[cell].terrain();
+		if (!flagsReady) return;
+		updateCellFlags(cell);
+		if (caveCollapse != null) caveCollapse.terrainChanged(cell, previous, terrainVisuals[cell]);
+		if (cell == hiddenEntranceCell && hiddenEntranceGrass
+				&& cells[cell].content(Terrain.GRASS) == null
+				&& cells[cell].content(Terrain.HIGH_GRASS) == null
+				&& cells[cell].content(Terrain.FURROWED_GRASS) == null) revealHiddenEntrance(cell);
+		if (this == Dungeon.level) GameScene.updateMap(cell);
+	}
 	public boolean[] visited;
 	public boolean[] mapped;
 	public boolean[] discoverable;
@@ -173,8 +200,6 @@ public abstract class Level implements Bundlable {
 	public boolean[] solid;
 	public boolean[] avoid;
 	public boolean[] water;
-	// 只记录运行中被水覆盖的地面；草地、陷阱及可破坏物不随退水复原。
-	public final SparseArray<Integer> waterCoveredTerrain = new SparseArray<>();
 	public boolean[] pit;
 
 	public boolean[] openSpace;
@@ -184,84 +209,13 @@ public abstract class Level implements Bundlable {
 
 	/** 只在生成器或测试场景显式配置交互时创建。运行时查询应直接检查可空字段。 */
 	public TerrainInteractions interactions() {
-		if (terrainInteractions == null) {
-			terrainInteractions = new TerrainInteractions(this);
-			int region = Dungeon.depth >= 1 ? (Dungeon.depth - 1) / 5 : -1;
-			if (region == 0) {
-				TerrainInteractions.Rule barrel = TerrainInteractions.Rule.LEGACY
-						.on(TerrainInteractions.Source.CLICK, TerrainInteractions.Response.DESTROY)
-						.on(TerrainInteractions.Source.MISSILE, TerrainInteractions.Response.DESTROY)
-						.on(TerrainInteractions.Source.WAND, TerrainInteractions.Response.DESTROY)
-						.on(TerrainInteractions.Source.SHOCKWAVE, TerrainInteractions.Response.DESTROY);
-				terrainInteractions.setDefault(Terrain.REGION_DECO, barrel);
-				terrainInteractions.setDefault(Terrain.REGION_DECO_ALT, barrel);
-				terrainInteractions.setDefault(Terrain.SEWER_BARREL_MARKED, barrel);
-				terrainInteractions.setDefault(Terrain.SEWER_BARREL_MARKED_ALT, barrel);
-			} else if (region == 4) {
-				TerrainInteractions.Rule rubble = TerrainInteractions.Rule.LEGACY
-						.on(TerrainInteractions.Source.CLICK, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
-						.on(TerrainInteractions.Source.MISSILE, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
-						.on(TerrainInteractions.Source.WAND, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
-						.on(TerrainInteractions.Source.SHOCKWAVE, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
-						.on(TerrainInteractions.Source.EXPLOSION, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
-						.on(TerrainInteractions.Source.DISINTEGRATION, TerrainInteractions.Response.replaceWith(Terrain.EMPTY));
-				terrainInteractions.setDefault(Terrain.REGION_DECO, rubble);
-				terrainInteractions.setDefault(Terrain.REGION_DECO_ALT, rubble);
-			}
-		}
+		if (terrainInteractions == null) terrainInteractions = new TerrainInteractions(this);
 		return terrainInteractions;
 	}
 
-	/** 作用路径的公共地形入口。未配置元素保留原有可燃地形破坏行为。 */
-	public boolean affectTerrain(int cell, TerrainInteractions.Source source) {
-		return affectTerrain(cell, source, flamable[cell]);
-	}
-
-	/** 少数旧效果也破坏空地；只改变未接管时的回退，不绕过类别拒绝。 */
-	public boolean affectTerrain(int cell, TerrainInteractions.Source source, boolean legacyDestroy) {
-		TerrainInteractions.Result result = terrainInteractions == null ? TerrainInteractions.Result.UNHANDLED
-				: terrainInteractions.interact(cell, source);
-		if (cell == hiddenEntranceCell && source == TerrainInteractions.Source.EXPLOSION
-				&& map[cell] == Terrain.EXIT) {
-			revealHiddenEntrance(cell);
-		}
-		if (result == TerrainInteractions.Result.DENIED) return false;
-		boolean changed = result == TerrainInteractions.Result.CHANGED;
-		if (result == TerrainInteractions.Result.UNHANDLED
-				&& (source == TerrainInteractions.Source.EXPLOSION || source == TerrainInteractions.Source.DISINTEGRATION
-				|| source == TerrainInteractions.Source.FIRE) && legacyDestroy) {
-			destroy(cell);
-			GameScene.updateMap(cell);
-			changed = true;
-		}
-		if (source == TerrainInteractions.Source.DISINTEGRATION && customTiles != null) {
-			for (CustomTilemap tilemap : customTiles) {
-				if (!(tilemap instanceof Carpet)) continue;
-				Carpet carpet = (Carpet) tilemap;
-				int terrain = map[cell];
-				int ash;
-				//EMPTY_DECO 是不可燃的装饰地面，但 Level.destroy() 一直把它和 EMPTY 同等看待，
-				//地毯盖住的这两种地面都应该露出普通余烬。
-				if (terrain == Terrain.EMPTY || terrain == Terrain.EMPTY_DECO
-						|| terrain == Terrain.CUSTOM_DECO_EMPTY) ash = Terrain.EMBERS;
-				else if (terrain == Terrain.EMPTY_SP) ash = Terrain.EMBERS_SP;
-				else if (terrain == Terrain.STATUE && this instanceof CityLevel) ash = Terrain.STATUE_EMBERS;
-				else if (terrain == Terrain.STATUE_SP && this instanceof CityLevel) ash = Terrain.STATUE_SP_EMBERS;
-				else if (terrain == Terrain.CUSTOM_DECO && this instanceof SewerBossLevel) ash = Terrain.CUSTOM_DECO_EMBERS_SP;
-				else if (terrain == Terrain.EMBERS || terrain == Terrain.EMBERS_SP
-						|| terrain == Terrain.STATUE_EMBERS || terrain == Terrain.STATUE_SP_EMBERS
-						|| terrain == Terrain.CUSTOM_DECO_EMBERS_SP) ash = terrain;
-				else continue;
-				if (carpet.overrideTile(cell, this, Carpet.DESTROYED)) {
-					if (ash != terrain) {
-						Level.set(cell, ash, this);
-						GameScene.updateMap(cell);
-					}
-					changed = true;
-				}
-			}
-		}
-		return changed;
+	/** 作用只指定要作用的内容属性，格子内符合属性的内容自行结算。 */
+	public boolean affectTerrain(int cell, int property) {
+		return interactions().interact(cell, property) == TerrainInteractions.Result.CHANGED;
 	}
 
 	/**
@@ -269,15 +223,7 @@ public abstract class Level implements Bundlable {
 	 * 判定与 affectTerrain(cell, DISINTEGRATION) 的破坏结果一致，但不会改动地图。
 	 */
 	public boolean passthroughDisintegrationRay(int cell) {
-		if (!insideMap(cell) || losBlocking[cell]) return false;
-		if (terrainInteractions != null) {
-			TerrainInteractions.Action action = terrainInteractions.ruleAt(cell)
-					.response(TerrainInteractions.Source.DISINTEGRATION).action;
-			if (action == TerrainInteractions.Action.REPLACE
-					|| action == TerrainInteractions.Action.DESTROY) return true;
-			if (action != TerrainInteractions.Action.LEGACY) return false;
-		}
-		return flamable[cell];
+		return insideMap(cell) && !losBlocking[cell] && cellAt(cell).has(CellContent.BREAKABLE | CellContent.BURNABLE);
 	}
 	
 	public Feeling feeling = Feeling.NONE;
@@ -286,8 +232,6 @@ public abstract class Level implements Bundlable {
 	public int exit;
 
 	public ArrayList<LevelTransition> transitions;
-	public static final TerrainInteractions.Rule HIDDEN_ENTRANCE_RULE = TerrainInteractions.Rule.LEGACY.on(
-			TerrainInteractions.Source.EXPLOSION, TerrainInteractions.Response.replaceWith(Terrain.EXIT));
 	public int hiddenEntranceCell = -1;
 	public boolean hiddenEntranceGrass;
 
@@ -318,9 +262,7 @@ public abstract class Level implements Bundlable {
 	private static final String VERSION     = "version";
 	private static final String WIDTH       = "width";
 	private static final String HEIGHT      = "height";
-	private static final String MAP			= "map";
-	private static final String WATER_COVERED_CELLS = "water_covered_cells";
-	private static final String WATER_COVERED_TERRAIN = "water_covered_terrain";
+	private static final String CELLS = "cell_composition";
 	private static final String VISITED		= "visited";
 	private static final String MAPPED		= "mapped";
 	private static final String TRANSITIONS	= "transitions";
@@ -444,37 +386,17 @@ public abstract class Level implements Bundlable {
 		int region = Dungeon.depth >= 1 ? (Dungeon.depth - 1) / 5 : -1;
 		if (region == 0) {
 			for (int i = 0; i < length(); i++) {
-				if (map[i] == Terrain.REGION_DECO && Random.Int(10) == 0) {
-					map[i] = Terrain.SEWER_BARREL_MARKED;
-				} else if (map[i] == Terrain.REGION_DECO_ALT && Random.Int(10) == 0) {
-					map[i] = Terrain.SEWER_BARREL_MARKED_ALT;
+				if (hasTerrain(i, Terrain.REGION_DECO) && Random.Int(10) == 0) {
+					cellAt(i).place(Terrain.SEWER_BARREL_MARKED);
+				} else if (hasTerrain(i, Terrain.REGION_DECO_ALT) && Random.Int(10) == 0) {
+					cellAt(i).place(Terrain.SEWER_BARREL_MARKED_ALT);
 				}
 			}
 		}
 		
+		for (CustomTilemap tile : customTiles) if (tile instanceof Carpet) ((Carpet)tile).registerContents(this);
 		buildFlagMaps();
-		TerrainInteractions.Rule statue = TerrainInteractions.Rule.LEGACY.on(
-				TerrainInteractions.Source.EXPLOSION, TerrainInteractions.Response.replaceWith(Terrain.EMBERS));
-		TerrainInteractions.Rule statueSp = TerrainInteractions.Rule.LEGACY.on(
-				TerrainInteractions.Source.EXPLOSION, TerrainInteractions.Response.replaceWith(
-						region == 0 || region == 3 ? Terrain.EMBERS_SP : Terrain.EMBERS));
-		interactions().setDefault(Terrain.STATUE, statue);
-		interactions().setDefault(Terrain.STATUE_SP, statueSp);
-		interactions().setDefault(Terrain.STATUE_EMBERS, statue);
-		interactions().setDefault(Terrain.STATUE_SP_EMBERS, statueSp);
-		//鼠王房雕像（下水道 Boss 层的隐藏房间，用自定义装饰表示）：炸掉后雕像消失，
-		//留下可通行的普通余烬（不走房间自身的特殊地面余烬，那种是木板地面）。
-		if (this instanceof SewerBossLevel) {
-			interactions().setDefault(Terrain.CUSTOM_DECO, TerrainInteractions.Rule.LEGACY.on(
-					TerrainInteractions.Source.EXPLOSION,
-					TerrainInteractions.Response.replaceWith(Terrain.EMBERS)));
-		}
-		if (region == 1 || region == 2) {
-			TerrainInteractions.Rule metal = TerrainInteractions.Rule.LEGACY.on(
-					TerrainInteractions.Source.ELECTRIC, TerrainInteractions.Response.CONDUCT);
-			interactions().setDefault(Terrain.REGION_DECO, metal);
-			interactions().setDefault(Terrain.REGION_DECO_ALT, metal);
-		}
+		interactions();
 		cleanWalls();
 		
 		createMobs();
@@ -491,14 +413,20 @@ public abstract class Level implements Bundlable {
 	
 	public void setSize(int w, int h){
 		terrainInteractions = null;
+		flagsReady = false;
 		caveCollapse = null;
 		
 		width = w;
 		height = h;
 		length = w * h;
 		
-		map = new int[length];
-		Arrays.fill( map, feeling == Level.Feeling.CHASM ? Terrain.CHASM : Terrain.WALL );
+		cells = new CellState[length];
+		terrainVisuals = new int[length];
+		for (int cell = 0; cell < length; cell++) {
+			cells[cell] = new CellState(this, cell);
+			cells[cell].setGround(feeling == Level.Feeling.CHASM ? Terrain.CHASM : Terrain.EMPTY);
+			if (feeling != Level.Feeling.CHASM) cells[cell].place(Terrain.WALL);
+		}
 		
 		visited     = new boolean[length];
 		mapped      = new boolean[length];
@@ -515,7 +443,6 @@ public abstract class Level implements Bundlable {
 		solid		= new boolean[length];
 		avoid		= new boolean[length];
 		water		= new boolean[length];
-		waterCoveredTerrain.clear();
 		pit			= new boolean[length];
 
 		openSpace   = new boolean[length];
@@ -558,22 +485,19 @@ public abstract class Level implements Bundlable {
 		customTerrain = new ArrayList<>();
 		customWalls = new ArrayList<>();
 		
-		map		= bundle.getIntArray( MAP );
-		if (bundle.contains(WATER_COVERED_CELLS)) {
-			int[] cells = bundle.getIntArray(WATER_COVERED_CELLS);
-			int[] terrain = bundle.getIntArray(WATER_COVERED_TERRAIN);
-			for (int i = 0; i < cells.length; i++) {
-				waterCoveredTerrain.put(cells[i], terrain[i]);
-			}
+		if (!bundle.contains(CELLS)) throw new RuntimeException("old save");
+		int cellIndex = 0;
+		for (Bundlable saved : bundle.getCollection(CELLS)) {
+			if (cellIndex >= length) throw new IllegalArgumentException("格子存档尺寸不符");
+			cells[cellIndex] = (CellState)saved;
+			cells[cellIndex].bind(this, cellIndex);
+			terrainVisuals[cellIndex] = cells[cellIndex].terrain();
+			cellIndex++;
 		}
+		if (cellIndex != length) throw new IllegalArgumentException("格子存档尺寸不符");
 		hiddenEntranceCell = bundle.contains(HIDDEN_ENTRANCE) ? bundle.getInt(HIDDEN_ENTRANCE) : -1;
 		hiddenEntranceGrass = bundle.getBoolean(HIDDEN_ENTRANCE_GRASS);
-		if (bundle.contains("terrain_interactions")) {
-			interactions().restoreFromBundle(bundle.getBundle("terrain_interactions"));
-		} else if (Dungeon.depth >= 1 && ((Dungeon.depth - 1) / 5 == 0 || (Dungeon.depth - 1) / 5 == 4)) {
-			// 更早的存档没有规则组件；复用初始化入口，不重抽木桶标记与战利品。
-			interactions();
-		}
+		interactions();
 
 		visited	= bundle.getBooleanArray( VISITED );
 		mapped	= bundle.getBooleanArray( MAPPED );
@@ -676,14 +600,7 @@ public abstract class Level implements Bundlable {
 		bundle.put( VERSION, Game.versionCode );
 		bundle.put( WIDTH, width );
 		bundle.put( HEIGHT, height );
-		bundle.put( MAP, map );
-		int[] waterCells = waterCoveredTerrain.keyArray();
-		int[] waterTerrain = new int[waterCells.length];
-		for (int i = 0; i < waterCells.length; i++) {
-			waterTerrain[i] = waterCoveredTerrain.get(waterCells[i]);
-		}
-		bundle.put(WATER_COVERED_CELLS, waterCells);
-		bundle.put(WATER_COVERED_TERRAIN, waterTerrain);
+		bundle.put(CELLS, Arrays.asList(cells));
 		if (caveCollapse != null) {
 			Bundle regions = new Bundle();
 			caveCollapse.storeInBundle(regions);
@@ -691,11 +608,6 @@ public abstract class Level implements Bundlable {
 		}
 		bundle.put( HIDDEN_ENTRANCE, hiddenEntranceCell );
 		bundle.put( HIDDEN_ENTRANCE_GRASS, hiddenEntranceGrass );
-		if (terrainInteractions != null) {
-			Bundle rules = new Bundle();
-			terrainInteractions.storeInBundle(rules);
-			bundle.put("terrain_interactions", rules);
-		}
 		bundle.put( VISITED, visited );
 		bundle.put( MAPPED, mapped );
 		bundle.put( TRANSITIONS, transitions );
@@ -1077,9 +989,11 @@ public abstract class Level implements Bundlable {
 
 		// 整体重建也可能绕过 Level.set，照明与遮挡缓存随标记一起重建。
 		lighting = null;
+		flagsReady = true;
 
 		for (int i=0; i < length(); i++) {
-			int flags = Terrain.flags[map[i]];
+			terrainVisuals[i] = cellAt(i).terrain();
+			int flags = cellAt(i).flags();
 			passable[i]     = (flags & Terrain.PASSABLE) != 0;
 			losBlocking[i]  = (flags & Terrain.LOS_BLOCKING) != 0;
 			flamable[i]     = (flags & Terrain.FLAMABLE) != 0;
@@ -1092,16 +1006,6 @@ public abstract class Level implements Bundlable {
 
 		for (Blob b : blobs.values()){
 			b.onBuildFlagMaps(this);
-		}
-
-		//区域 0（下水道）默认：木桶与标记桶可被烧毁，任何该区域楼层行为一致
-		if (Dungeon.depth >= 1 && (Dungeon.depth - 1) / 5 == 0) {
-			for (int i = 0; i < length(); i++) {
-				if (map[i] == Terrain.REGION_DECO || map[i] == Terrain.REGION_DECO_ALT
-						|| map[i] == Terrain.SEWER_BARREL_MARKED || map[i] == Terrain.SEWER_BARREL_MARKED_ALT) {
-					flamable[i] = true;
-				}
-			}
 		}
 
 		int lastRow = length() - width();
@@ -1158,33 +1062,9 @@ public abstract class Level implements Bundlable {
 	}
 
 	public void destroy( int pos ) {
-		//if raw tile type is flammable or empty
-		int terr = map[pos];
-		//区域 0（下水道）默认木桶行为：打烂后原地留水/普通地板，标记桶掉落战利品。
-		//任何该区域楼层（主线、王鼠房、任务支线、隐藏楼层）行为一致。
-		if (Dungeon.depth >= 1 && (Dungeon.depth - 1) / 5 == 0) {
-			if (terr == Terrain.REGION_DECO || terr == Terrain.SEWER_BARREL_MARKED){
-				set(pos, Terrain.WATER, this);
-				Splash.at(pos, 0xFF8A5A2E, 8);
-			} else if (terr == Terrain.REGION_DECO_ALT || terr == Terrain.SEWER_BARREL_MARKED_ALT){
-				set(pos, Terrain.EMPTY_SP, this);
-				Splash.at(pos, 0xFF8A5A2E, 8);
-			}
-			if (terr == Terrain.SEWER_BARREL_MARKED || terr == Terrain.SEWER_BARREL_MARKED_ALT) {
-				Heap heap = drop(Random.Int(4) == 0 ? Generator.random() : Gem.generateTreasure(), pos);
-				//砸桶是可选收获，掉出来的东西不计入探索
-				heap.autoExplored = true;
-				if (heap.sprite != null) heap.sprite.drop();
-			}
-		}
-		if (terr == Terrain.EMPTY || terr == Terrain.EMPTY_DECO
-				|| (Terrain.flags[map[pos]] & Terrain.FLAMABLE) != 0) {
-			set(pos, Terrain.EMBERS);
-		}
+		cellAt(pos).affect(CellContent.BREAKABLE | CellContent.BURNABLE, true);
 		Blob web = blobs.get(Web.class);
-		if (web != null){
-			web.clear(pos);
-		}
+		if (web != null) web.clear(pos);
 	}
 
 	public void cleanWalls() {
@@ -1198,7 +1078,7 @@ public abstract class Level implements Bundlable {
 			
 			for (int j=0; j < PathFinder.NEIGHBOURS9.length; j++) {
 				int n = i + PathFinder.NEIGHBOURS9[j];
-				if (n >= 0 && n < length() && map[n] != Terrain.WALL && map[n] != Terrain.WALL_DECO) {
+				if (n >= 0 && n < length() && !hasTerrain(n, Terrain.WALL) && !hasTerrain(n, Terrain.WALL_DECO)) {
 					d = true;
 					break;
 				}
@@ -1213,63 +1093,7 @@ public abstract class Level implements Bundlable {
 	}
 	
 	public static void set( int cell, int terrain, Level level ) {
-		int previous = level.map[cell];
-		CaveCollapse collapse = level.caveCollapse;
-		if (collapse != null && collapse.contains(cell)) {
-			if (previous != Terrain.COLLAPSE_WALL && terrain == Terrain.COLLAPSE_WALL) {
-				// 记住本次落石覆盖前的实际地形，已燃烧或解除的陷阱不会被倒回。
-				int groundTile = previous;
-				if (groundTile == Terrain.HIGH_GRASS || groundTile == Terrain.FURROWED_GRASS) groundTile = Terrain.GRASS;
-				else if (groundTile == Terrain.WATER) groundTile = Random.Int(2) == 0 ? Terrain.EMPTY : Terrain.EMPTY_DECO;
-				collapse.buriedTerrain[cell] = groundTile;
-				Trap trap = level.traps.get(cell);
-				if (trap != null) collapse.buriedTraps.put(cell, trap);
-			} else if (previous == Terrain.COLLAPSE_WALL && terrain == Terrain.EMPTY) {
-				terrain = collapse.buriedTerrain[cell];
-			}
-		}
-		if (level.terrainInteractions != null && level.map[cell] != terrain) {
-			level.terrainInteractions.clearOverride(cell);
-		}
-		if (terrain == Terrain.WATER && previous != Terrain.WATER) {
-			int ground = Terrain.EMPTY;
-			switch (previous) {
-				case Terrain.EMBERS_SP:
-					ground = Terrain.EMPTY_SP;
-					break;
-				case Terrain.EMPTY_SP:
-				case Terrain.EMPTY_DECO:
-				case Terrain.CUSTOM_DECO_EMPTY:
-					ground = previous;
-					break;
-			}
-			level.waterCoveredTerrain.put(cell, ground);
-		} else if (previous == Terrain.WATER && terrain != Terrain.WATER) {
-			level.waterCoveredTerrain.remove(cell);
-		}
-		Painter.set(level, cell, terrain);
-
-		if (terrain != Terrain.TRAP && terrain != Terrain.SECRET_TRAP && terrain != Terrain.INACTIVE_TRAP) {
-			level.traps.remove(cell);
-		}
-		if (collapse != null && collapse.contains(cell)
-				&& previous == Terrain.COLLAPSE_WALL && terrain != Terrain.COLLAPSE_WALL) {
-			Trap trap = collapse.buriedTraps.remove(cell);
-			if (trap != null && (terrain == Terrain.TRAP || terrain == Terrain.SECRET_TRAP || terrain == Terrain.INACTIVE_TRAP)) {
-				level.setTrap(trap, cell);
-			}
-		}
-
-		level.updateCellFlags(cell);
-		if (level.caveCollapse != null) level.caveCollapse.terrainChanged(cell, previous, terrain);
-		if (cell == level.hiddenEntranceCell && level.hiddenEntranceGrass
-				&& (previous == Terrain.GRASS || previous == Terrain.HIGH_GRASS || previous == Terrain.FURROWED_GRASS)
-				&& terrain != Terrain.GRASS && terrain != Terrain.HIGH_GRASS && terrain != Terrain.FURROWED_GRASS) {
-			level.revealHiddenEntrance(cell);
-		} else if (cell == level.hiddenEntranceCell && !level.hiddenEntranceGrass
-				&& previous != terrain && terrain != Terrain.EXIT) {
-			level.interactions().setOverride(cell, HIDDEN_ENTRANCE_RULE);
-		}
+		level.cellAt(cell).place(terrain);
 	}
 
 	public void revealHiddenEntrance(int cell) {
@@ -1284,9 +1108,9 @@ public abstract class Level implements Bundlable {
 	}
 
 	public void updateCellFlags( int cell ){
-		int terrain = map[cell];
+		int terrain = terrainAt(cell);
 
-		int flags = Terrain.flags[terrain];
+		int flags = cellAt(cell).flags();
 		passable[cell]      = (flags & Terrain.PASSABLE) != 0;
 		losBlocking[cell]   = (flags & Terrain.LOS_BLOCKING) != 0;
 		flamable[cell]      = (flags & Terrain.FLAMABLE) != 0;
@@ -1294,21 +1118,13 @@ public abstract class Level implements Bundlable {
 		solid[cell]         = (flags & Terrain.SOLID) != 0;
 		avoid[cell]         = (flags & Terrain.AVOID) != 0;
 		pit[cell]           = (flags & Terrain.PIT) != 0;
-		water[cell]         = terrain == Terrain.WATER;
-
-		//与全量构建一致，下水道区域的 Boss 层和隐藏楼层也保留木桶的可燃性。
-		if (Dungeon.depth >= 1 && (Dungeon.depth - 1) / 5 == 0){
-			if (map[cell] == Terrain.REGION_DECO || map[cell] == Terrain.REGION_DECO_ALT
-					|| map[cell] == Terrain.SEWER_BARREL_MARKED || map[cell] == Terrain.SEWER_BARREL_MARKED_ALT){
-				flamable[cell] = true;
-			}
-		}
+		water[cell]         = (flags & Terrain.LIQUID) != 0;
 
 		for (Blob b : blobs.values()){
 			b.onUpdateCellFlags(this, cell);
 		}
 
-		updateOpenSpace(cell);
+		if (insideMap(cell)) updateOpenSpace(cell);
 
 		if (lighting != null) lighting.terrainChanged(cell);
 	}
@@ -1345,14 +1161,14 @@ public abstract class Level implements Bundlable {
 					checked[next] = true;
 					//Room painters can drop items before buildFlagMaps has run.
 					boolean canLand = Dungeon.level == this ? passable[next] || avoid[next]
-							: (Terrain.flags[map[next]] & (Terrain.PASSABLE | Terrain.AVOID)) != 0;
+							: (cellAt(next).flags() & (Terrain.PASSABLE | Terrain.AVOID)) != 0;
 					if (!canLand) continue;
 					Heap other = heaps.get(next);
 					if (other != null && other.type != Heap.Type.HEAP) {
 						containers.add(next);
 						continue;
 					}
-					int risk = pit[next] || map[next] == Terrain.CHASM ? 2
+					int risk = pit[next] || terrainAt(next) == Terrain.CHASM ? 2
 							: traps.get(next) != null && traps.get(next).active ? 1 : 0;
 					if (risk < bestRisk) {
 						candidates.clear();
@@ -1370,8 +1186,8 @@ public abstract class Level implements Bundlable {
 				for (int next = 0; next < length; next++) {
 					Heap other = heaps.get(next);
 					boolean canLand = Dungeon.level == this ? passable[next] || avoid[next]
-							: (Terrain.flags[map[next]] & (Terrain.PASSABLE | Terrain.AVOID)) != 0;
-					if (!canLand || pit[next] || map[next] == Terrain.CHASM
+							: (cellAt(next).flags() & (Terrain.PASSABLE | Terrain.AVOID)) != 0;
+					if (!canLand || pit[next] || terrainAt(next) == Terrain.CHASM
 							|| (other != null && other.type != Heap.Type.HEAP)) continue;
 					int distance = distance(cell, next);
 					if (distance < nearest) {
@@ -1390,7 +1206,7 @@ public abstract class Level implements Bundlable {
 			heap.seen = Dungeon.level == this && heroFOV[cell];
 			heap.pos = cell;
 			heap.drop(item);
-			if (map[cell] == Terrain.CHASM || (Dungeon.level != null && pit[cell])) {
+			if (terrainAt(cell) == Terrain.CHASM || (Dungeon.level != null && pit[cell])) {
 				Dungeon.dropToChasm( item );
 				GameScene.discard( heap );
 			} else {
@@ -1416,11 +1232,11 @@ public abstract class Level implements Bundlable {
 			plant.wither();
 		}
 
-		if (map[pos] == Terrain.HIGH_GRASS ||
-				map[pos] == Terrain.FURROWED_GRASS ||
-				map[pos] == Terrain.EMPTY ||
-				map[pos] == Terrain.EMBERS ||
-				map[pos] == Terrain.EMPTY_DECO) {
+		if (hasTerrain(pos, Terrain.HIGH_GRASS) ||
+				hasTerrain(pos, Terrain.FURROWED_GRASS) ||
+				terrainAt(pos) == Terrain.EMPTY ||
+				hasTerrain(pos, Terrain.EMBERS) ||
+				terrainAt(pos) == Terrain.EMPTY_DECO) {
 			set(pos, Terrain.GRASS, this);
 			GameScene.updateMap(pos);
 		}
@@ -1463,6 +1279,10 @@ public abstract class Level implements Bundlable {
 		}
 		trap.set( pos );
 		traps.put( pos, trap );
+		cellAt(pos).removeTerrain(Terrain.TRAP);
+		cellAt(pos).removeTerrain(Terrain.SECRET_TRAP);
+		cellAt(pos).removeTerrain(Terrain.INACTIVE_TRAP);
+		cellChanged(pos);
 		GameScene.updateMap( pos );
 		return trap;
 	}
@@ -1473,11 +1293,16 @@ public abstract class Level implements Bundlable {
 	}
 
 	public void discover( int cell ) {
-		set( cell, Terrain.discover( map[cell] ) );
-		Trap trap = traps.get( cell );
-		if (trap != null)
-			trap.reveal();
-		GameScene.updateMap( cell );
+		//隐藏门自身带有“覆盖内容”属性，不能当成压在物件上的墙直接跳过；
+		//否则搜索成功后地形仍停在 SECRET_DOOR，看上去还是墙。
+		boolean secretDoor = hasTerrain(cell, Terrain.SECRET_DOOR);
+		if (cellAt(cell).buried() && !secretDoor) return;
+		if (secretDoor) cellAt(cell).place(Terrain.discover(Terrain.SECRET_DOOR));
+		Trap trap = traps.get(cell);
+		if (trap != null) trap.reveal();
+		else if (hasTerrain(cell, Terrain.SECRET_TRAP))
+			cellAt(cell).place(Terrain.discover(Terrain.SECRET_TRAP));
+		cellChanged(cell);
 	}
 
 	public boolean setCellToWater( boolean includeTraps, int cell ){
@@ -1496,22 +1321,9 @@ public abstract class Level implements Bundlable {
 			}
 		}
 
-		int terr = map[cell];
-		if (terr == Terrain.EMPTY || terr == Terrain.GRASS ||
-				terr == Terrain.EMBERS || terr == Terrain.EMBERS_SP || terr == Terrain.EMPTY_SP ||
-				terr == Terrain.HIGH_GRASS || terr == Terrain.FURROWED_GRASS
-				|| terr == Terrain.EMPTY_DECO){
-			set(cell, Terrain.WATER, this);
-			GameScene.updateMap(cell);
-			return true;
-		} else if (includeTraps && (terr == Terrain.SECRET_TRAP ||
-				terr == Terrain.TRAP || terr == Terrain.INACTIVE_TRAP)){
-			set(cell, Terrain.WATER, this);
-			GameScene.updateMap(cell);
-			return true;
-		}
-
-		return false;
+		if (!cellAt(cell).supports(CellContent.SUPPORTS_COVER) || solid[cell]
+				|| (!includeTraps && traps.get(cell) != null)) return false;
+		return cellAt(cell).addContent(new CellContent(Terrain.WATER, region()));
 	}
 	
 	public int fallCell( boolean fallIntoPit ) {
@@ -1540,7 +1352,7 @@ public abstract class Level implements Bundlable {
 		if (!ch.flying){
 
 			//we call act here instead of detach in case the debuffs haven't managed to deal dmg once yet
-			if (map[ch.pos] == Terrain.WATER){
+			if (hasTerrain(ch.pos, Terrain.WATER)){
 				if (ch.buff(Burning.class) != null){
 					ch.buff(Burning.class).act();
 				}
@@ -1549,7 +1361,7 @@ public abstract class Level implements Bundlable {
 				}
 			}
 
-			if ( (map[ch.pos] == Terrain.GRASS || map[ch.pos] == Terrain.EMBERS)
+			if ( (hasTerrain(ch.pos, Terrain.GRASS) || hasTerrain(ch.pos, Terrain.EMBERS))
 					&& ch == Dungeon.hero && Dungeon.hero.hasTalent(Talent.REJUVENATING_STEPS)
 					&& ch.buff(Talent.RejuvenatingStepsCooldown.class) == null){
 
@@ -1584,7 +1396,7 @@ public abstract class Level implements Bundlable {
 			//characters which are not the hero or a sheep 'soft' press cells
 			pressCell( ch.pos, ch instanceof Hero || ch instanceof Sheep);
 		} else {
-			if (map[ch.pos] == Terrain.DOOR){
+			if (hasTerrain(ch.pos, Terrain.DOOR)){
 				Door.enter( ch.pos );
 			}
 		}
@@ -1607,38 +1419,16 @@ public abstract class Level implements Bundlable {
 	//a 'hard' press triggers all things
 	private void pressCell( int cell, boolean hard ) {
 
-		Trap trap = null;
-		
-		switch (map[cell]) {
-
-		case Terrain.SECRET_TRAP:
-			if (hard) {
-				trap = traps.get( cell );
-				if (primeOutdatedTrap(trap)) {
-					trap = null;
-				} else {
-					GLog.i(Messages.get(Level.class, "hidden_trap", trap.name()));
-				}
-			}
-			break;
-
-		case Terrain.TRAP:
-			trap = traps.get( cell );
-			break;
-			
-		case Terrain.HIGH_GRASS:
-		case Terrain.FURROWED_GRASS:
-			HighGrass.trample( this, cell);
-			break;
-			
-		case Terrain.WELL:
-			WellWater.affectCell( cell );
-			break;
-			
-		case Terrain.DOOR:
-			Door.enter( cell );
-			break;
+		if (cellAt(cell).buried()) return;
+		Trap trap = traps.get(cell);
+		if (trap != null && (!trap.active || (!hard && !trap.visible))) trap = null;
+		if (trap != null && !trap.visible) {
+			if (primeOutdatedTrap(trap)) trap = null;
+			else GLog.i(Messages.get(Level.class, "hidden_trap", trap.name()));
 		}
+		if (hasTerrain(cell, Terrain.HIGH_GRASS) || hasTerrain(cell, Terrain.FURROWED_GRASS)) HighGrass.trample(this, cell);
+		if (cellAt(cell).ground() == Terrain.WELL) WellWater.affectCell(cell);
+		if (hasTerrain(cell, Terrain.DOOR)) Door.enter(cell);
 
 		TimekeepersHourglass.timeFreeze timeFreeze =
 				Dungeon.hero.buff(TimekeepersHourglass.timeFreeze.class);
@@ -1719,7 +1509,7 @@ public abstract class Level implements Bundlable {
 	public void updateBlobLighting(Blob blob, int cell) {
 		if (lighting != null) lighting.blobChanged(blob, cell);
 		// 自然视野未变化时，书架点燃和熄灭仍须重绘墙面与顶部的迷雾。
-		if (this == Dungeon.level && blob.getClass() == Fire.class && map[cell] == Terrain.BOOKSHELF) {
+		if (this == Dungeon.level && blob.getClass() == Fire.class && hasTerrain(cell, Terrain.BOOKSHELF)) {
 			GameScene.updateFog(cell, 1);
 		}
 	}
@@ -1961,7 +1751,7 @@ public abstract class Level implements Bundlable {
 
 	/** 默认光源按当前楼层环境复用，特殊楼层只补充自己的来源。 */
 	protected int staticEnvironmentalLightRadius(int cell) {
-		return lighting().terrainRadius(map[cell]);
+		return lighting().terrainRadius(terrainAt(cell));
 	}
 
 	/** 最终视野驱动探索和迷雾，熄灯及远处感知消失也会进入更新范围。 */
@@ -2013,7 +1803,7 @@ public abstract class Level implements Bundlable {
 	//usually just if the base terrain of a cell is solid, but other cases exist too
 	//only check on base terrain, we want to ignore temporary changes from blobs (e.g. light wall)
 	public boolean invalidHeroPos( int tile ){
-		int flags = Terrain.flags[map[tile]];
+		int flags = cellAt(tile).flags();
 		return (flags & Terrain.PASSABLE) != 0 && (flags & Terrain.AVOID) != 0;
 	}
 
@@ -2062,7 +1852,7 @@ public abstract class Level implements Bundlable {
 			case Terrain.EXIT:
 				return Messages.get(Level.class, "exit_name");
 			case Terrain.EMBERS:
-			case Terrain.EMBERS_SP:
+
 				return Messages.get(Level.class, "embers_name");
 			case Terrain.FURROWED_GRASS:
 				return Messages.get(Level.class, "furrowed_grass_name");
@@ -2087,8 +1877,8 @@ public abstract class Level implements Bundlable {
 				return Messages.get(Level.class, "empty_well_name");
 			case Terrain.STATUE:
 			case Terrain.STATUE_SP:
-			case Terrain.STATUE_EMBERS:
-			case Terrain.STATUE_SP_EMBERS:
+
+
 				return Messages.get(Level.class, "statue_name");
 			case Terrain.INACTIVE_TRAP:
 				return Messages.get(Level.class, "inactive_trap_name");
@@ -2115,7 +1905,7 @@ public abstract class Level implements Bundlable {
 			case Terrain.UNLOCKED_EXIT:
 				return Messages.get(Level.class, "exit_desc");
 			case Terrain.EMBERS:
-			case Terrain.EMBERS_SP:
+
 				return Messages.get(Level.class, "embers_desc");
 			case Terrain.HIGH_GRASS:
 			case Terrain.FURROWED_GRASS:
@@ -2133,8 +1923,8 @@ public abstract class Level implements Bundlable {
 				return Messages.get(Level.class, "inactive_trap_desc");
 			case Terrain.STATUE:
 			case Terrain.STATUE_SP:
-			case Terrain.STATUE_EMBERS:
-			case Terrain.STATUE_SP_EMBERS:
+
+
 				return Messages.get(Level.class, "statue_desc");
 			case Terrain.ALCHEMY:
 				return Messages.get(Level.class, "alchemy_desc");

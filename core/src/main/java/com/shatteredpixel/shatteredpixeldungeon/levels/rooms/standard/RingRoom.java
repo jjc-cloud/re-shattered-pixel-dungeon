@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
@@ -46,12 +47,12 @@ public class RingRoom extends StandardRoom {
 	
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1 , Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1 , CellPlacement.reset(Terrain.EMPTY) );
 		
 		int minDim = Math.min(width(), height());
 		int passageWidth = (int)Math.floor(0.2f*(minDim+3));
-		Painter.fill(level, this, passageWidth+1, Terrain.WALL);
+		Painter.fill(level, this, passageWidth+1, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 
 		if (minDim >= 10){
 			Painter.fill(level, this, passageWidth+2, centerDecoTiles());
@@ -77,17 +78,17 @@ public class RingRoom extends StandardRoom {
 				}
 			}
 
-			Painter.set(level, center, Terrain.EMPTY_SP);
+			Painter.set(level, center, CellPlacement.reset(Terrain.EMPTY_SP));
 			placeCenterDetail(level, level.pointToCell(center));
 
 			center.x += xDir;
 			center.y += yDir;
-			while (level.map[level.pointToCell(center)] != Terrain.WALL){
-				Painter.set(level, center, Terrain.EMPTY_SP);
+			while (!level.hasTerrain(level.pointToCell(center), Terrain.WALL)){
+				Painter.set(level, center, CellPlacement.reset(Terrain.EMPTY_SP));
 				center.x += xDir;
 				center.y += yDir;
 			}
-			Painter.set(level, center, Terrain.DOOR);
+			Painter.set(level, center, CellPlacement.reset(Terrain.EMPTY, Terrain.DOOR));
 		}
 		
 		for (Door door : connected.values()) {
@@ -95,8 +96,8 @@ public class RingRoom extends StandardRoom {
 		}
 	}
 
-	protected int centerDecoTiles(){
-		return Terrain.REGION_DECO_ALT;
+	protected CellPlacement centerDecoTiles(){
+		return CellPlacement.reset(Terrain.EMPTY, Terrain.REGION_DECO_ALT);
 	}
 
 	protected void placeCenterDetail(Level level, int pos){

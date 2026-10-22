@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.food.Food;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.Pasty;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.plants.BlandfruitBush;
 import com.watabou.utils.Point;
@@ -46,13 +47,14 @@ public class SecretLarderRoom extends SecretRoom {
 	
 	@Override
 	public void paint(Level level) {
-		Painter.fill(level, this, Terrain.WALL);
-		Painter.fill(level, this, 1, Terrain.EMPTY_SP);
+		Painter.fill(level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL));
+		Painter.fill(level, this, 1, CellPlacement.reset(Terrain.EMPTY_SP));
 		
 		Point c = center();
 		
-		Painter.fill(level, c.x-1, c.y-1, 3, 3, Terrain.WATER);
-		Painter.set(level, c, Terrain.GRASS);
+		Painter.fill(level, c.x-1, c.y-1, 3, 3, CellPlacement.content(Terrain.WATER));
+		// 水池中心是承载无味果丛的干燥草地，需要移除刚铺设的水。
+		Painter.set(level, c, CellPlacement.reset(Terrain.EMPTY, Terrain.GRASS));
 		
 		level.plant(new BlandfruitBush.Seed(), level.pointToCell(c));
 		
@@ -70,7 +72,7 @@ public class SecretLarderRoom extends SecretRoom {
 			int foodPos;
 			do {
 				foodPos = level.pointToCell(random());
-			} while (level.map[foodPos] != Terrain.EMPTY_SP || level.heaps.get(foodPos) != null);
+			} while (level.terrainAt(foodPos) != Terrain.EMPTY_SP || level.heaps.get(foodPos) != null);
 			level.drop(food, foodPos);
 		}
 		

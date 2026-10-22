@@ -29,6 +29,7 @@ import com.shatteredpixel.shatteredpixeldungeon.journal.Document;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.StandardRoom;
@@ -57,7 +58,7 @@ public class EntranceRoom extends StandardRoom {
 	}
 
 	@Override
-	public boolean canMerge(Level l, Room other, Point p, int mergeTerrain) {
+	public boolean canMerge(Level l, Room other, Point p, CellPlacement mergeTerrain) {
 		if (Dungeon.depth <= 2) {
 			return false;
 		} else {
@@ -76,8 +77,8 @@ public class EntranceRoom extends StandardRoom {
 
 	public void paint(Level level ) {
 		
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY) );
 		
 		for (Room.Door door : connected.values()) {
 			door.set( Room.Door.Type.REGULAR );
@@ -87,7 +88,7 @@ public class EntranceRoom extends StandardRoom {
 		do {
 			entrance = level.pointToCell(random(2));
 		} while (level.findMob(entrance) != null);
-		Painter.set( level, entrance, Terrain.ENTRANCE );
+		Painter.set( level, entrance, CellPlacement.reset(Terrain.ENTRANCE) );
 
 		if (Dungeon.depth == 1 && Dungeon.branch == 0){
 			level.transitions.add(new LevelTransition(level, entrance, LevelTransition.Type.SURFACE));
@@ -111,7 +112,7 @@ public class EntranceRoom extends StandardRoom {
 				//can't be on bottom row of tiles
 				pos = level.pointToCell(new Point( Random.IntRange( r.left + 1, r.right - 1 ),
 						Random.IntRange( r.top + 1, r.bottom - 2 )));
-			} while (pos == level.entrance() || level.map[pos] == Terrain.REGION_DECO);
+			} while (pos == level.entrance() || level.hasTerrain(pos, Terrain.REGION_DECO));
 			level.drop( new Guidebook(), pos );
 			Document.ADVENTURERS_GUIDE.deletePage(Document.GUIDE_INTRO);
 		}
@@ -123,7 +124,7 @@ public class EntranceRoom extends StandardRoom {
 				//can't be on bottom row of tiles
 				pos = level.pointToCell(new Point( Random.IntRange( r.left + 1, r.right - 1 ),
 						Random.IntRange( r.top + 1, r.bottom - 2 )));
-			} while (pos == level.entrance() || level.map[pos] == Terrain.REGION_DECO);
+			} while (pos == level.entrance() || level.hasTerrain(pos, Terrain.REGION_DECO));
 			GuidePage p = new GuidePage();
 			p.page(Document.GUIDE_SEARCHING);
 			level.drop( p, pos );

@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.exit;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.LibraryHallRoom;
 import com.watabou.utils.Point;
@@ -42,9 +43,9 @@ public class LibraryHallExitRoom extends LibraryHallRoom {
 		while (true){
 			Point p = random(2);
 
-			if (level.map[level.pointToCell(p)] == Terrain.REGION_DECO){
+			if (level.hasTerrain(level.pointToCell(p), Terrain.REGION_DECO)){
 				int exit = level.pointToCell(p);
-				Painter.set( level, exit, Terrain.EXIT );
+				Painter.set( level, exit, CellPlacement.reset(Terrain.EXIT) );
 
 				level.transitions.add(new LevelTransition(level, exit, LevelTransition.Type.REGULAR_EXIT));
 				return;

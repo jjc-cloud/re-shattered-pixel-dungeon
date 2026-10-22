@@ -1,5 +1,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gem;
@@ -9,6 +11,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
@@ -16,10 +19,6 @@ import com.watabou.utils.Random;
 /** 入口墙后是两格直道，再接中央带基座的 3×3 宝物区。 */
 public class SuperSecretRoom extends SecretRoom {
 
-	private static final TerrainInteractions.Rule ENTRANCE_RULE = TerrainInteractions.Rule.NONE
-			.on(TerrainInteractions.Source.EXPLOSION, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
-			.on(TerrainInteractions.Source.DISINTEGRATION, TerrainInteractions.Response.replaceWith(Terrain.EMPTY))
-			.on(TerrainInteractions.Source.SHOCKWAVE, TerrainInteractions.Response.replaceWith(Terrain.EMPTY));
 
 	@Override public int minWidth() { return 5; }
 	@Override public int maxWidth() { return 7; }
@@ -55,15 +54,15 @@ public class SuperSecretRoom extends SecretRoom {
 
 	@Override
 	public void paint(Level level) {
-		Painter.fill(level, this, Terrain.WALL);
+		Painter.fill(level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL));
 		Door door = entrance();
 		door.set(Door.Type.WALL);
-		Painter.set(level, pointInside(door, 1), Terrain.EMPTY);
-		Painter.set(level, pointInside(door, 2), Terrain.EMPTY);
+		Painter.set(level, pointInside(door, 1), CellPlacement.reset(Terrain.EMPTY));
+		Painter.set(level, pointInside(door, 2), CellPlacement.reset(Terrain.EMPTY));
 
 		Point pedestal = pointInside(door, 4);
-		Painter.fill(level, pedestal.x - 1, pedestal.y - 1, 3, 3, Terrain.EMPTY_SP);
-		Painter.set(level, pedestal, Terrain.PEDESTAL);
+		Painter.fill(level, pedestal.x - 1, pedestal.y - 1, 3, 3, CellPlacement.reset(Terrain.EMPTY_SP));
+		Painter.set(level, pedestal, CellPlacement.reset(Terrain.PEDESTAL));
 		level.drop(createPrize(), level.pointToCell(pedestal)).autoExplored = true;
 		for (int y = -1; y <= 1; y++) {
 			for (int x = -1; x <= 1; x++) {
@@ -73,7 +72,7 @@ public class SuperSecretRoom extends SecretRoom {
 				}
 			}
 		}
-		level.interactions().setOverride(level.pointToCell(door), ENTRANCE_RULE);
+		level.interactions().propertiesAt(level.pointToCell(door), Terrain.WALL, CellContent.BREAKABLE, 0);
 	}
 
 	private Item createPrize() {

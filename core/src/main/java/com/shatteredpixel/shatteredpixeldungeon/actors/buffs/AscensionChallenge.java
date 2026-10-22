@@ -260,7 +260,7 @@ public class AscensionChallenge extends Buff {
 
 				//doors locked by the hero are reset, to prevent blocking out enemies
 				for (int i = 0; i < Dungeon.level.length(); i++){
-					if (Dungeon.level.map[i] == Terrain.HERO_LKD_DR){
+					if (Dungeon.level.hasTerrain(i, Terrain.HERO_LKD_DR)){
 						Level.set(i, Terrain.DOOR, Dungeon.level);
 					}
 				}

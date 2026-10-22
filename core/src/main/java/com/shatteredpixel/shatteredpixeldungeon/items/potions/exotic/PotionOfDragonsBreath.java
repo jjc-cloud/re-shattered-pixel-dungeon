@@ -166,7 +166,7 @@ public class PotionOfDragonsBreath extends ExoticPotion {
 											}
 
 											//knock doors open
-											if (Dungeon.level.map[cell] == Terrain.DOOR){
+											if (Dungeon.level.hasTerrain(cell, Terrain.DOOR)){
 												Level.set(cell, Terrain.OPEN_DOOR);
 												GameScene.updateMap(cell);
 											}

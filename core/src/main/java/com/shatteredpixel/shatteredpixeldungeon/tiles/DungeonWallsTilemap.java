@@ -34,7 +34,7 @@ public class DungeonWallsTilemap extends DungeonTilemap {
 	public DungeonWallsTilemap(){
 		super(Dungeon.level.tilesTex());
 		skipCells.clear();
-		map( Dungeon.level.map, Dungeon.level.width() );
+		map( Dungeon.level.terrainVisuals(), Dungeon.level.width() );
 	}
 
 	@Override
@@ -103,11 +103,9 @@ public class DungeonWallsTilemap extends DungeonTilemap {
 			return DungeonTileSheet.DOOR_OVERHANG_OPEN;
 		} else if (Dungeon.level.insideMap(pos) && map[pos+mapWidth] == Terrain.CRYSTAL_DOOR ) {
 			return DungeonTileSheet.DOOR_OVERHANG_CRYSTAL;
-		} else if (pos + mapWidth < size && (map[pos+mapWidth] == Terrain.STATUE
-				|| map[pos+mapWidth] == Terrain.STATUE_EMBERS)){
+		} else if (pos + mapWidth < size && (map[pos+mapWidth] == Terrain.STATUE)){
 			return DungeonTileSheet.STATUE_OVERHANG;
-		} else if (pos + mapWidth < size && (map[pos+mapWidth] == Terrain.STATUE_SP
-				|| map[pos+mapWidth] == Terrain.STATUE_SP_EMBERS)){
+		} else if (pos + mapWidth < size && (map[pos+mapWidth] == Terrain.STATUE_SP)){
 			return DungeonTileSheet.STATUE_SP_OVERHANG;
 		} else if (pos + mapWidth < size && map[pos+mapWidth] == Terrain.REGION_DECO){
 			return DungeonTileSheet.REGION_DECO_OVERHANG;

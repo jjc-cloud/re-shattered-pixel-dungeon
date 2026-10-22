@@ -111,7 +111,7 @@ public class CellSelector extends ScrollArea {
 
 			//then heaps
 			for (Heap heap : Dungeon.level.heaps.valueList()){
-				if (Dungeon.level.map[heap.pos] != Terrain.COLLAPSE_WALL
+				if (!Dungeon.level.hasTerrain(heap.pos, Terrain.COLLAPSE_WALL)
 						&& heap.sprite != null && heap.sprite.overlapsPoint( p.x, p.y)){
 					PointF c = DungeonTilemap.tileCenterToWorld(heap.pos);
 					if (Math.abs(p.x - c.x) <= 12 && Math.abs(p.y - c.y) <= 12) {

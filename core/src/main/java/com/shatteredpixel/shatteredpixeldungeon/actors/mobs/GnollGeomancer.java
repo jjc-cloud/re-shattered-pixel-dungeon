@@ -113,7 +113,7 @@ public class GnollGeomancer extends Mob {
 		if (throwingRocksFromPos != null){
 			boolean attacked = false;
 			for (int rock : throwingRocksFromPos) {
-				if (rock != -1 && Dungeon.level.map[rock] == Terrain.MINE_BOULDER) {
+				if (rock != -1 && Dungeon.level.hasTerrain(rock, Terrain.MINE_BOULDER)) {
 					attacked = true;
 					GnollGeomancer.doRockThrowAttack(this, rock, throwingRockToPos);
 				}
@@ -402,32 +402,32 @@ public class GnollGeomancer extends Mob {
 		ArrayList<Integer> exteriorCells = spreadDiamondAOE(cells);
 
 		for (int i : cells){
-			if (Dungeon.level.map[i] == Terrain.WALL_DECO){
+			if (Dungeon.level.hasTerrain(i, Terrain.WALL_DECO)){
 				Dungeon.level.drop(new DarkGold(), i).sprite.drop();
-				Dungeon.level.map[i] = Terrain.EMPTY_DECO;
+				Dungeon.level.cellAt(i).reset(Terrain.EMPTY_DECO);
 			} else if (Dungeon.level.solid[i]){
 				if (Random.Int(3) == 0){
-					Dungeon.level.map[i] = Terrain.MINE_BOULDER;
+					Dungeon.level.cellAt(i).reset(Terrain.EMPTY_DECO, Terrain.MINE_BOULDER);
 				} else {
-					Dungeon.level.map[i] = Terrain.EMPTY_DECO;
+					Dungeon.level.cellAt(i).reset(Terrain.EMPTY_DECO);
 				}
-			} else if (Dungeon.level.map[i] == Terrain.HIGH_GRASS || Dungeon.level.map[i] == Terrain.FURROWED_GRASS){
-				Dungeon.level.map[i] = Terrain.GRASS;
+			} else if (Dungeon.level.hasTerrain(i, Terrain.HIGH_GRASS) || Dungeon.level.hasTerrain(i, Terrain.FURROWED_GRASS)){
+				Dungeon.level.cellAt(i).place(Terrain.GRASS);
 			}
 			CellEmitter.get( i - Dungeon.level.width() ).start(Speck.factory(Speck.ROCK), 0.07f, 10);
 		}
 		for (int i : exteriorCells){
 			if (!Dungeon.level.solid[i]
-					&& Dungeon.level.map[i] != Terrain.EMPTY_SP
+					&& Dungeon.level.terrainAt(i) != Terrain.EMPTY_SP
 					&& !Dungeon.level.adjacent(i, Dungeon.level.entrance())
 					&& Dungeon.level.traps.get(i) == null
 					&& Dungeon.level.plants.get(i) == null
 					&& Actor.findChar(i) == null){
-				Dungeon.level.map[i] = Terrain.MINE_BOULDER;
+				Dungeon.level.cellAt(i).place(Terrain.MINE_BOULDER);
 			}
 		}
 		if (Dungeon.level.solid[dashPos]){
-			Dungeon.level.map[dashPos] = Terrain.EMPTY_DECO;
+			Dungeon.level.cellAt(dashPos).reset(Terrain.EMPTY_DECO);
 		}
 		//we potentially update a lot of cells, so might as well just reset properties instead of incrementally updating
 		Dungeon.level.buildFlagMaps();
@@ -534,8 +534,8 @@ public class GnollGeomancer extends Mob {
 		});
 
 		for (int i = 0; i < Dungeon.level.length(); i++){
-			if (Dungeon.level.map[i] == Terrain.MINE_BOULDER && Dungeon.level.trueDistance(i, pos) <= 6){
-				Level.set(i, Terrain.EMPTY_DECO);
+			if (Dungeon.level.hasTerrain(i, Terrain.MINE_BOULDER) && Dungeon.level.trueDistance(i, pos) <= 6){
+				Dungeon.level.cellAt(i).removeTerrain(Terrain.MINE_BOULDER);
 				GameScene.updateMap(i);
 				Splash.at(i, 0x555555, 15);
 			}
@@ -593,8 +593,8 @@ public class GnollGeomancer extends Mob {
 
 					boolean targetNextToBarricade = false;
 					for (int i : PathFinder.NEIGHBOURS8){
-						if (Dungeon.level.map[enemy.pos+i] == Terrain.BARRICADE
-								|| Dungeon.level.map[enemy.pos+i] == Terrain.ENTRANCE){
+						if (Dungeon.level.hasTerrain(enemy.pos+i, Terrain.BARRICADE)
+								|| Dungeon.level.terrainAt(enemy.pos+i) == Terrain.ENTRANCE){
 							targetNextToBarricade = true;
 							break;
 						}
@@ -658,7 +658,7 @@ public class GnollGeomancer extends Mob {
 		ArrayList<Integer> candidateRocks = new ArrayList<>();
 
 		for (int i = 0; i < Dungeon.level.length(); i++){
-			if (source.fieldOfView[i] && Dungeon.level.map[i] == Terrain.MINE_BOULDER){
+			if (source.fieldOfView[i] && Dungeon.level.hasTerrain(i, Terrain.MINE_BOULDER)){
 				if (new Ballistica(i, target.pos, Ballistica.PROJECTILE).collisionPos == target.pos){
 					candidateRocks.add(i);
 				}
@@ -699,7 +699,7 @@ public class GnollGeomancer extends Mob {
 
 	public static void doRockThrowAttack( Char source, int from, int to ){
 
-		Level.set(from, Terrain.EMPTY);
+		Dungeon.level.cellAt(from).removeTerrain(Terrain.MINE_BOULDER);
 		GameScene.updateMap(from);
 		source.sprite.attack(from, new Callback() {
 			@Override
@@ -806,8 +806,8 @@ public class GnollGeomancer extends Mob {
 				if (avoidBarricades){
 					boolean barricade = false;
 					for (int j : PathFinder.NEIGHBOURS9){
-						if (Dungeon.level.map[pos+j] == Terrain.BARRICADE
-								|| Dungeon.level.map[pos+j] == Terrain.ENTRANCE){
+						if (Dungeon.level.hasTerrain(pos+j, Terrain.BARRICADE)
+								|| Dungeon.level.terrainAt(pos+j) == Terrain.ENTRANCE){
 							barricade = true;
 						}
 					}
@@ -865,7 +865,7 @@ public class GnollGeomancer extends Mob {
 
 		@Override
 		public void affectCell(int cell) {
-			if (Dungeon.level.map[cell] != Terrain.EMPTY_SP
+			if (Dungeon.level.terrainAt(cell) != Terrain.EMPTY_SP
 					&& !Dungeon.level.adjacent(cell, Dungeon.level.entrance())
 					&& Random.Int(3) == 0) {
 				Level.set(cell, Terrain.MINE_BOULDER);

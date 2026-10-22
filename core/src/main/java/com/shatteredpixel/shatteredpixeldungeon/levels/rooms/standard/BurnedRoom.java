@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.TrapMechanism;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.BurningTrap;
@@ -38,9 +39,9 @@ public class BurnedRoom extends PatchRoom {
 	}
 
 	@Override
-	public boolean canMerge(Level l, Room other, Point p, int mergeTerrain) {
+	public boolean canMerge(Level l, Room other, Point p, CellPlacement mergeTerrain) {
 		int cell = l.pointToCell(pointInside(p, 1));
-		return l.map[cell] == Terrain.EMPTY;
+		return l.terrainAt(cell) == Terrain.EMPTY;
 	}
 
 	@Override
@@ -67,8 +68,8 @@ public class BurnedRoom extends PatchRoom {
 
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY) );
 		for (Door door : connected.values()) {
 			door.set( Door.Type.REGULAR );
 		}
@@ -82,37 +83,35 @@ public class BurnedRoom extends PatchRoom {
 				if (!patch[xyToPatchCoords(j, i)])
 					continue;
 				int cell = i * level.width() + j;
-				int t;
 				switch (Random.Int( 5 )) {
 					case 0: default:
-						t = Terrain.EMPTY;
+
 						break;
 					case 1:
-						t = Terrain.EMBERS;
+						level.cellAt(cell).place(Terrain.EMBERS);
 						break;
 					case 2:
-						t = Terrain.TRAP;
+
 						level.setTrap(new BurningTrap().reveal(), cell);
 						break;
 					case 3:
 						revealInc += revealedChance;
 						if (revealInc >= 1){
-							t = Terrain.TRAP;
+
 							level.setTrap(new BurningTrap().reveal(), cell);
 							revealInc--;
 						} else {
-							t = Terrain.SECRET_TRAP;
+
 							level.setTrap(new BurningTrap().rollOutdatedRandom(level).hide(), cell);
 						}
 						break;
 					case 4:
-						t = Terrain.INACTIVE_TRAP;
+
 						BurningTrap trap = new BurningTrap();
 						trap.reveal().active = false;
 						level.setTrap(trap, cell);
 						break;
 				}
-				level.map[cell] = t;
 			}
 		}
 	}

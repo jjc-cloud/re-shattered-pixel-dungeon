@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.FlameParticle;
@@ -68,8 +70,8 @@ public class FireImbue extends Buff {
 
 	@Override
 	public boolean act() {
-		if (Dungeon.level.map[target.pos] == Terrain.GRASS) {
-			Dungeon.level.set(target.pos, Terrain.EMBERS);
+		if (Dungeon.level.hasTerrain(target.pos, Terrain.GRASS)) {
+			Dungeon.level.affectTerrain(target.pos, CellContent.BURNABLE);
 			GameScene.updateMap(target.pos);
 		}
 

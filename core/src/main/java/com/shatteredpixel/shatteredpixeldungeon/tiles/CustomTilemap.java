@@ -39,6 +39,7 @@ public abstract class CustomTilemap implements Bundlable {
 	
 	protected Object texture;
 	protected Tilemap vis = null;
+	public final java.util.ArrayList<Tilemap> layerVisuals = new java.util.ArrayList<>();
 
 	public void pos(int pos) {
 		pos( pos, Dungeon.level );
@@ -98,6 +99,11 @@ public abstract class CustomTilemap implements Bundlable {
 		vis.x = tileX*SIZE;
 		vis.y = tileY*SIZE;
 		return vis;
+	}
+
+	public void clearVisuals() {
+		vis = null;
+		layerVisuals.clear();
 	}
 
 	//TODO we need broader support for being able to alter terrain on custom tilemaps, this is a bit of a bandaid for DK fight changes atm.

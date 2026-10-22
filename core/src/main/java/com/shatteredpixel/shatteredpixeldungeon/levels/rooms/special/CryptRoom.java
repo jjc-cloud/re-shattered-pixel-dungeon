@@ -31,6 +31,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.IronKey;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 
@@ -38,8 +39,8 @@ public class CryptRoom extends SpecialRoom {
 
 	public void paint( Level level ) {
 		
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY) );
 
 		Point c = center();
 		int cx = c.x;
@@ -51,20 +52,20 @@ public class CryptRoom extends SpecialRoom {
 		level.addItemToSpawn( new IronKey( Dungeon.depth ) );
 		
 		if (entrance.x == left) {
-			Painter.set( level, new Point( right-1, top+1 ), Terrain.STATUE );
-			Painter.set( level, new Point( right-1, bottom-1 ), Terrain.STATUE );
+			Painter.set( level, new Point( right-1, top+1 ), CellPlacement.content(Terrain.STATUE) );
+			Painter.set( level, new Point( right-1, bottom-1 ), CellPlacement.content(Terrain.STATUE) );
 			cx = right - 2;
 		} else if (entrance.x == right) {
-			Painter.set( level, new Point( left+1, top+1 ), Terrain.STATUE );
-			Painter.set( level, new Point( left+1, bottom-1 ), Terrain.STATUE );
+			Painter.set( level, new Point( left+1, top+1 ), CellPlacement.content(Terrain.STATUE) );
+			Painter.set( level, new Point( left+1, bottom-1 ), CellPlacement.content(Terrain.STATUE) );
 			cx = left + 2;
 		} else if (entrance.y == top) {
-			Painter.set( level, new Point( left+1, bottom-1 ), Terrain.STATUE );
-			Painter.set( level, new Point( right-1, bottom-1 ), Terrain.STATUE );
+			Painter.set( level, new Point( left+1, bottom-1 ), CellPlacement.content(Terrain.STATUE) );
+			Painter.set( level, new Point( right-1, bottom-1 ), CellPlacement.content(Terrain.STATUE) );
 			cy = bottom - 2;
 		} else if (entrance.y == bottom) {
-			Painter.set( level, new Point( left+1, top+1 ), Terrain.STATUE );
-			Painter.set( level, new Point( right-1, top+1 ), Terrain.STATUE );
+			Painter.set( level, new Point( left+1, top+1 ), CellPlacement.content(Terrain.STATUE) );
+			Painter.set( level, new Point( right-1, top+1 ), CellPlacement.content(Terrain.STATUE) );
 			cy = top + 2;
 		}
 		

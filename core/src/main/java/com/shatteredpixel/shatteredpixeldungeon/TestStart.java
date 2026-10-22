@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
@@ -128,26 +130,18 @@ public class TestStart {
 
 	private static void applyTerrainInteractions(Level level) {
 		if (!(level instanceof SewerLevel) && !(level instanceof PrisonLevel)) return;
-		TerrainInteractions.Rule decoration = TerrainInteractions.Rule.LEGACY.on(
-				level instanceof SewerLevel ? TerrainInteractions.Source.CLICK : TerrainInteractions.Source.ELECTRIC,
-				level instanceof SewerLevel ? TerrainInteractions.Response.DESTROY : TerrainInteractions.Response.CONDUCT);
-		level.interactions().setDefault(Terrain.REGION_DECO, decoration);
-		level.interactions().setDefault(Terrain.REGION_DECO_ALT, decoration);
-		TerrainInteractions.Rule wall = TerrainInteractions.Rule.NONE
-				.on(TerrainInteractions.Source.EXPLOSION, TerrainInteractions.Response.replaceWith(Terrain.EMPTY_DECO))
-				.on(TerrainInteractions.Source.DISINTEGRATION, TerrainInteractions.Response.replaceWith(Terrain.EMPTY_DECO));
 		int best = -1, distance = Integer.MAX_VALUE;
 		for (int cell = 0; cell < level.length(); cell++) {
-			if (!level.insideMap(cell) || level.map[cell] != Terrain.WALL) continue;
+			if (!level.insideMap(cell) || !level.hasTerrain(cell, Terrain.WALL)) continue;
 			int near = level.distance(cell, level.entrance());
 			if (near <= 2 || near >= distance || level.distance(cell, level.exit()) <= 2) continue;
 			for (int offset : com.watabou.utils.PathFinder.NEIGHBOURS4) {
-				if (level.map[cell + offset] == Terrain.EMPTY) { best = cell; distance = near; break; }
+				if (level.terrainAt(cell + offset) == Terrain.EMPTY) { best = cell; distance = near; break; }
 			}
 		}
 		if (best != -1) {
 			Level.set(best, Terrain.WALL_DECO, level);
-			level.interactions().setOverride(best, wall);
+			level.interactions().propertiesAt(best, Terrain.WALL_DECO, CellContent.BREAKABLE, 0);
 		}
 	}
 
@@ -187,7 +181,7 @@ public class TestStart {
 		int best = -1;
 		int nearest = Integer.MAX_VALUE;
 		for (int cell = 0; cell < level.length(); cell++) {
-			if (!level.insideMap(cell) || level.map[cell] != Terrain.EMPTY
+			if (!level.insideMap(cell) || level.terrainAt(cell) != Terrain.EMPTY
 					|| !level.passable[cell] || (large && !level.openSpace[cell])
 					|| cell == level.entrance() || cell == level.exit()
 					|| level.getTransition(cell) != null || level.findMob(cell) != null

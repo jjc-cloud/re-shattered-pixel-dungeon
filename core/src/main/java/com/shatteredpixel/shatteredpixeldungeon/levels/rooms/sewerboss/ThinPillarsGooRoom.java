@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.sewerboss;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Goo;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection.PerimeterRoom;
 
@@ -32,26 +33,26 @@ public class ThinPillarsGooRoom extends GooBossRoom {
 	@Override
 	public void paint(Level level) {
 		
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1 , Terrain.WATER );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1 , CellPlacement.reset(Terrain.EMPTY, Terrain.WATER) );
 		
 		int pillarW = (width() == 14 ? 4: 2) + width()%2;
 		int pillarH = (height() == 14 ? 4: 2) + height()%2;
 		
 		if (height() < 12){
-			Painter.fill(level, left + (width()-pillarW)/2, top+2, pillarW, 1, Terrain.WALL);
-			Painter.fill(level, left + (width()-pillarW)/2, bottom-2, pillarW, 1, Terrain.WALL);
+			Painter.fill(level, left + (width()-pillarW)/2, top+2, pillarW, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
+			Painter.fill(level, left + (width()-pillarW)/2, bottom-2, pillarW, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 		} else {
-			Painter.fill(level, left + (width()-pillarW)/2, top+3, pillarW, 1, Terrain.WALL);
-			Painter.fill(level, left + (width()-pillarW)/2, bottom-3, pillarW, 1, Terrain.WALL);
+			Painter.fill(level, left + (width()-pillarW)/2, top+3, pillarW, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
+			Painter.fill(level, left + (width()-pillarW)/2, bottom-3, pillarW, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 		}
 		
 		if (width() < 12){
-			Painter.fill(level, left + 2, top + (height() - pillarH)/2, 1, pillarH, Terrain.WALL);
-			Painter.fill(level, right - 2, top + (height() - pillarH)/2, 1, pillarH, Terrain.WALL);
+			Painter.fill(level, left + 2, top + (height() - pillarH)/2, 1, pillarH, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
+			Painter.fill(level, right - 2, top + (height() - pillarH)/2, 1, pillarH, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 		} else {
-			Painter.fill(level, left + 3, top + (height() - pillarH)/2, 1, pillarH, Terrain.WALL);
-			Painter.fill(level, right - 3, top + (height() - pillarH)/2, 1, pillarH, Terrain.WALL);
+			Painter.fill(level, left + 3, top + (height() - pillarH)/2, 1, pillarH, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
+			Painter.fill(level, right - 3, top + (height() - pillarH)/2, 1, pillarH, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 		}
 		
 		PerimeterRoom.fillPerimiterPaths(level, this, Terrain.EMPTY_SP);

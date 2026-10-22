@@ -37,6 +37,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ExoticScrol
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ExoticCrystals;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Random;
 import com.watabou.utils.Reflection;
@@ -72,16 +73,16 @@ public class SecretLibraryRoom extends SecretRoom {
 	
 	public void paint( Level level ) {
 		
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.BOOKSHELF );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.BOOKSHELF) );
 		
-		Painter.fillEllipse(level, this, 2, Terrain.EMPTY_SP);
+		Painter.fillEllipse(level, this, 2, CellPlacement.reset(Terrain.EMPTY_SP));
 		
 		Door entrance = entrance();
 		if (entrance.x == left || entrance.x == right){
-			Painter.drawInside(level, this, entrance, (width() - 3) / 2, Terrain.EMPTY_SP);
+			Painter.drawInside(level, this, entrance, (width() - 3) / 2, CellPlacement.reset(Terrain.EMPTY_SP));
 		} else {
-			Painter.drawInside(level, this, entrance, (height() - 3) / 2, Terrain.EMPTY_SP);
+			Painter.drawInside(level, this, entrance, (height() - 3) / 2, CellPlacement.reset(Terrain.EMPTY_SP));
 		}
 		entrance.set( Door.Type.HIDDEN );
 		
@@ -91,7 +92,7 @@ public class SecretLibraryRoom extends SecretRoom {
 			int pos;
 			do {
 				pos = level.pointToCell(random());
-			} while (level.map[pos] != Terrain.EMPTY_SP || level.heaps.get( pos ) != null);
+			} while (level.terrainAt(pos) != Terrain.EMPTY_SP || level.heaps.get( pos ) != null);
 			
 			Class<?extends Scroll> scrollCls = Random.chances(chances);
 			chances.put(scrollCls, 0f);

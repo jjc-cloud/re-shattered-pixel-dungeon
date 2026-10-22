@@ -34,6 +34,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.MimicTooth;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.RatSkull;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
@@ -52,9 +53,9 @@ public class CrystalVaultRoom extends SpecialRoom {
 
 	public void paint( Level level ) {
 
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY_SP );
-		Painter.fill( level, this, 2, Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY_SP) );
+		Painter.fill( level, this, 2, CellPlacement.reset(Terrain.EMPTY) );
 		
 		int c = level.pointToCell(center());
 		Random.shuffle(prizeClasses);
@@ -80,8 +81,8 @@ public class CrystalVaultRoom extends SpecialRoom {
 		} else {
 			level.drop(i2, i2Pos).type = Heap.Type.CRYSTAL_CHEST;
 		}
-		Painter.set(level, i1Pos, Terrain.PEDESTAL);
-		Painter.set(level, i2Pos, Terrain.PEDESTAL);
+		Painter.set(level, i1Pos, CellPlacement.reset(Terrain.PEDESTAL));
+		Painter.set(level, i2Pos, CellPlacement.reset(Terrain.PEDESTAL));
 
 		level.addItemToSpawn( new CrystalKey( Dungeon.depth ) );
 		

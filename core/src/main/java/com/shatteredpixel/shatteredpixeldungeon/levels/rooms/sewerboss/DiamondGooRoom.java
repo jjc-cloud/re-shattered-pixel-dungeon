@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.sewerboss;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Goo;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 
@@ -31,9 +32,9 @@ public class DiamondGooRoom extends GooBossRoom {
 	
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
 		
-		Painter.fillDiamond( level, this, 1, Terrain.EMPTY);
+		Painter.fillDiamond( level, this, 1, CellPlacement.reset(Terrain.EMPTY));
 		
 		for (Door door : connected.values()) {
 			door.set( Door.Type.REGULAR );
@@ -50,14 +51,14 @@ public class DiamondGooRoom extends GooBossRoom {
 			
 			Point curr = new Point(door);
 			do {
-				Painter.set(level, curr, Terrain.EMPTY_SP);
+				Painter.set(level, curr, CellPlacement.reset(Terrain.EMPTY_SP));
 				curr.x += dir.x;
 				curr.y += dir.y;
-			} while (level.map[level.pointToCell(curr)] == Terrain.WALL);
+			} while (level.hasTerrain(level.pointToCell(curr), Terrain.WALL));
 		}
 		
-		Painter.fill( level, left + width()/2 - 1, top + height()/2 - 2, 2 + width()%2, 4 + height()%2, Terrain.WATER);
-		Painter.fill( level, left + width()/2 - 2, top + height()/2 - 1, 4 + width()%2, 2 + height()%2, Terrain.WATER);
+		Painter.fill( level, left + width()/2 - 1, top + height()/2 - 2, 2 + width()%2, 4 + height()%2, CellPlacement.content(Terrain.WATER));
+		Painter.fill( level, left + width()/2 - 2, top + height()/2 - 1, 4 + width()%2, 2 + height()%2, CellPlacement.content(Terrain.WATER));
 		
 		setupGooNest(level);
 		

@@ -1268,7 +1268,7 @@ public abstract class Char extends Actor {
 		}
 		if (src != Chasm.class) {
 			sprite.die();
-			if (!flying && Dungeon.level != null && sprite instanceof MobSprite && Dungeon.level.map[pos] == Terrain.CHASM){
+			if (!flying && Dungeon.level != null && sprite instanceof MobSprite && Dungeon.level.terrainAt(pos) == Terrain.CHASM){
 				((MobSprite) sprite).fall();
 			}
 		}
@@ -1463,7 +1463,7 @@ public abstract class Char extends Actor {
 			}
 		}
 
-		if (Dungeon.level.map[pos] == Terrain.OPEN_DOOR) {
+		if (Dungeon.level.hasTerrain(pos, Terrain.OPEN_DOOR)) {
 			Door.leave( pos );
 		}
 

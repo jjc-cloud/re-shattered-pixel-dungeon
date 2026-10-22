@@ -33,40 +33,40 @@ public class SewerPainter extends RegularPainter {
 	@Override
 	protected void decorate(Level level, ArrayList<Room> rooms) {
 		
-		int[] map = level.map;
+		int[] map = level.terrainVisuals();
 		int w = level.width();
 		int l = level.length();
 		
 		for (int i=0; i < w; i++) {
-			if (map[i] == Terrain.WALL &&
-					map[i + w] == Terrain.WATER &&
+			if (level.hasTerrain(i, Terrain.WALL) &&
+					level.hasTerrain(i + w, Terrain.WATER) &&
 					Random.Int( 4 ) == 0) {
 				
-				map[i] = Terrain.WALL_DECO;
+				level.cellAt(i).place(Terrain.WALL_DECO);
 			}
 		}
 		
 		for (int i=w; i < l - w; i++) {
-			if (map[i] == Terrain.WALL &&
-					map[i - w] == Terrain.WALL &&
-					map[i + w] == Terrain.WATER &&
+			if (level.hasTerrain(i, Terrain.WALL) &&
+					level.hasTerrain(i - w, Terrain.WALL) &&
+					level.hasTerrain(i + w, Terrain.WATER) &&
 					Random.Int( 2 ) == 0) {
 				
-				map[i] = Terrain.WALL_DECO;
+				level.cellAt(i).place(Terrain.WALL_DECO);
 			}
 		}
 		
 		for (int i=w + 1; i < l - w - 1; i++) {
-			if (map[i] == Terrain.EMPTY) {
+			if (level.terrainAt(i) == Terrain.EMPTY) {
 				
 				int count =
-						(map[i + 1] == Terrain.WALL ? 1 : 0) +
-								(map[i - 1] == Terrain.WALL ? 1 : 0) +
-								(map[i + w] == Terrain.WALL ? 1 : 0) +
-								(map[i - w] == Terrain.WALL ? 1 : 0);
+						(level.hasTerrain(i + 1, Terrain.WALL) ? 1 : 0) +
+								(level.hasTerrain(i - 1, Terrain.WALL) ? 1 : 0) +
+								(level.hasTerrain(i + w, Terrain.WALL) ? 1 : 0) +
+								(level.hasTerrain(i - w, Terrain.WALL) ? 1 : 0);
 				
 				if (Random.Int( 16 ) < count * count) {
-					map[i] = Terrain.EMPTY_DECO;
+					level.cellAt(i).setGround(Terrain.EMPTY_DECO);
 				}
 			}
 		}

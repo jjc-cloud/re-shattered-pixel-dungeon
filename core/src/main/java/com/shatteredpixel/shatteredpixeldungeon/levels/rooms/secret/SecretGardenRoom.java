@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfRegrowth;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Patch;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Starflower;
 import com.watabou.utils.Random;
@@ -34,14 +35,14 @@ public class SecretGardenRoom extends SecretRoom {
 	
 	public void paint( Level level ) {
 		
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.GRASS );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.GRASS) );
 		
 		boolean[] grass = Patch.generate(width()-2, height()-2, 0.5f, 0, true);
 		for (int i=top + 1; i < bottom; i++) {
 			for (int j=left + 1; j < right; j++) {
 				if (grass[xyToPatchCoords(j, i)]) {
-					level.map[i * level.width() + j] = Terrain.HIGH_GRASS;
+					level.cellAt(i * level.width() + j).place(Terrain.HIGH_GRASS);
 				}
 			}
 		}

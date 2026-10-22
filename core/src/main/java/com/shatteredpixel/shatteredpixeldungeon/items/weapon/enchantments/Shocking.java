@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -85,7 +87,7 @@ public class Shocking extends Weapon.Enchantment {
 	private ArrayList<Lightning.Arc> arcs = new ArrayList<>();
 	
 	public static void arc( Char attacker, Char defender, int dist, ArrayList<Char> affected, ArrayList<Lightning.Arc> arcs ) {
-		TerrainPropagation conduction = TerrainPropagation.event(Dungeon.level, TerrainInteractions.Source.ELECTRIC);
+		TerrainPropagation conduction = TerrainPropagation.event(Dungeon.level, CellContent.CONDUCTIVE);
 		arc(attacker, defender, dist, affected, arcs, conduction);
 		if (conduction == null) return;
 		if (!conduction.hasNext()) { conduction.end(); return; }

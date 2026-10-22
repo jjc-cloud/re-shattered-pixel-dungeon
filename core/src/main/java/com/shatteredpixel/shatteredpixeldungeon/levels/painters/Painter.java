@@ -27,53 +27,52 @@ import com.watabou.utils.Point;
 import com.watabou.utils.Rect;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public abstract class Painter {
 	
 	//If painters require additional parameters, they should
 	// request them in their constructor or other methods
 	
-	//Painters take a level and its collection of rooms, and paint all the specific tile values
+	// 几何画笔只确定范围，格子组成由放置指令明确指定。
 	public abstract boolean paint(Level level, ArrayList<Room> rooms);
 	
 	// Static methods
 
-	public static void set( Level level, int cell, int value ) {
-		level.map[cell] = value;
+	public static void set( Level level, int cell, CellPlacement placement ) {
+		placement.apply(level, cell);
 	}
 	
-	public static void set( Level level, int x, int y, int value ) {
-		set( level, x + y * level.width(), value );
+	public static void set( Level level, int x, int y, CellPlacement placement ) {
+		set( level, x + y * level.width(), placement );
 	}
 	
-	public static void set( Level level, Point p, int value ) {
-		set( level, p.x, p.y, value );
+	public static void set( Level level, Point p, CellPlacement placement ) {
+		set( level, p.x, p.y, placement );
 	}
 	
-	public static void fill( Level level, int x, int y, int w, int h, int value ) {
+	public static void fill( Level level, int x, int y, int w, int h, CellPlacement placement ) {
 		
 		int width = level.width();
 		
 		int pos = y * width + x;
 		for (int i=y; i < y + h; i++, pos += width) {
-			Arrays.fill( level.map, pos, pos + w, value );
+			for (int cell = pos; cell < pos + w; cell++) placement.apply(level, cell);
 		}
 	}
 	
-	public static void fill( Level level, Rect rect, int value ) {
-		fill( level, rect.left, rect.top, rect.width(), rect.height(), value );
+	public static void fill( Level level, Rect rect, CellPlacement placement ) {
+		fill( level, rect.left, rect.top, rect.width(), rect.height(), placement );
 	}
 	
-	public static void fill( Level level, Rect rect, int m, int value ) {
-		fill( level, rect.left + m, rect.top + m, rect.width() - m*2, rect.height() - m*2, value );
+	public static void fill( Level level, Rect rect, int m, CellPlacement placement ) {
+		fill( level, rect.left + m, rect.top + m, rect.width() - m*2, rect.height() - m*2, placement );
 	}
 	
-	public static void fill( Level level, Rect rect, int l, int t, int r, int b, int value ) {
-		fill( level, rect.left + l, rect.top + t, rect.width() - (l + r), rect.height() - (t + b), value );
+	public static void fill( Level level, Rect rect, int l, int t, int r, int b, CellPlacement placement ) {
+		fill( level, rect.left + l, rect.top + t, rect.width() - (l + r), rect.height() - (t + b), placement );
 	}
 	
-	public static void drawLine( Level level, Point from, Point to, int value){
+	public static void drawLine( Level level, Point from, Point to, CellPlacement placement){
 		float x = from.x;
 		float y = from.y;
 		float dx = to.x - from.x;
@@ -89,23 +88,23 @@ public abstract class Painter {
 			dy /= Math.abs(dy);
 		}
 		
-		set(level, Math.round(x), Math.round(y), value);
+		set(level, Math.round(x), Math.round(y), placement);
 		while((movingbyX && to.x != x) || (!movingbyX && to.y != y)){
 			x += dx;
 			y += dy;
-			set(level, Math.round(x), Math.round(y), value);
+			set(level, Math.round(x), Math.round(y), placement);
 		}
 	}
 
-	public static void fillEllipse(Level level, Rect rect, int value ) {
-		fillEllipse( level, rect.left, rect.top, rect.width(), rect.height(), value );
+	public static void fillEllipse(Level level, Rect rect, CellPlacement placement ) {
+		fillEllipse( level, rect.left, rect.top, rect.width(), rect.height(), placement );
 	}
 
-	public static void fillEllipse(Level level, Rect rect, int m, int value ) {
-		fillEllipse( level, rect.left + m, rect.top + m, rect.width() - m*2, rect.height() - m*2, value );
+	public static void fillEllipse(Level level, Rect rect, int m, CellPlacement placement ) {
+		fillEllipse( level, rect.left + m, rect.top + m, rect.width() - m*2, rect.height() - m*2, placement );
 	}
 	
-	public static void fillEllipse(Level level, int x, int y, int w, int h, int value){
+	public static void fillEllipse(Level level, int x, int y, int w, int h, CellPlacement placement){
 
 		//radii
 		double radH = h/2f;
@@ -132,21 +131,21 @@ public abstract class Painter {
 			}
 
 			int cell = x + (w - (int)rowW)/2 + ((y + i) * level.width());
-			Arrays.fill( level.map, cell, cell + (int)rowW, value );
+			for (int pos = cell; pos < cell + (int)rowW; pos++) placement.apply(level, pos);
 
 		}
 
 	}
 
-	public static void fillDiamond(Level level, Rect rect, int value ) {
-		fillDiamond( level, rect.left, rect.top, rect.width(), rect.height(), value );
+	public static void fillDiamond(Level level, Rect rect, CellPlacement placement ) {
+		fillDiamond( level, rect.left, rect.top, rect.width(), rect.height(), placement );
 	}
 
-	public static void fillDiamond(Level level, Rect rect, int m, int value ) {
-		fillDiamond( level, rect.left + m, rect.top + m, rect.width() - m*2, rect.height() - m*2, value );
+	public static void fillDiamond(Level level, Rect rect, int m, CellPlacement placement ) {
+		fillDiamond( level, rect.left + m, rect.top + m, rect.width() - m*2, rect.height() - m*2, placement );
 	}
 
-	public static void fillDiamond(Level level, int x, int y, int w, int h, int value){
+	public static void fillDiamond(Level level, int x, int y, int w, int h, CellPlacement placement){
 
 		//we want the end width to be w, and the width will grow by a total of (h-2 - h%2)
 		int diamondWidth = w - (h-2 - h%2);
@@ -154,14 +153,14 @@ public abstract class Painter {
 		diamondWidth = Math.max(diamondWidth, w%2 == 0 ? 2 : 3);
 
 		for (int i = 0; i <= h; i++){
-			Painter.fill( level, x + (w - diamondWidth)/2, y+i, diamondWidth, h-2*i, value);
+			Painter.fill( level, x + (w - diamondWidth)/2, y+i, diamondWidth, h-2*i, placement);
 			diamondWidth += 2;
 			if (diamondWidth > w) break;
 		}
 
 	}
 	
-	public static Point drawInside( Level level, Room room, Point from, int n, int value ) {
+	public static Point drawInside( Level level, Room room, Point from, int n, CellPlacement placement ) {
 		
 		Point step = new Point();
 		if (from.x == room.left) {
@@ -176,8 +175,8 @@ public abstract class Painter {
 		
 		Point p = new Point( from ).offset( step );
 		for (int i=0; i < n; i++) {
-			if (value != -1) {
-				set( level, p, value );
+			if (placement != CellPlacement.NONE) {
+				set( level, p, placement );
 			}
 			p.offset( step );
 		}

@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.StandardRoom;
@@ -53,26 +54,26 @@ public class BlacksmithRoom extends StandardRoom {
 
 	public void paint(Level level ) {
 
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY );
-		Painter.fill( level, this, 2, Terrain.EMPTY_SP );
-		Painter.fill( level, left+2, top+1, width()-4, 1, Terrain.REGION_DECO_ALT);
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY) );
+		Painter.fill( level, this, 2, CellPlacement.reset(Terrain.EMPTY_SP) );
+		Painter.fill( level, left+2, top+1, width()-4, 1, CellPlacement.content(Terrain.REGION_DECO_ALT));
 
 		for (Door door : connected.values()) {
 			door.set( Door.Type.REGULAR );
-			Painter.drawInside( level, this, door, 1, Terrain.EMPTY );
+			Painter.drawInside( level, this, door, 1, CellPlacement.reset(Terrain.EMPTY) );
 		}
 
-		Painter.fill( level, this, 2, Terrain.EMPTY_SP );
+		Painter.fill( level, this, 2, CellPlacement.reset(Terrain.EMPTY_SP) );
 		
 		Blacksmith npc = new Blacksmith();
 		npc.pos = left + 3 + (level.width()*(top+3));
 		level.mobs.add( npc );
 
-		Painter.set(level, npc.pos+1, Terrain.CUSTOM_DECO_WTR);
-		Painter.set(level, npc.pos+1-level.width(), Terrain.CUSTOM_DECO);
-		Painter.set(level, npc.pos-level.width(), Terrain.CUSTOM_DECO);
-		Painter.set(level, npc.pos-1-level.width(), Terrain.CUSTOM_DECO);
+		Painter.set(level, npc.pos+1, CellPlacement.content(Terrain.CUSTOM_DECO_WTR));
+		Painter.set(level, npc.pos+1-level.width(), CellPlacement.content(Terrain.CUSTOM_DECO));
+		Painter.set(level, npc.pos-level.width(), CellPlacement.content(Terrain.CUSTOM_DECO));
+		Painter.set(level, npc.pos-1-level.width(), CellPlacement.content(Terrain.CUSTOM_DECO));
 
 		int equipPos = right-3 + (bottom-3)*level.width();
 		if (height() == 8){
@@ -85,7 +86,7 @@ public class BlacksmithRoom extends StandardRoom {
 							Generator.Category.WEAPON,
 							Generator.Category.MISSILE
 					) ), equipPos );
-			Painter.set(level, equipPos, Terrain.PEDESTAL);
+			Painter.set(level, equipPos, CellPlacement.reset(Terrain.PEDESTAL));
 			equipPos--;
 		}
 
@@ -107,7 +108,7 @@ public class BlacksmithRoom extends StandardRoom {
 				Dungeon.depth,
 				Dungeon.branch + 1,
 				LevelTransition.Type.BRANCH_ENTRANCE));
-		Painter.set(level, entrancePos, Terrain.EXIT);
+		Painter.set(level, entrancePos, CellPlacement.reset(Terrain.EXIT));
 
 		CustomTilemap vis = new QuestEntrance();
 		vis.pos(entrancePos, level);
@@ -159,7 +160,7 @@ public class BlacksmithRoom extends StandardRoom {
 
 	@Override
 	public boolean canPlaceItem(Point p, Level l) {
-		return l.map[l.pointToCell(p)] == Terrain.EMPTY;
+		return l.terrainAt(l.pointToCell(p)) == Terrain.EMPTY;
 	}
 
 	@Override
@@ -178,7 +179,7 @@ public class BlacksmithRoom extends StandardRoom {
 	}
 
 	@Override
-	public boolean canMerge(Level l, Room other, Point p, int mergeTerrain) {
+	public boolean canMerge(Level l, Room other, Point p, CellPlacement mergeTerrain) {
 		return false;
 	}
 
@@ -229,7 +230,7 @@ public class BlacksmithRoom extends StandardRoom {
 				else {
 					int cell = tileX + i % tileW;
 					cell += (tileY + i / tileW)*Dungeon.level.width();
-					if (Dungeon.level.map[cell] == Terrain.EMPTY_SP) {
+					if (Dungeon.level.terrainAt(cell) == Terrain.EMPTY_SP) {
 						if (i >= data.length - tileW) {
 							if (i % tileW == 0) data[i] = 12;
 							else if (i % tileW == tileW - 1) data[i] = 14;
@@ -239,7 +240,7 @@ public class BlacksmithRoom extends StandardRoom {
 							else if (i % tileW == tileW - 1) data[i] = 10;
 							else data[i] = -1;
 						}
-					} else if (Dungeon.level.map[cell] == Terrain.PEDESTAL) {
+					} else if (Dungeon.level.terrainAt(cell) == Terrain.PEDESTAL) {
 						if (i >= data.length - tileW)   data[i] = 20;
 						else                            data[i] = 21;
 					} else {
@@ -254,7 +255,7 @@ public class BlacksmithRoom extends StandardRoom {
 		@Override
 		public String name(int tileX, int tileY) {
 			int cell = (this.tileX+tileX) + (this.tileY+tileY)*Dungeon.level.width();
-			if (Dungeon.level.map[cell] == Terrain.CUSTOM_DECO || Dungeon.level.map[cell] == Terrain.CUSTOM_DECO_WTR){
+			if (Dungeon.level.hasTerrain(cell, Terrain.CUSTOM_DECO) || Dungeon.level.hasTerrain(cell, Terrain.CUSTOM_DECO_WTR)){
 				return Messages.get(this, "name");
 			}
 			return super.name(tileX, tileY);
@@ -263,7 +264,7 @@ public class BlacksmithRoom extends StandardRoom {
 		@Override
 		public String desc(int tileX, int tileY) {
 			int cell = (this.tileX+tileX) + (this.tileY+tileY)*Dungeon.level.width();
-			if (Dungeon.level.map[cell] == Terrain.CUSTOM_DECO || Dungeon.level.map[cell] == Terrain.CUSTOM_DECO_WTR){
+			if (Dungeon.level.hasTerrain(cell, Terrain.CUSTOM_DECO) || Dungeon.level.hasTerrain(cell, Terrain.CUSTOM_DECO_WTR)){
 				return Messages.get(this, "desc");
 			}
 			return super.desc(tileX, tileY);

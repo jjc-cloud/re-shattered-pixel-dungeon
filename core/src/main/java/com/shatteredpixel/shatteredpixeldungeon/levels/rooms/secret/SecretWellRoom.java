@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.WaterOfHealth;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.WellWater;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
@@ -43,7 +44,7 @@ public class SecretWellRoom extends SecretRoom {
 	
 	public void paint( Level level ) {
 		
-		Painter.fill( level, this, Terrain.WALL );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
 		Point door = entrance();
 		Point well;
 		if (door.x == left){
@@ -56,10 +57,10 @@ public class SecretWellRoom extends SecretRoom {
 			well = new Point(door.x, top+2);
 		}
 		
-		Painter.fill(level, well.x-1, well.y-1, 3, 3, Terrain.CHASM);
-		Painter.drawLine(level, door, well, Terrain.EMPTY);
+		Painter.fill(level, well.x-1, well.y-1, 3, 3, CellPlacement.reset(Terrain.CHASM));
+		Painter.drawLine(level, door, well, CellPlacement.reset(Terrain.EMPTY));
 		
-		Painter.set( level, well, Terrain.WELL );
+		Painter.set( level, well, CellPlacement.reset(Terrain.WELL) );
 		
 		@SuppressWarnings("unchecked")
 		Class<? extends WellWater> waterClass = (Class<? extends WellWater>) Random.element( WATERS );

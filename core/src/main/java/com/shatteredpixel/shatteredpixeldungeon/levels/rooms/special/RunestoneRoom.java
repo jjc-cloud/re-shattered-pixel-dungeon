@@ -29,6 +29,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.stones.Runestone;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.TrinketCatalyst;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Random;
 
@@ -45,18 +46,18 @@ public class RunestoneRoom extends SpecialRoom {
 	@Override
 	public void paint( Level level) {
 		
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.CHASM );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.CHASM) );
 		
-		Painter.drawInside( level, this, entrance(), 2, Terrain.EMPTY_SP);
-		Painter.fill( level, this, 2, Terrain.EMPTY );
+		Painter.drawInside( level, this, entrance(), 2, CellPlacement.reset(Terrain.EMPTY_SP));
+		Painter.fill( level, this, 2, CellPlacement.reset(Terrain.EMPTY) );
 		
 		int n = Random.NormalIntRange(2, 3);
 		int dropPos;
 		for (int i = 0; i < n; i++) {
 			do {
 				dropPos = level.pointToCell(random());
-			} while (level.map[dropPos] != Terrain.EMPTY || level.heaps.get( dropPos ) != null);
+			} while (level.terrainAt(dropPos) != Terrain.EMPTY || level.heaps.get( dropPos ) != null);
 			level.drop(prize(level), dropPos);
 		}
 		

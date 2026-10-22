@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.exit;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.ChasmRoom;
 import com.watabou.utils.PathFinder;
@@ -63,21 +64,21 @@ public class ChasmExitRoom extends ChasmRoom {
 
 			//need extra logic here as these rooms can spawn small and cramped in very rare cases
 			if (tries-- > 0){
-				valid = level.map[exit] != Terrain.CHASM && level.findMob(exit) == null;
+				valid = level.terrainAt(exit) != Terrain.CHASM && level.findMob(exit) == null;
 			} else {
 				valid = false;
 				for (int i : PathFinder.NEIGHBOURS4){
-					if (level.map[exit+i] != Terrain.CHASM){
+					if (level.terrainAt(exit+i) != Terrain.CHASM){
 						valid = true;
 					}
 				}
 				valid = valid && level.findMob(exit) == null;
 			}
 		} while (!valid);
-		Painter.set( level, exit, Terrain.EXIT );
+		Painter.set( level, exit, CellPlacement.reset(Terrain.EXIT) );
 
 		for (int i : PathFinder.NEIGHBOURS8){
-			Painter.set( level, exit+i, Terrain.EMPTY );
+			Painter.set( level, exit+i, CellPlacement.reset(Terrain.EMPTY) );
 		}
 
 		level.transitions.add(new LevelTransition(level, exit, LevelTransition.Type.REGULAR_EXIT));

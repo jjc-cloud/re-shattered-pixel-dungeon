@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.CeremonialCandle;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.StandardRoom;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -55,8 +56,8 @@ public class RitualSiteRoom extends StandardRoom {
 			door.set( Door.Type.REGULAR );
 		}
 
-		Painter.fill(level, this, Terrain.WALL);
-		Painter.fill(level, this, 1, Terrain.EMPTY);
+		Painter.fill(level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL));
+		Painter.fill(level, this, 1, CellPlacement.reset(Terrain.EMPTY));
 
 		boolean[] validTopRowCells = new boolean[10];
 		Arrays.fill(validTopRowCells, true);
@@ -76,7 +77,7 @@ public class RitualSiteRoom extends StandardRoom {
 
 		for (int i = left; i < right; i+=3){
 			topRow.x = i;
-			Painter.drawInside(level, this, topRow, 2, Terrain.WALL);
+			Painter.drawInside(level, this, topRow, 2, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
 
 			//rare case of two doors (one side one top), just continue
 			if (!validTopRowCells[topRow.x+1 - left] && !validTopRowCells[topRow.x+2 - left]){
@@ -93,10 +94,10 @@ public class RitualSiteRoom extends StandardRoom {
 
 			validTopRowCells[topRow.x-left] = false;
 			if (cageRow == 0){
-				Painter.drawInside(level, this, topRow, 2, Terrain.REGION_DECO);
+				Painter.drawInside(level, this, topRow, 2, CellPlacement.content(Terrain.REGION_DECO));
 			} else {
 				Table table = new Table();
-				Painter.drawInside(level, this, topRow, 2, Terrain.CUSTOM_DECO);
+				Painter.drawInside(level, this, topRow, 2, CellPlacement.content(Terrain.CUSTOM_DECO));
 				table.pos(topRow.x, topRow.y + 1);
 				level.customTerrain.add(table);
 			}
@@ -109,7 +110,7 @@ public class RitualSiteRoom extends StandardRoom {
 			int i = Random.IntRange(1, 9);
 			if (validTopRowCells[i]){
 				topRow.x = left+i;
-				Painter.drawInside(level, this, topRow, 1, Terrain.REGION_DECO);
+				Painter.drawInside(level, this, topRow, 1, CellPlacement.content(Terrain.REGION_DECO));
 				tries = 0;
 			}
 		} while (tries-- > 0);
@@ -121,7 +122,7 @@ public class RitualSiteRoom extends StandardRoom {
 
 		level.customTiles.add(vis);
 		
-		Painter.fill(level, c.x-1, c.y-1, 3, 3, Terrain.CUSTOM_DECO_EMPTY);
+		Painter.fill(level, c.x-1, c.y-1, 3, 3, CellPlacement.reset(Terrain.CUSTOM_DECO_EMPTY));
 
 		level.addItemToSpawn(new CeremonialCandle());
 		level.addItemToSpawn(new CeremonialCandle());

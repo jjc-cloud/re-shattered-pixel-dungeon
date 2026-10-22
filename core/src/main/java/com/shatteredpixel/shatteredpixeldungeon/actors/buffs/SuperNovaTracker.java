@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
@@ -108,7 +110,7 @@ public class SuperNovaTracker extends Buff {
 					//9x bomb dmg when fully inside
 					//6x when along straight edge
 					//3x when outside straight edge
-					Dungeon.level.affectTerrain(i, TerrainInteractions.Source.EXPLOSION, true);
+					Dungeon.level.affectTerrain(i, (CellContent.BREAKABLE | CellContent.BURNABLE));
 					if (Actor.findChar(i) == Dungeon.hero){
 						GameScene.flash(0x80FFFFFF);
 					}

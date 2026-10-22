@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.watabou.utils.Point;
@@ -36,7 +37,7 @@ public class RuinsRoom extends PatchRoom {
 	}
 
 	@Override
-	public boolean canMerge(Level l, Room other, Point p, int mergeTerrain) {
+	public boolean canMerge(Level l, Room other, Point p, CellPlacement mergeTerrain) {
 		return true;
 	}
 
@@ -67,8 +68,8 @@ public class RuinsRoom extends PatchRoom {
 
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1 , Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1 , CellPlacement.reset(Terrain.EMPTY) );
 		for (Door door : connected.values()) {
 			door.set( Door.Type.REGULAR );
 		}
@@ -92,7 +93,7 @@ public class RuinsRoom extends PatchRoom {
 					}
 
 					int cell = i * level.width() + j;
-					level.map[cell] = wall ? Terrain.WALL : Terrain.REGION_DECO;
+					level.cellAt(cell).place(wall ? Terrain.WALL : Terrain.REGION_DECO);
 				}
 			}
 		}

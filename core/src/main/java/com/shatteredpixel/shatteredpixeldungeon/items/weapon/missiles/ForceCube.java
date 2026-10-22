@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
@@ -87,17 +89,11 @@ public class ForceCube extends MissileWeapon {
 		parent = parentTemp;
 		boolean terrainAffected = false;
 		ArrayList<Integer> affectedCells = new ArrayList<>();
-		ArrayList<Integer> wallCells = new ArrayList<>();
 		for (int offset : PathFinder.NEIGHBOURS9) {
 			int target = cell + offset;
-			if (Dungeon.level.insideMap(target)) {
-				if (Dungeon.level.map[target] == Terrain.COLLAPSE_WALL) wallCells.add(target);
-				else affectedCells.add(target);
-			}
+			if (Dungeon.level.insideMap(target)) affectedCells.add(target);
 		}
-		// 固定冲击前的墙面，保留本次击碎最后支撑墙后重新落下的岩壁。
-		for (int target : affectedCells) terrainAffected |= Dungeon.level.affectTerrain(target, TerrainInteractions.Source.SHOCKWAVE);
-		for (int target : wallCells) terrainAffected |= Dungeon.level.affectTerrain(target, TerrainInteractions.Source.SHOCKWAVE);
+		terrainAffected = Dungeon.level.interactions().affectCells(affectedCells, CellContent.BREAKABLE);
 		if (terrainAffected) Dungeon.observe();
 		Dungeon.level.pressCell(cell);
 		

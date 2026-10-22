@@ -102,6 +102,8 @@ public abstract class Trap implements Bundlable {
 		//outdated design challenge: revealed traps always trigger normally
 		outdated = false;
 		primed = false;
+		if (Dungeon.level != null && pos >= 0 && pos < Dungeon.level.length()
+				&& Dungeon.level.traps.get(pos) == this) Dungeon.level.cellChanged(pos);
 		GameScene.updateMap(pos);
 		return this;
 	}
@@ -109,7 +111,9 @@ public abstract class Trap implements Bundlable {
 	public Trap hide() {
 		if (canBeHidden) {
 			visible = false;
-			GameScene.updateMap(pos);
+			if (Dungeon.level != null && pos >= 0 && pos < Dungeon.level.length()
+				&& Dungeon.level.traps.get(pos) == this) Dungeon.level.cellChanged(pos);
+		GameScene.updateMap(pos);
 			return this;
 		} else {
 			return reveal();

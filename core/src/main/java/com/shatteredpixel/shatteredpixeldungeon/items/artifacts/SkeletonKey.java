@@ -141,11 +141,11 @@ public class SkeletonKey extends ChargedArtifact {
 				}
 
 				if (Dungeon.level.adjacent(target, curUser.pos)) {
-					if (Dungeon.level.map[target] == Terrain.LOCKED_EXIT){
+					if (Dungeon.level.terrainAt(target) == Terrain.LOCKED_EXIT){
 						GLog.w(Messages.get(SkeletonKey.class, "wont_open"));
 						return;
 					}
-					if (Dungeon.level.map[target] == Terrain.LOCKED_DOOR){
+					if (Dungeon.level.hasTerrain(target, Terrain.LOCKED_DOOR)){
 						if (Dungeon.level.locked || Dungeon.branch != 0){
 							GLog.w(Messages.get(SkeletonKey.class, "wont_open"));
 							return;
@@ -171,7 +171,7 @@ public class SkeletonKey extends ChargedArtifact {
 						curUser.busy();
 						return;
 
-					} else if (Dungeon.level.map[target] == Terrain.HERO_LKD_DR) {
+					} else if (Dungeon.level.hasTerrain(target, Terrain.HERO_LKD_DR)) {
 
 						Sample.INSTANCE.play(Assets.Sounds.UNLOCK);
 						curUser.sprite.operate(target, new Callback() {
@@ -186,7 +186,7 @@ public class SkeletonKey extends ChargedArtifact {
 						});
 						curUser.busy();
 						return;
-					} else if (Dungeon.level.map[target] == Terrain.CRYSTAL_DOOR) {
+					} else if (Dungeon.level.hasTerrain(target, Terrain.CRYSTAL_DOOR)) {
 
 						if (!canSpendCharge(curUser, 5)) {
 							GLog.i(Messages.get(SkeletonKey.class, "crystal_charges"));
@@ -197,7 +197,7 @@ public class SkeletonKey extends ChargedArtifact {
 							@Override
 							public void call() {
 								Buff.affect(curUser, KeyReplacementTracker.class).processCrystalLockOpened();
-								Level.set(target, Terrain.EMPTY);
+								Dungeon.level.cellAt(target).removeTerrain(Terrain.CRYSTAL_DOOR);
 								GameScene.updateMap(target);
 								spendCharge(5);
 								gainExp(2 + 5);
@@ -213,7 +213,7 @@ public class SkeletonKey extends ChargedArtifact {
 						});
 						curUser.busy();
 						return;
-					} else if (Dungeon.level.map[target] == Terrain.DOOR || Dungeon.level.map[target] == Terrain.OPEN_DOOR){
+					} else if (Dungeon.level.hasTerrain(target, Terrain.DOOR) || Dungeon.level.hasTerrain(target, Terrain.OPEN_DOOR)){
 
 						if (!canSpendCharge(curUser, 2)) {
 							GLog.i(Messages.get(SkeletonKey.class, "lock_charges"));
@@ -588,9 +588,9 @@ public class SkeletonKey extends ChargedArtifact {
 			}
 
 			for (int i = 0; i < Dungeon.level.length(); i++){
-				if (Dungeon.level.map[i] == Terrain.LOCKED_DOOR){
+				if (Dungeon.level.hasTerrain(i, Terrain.LOCKED_DOOR)){
 					ironKeysNeeded[Dungeon.depth]++;
-				} else if (Dungeon.level.map[i] == Terrain.CRYSTAL_DOOR){
+				} else if (Dungeon.level.hasTerrain(i, Terrain.CRYSTAL_DOOR)){
 					crystalKeysNeeded[Dungeon.depth]++;
 				}
 			}

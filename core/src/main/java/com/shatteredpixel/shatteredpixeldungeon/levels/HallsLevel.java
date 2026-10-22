@@ -195,7 +195,7 @@ public class HallsLevel extends RegularLevel {
 	
 	public static void addHallsVisuals( Level level, Group group ) {
 		for (int i=0; i < level.length(); i++) {
-			if (level.map[i] == Terrain.WATER) {
+			if (level.hasTerrain(i, Terrain.WATER)) {
 				group.add( new Stream( i ) );
 			}
 		}

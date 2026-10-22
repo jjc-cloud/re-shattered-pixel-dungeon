@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.TrapMechanism;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ExplosiveTrap;
@@ -39,15 +40,15 @@ public class MinefieldRoom extends StandardRoom {
 	}
 
 	@Override
-	public boolean canMerge(Level l, Room other, Point p, int mergeTerrain) {
+	public boolean canMerge(Level l, Room other, Point p, CellPlacement mergeTerrain) {
 		int cell = l.pointToCell(pointInside(p, 1));
-		return l.map[cell] == Terrain.EMPTY;
+		return l.terrainAt(cell) == Terrain.EMPTY;
 	}
 
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY) );
 		for (Door door : connected.values()) {
 			door.set( Door.Type.REGULAR );
 		}
@@ -77,18 +78,18 @@ public class MinefieldRoom extends StandardRoom {
 			//randomly places some embers around the mines
 			for (int j = 0; j < 8; j ++){
 				int c = PathFinder.NEIGHBOURS8[Random.Int(8)];
-				if (level.traps.get(pos+c) == null && level.map[pos+c] == Terrain.EMPTY){
-					Painter.set(level, pos+c, Terrain.EMBERS);
+				if (level.traps.get(pos+c) == null && level.terrainAt(pos+c) == Terrain.EMPTY){
+					Painter.set(level, pos+c, CellPlacement.content(Terrain.EMBERS));
 				}
 			}
 
 			revealInc += revealedChance;
 			if (revealInc >= 1) {
-				Painter.set(level, pos, Terrain.TRAP);
+				Painter.set(level, pos, CellPlacement.content(Terrain.TRAP));
 				level.setTrap(new ExplosiveTrap().reveal(), pos);
 				revealInc--;
 			} else {
-				Painter.set(level, pos, Terrain.SECRET_TRAP);
+				Painter.set(level, pos, CellPlacement.content(Terrain.SECRET_TRAP));
 				level.setTrap(new ExplosiveTrap().rollOutdatedRandom(level).hide(), pos);
 			}
 

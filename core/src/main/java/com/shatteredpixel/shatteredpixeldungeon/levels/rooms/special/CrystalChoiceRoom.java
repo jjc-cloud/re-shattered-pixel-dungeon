@@ -29,6 +29,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.keys.CrystalKey;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.IronKey;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.EmptyRoom;
@@ -44,7 +45,7 @@ public class CrystalChoiceRoom extends SpecialRoom {
 	@Override
 	public void paint(Level level) {
 
-		Painter.fill( level, this, Terrain.WALL );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
 
 		Door entrance = entrance();
 
@@ -59,8 +60,8 @@ public class CrystalChoiceRoom extends SpecialRoom {
 			room1.set(entry.right+2, top+1, right-1, center().y-1);
 			room2.set(entry.right+2, room1.bottom+2, right-1, bottom-1);
 
-			Painter.set(level, new Point(entry.right+1, (room1.top + room1.bottom + 1)/2), Terrain.CRYSTAL_DOOR);
-			Painter.set(level, new Point(entry.right+1, (room2.top + room2.bottom)/2), Terrain.CRYSTAL_DOOR);
+			Painter.set(level, new Point(entry.right+1, (room1.top + room1.bottom + 1)/2), CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
+			Painter.set(level, new Point(entry.right+1, (room2.top + room2.bottom)/2), CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 
 		} else if (entrance.y == top){
 			entry.set(left+1, top+1, right-1, top+2);
@@ -68,18 +69,18 @@ public class CrystalChoiceRoom extends SpecialRoom {
 			room1.set(left+1, entry.bottom+2, center().x-1, bottom-1);
 			room2.set(room1.right+2, entry.bottom+2, right-1, bottom-1);
 
-			Painter.set(level, new Point((room1.left + room1.right + 1)/2, entry.bottom+1), Terrain.CRYSTAL_DOOR);
-			Painter.set(level, new Point((room2.left + room2.right)/2, entry.bottom+1), Terrain.CRYSTAL_DOOR);
+			Painter.set(level, new Point((room1.left + room1.right + 1)/2, entry.bottom+1), CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
+			Painter.set(level, new Point((room2.left + room2.right)/2, entry.bottom+1), CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 
 		} else if (entrance.x == right){
 			entry.set(right-2, top+1, right-1, bottom-1);
-			Painter.drawLine(level, new Point(right-1, top+1), new Point(right-1, bottom-1), Terrain.EMPTY);
+			Painter.drawLine(level, new Point(right-1, top+1), new Point(right-1, bottom-1), CellPlacement.reset(Terrain.EMPTY));
 
 			room1.set(left+1, top+1, entry.left-2, center().y-1);
 			room2.set(left+1, room1.bottom+2, entry.left-2, bottom-1);
 
-			Painter.set(level, new Point(entry.left-1, (room1.top + room1.bottom + 1)/2), Terrain.CRYSTAL_DOOR);
-			Painter.set(level, new Point(entry.left-1, (room2.top + room2.bottom)/2), Terrain.CRYSTAL_DOOR);
+			Painter.set(level, new Point(entry.left-1, (room1.top + room1.bottom + 1)/2), CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
+			Painter.set(level, new Point(entry.left-1, (room2.top + room2.bottom)/2), CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 
 		} else if (entrance.y == bottom){
 			entry.set(left+1, bottom-2, right-1, bottom-1);
@@ -87,14 +88,14 @@ public class CrystalChoiceRoom extends SpecialRoom {
 			room1.set(left+1, top+1, center().x-1, entry.top-2);
 			room2.set(room1.right+2, top+1, right-1, entry.top-2);
 
-			Painter.set(level, new Point((room1.left + room1.right + 1)/2, entry.top-1), Terrain.CRYSTAL_DOOR);
-			Painter.set(level, new Point((room2.left + room2.right)/2, entry.top-1), Terrain.CRYSTAL_DOOR);
+			Painter.set(level, new Point((room1.left + room1.right + 1)/2, entry.top-1), CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
+			Painter.set(level, new Point((room2.left + room2.right)/2, entry.top-1), CellPlacement.reset(Terrain.EMPTY, Terrain.CRYSTAL_DOOR));
 
 		}
 
-		Painter.fill(level, entry, Terrain.EMPTY);
-		Painter.fill(level, room1, Terrain.EMPTY_SP);
-		Painter.fill(level, room2, Terrain.EMPTY_SP);
+		Painter.fill(level, entry, CellPlacement.reset(Terrain.EMPTY));
+		Painter.fill(level, room1, CellPlacement.reset(Terrain.EMPTY_SP));
+		Painter.fill(level, room2, CellPlacement.reset(Terrain.EMPTY_SP));
 
 		if (Random.Int(2) == 0){
 			Room tmp = room1;

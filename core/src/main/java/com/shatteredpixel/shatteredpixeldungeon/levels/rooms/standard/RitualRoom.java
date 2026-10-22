@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
@@ -74,26 +75,26 @@ public class RitualRoom extends PatchRoom {
 
 	@Override
 	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1 , Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1 , CellPlacement.reset(Terrain.EMPTY) );
 
 		Point c = center();
 
 		setupPatch(level);
-		fillPatch(level, Terrain.REGION_DECO);
+		fillPatch(level, CellPlacement.content(Terrain.REGION_DECO));
 
-		Painter.fill(level, c.x - 3, c.y - 3, 7, 7, Terrain.EMPTY);
+		Painter.fill(level, c.x - 3, c.y - 3, 7, 7, CellPlacement.reset(Terrain.EMPTY));
 
-		Painter.set(level, c.x-2, c.y-1, Terrain.STATUE);
-		Painter.set(level, c.x-1, c.y-2, Terrain.STATUE);
-		Painter.set(level, c.x+2, c.y-1, Terrain.STATUE);
-		Painter.set(level, c.x+1, c.y-2, Terrain.STATUE);
-		Painter.set(level, c.x-2, c.y+1, Terrain.STATUE);
-		Painter.set(level, c.x-1, c.y+2, Terrain.STATUE);
-		Painter.set(level, c.x+2, c.y+1, Terrain.STATUE);
-		Painter.set(level, c.x+1, c.y+2, Terrain.STATUE);
-		Painter.fill(level, c.x-1, c.y-1, 3, 3, Terrain.EMBERS);
-		Painter.set(level, c, Terrain.PEDESTAL);
+		Painter.set(level, c.x-2, c.y-1, CellPlacement.content(Terrain.STATUE));
+		Painter.set(level, c.x-1, c.y-2, CellPlacement.content(Terrain.STATUE));
+		Painter.set(level, c.x+2, c.y-1, CellPlacement.content(Terrain.STATUE));
+		Painter.set(level, c.x+1, c.y-2, CellPlacement.content(Terrain.STATUE));
+		Painter.set(level, c.x-2, c.y+1, CellPlacement.content(Terrain.STATUE));
+		Painter.set(level, c.x-1, c.y+2, CellPlacement.content(Terrain.STATUE));
+		Painter.set(level, c.x+2, c.y+1, CellPlacement.content(Terrain.STATUE));
+		Painter.set(level, c.x+1, c.y+2, CellPlacement.content(Terrain.STATUE));
+		Painter.fill(level, c.x-1, c.y-1, 3, 3, CellPlacement.content(Terrain.EMBERS));
+		Painter.set(level, c, CellPlacement.reset(Terrain.PEDESTAL));
 
 		placeloot(level, c);
 

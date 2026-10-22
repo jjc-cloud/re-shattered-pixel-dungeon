@@ -310,8 +310,8 @@ public abstract class RegularLevel extends Level {
 		}
 
 		for (Mob m : mobs){
-			if (map[m.pos] == Terrain.HIGH_GRASS || map[m.pos] == Terrain.FURROWED_GRASS) {
-				map[m.pos] = Terrain.GRASS;
+			if (hasTerrain(m.pos, Terrain.HIGH_GRASS) || hasTerrain(m.pos, Terrain.FURROWED_GRASS)) {
+				cellAt(m.pos).place(Terrain.GRASS);
 				losBlocking[m.pos] = false;
 			}
 
@@ -393,8 +393,8 @@ public abstract class RegularLevel extends Level {
 			if (toDrop == null) continue;
 
 			int cell = randomDropCell();
-			if (map[cell] == Terrain.HIGH_GRASS || map[cell] == Terrain.FURROWED_GRASS) {
-				map[cell] = Terrain.GRASS;
+			if (hasTerrain(cell, Terrain.HIGH_GRASS) || hasTerrain(cell, Terrain.FURROWED_GRASS)) {
+				cellAt(cell).place(Terrain.GRASS);
 				losBlocking[cell] = false;
 			}
 
@@ -457,15 +457,15 @@ public abstract class RegularLevel extends Level {
 				drop( item, cell ).type = Heap.Type.LOCKED_CHEST;
 				int keyCell = randomDropCell();
 				drop( new GoldenKey(Dungeon.depth), keyCell ).type = Heap.Type.HEAP;
-				if (map[keyCell] == Terrain.HIGH_GRASS || map[keyCell] == Terrain.FURROWED_GRASS) {
-					map[keyCell] = Terrain.GRASS;
+				if (hasTerrain(keyCell, Terrain.HIGH_GRASS) || hasTerrain(keyCell, Terrain.FURROWED_GRASS)) {
+					cellAt(keyCell).place(Terrain.GRASS);
 					losBlocking[keyCell] = false;
 				}
 			} else {
 				drop( item, cell ).type = Heap.Type.HEAP;
 			}
-			if (map[cell] == Terrain.HIGH_GRASS || map[cell] == Terrain.FURROWED_GRASS) {
-				map[cell] = Terrain.GRASS;
+			if (hasTerrain(cell, Terrain.HIGH_GRASS) || hasTerrain(cell, Terrain.FURROWED_GRASS)) {
+				cellAt(cell).place(Terrain.GRASS);
 				losBlocking[cell] = false;
 			}
 		}
@@ -476,16 +476,16 @@ public abstract class RegularLevel extends Level {
 		Random.pushGenerator( Random.Long() );
 			if (Dungeon.isChallenged(Challenges.DARKNESS)){
 				int cell = randomDropCell();
-				if (map[cell] == Terrain.HIGH_GRASS || map[cell] == Terrain.FURROWED_GRASS) {
-					map[cell] = Terrain.GRASS;
+				if (hasTerrain(cell, Terrain.HIGH_GRASS) || hasTerrain(cell, Terrain.FURROWED_GRASS)) {
+					cellAt(cell).place(Terrain.GRASS);
 					losBlocking[cell] = false;
 				}
 				drop( new Torch(), cell );
 				//add a second torch to help with the larger floor
 				if (feeling == Feeling.LARGE){
 					cell = randomDropCell();
-					if (map[cell] == Terrain.HIGH_GRASS || map[cell] == Terrain.FURROWED_GRASS) {
-						map[cell] = Terrain.GRASS;
+					if (hasTerrain(cell, Terrain.HIGH_GRASS) || hasTerrain(cell, Terrain.FURROWED_GRASS)) {
+						cellAt(cell).place(Terrain.GRASS);
 						losBlocking[cell] = false;
 					}
 					drop( new Torch(), cell );
@@ -497,8 +497,8 @@ public abstract class RegularLevel extends Level {
 			ArrayList<Item> bonesItems = Bones.get();
 			if (bonesItems != null) {
 				int cell = randomDropCell();
-				if (map[cell] == Terrain.HIGH_GRASS || map[cell] == Terrain.FURROWED_GRASS) {
-					map[cell] = Terrain.GRASS;
+				if (hasTerrain(cell, Terrain.HIGH_GRASS) || hasTerrain(cell, Terrain.FURROWED_GRASS)) {
+					cellAt(cell).place(Terrain.GRASS);
 					losBlocking[cell] = false;
 				}
 				for (Item i : bonesItems) {
@@ -519,8 +519,8 @@ public abstract class RegularLevel extends Level {
 						Item item = new DriedRose.Petal();
 						int cell = randomDropCell();
 						drop( item, cell ).type = Heap.Type.HEAP;
-						if (map[cell] == Terrain.HIGH_GRASS || map[cell] == Terrain.FURROWED_GRASS) {
-							map[cell] = Terrain.GRASS;
+						if (hasTerrain(cell, Terrain.HIGH_GRASS) || hasTerrain(cell, Terrain.FURROWED_GRASS)) {
+							cellAt(cell).place(Terrain.GRASS);
 							losBlocking[cell] = false;
 						}
 						rose.droppedPetals++;
@@ -544,13 +544,13 @@ public abstract class RegularLevel extends Level {
 						cell = randomDropCell(SpecialRoom.class);
 						valid = cell != -1 && !(room(cell) instanceof SecretRoom)
 								&& !(room(cell) instanceof ShopRoom)
-								&& map[cell] != Terrain.EMPTY_SP
-								&& map[cell] != Terrain.WATER
-								&& map[cell] != Terrain.PEDESTAL;
+								&& terrainAt(cell) != Terrain.EMPTY_SP
+								&& !hasTerrain(cell, Terrain.WATER)
+								&& terrainAt(cell) != Terrain.PEDESTAL;
 					} while (tries-- > 0 && !valid);
 					if (valid) {
-						if (map[cell] == Terrain.HIGH_GRASS || map[cell] == Terrain.FURROWED_GRASS) {
-							map[cell] = Terrain.GRASS;
+						if (hasTerrain(cell, Terrain.HIGH_GRASS) || hasTerrain(cell, Terrain.FURROWED_GRASS)) {
+							cellAt(cell).place(Terrain.GRASS);
 							losBlocking[cell] = false;
 						}
 						drop(new SupplyRation(), cell).type = Heap.Type.CHEST;
@@ -579,8 +579,8 @@ public abstract class RegularLevel extends Level {
 				GuidePage p = new GuidePage();
 				p.page(missingPages.get(0));
 				int cell = randomDropCell();
-				if (map[cell] == Terrain.HIGH_GRASS || map[cell] == Terrain.FURROWED_GRASS) {
-					map[cell] = Terrain.GRASS;
+				if (hasTerrain(cell, Terrain.HIGH_GRASS) || hasTerrain(cell, Terrain.FURROWED_GRASS)) {
+					cellAt(cell).place(Terrain.GRASS);
 					losBlocking[cell] = false;
 				}
 				drop( p, cell );
@@ -634,8 +634,8 @@ public abstract class RegularLevel extends Level {
 							DocumentPage page = RegionLorePage.pageForDoc(regionDoc);
 							page.page(pageToDrop);
 							int cell = randomDropCell();
-							if (map[cell] == Terrain.HIGH_GRASS || map[cell] == Terrain.FURROWED_GRASS) {
-								map[cell] = Terrain.GRASS;
+							if (hasTerrain(cell, Terrain.HIGH_GRASS) || hasTerrain(cell, Terrain.FURROWED_GRASS)) {
+								cellAt(cell).place(Terrain.GRASS);
 								losBlocking[cell] = false;
 							}
 							drop(page, cell);
@@ -668,7 +668,7 @@ public abstract class RegularLevel extends Level {
 						candidateCells.add(exit());
 					} else {
 						for (int i = 0; i < length(); i++) {
-							if (map[i] == Terrain.DOOR && findMob(i) == null) {
+							if (hasTerrain(i, Terrain.DOOR) && findMob(i) == null) {
 								candidateCells.add(i);
 							}
 						}
@@ -685,8 +685,8 @@ public abstract class RegularLevel extends Level {
 			int items = (int)(Random.Float() + CrackedSpyglass.extraLootChance());
 			for (int i = 0; i < items; i++){
 				int cell = randomDropCell();
-				if (map[cell] == Terrain.HIGH_GRASS || map[cell] == Terrain.FURROWED_GRASS) {
-					map[cell] = Terrain.GRASS;
+				if (hasTerrain(cell, Terrain.HIGH_GRASS) || hasTerrain(cell, Terrain.FURROWED_GRASS)) {
+					cellAt(cell).place(Terrain.GRASS);
 					losBlocking[cell] = false;
 				}
 				drop( Generator.randomUsingDefaults(), cell).hidden = true;
@@ -746,7 +746,7 @@ public abstract class RegularLevel extends Level {
 					|| !passable[cell] || solid[cell] || getTransition(cell) != null
 					|| heaps.get(cell) != null || traps.get(cell) != null
 					|| plants.get(cell) != null || findMob(cell) != null) continue;
-			int terrain = map[cell];
+			int terrain = terrainAt(cell);
 			if (terrain == Terrain.EMPTY || terrain == Terrain.EMPTY_DECO || terrain == Terrain.GRASS) {
 				if (room == roomEntrance) {
 					fallback.add(cell);
@@ -763,11 +763,11 @@ public abstract class RegularLevel extends Level {
 				: (!preferred.isEmpty() ? preferred : !fallback.isEmpty() ? fallback : convertible);
 		if (candidates.isEmpty()) return false;
 		int cell = candidates.get(fixedInEntranceRoom ? 0 : Random.Int(candidates.size()));
-		if (map[cell] == Terrain.EMPTY_SP) Level.set(cell, Terrain.EMPTY, this);
+		if (terrainAt(cell) == Terrain.EMPTY_SP) Level.set(cell, Terrain.EMPTY, this);
 		hiddenEntranceCell = cell;
-		hiddenEntranceGrass = map[cell] == Terrain.GRASS;
+		hiddenEntranceGrass = hasTerrain(cell, Terrain.GRASS);
 		if (!hiddenEntranceGrass) {
-			interactions().setOverride(cell, HIDDEN_ENTRANCE_RULE);
+			cellAt(cell).addContent(new CellContent(CellContent.HIDDEN_ENTRANCE, region()));
 		}
 		return true;
 	}
@@ -879,7 +879,7 @@ public abstract class RegularLevel extends Level {
 
 		//it contains a barricade, locked door (player locked doors are fine though), or hidden door
 		for (int i = 0; i < length; i++){
-			if (map[i] == Terrain.BARRICADE || map[i] == Terrain.LOCKED_DOOR || map[i] == Terrain.SECRET_DOOR){
+			if (hasTerrain(i, Terrain.BARRICADE) || hasTerrain(i, Terrain.LOCKED_DOOR) || hasTerrain(i, Terrain.SECRET_DOOR)){
 				//we use adjacent cells to find the room this is connected to
 				// we ignore connection rooms and prefer rooms already missed
 				// note that if the tile borders two non-connection rooms, it only counts one

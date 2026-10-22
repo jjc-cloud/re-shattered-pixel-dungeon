@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 
 public class ChasmBridgeRoom extends StandardBridgeRoom {
 
@@ -29,8 +30,8 @@ public class ChasmBridgeRoom extends StandardBridgeRoom {
 		return roomDimension >= 7 ? 2 : 1;
 	}
 
-	protected int spaceTile(){
-		return Terrain.CHASM;
+	protected CellPlacement spaceTile(){
+		return CellPlacement.reset(Terrain.CHASM);
 	}
 
 }

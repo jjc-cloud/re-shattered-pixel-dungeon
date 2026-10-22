@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Statue;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.IronKey;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 
@@ -33,8 +34,8 @@ public class StatueRoom extends SpecialRoom {
 
 	public void paint( Level level ) {
 
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY );
+		Painter.fill( level, this, CellPlacement.ground(Terrain.EMPTY, Terrain.WALL) );
+		Painter.fill( level, this, 1, CellPlacement.reset(Terrain.EMPTY) );
 
 		Point c = center();
 		int cx = c.x;
@@ -47,22 +48,22 @@ public class StatueRoom extends SpecialRoom {
 		
 		if (door.x == left) {
 			
-			Painter.fill( level, right - 1, top + 1, 1, height() - 2 , Terrain.STATUE );
+			Painter.fill( level, right - 1, top + 1, 1, height() - 2 , CellPlacement.content(Terrain.STATUE) );
 			cx = right - 2;
 			
 		} else if (door.x == right) {
 			
-			Painter.fill( level, left + 1, top + 1, 1, height() - 2 , Terrain.STATUE );
+			Painter.fill( level, left + 1, top + 1, 1, height() - 2 , CellPlacement.content(Terrain.STATUE) );
 			cx = left + 2;
 			
 		} else if (door.y == top) {
 			
-			Painter.fill( level, left + 1, bottom - 1, width() - 2, 1 , Terrain.STATUE );
+			Painter.fill( level, left + 1, bottom - 1, width() - 2, 1 , CellPlacement.content(Terrain.STATUE) );
 			cy = bottom - 2;
 			
 		} else if (door.y == bottom) {
 			
-			Painter.fill( level, left + 1, top + 1, width() - 2, 1 , Terrain.STATUE );
+			Painter.fill( level, left + 1, top + 1, width() - 2, 1 , CellPlacement.content(Terrain.STATUE) );
 			cy = top + 2;
 			
 		}
