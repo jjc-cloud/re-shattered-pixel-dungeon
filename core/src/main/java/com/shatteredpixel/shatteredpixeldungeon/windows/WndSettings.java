@@ -1038,12 +1038,7 @@ public class WndSettings extends WndTabbed {
 
 		RenderedTextBlock title;
 		ColorBlock sep1;
-		RenderedTextBlock txtLangInfo;
-		ColorBlock sep2;
 		RedButton[] lanBtns;
-		ColorBlock sep3;
-		RenderedTextBlock txtTranifex;
-		RedButton btnCredits;
 
 		@Override
 		protected void createChildren() {
@@ -1062,21 +1057,6 @@ public class WndSettings extends WndTabbed {
 			langs.add(0, nativeLang);
 
 			final Languages currLang = Messages.lang();
-
-			txtLangInfo = PixelScene.renderTextBlock(6);
-			String info = "_" + Messages.titleCase(currLang.nativeName()) + "_ - ";
-			if (currLang == Languages.ENGLISH) info += "This is the source language, written by the developer.";
-			else if (currLang.status() == Languages.Status.O_COMPLETE) info += Messages.get(this, "completed");
-			else if (currLang.status() == Languages.Status.__UNREVIEW) info += Messages.get(this, "unreviewed");
-			else if (currLang.status() == Languages.Status.X_UNFINISH) info += Messages.get(this, "unfinished");
-			txtLangInfo.text(info);
-
-			if (currLang.status() == Languages.Status.__UNREVIEW) txtLangInfo.setHightlighting(true, CharSprite.WARNING);
-			else if (currLang.status() == Languages.Status.X_UNFINISH) txtLangInfo.setHightlighting(true, CharSprite.NEGATIVE);
-			add(txtLangInfo);
-
-			sep2 = new ColorBlock(1, 1, 0xFF000000);
-			add(sep2);
 
 			lanBtns = new RedButton[langs.size()];
 			for (int i = 0; i < langs.size(); i++){
@@ -1116,94 +1096,6 @@ public class WndSettings extends WndTabbed {
 				add(btn);
 			}
 
-			sep3 = new ColorBlock(1, 1, 0xFF000000);
-			add(sep3);
-
-			txtTranifex = PixelScene.renderTextBlock(5);
-			txtTranifex.text(Messages.get(this, "transifex"));
-			add(txtTranifex);
-
-			if (currLang != Languages.ENGLISH) {
-				String credText = Messages.titleCase(Messages.get(this, "credits"));
-				btnCredits = new RedButton(credText, credText.length() > 9 ? 6 : 9) {
-					@Override
-					protected void onClick() {
-						super.onClick();
-						String[] reviewers = currLang.reviewers();
-						String[] translators = currLang.translators();
-
-						int totalCredits = 2*reviewers.length + translators.length;
-						int totalTokens = 2*totalCredits; //for spaces
-
-						//additional space for titles, and newline chars
-						if (reviewers.length > 0) totalTokens+=6;
-						totalTokens +=4;
-
-						String[] entries = new String[totalTokens];
-						int index = 0;
-						if (reviewers.length > 0){
-							entries[0] = "_";
-							entries[1] = Messages.titleCase(Messages.get(LangsTab.this, "reviewers"));
-							entries[2] = "_";
-							entries[3] = "\n";
-							index = 4;
-							for (int i = 0; i < reviewers.length; i++){
-								entries[index] = reviewers[i];
-								if (i < reviewers.length-1) entries[index] += ", ";
-								entries[index+1] = " ";
-								index += 2;
-							}
-							entries[index] = "\n";
-							entries[index+1] = "\n";
-							index += 2;
-						}
-
-						entries[index] = "_";
-						entries[index+1] = Messages.titleCase(Messages.get(LangsTab.this, "translators"));
-						entries[index+2] = "_";
-						entries[index+3] = "\n";
-						index += 4;
-
-						//reviewers are also shown as translators
-						for (int i = 0; i < reviewers.length; i++){
-							entries[index] = reviewers[i];
-							if (i < reviewers.length-1 || translators.length > 0) entries[index] += ", ";
-							entries[index+1] = " ";
-							index += 2;
-						}
-
-						for (int i = 0; i < translators.length; i++){
-							entries[index] = translators[i];
-							if (i < translators.length-1) entries[index] += ", ";
-							entries[index+1] = " ";
-							index += 2;
-						}
-
-						Window credits = new Window(0, 0, Chrome.get(Chrome.Type.TOAST));
-
-						int w = PixelScene.landscape() ? 120 : 80;
-						if (totalCredits >= 25) w *= 1.5f;
-
-						RenderedTextBlock title = PixelScene.renderTextBlock(9);
-						title.text(Messages.titleCase(Messages.get(LangsTab.this, "credits")), w);
-						title.hardlight(TITLE_COLOR);
-						title.setPos((w - title.width()) / 2, 0);
-						credits.add(title);
-
-						RenderedTextBlock text = PixelScene.renderTextBlock(7);
-						text.maxWidth(w);
-						text.tokens(entries);
-
-						text.setPos(0, title.bottom() + 4);
-						credits.add(text);
-
-						credits.resize(w, (int) text.bottom() + 2);
-						ShatteredPixelDungeon.scene().addToFront(credits);
-					}
-				};
-				add(btnCredits);
-			}
-
 		}
 
 		@Override
@@ -1212,15 +1104,8 @@ public class WndSettings extends WndTabbed {
 			sep1.size(width, 1);
 			sep1.y = title.bottom() + 3*GAP;
 
-			txtLangInfo.setPos(0, sep1.y + 1 + GAP);
-			txtLangInfo.maxWidth((int)width);
-
-			y = txtLangInfo.bottom() + 2*GAP;
+			y = sep1.y + 1 + GAP;
 			int x = 0;
-
-			sep2.size(width, 1);
-			sep2.y = y;
-			y += 2;
 
 			int cols = PixelScene.landscape() ? COLS_L : COLS_P;
 			int btnWidth = (int)Math.floor((width - (cols-1)) / cols);
@@ -1237,25 +1122,7 @@ public class WndSettings extends WndTabbed {
 				y += BTN_HEIGHT+1;
 			}
 
-			sep3.size(width, 1);
-			sep3.y = y;
-			y += 2;
-
-			if (btnCredits != null){
-				btnCredits.setSize(btnCredits.reqWidth() + 2, 16);
-				btnCredits.setPos(width - btnCredits.width(), y);
-
-				txtTranifex.setPos(0, y);
-				txtTranifex.maxWidth((int)btnCredits.left());
-
-				height = Math.max(btnCredits.bottom(), txtTranifex.bottom());
-			} else {
-				txtTranifex.setPos(0, y);
-				txtTranifex.maxWidth((int)width);
-
-				height = txtTranifex.bottom();
-			}
-
+			height = y;
 		}
 	}
 }

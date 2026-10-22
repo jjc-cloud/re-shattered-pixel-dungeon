@@ -201,6 +201,18 @@ public class RenderedTextBlock extends Component {
 		layout();
 	}
 
+	//word splitters break each CJK character into its own token, and a line may be broken between
+	//any two of them, so such a token must never be grouped with what follows it
+	private static boolean breakableCJK( RenderedText word ){
+		String text = word.text();
+		if (text == null || text.isEmpty()) return false;
+		int codePoint = text.codePointAt(0);
+		return (codePoint >= 0x2E80 && codePoint <= 0x9FFF)	//CJK radicals, kana, unified ideographs
+				|| (codePoint >= 0xAC00 && codePoint <= 0xD7AF)	//hangul syllables
+				|| (codePoint >= 0xF900 && codePoint <= 0xFAFF)	//CJK compatibility ideographs
+				|| (codePoint >= 0xFF00 && codePoint <= 0xFF65);	//fullwidth forms
+	}
+
 	@Override
 	protected synchronized void layout() {
 		super.layout();
@@ -232,10 +244,11 @@ public class RenderedTextBlock extends Component {
 				int j = i+1;
 
 				//this is so that words split only by highlighting are still grouped in layout
-				//Chinese/Japanese always render every character separately without spaces however
-				while (Messages.lang() != Languages.CHI_SMPL && Messages.lang() != Languages.CHI_TRAD
-						&& Messages.lang() != Languages.JAPANESE
-						&& j < words.size() && words.get(j) != SPACE && words.get(j) != NEWLINE){
+				//CJK characters can be broken anywhere though, so they never extend the group
+				//(this also keeps CJK text wrapping correctly when the UI language isn't chinese)
+				while (Messages.lang() != Languages.CHI_SMPL
+						&& j < words.size() && words.get(j) != SPACE && words.get(j) != NEWLINE
+						&& !breakableCJK(words.get(j))){
 					fullWidth += words.get(j).width() - 0.667f;
 					j++;
 				}

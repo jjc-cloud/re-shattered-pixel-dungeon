@@ -110,6 +110,8 @@ public class Heap implements Bundlable {
 					&& !Imp.Quest.vaultRemainsCommented) {
 				Imp.Quest.vaultRemainsCommented = true;
 				GLog.n(Messages.get(Imp.class, "vault_remains_hero"));
+				//separate log entries so both lines start flush left instead of being merged into one paragraph
+				GLog.newLine();
 				GLog.n(Messages.get(Imp.class, "vault_remains_reply"));
 			}
 			break;
