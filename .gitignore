@@ -8,7 +8,7 @@
 *.class
 
 # Gradle build files
-.gradle/
+.gradle*/
 build/
 release/
 test/
@@ -23,7 +23,9 @@ local.properties
 #agent files
 /AGENTS.md
 .claude/
+.codex/
 .workbuddy/
+.worktrees/
 
 # Local development notes and tool configuration
 /docs/*
