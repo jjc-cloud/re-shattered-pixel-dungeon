@@ -21,13 +21,18 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.tiles;
 
+import com.badlogic.gdx.graphics.Pixmap;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.LastShopLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.VaultTiles;
+import com.watabou.gltextures.TextureCache;
 import com.watabou.noosa.Image;
+import com.watabou.noosa.TextureFilm;
 import com.watabou.noosa.tweeners.ScaleTweener;
 import com.watabou.utils.PointF;
 import com.watabou.utils.RectF;
@@ -51,18 +56,26 @@ public class TerrainFeaturesTilemap extends DungeonTilemap {
 		this.contentType = contentType;
 		this.plants = plants;
 		this.traps = traps;
+		if (contentType == Terrain.STATUE || contentType == Terrain.STATUE_SP) {
+			texture = contentImage(0, contentType).texture;
+			tileset = new TextureFilm(texture, SIZE, SIZE);
+		}
 
 		if (Dungeon.level != null) {
 			map(Dungeon.level.terrainVisuals(), Dungeon.level.width());
 		}
 
-		instance = this;
+		if (contentType != Terrain.STATUE && contentType != Terrain.STATUE_SP) instance = this;
 	}
 
 	protected int getTileVisual(int pos, int tile, boolean flat){
 		if (Dungeon.level.cellAt(pos).buried()) return -1;
 		if (contentType >= 0) {
-			return Dungeon.level.cellAt(pos).hasTerrain(contentType) ? contentVisual(pos, contentType) : -1;
+			if (!Dungeon.level.cellAt(pos).hasTerrain(contentType)) return -1;
+			if (contentType == Terrain.STATUE && Dungeon.level instanceof VaultLevel
+					&& ((VaultLevel) Dungeon.level).customStatueCell(pos)) return -1;
+			return contentType == Terrain.STATUE || contentType == Terrain.STATUE_SP
+					? 0 : contentVisual(pos, contentType);
 		}
 		if (contentType != -3 && traps != null && traps.get(pos) != null){
 			Trap trap = traps.get(pos);
@@ -156,10 +169,49 @@ public class TerrainFeaturesTilemap extends DungeonTilemap {
 	}
 
 	public static Image contentImage(int pos, int type) {
+		if (type == Terrain.STATUE && Dungeon.level instanceof VaultLevel
+				&& ((VaultLevel) Dungeon.level).customStatueCell(pos)) {
+			for (CustomTilemap custom : Dungeon.level.customTerrain) {
+				if (!(custom instanceof VaultTiles.EntranceDecorations)) continue;
+				int tx = pos % Dungeon.level.width() - custom.tileX;
+				int ty = pos / Dungeon.level.width() - custom.tileY;
+				if (tx < 0 || ty < 1 || tx >= custom.tileW || ty >= custom.tileH) continue;
+				int[] data = ((VaultTiles.EntranceDecorations) custom).tileData();
+				int upper = data[tx + (ty - 1) * custom.tileW];
+				if (upper < 0 || data[tx + ty * custom.tileW] != upper + 16) continue;
+				// 使用专用图层的朝向和上下两格，检视不再叠普通雕像或截掉头部。
+				return new Image(Assets.Environment.CITY_QUEST, upper % 16 * SIZE,
+						upper / 16 * SIZE, SIZE, SIZE * 2);
+			}
+		}
 		int visual = contentVisual(pos, type);
 		if (visual < 0) return null;
 		Image image = new Image(Assets.Environment.TERRAIN_FEATURES);
 		image.frame((visual % 16) * SIZE, (visual / 16) * SIZE, SIZE, SIZE);
+		if (type == Terrain.STATUE || type == Terrain.STATUE_SP) {
+			Pixmap foreground = image.texture.bitmap;
+			Pixmap terrain = TextureCache.get(Dungeon.level.tilesTex()).bitmap;
+			int raised = type == Terrain.STATUE ? DungeonTileSheet.RAISED_STATUE : DungeonTileSheet.RAISED_STATUE_SP;
+			int floor = type == Terrain.STATUE ? DungeonTileSheet.FLOOR : DungeonTileSheet.FLOOR_SP;
+			int[] pixels = new int[SIZE * SIZE];
+			for (int y = 0; y < SIZE; y++) for (int x = 0; x < SIZE; x++) {
+				int rgba = foreground.getPixel(visual % 16 * SIZE + x, visual / 16 * SIZE + y);
+				if ((rgba & 0xFF) == 0) {
+					int ground = terrain.getPixel(floor % 16 * SIZE + x, floor / 16 * SIZE + y);
+					int statue = terrain.getPixel(raised % 16 * SIZE + x, raised / 16 * SIZE + y);
+					// 原图的落地阴影把地面压暗到 40%，转为透明黑色后可叠在任意地面上。
+					boolean shadow = (ground & 0xFFFFFF00) != 0;
+					for (int shift = 8; shift <= 24; shift += 8) {
+						if (Math.abs(((ground >>> shift) & 0xFF) * 2 / 5
+								- ((statue >>> shift) & 0xFF)) > 1) shadow = false;
+					}
+					if (shadow) rgba = 0x00000099;
+				}
+				pixels[x + y * SIZE] = rgba;
+			}
+			image.texture(TextureCache.createPixels("statue-with-shadow:" + Dungeon.level.tilesTex() + ':' + type + ':' + visual,
+					SIZE, SIZE, pixels));
+		}
 		return image;
 	}
 

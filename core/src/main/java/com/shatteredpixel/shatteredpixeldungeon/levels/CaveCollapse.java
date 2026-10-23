@@ -308,7 +308,6 @@ public final class CaveCollapse implements Hero.Doom {
 			boolean seen = false;
 			for (int cell : cells) {
 				goldVeins.remove(cell);
-				if (level.plants.get(cell) != null) level.plants.get(cell).wither();
 				Level.set(cell, Terrain.COLLAPSE_WALL, level);
 				for (int offset : PathFinder.NEIGHBOURS9) {
 					int next = cell + offset;

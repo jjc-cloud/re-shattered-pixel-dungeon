@@ -32,7 +32,9 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellState;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CaveCollapse;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CavesLevel;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.AmbitiousImpRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
@@ -45,6 +47,7 @@ import com.shatteredpixel.shatteredpixeldungeon.tiles.CellPreview;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.CustomTilemap;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTileSheet;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.Carpet;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.VaultTiles;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.TerrainFeaturesTilemap;
 import com.shatteredpixel.shatteredpixeldungeon.ui.IconButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
@@ -52,12 +55,12 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.ScrollPane;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.ui.Component;
-import com.watabou.utils.RectF;
 import java.util.ArrayList;
 
 public class WndInfoCell extends Window {
     private static final int WIDTH = 120;
     private static final int CONTENT_SLOT = 24;
+    private static final int TEXT_MARGIN = 2;
     private ScrollPane scroll;
     public static Image cellImage(int cell) { return new CellPreview(cell); }
     public static String cellName(int cell) {
@@ -67,10 +70,12 @@ public class WndInfoCell extends Window {
     public WndInfoCell(int cell) {
         CellState state = Dungeon.level.cellAt(cell);
         Image preview = cellImage(cell);
-        preview.x = 0;
-        add(preview);
+        IconTitle titlebar = new IconTitle(preview, Messages.get(GameScene.class, "examine"));
+        titlebar.setRect(TEXT_MARGIN, TEXT_MARGIN, WIDTH - 2 * TEXT_MARGIN, 0);
+        add(titlebar);
 
         ArrayList<Object> objects = GameScene.getObjectsAtCell(cell);
+        ArrayList<Object> contents = new ArrayList<>(objects);
         StringBuilder desc = new StringBuilder();
         int top = state.terrain();
         boolean coveredGround = state.buried() || DungeonTileSheet.wallStitcheable(top);
@@ -85,10 +90,11 @@ public class WndInfoCell extends Window {
         for (CellContent content : state.contents()) {
             if (!state.exposed(content) || content.type() == CellContent.HIDDEN_ENTRANCE
                     || CellContent.family(content.type()) == Terrain.TRAP) continue;
+            contents.add(content);
             if (content.type() == CellContent.CARPET) {
                 if (!carpetDescribed) {
-                    contentNames.add(Messages.get(this, "carpet"));
-                    details.add(Messages.get(this, "carpet_desc"));
+                    contentNames.add(Messages.get(Carpet.class, "name"));
+                    details.add(Messages.get(Carpet.class, "desc"));
                     carpetDescribed = true;
                 }
                 continue;
@@ -100,6 +106,15 @@ public class WndInfoCell extends Window {
             }
             if (detail != null && !detail.isEmpty()) {
                 details.add(detail);
+            }
+        }
+        if (!carpetDescribed && !coveredGround) {
+            for (int side = 0; side < Carpet.SEAM_PIECES; side++) {
+                if (Carpet.seamPiece(cell, side) < 0) continue;
+                contentNames.add(Messages.get(this, "carpet"));
+                details.add(Messages.get(this, "carpet_desc"));
+                contents.add(CellContent.CARPET);
+                break;
             }
         }
         ArrayList<String> objectNames = GameScene.getObjectNames(objects);
@@ -128,11 +143,12 @@ public class WndInfoCell extends Window {
         ArrayList<CustomTilemap> custom = new ArrayList<>(Dungeon.level.customTiles);
         custom.addAll(Dungeon.level.customTerrain);
         for (CustomTilemap tile : custom) {
-            if (tile instanceof Carpet) continue;
+            if (tile instanceof Carpet || (carpetDescribed && (tile instanceof VaultTiles.EntranceRug
+                    || tile instanceof AmbitiousImpRoom.QuestEntrance))) continue;
             int tx = x - tile.tileX, ty = y - tile.tileY;
             if (tx < 0 || ty < 0 || tx >= tile.tileW || ty >= tile.tileH) continue;
             String detail = tile.desc(tx, ty);
-            if (detail != null && !detail.isEmpty()) {
+            if (detail != null && !detail.isEmpty() && !details.contains(detail)) {
                 if (desc.length() > 0) desc.append("\n\n");
                 desc.append(detail);
             }
@@ -161,11 +177,13 @@ public class WndInfoCell extends Window {
         scroll = new ScrollPane(body);
         add(scroll);
         RenderedTextBlock info = PixelScene.renderTextBlock(desc.toString(), 6);
-        info.maxWidth(WIDTH);
+        // 字符和描边可能超出测量框，避开滚动相机的裁切边界。
+        info.maxWidth(WIDTH - 2 * TEXT_MARGIN);
+        info.setPos(TEXT_MARGIN, TEXT_MARGIN);
         body.add(info);
         float iconTop = info.bottom() + 4;
         int contentCount = 0;
-        for (Object object : objects) {
+        for (Object object : contents) {
             final Object content = object;
             Image icon;
             if (object == Dungeon.hero) {
@@ -184,25 +202,35 @@ public class WndInfoCell extends Window {
                 icon = TerrainFeaturesTilemap.getPlantVisual((Plant)object);
             } else if (object instanceof Trap) {
                 icon = TerrainFeaturesTilemap.getTrapVisual((Trap)object);
+            } else if (object instanceof CellContent || object instanceof Integer) {
+                int type = object instanceof CellContent ? ((CellContent)object).type() : (Integer)object;
+                icon = new CellPreview(cell, type);
             } else {
                 continue;
             }
-            if (icon.width() > CONTENT_SLOT - 2 || icon.height() > CONTENT_SLOT - 2) {
-                RectF frame = icon.frame();
-                float wShrink = frame.width() * (1f - (CONTENT_SLOT - 2) / icon.width());
-                float hShrink = frame.height() * (1f - (CONTENT_SLOT - 2) / icon.height());
-                if (wShrink > 0) {
-                    frame.left += wShrink / 2f;
-                    frame.right -= wShrink / 2f;
-                }
-                if (hShrink > 0) {
-                    frame.top += hShrink / 2f;
-                    frame.bottom -= hShrink / 2f;
-                }
-                icon.frame(frame);
-            }
+            if (!(icon instanceof CellPreview)) icon = new CellPreview(cell, icon);
             IconButton button = new IconButton(icon) {
-                @Override protected void onClick() { GameScene.examineObject(content); }
+                @Override protected void onClick() {
+                    if (content instanceof CellContent || content instanceof Integer) {
+                        int type = content instanceof CellContent ? ((CellContent)content).type() : (Integer)content;
+                        String name;
+                        String detail;
+                        if (type == CellContent.CARPET) {
+                            boolean intact = state.hasTerrain(CellContent.CARPET);
+                            name = intact ? Messages.get(Carpet.class, "name") : Messages.get(WndInfoCell.this, "carpet");
+                            detail = intact ? Messages.get(Carpet.class, "desc") : Messages.get(WndInfoCell.this, "carpet_desc");
+                        } else {
+                            name = Dungeon.level.tileName(type);
+                            detail = Dungeon.level.tileDesc(type);
+                            if (type == Terrain.GRASS && (detail == null || detail.isEmpty()))
+                                detail = Messages.get(Level.Feeling.class, "grass_desc");
+                            if (detail == null || detail.isEmpty()) detail = Messages.get(WndInfoCell.this, "nothing");
+                        }
+                        GameScene.show(new WndTitledMessage(new CellPreview(cell, type), name, detail));
+                    } else {
+                        GameScene.examineObject(content);
+                    }
+                }
             };
             button.setRect(contentCount % 5 * CONTENT_SLOT,
                     iconTop + contentCount / 5 * CONTENT_SLOT,
@@ -211,9 +239,9 @@ public class WndInfoCell extends Window {
             contentCount++;
         }
         int rows = (contentCount + 4) / 5;
-        float bottom = iconTop + rows * CONTENT_SLOT;
+        float bottom = iconTop + rows * CONTENT_SLOT + TEXT_MARGIN;
         body.setSize(WIDTH, bottom);
-        float topOffset = preview.height() + 4;
+        float topOffset = titlebar.bottom() + 4;
         int height = (int)Math.ceil(Math.max(CONTENT_SLOT, Math.min(bottom,
                 PixelScene.uiCamera.height - topOffset - 30)));
         // 滚动区使用独立相机，必须在窗口尺寸和屏幕位置确定之后布局。

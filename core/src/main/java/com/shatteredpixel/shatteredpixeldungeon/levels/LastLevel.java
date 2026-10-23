@@ -135,8 +135,9 @@ public class LastLevel extends Level {
 
 		int entrance = (height-ROOM_TOP) * width() + MID;
 		Painter.fill(this, 0, height - ROOM_TOP, width, 2, CellPlacement.reset(Terrain.EMPTY, Terrain.WALL));
-		cellAt(entrance).setGround(Terrain.ENTRANCE);
-		cellAt(entrance+width).setGround(Terrain.ENTRANCE);
+		// 从两排墙中开出入口，重建格子以清除墙内容。
+		cellAt(entrance).reset(Terrain.ENTRANCE);
+		cellAt(entrance+width).reset(Terrain.ENTRANCE);
 		LevelTransition entry = new LevelTransition(this, entrance, LevelTransition.Type.REGULAR_ENTRANCE);
 		entry.left--;
 		entry.right++;

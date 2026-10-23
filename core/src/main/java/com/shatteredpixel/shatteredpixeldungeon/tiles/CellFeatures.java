@@ -2,6 +2,7 @@ package com.shatteredpixel.shatteredpixeldungeon.tiles;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.Carpet;
 import com.watabou.noosa.Group;
 
 import java.util.ArrayList;
@@ -15,8 +16,8 @@ public class CellFeatures extends Group {
 	private final TerrainFeaturesTilemap plants;
 
 	public CellFeatures() {
-		// 地毯破损缝按边各一层，先铺在地面内容之下
-		for (int side = 0; side < 4; side++) {
+		// 地毯的四条破损边和四个角各一层，先铺在地面内容之下。
+		for (int side = 0; side < Carpet.SEAM_PIECES; side++) {
 			CarpetSeamTilemap seam = new CarpetSeamTilemap(side);
 			layers.add(seam);
 			add(seam);

@@ -29,6 +29,7 @@ import com.shatteredpixel.shatteredpixeldungeon.tiles.CustomTilemap;
 import com.watabou.noosa.Tilemap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CityLevel;
+import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
@@ -253,10 +254,18 @@ public final class VaultTiles {
 			return result;
 		}
 		@Override
-		public String name(int x, int y) { return Messages.get(Level.class, "statue_name"); }
+		public String name(int x, int y) {
+			if (!(Dungeon.level instanceof VaultLevel) || !((VaultLevel) Dungeon.level)
+					.customStatueCell(tileX + x + (tileY + y) * Dungeon.level.width())) return null;
+			return Messages.get(Level.class, "statue_name");
+		}
 
 		@Override
-		public String desc(int x, int y) { return Messages.get(CityLevel.class, "statue_desc"); }
+		public String desc(int x, int y) {
+			if (!(Dungeon.level instanceof VaultLevel) || !((VaultLevel) Dungeon.level)
+					.customStatueCell(tileX + x + (tileY + y) * Dungeon.level.width())) return null;
+			return Messages.get(CityLevel.class, "statue_desc");
+		}
 
 	}
 

@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
@@ -88,11 +89,25 @@ public class AmbitiousImpRoom extends SpecialRoom {
 
 		Carpet carpet = new Carpet();
 		carpet.setRect(left+1, top+3, 7, 3);
+		// 只保留十字形地毯的左右末端，中央 5×5 由任务专用图层绘制。
+		for (int y = 0; y < 3; y++) for (int x = 1; x <= 5; x++) {
+			carpet.overrideTile(x, y, Carpet.SKIP);
+		}
 		level.customTiles.add(carpet);
 
 		carpet = new Carpet();
 		carpet.setRect(left+3, top+1, 3, 7);
+		for (int y = 1; y <= 5; y++) for (int x = 0; x < 3; x++) {
+			carpet.overrideTile(x, y, Carpet.SKIP);
+		}
 		level.customTiles.add(carpet);
+		// 特殊毯圈只占 5×5 边上的四段，四个基座角和中央 3×3 均不铺毯。
+		for (int y = -2; y <= 2; y++) for (int x = -2; x <= 2; x++) {
+			if (Math.max(Math.abs(x), Math.abs(y)) != 2 || (Math.abs(x) == 2 && Math.abs(y) == 2)) continue;
+			CellContent fixedCarpet = new CellContent(CellContent.CARPET, level.region());
+			fixedCarpet.properties(0, CellContent.BREAKABLE | CellContent.BURNABLE);
+			level.cellAt(c.x + x + (c.y + y) * level.width()).addContent(fixedCarpet);
+		}
 
 		QuestEntrance vis = new QuestEntrance();
 		vis.pos(c.x - 2, c.y - 2);
@@ -162,11 +177,19 @@ public class AmbitiousImpRoom extends SpecialRoom {
 
 		@Override
 		public String name(int tileX, int tileY) {
+			if (tileX == 0 || tileY == 0 || tileX == tileW - 1 || tileY == tileH - 1) {
+				return (tileX == 0 || tileX == tileW - 1) && (tileY == 0 || tileY == tileH - 1)
+						? null : Messages.get(Carpet.class, "name");
+			}
 			return Messages.get(this, "name");
 		}
 
 		@Override
 		public String desc(int tileX, int tileY) {
+			if (tileX == 0 || tileY == 0 || tileX == tileW - 1 || tileY == tileH - 1) {
+				return (tileX == 0 || tileX == tileW - 1) && (tileY == 0 || tileY == tileH - 1)
+						? null : Messages.get(Carpet.class, "desc");
+			}
 			return Messages.get(this, "desc");
 		}
 

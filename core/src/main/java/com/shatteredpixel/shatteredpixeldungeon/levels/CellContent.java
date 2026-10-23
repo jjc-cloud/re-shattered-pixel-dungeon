@@ -1,10 +1,14 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gem;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.watabou.noosa.Game;
 import com.watabou.utils.Bundlable;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
@@ -109,6 +113,10 @@ public class CellContent implements Bundlable {
 	/** 内容已从格子移除后结算自身产物；不会把整个格子替换成另一种地形。 */
 	public void destroyed(Level level, int cell, boolean burned) {
 		if (type == HIDDEN_ENTRANCE) { level.revealHiddenEntrance(cell); return; }
+		if ((type == Terrain.WALL || type == Terrain.WALL_DECO) && level == Dungeon.level
+				&& level.heroFOV[cell] && Game.scene() instanceof GameScene) {
+			CellEmitter.get(cell).burst(Speck.factory(Speck.ROCK), 2);
+		}
 		if (burned && has(BURNABLE)) level.cellAt(cell).addContent(new CellContent(Terrain.EMBERS, level.region()));
 		if (family(type) == Terrain.REGION_DECO && level.region() == 0) {
 			if (type == Terrain.REGION_DECO || type == Terrain.SEWER_BARREL_MARKED) {

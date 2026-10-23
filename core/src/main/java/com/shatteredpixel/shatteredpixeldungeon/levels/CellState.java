@@ -132,6 +132,18 @@ public class CellState implements Bundlable {
 				removeTerrain(Terrain.HIGH_GRASS);
 				removeTerrain(Terrain.FURROWED_GRASS);
 			}
+			if (content.type() == Terrain.COLLAPSE_WALL) {
+				// 掩埋永久填平水与陷阱、压低高草，其他内容继续留在岩壁下。
+				boolean filled = removeTerrain(Terrain.WATER);
+				filled |= removeTerrain(Terrain.TRAP);
+				filled |= removeTerrain(Terrain.SECRET_TRAP);
+				filled |= removeTerrain(Terrain.INACTIVE_TRAP);
+				if (level != null && level.traps != null) filled |= level.traps.remove(cell) != null;
+				if (filled) setGround(Terrain.EMPTY);
+				boolean flattened = removeTerrain(Terrain.HIGH_GRASS);
+				flattened |= removeTerrain(Terrain.FURROWED_GRASS);
+				if (flattened) addContent(new CellContent(Terrain.GRASS, level == null ? -1 : level.region()));
+			}
 			contents.add(content);
 			changed();
 			return true;

@@ -21,18 +21,19 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.tiles.custom;
 
+import com.badlogic.gdx.graphics.Pixmap;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.AmbitiousImpRoom;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.CustomTilemap;
+import com.watabou.gltextures.TextureCache;
 import com.watabou.noosa.Image;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.SparseArray;
 
-//TODO currently carpets only have implemented visuals for the dwarven city,
-// and also only support being rectangular in shape
 public class Carpet extends CustomTilemap {
 
 	{
@@ -43,6 +44,7 @@ public class Carpet extends CustomTilemap {
 	protected SparseArray<Integer> tileOverrides = new SparseArray<>();
 
 	public static final int SKIP = -1;
+	public static final int SEAM_PIECES = 8;
 	// 破损缝按边取图，每个区域块间隔 32 格（贴图第 7/9/11 行）。
 	private static final int CITY_SEAM = 96;    // 都市（含王座厅与秘库支线）
 	private static final int PRISON_SEAM = 128; // 监狱与矿洞（两区域同色，共用一块）
@@ -101,40 +103,23 @@ public class Carpet extends CustomTilemap {
 	}
 
 	/**
-	 * 地毯基础层。没有地毯（含生成期预留的洞口）的格子留空，
-	 * 洞口边缘由破损缝图层按周围现存的地毯现场拼接。
+	 * 地毯基础层。没有地毯的格子留空，破损边缘由破损缝图层现场拼接。
+	 * 生成期明确跳过的格子（如下楼口）不作为破口。
 	 */
 	public synchronized int[] createLayers() {
 		registerContents(Dungeon.level);
 		int[] base = new int[tileW * tileH];
-		int regionOfs = 16 * ((Dungeon.depth - 1) / 5);
 		for (int y = 0; y < tileH; y++) {
 			for (int x = 0; x < tileW; x++) {
-				int i = x + tileW * y;
-				int cell = tileX + x + (tileY + y) * Dungeon.level.width();
-				boolean carpet = tileOverrides.get(i, 0) != SKIP
-						&& Dungeon.level.cellAt(cell).hasTerrain(CellContent.CARPET);
-				if (!carpet) {
-					base[i] = SKIP;
-					continue;
-				}
-				if (tileOverrides.containsKey(i)) {
-					base[i] = tileOverrides.get(i);
-				} else {
-					base[i] = regionOfs;
-					if (y == 0) base[i] += 1;
-					if (x == tileW - 1) base[i] += 2;
-					if (y == tileH - 1) base[i] += 4;
-					if (x == 0) base[i] += 8;
-				}
+				base[x + tileW * y] = carpetAt(tileX + x, tileY + y);
 			}
 		}
 		return base;
 	}
 
 	/**
-	 * 破损缝：0=上 1=右 2=下 3=左，返回贴图索引，-1 表示该边不画。
-	 * 只管“这条边对面还有没有地毯”和“端头顺着缝能不能接下去”，不查任何组合表。
+	 * 破损缝：0=上 1=右 2=下 3=左，4～7=左上、右上、右下、左下角。
+	 * 返回贴图索引，-1 表示不画；直边按边长选端头，斜邻地毯按接点补角。
 	 */
 	public static int seamPiece(int cell, int side) {
 		Level level = Dungeon.level;
@@ -145,36 +130,87 @@ public class Carpet extends CustomTilemap {
 
 		int w = level.width();
 		int x = cell % w, y = cell / w;
-		int piece;
 		switch (side) {
 			case 0: // 上
-				if (!carpetAt(x, y - 1)) return -1;
-				piece = seamVariant(side,
-						!(carpetAt(x + 1, y) || carpetAt(x + 1, y - 1)),
-						!(carpetAt(x - 1, y) || carpetAt(x - 1, y - 1)));
+				y--;
 				break;
 			case 1: // 右
-				if (!carpetAt(x + 1, y)) return -1;
-				piece = seamVariant(side,
-						!(carpetAt(x, y - 1) || carpetAt(x + 1, y - 1)),
-						!(carpetAt(x, y + 1) || carpetAt(x + 1, y + 1)));
+				x++;
 				break;
 			case 2: // 下
-				if (!carpetAt(x, y + 1)) return -1;
-				piece = seamVariant(side,
-						!(carpetAt(x - 1, y) || carpetAt(x - 1, y + 1)),
-						!(carpetAt(x + 1, y) || carpetAt(x + 1, y + 1)));
+				y++;
 				break;
 			case 3: // 左
-				if (!carpetAt(x - 1, y)) return -1;
-				piece = seamVariant(side,
-						!(carpetAt(x, y - 1) || carpetAt(x - 1, y - 1)),
-						!(carpetAt(x, y + 1) || carpetAt(x - 1, y + 1)));
+				x--;
+				break;
+			case 4: // 左上
+				x--;
+				y--;
+				break;
+			case 5: // 右上
+				x++;
+				y--;
+				break;
+			case 6: // 右下
+				x++;
+				y++;
+				break;
+			case 7: // 左下
+				x--;
+				y++;
 				break;
 			default:
 				return -1;
 		}
-		return seamBase + piece;
+		if (x < 0 || y < 0 || x >= w || y >= level.height()) return -1;
+		// 入口地毯可能垫在雕像地毯下面；上层透明的边仍可能被下层填满。
+		Pixmap atlas = TextureCache.get(Assets.Environment.CARPET).bitmap;
+		int edgePixels = 0;
+		for (CustomTilemap custom : level.customTiles) {
+			Pixmap edgeAtlas = atlas;
+			int visual;
+			if (custom instanceof Carpet) {
+				visual = ((Carpet) custom).carpetAt(x, y);
+			} else if ((custom instanceof AmbitiousImpRoom.QuestEntrance || custom instanceof VaultTiles.EntranceRug)
+					&& level.cellAt(x + y * w).hasTerrain(CellContent.CARPET)) {
+				// 固定特殊毯虽然不能破坏，仍按实际图块的边长参与相邻破口的拼接。
+				int tx = x - custom.tileX, ty = y - custom.tileY;
+				if (tx < 0 || ty < 0 || tx >= custom.tileW || ty >= custom.tileH) continue;
+				visual = custom instanceof VaultTiles.EntranceRug
+						? ((VaultTiles.EntranceRug) custom).tileData()[tx + ty * custom.tileW]
+						: tx + ty * 16;
+				edgeAtlas = TextureCache.get(Assets.Environment.CITY_QUEST).bitmap;
+			} else {
+				continue;
+			}
+			if (visual < 0) continue;
+			int tileX = visual % 16 * SIZE, tileY = visual / 16 * SIZE;
+			for (int p = 0; p < (side >= 4 ? 1 : SIZE); p++) {
+				int px = side >= 4 ? (side == 4 || side == 7 ? SIZE - 1 : 0)
+						: side == 1 ? 0 : side == 3 ? SIZE - 1 : p;
+				int py = side >= 4 ? (side == 4 || side == 5 ? SIZE - 1 : 0)
+						: side == 0 ? SIZE - 1 : side == 2 ? 0 : p;
+				if ((edgeAtlas.getPixel(tileX + px, tileY + py) & 0xFF) != 0) edgePixels |= 1 << p;
+			}
+		}
+		if (edgePixels == 0) return -1;
+
+		if (side >= 4) {
+			int corner = side - 4;
+			int px = corner == 0 || corner == 3 ? 0 : SIZE - 1;
+			int py = corner < 2 ? 0 : SIZE - 1;
+			int horizontal = seamPiece(cell, corner < 2 ? 0 : 2);
+			int vertical = seamPiece(cell, corner == 0 || corner == 3 ? 3 : 1);
+			// 接点已有直边覆盖时保持原样，其余情况用第二行的四像素角过渡。
+			if (horizontal >= 0 && (atlas.getPixel(horizontal % 16 * SIZE + px,
+					horizontal / 16 * SIZE + py) & 0xFF) != 0) return -1;
+			if (vertical >= 0 && (atlas.getPixel(vertical % 16 * SIZE + px,
+					vertical / 16 * SIZE + py) & 0xFF) != 0) return -1;
+			return seamBase + 16 + corner;
+		}
+		boolean cutStart = (edgePixels & 1) == 0, cutEnd = (edgePixels & (1 << (SIZE - 1))) == 0;
+		return seamBase + seamVariant(side,
+				side == 0 ? cutEnd : cutStart, side == 0 ? cutStart : cutEnd);
 	}
 
 	//cutA/cutB 对应贴图里该边两个端头的切法，顺序见 SEAM_CUT_A / SEAM_CUT_B 的注释
@@ -192,14 +228,35 @@ public class Carpet extends CustomTilemap {
 		return -1;
 	}
 
-	private static boolean carpetAt(int x, int y) {
+	// 与基础层使用同一套图块选择规则，返回当前仍在绘制的地毯图块。
+	private int carpetAt(int x, int y) {
 		Level level = Dungeon.level;
-		if (level == null) return false;
-		if (x < 0 || y < 0 || x >= level.width() || y >= level.height()) return false;
-		return level.cellAt(x + y * level.width()).hasTerrain(CellContent.CARPET);
+		if (level == null) return SKIP;
+		if (x < 0 || y < 0 || x >= level.width() || y >= level.height()) return SKIP;
+		if (!level.cellAt(x + y * level.width()).hasTerrain(CellContent.CARPET)) return SKIP;
+		int tx = x - tileX, ty = y - tileY;
+		if (tx < 0 || ty < 0 || tx >= tileW || ty >= tileH) return SKIP;
+		int index = tx + ty * tileW;
+		if (tileOverrides.containsKey(index)) {
+			// 雕像与阴影由独立物件层绘制，地毯不再夹带雕像，破坏任一方互不影响。
+			switch (tileOverrides.get(index)) {
+				case CITY_STATUE: return 48;
+				case CITY_STATUE_TR: return 48 + 3;
+				case CITY_STATUE_BR: return 48 + 6;
+				case CITY_STATUE_TL: return 48 + 9;
+				case CITY_STATUE_BL: return 48 + 12;
+				default: return tileOverrides.get(index);
+			}
+		}
+		int visual = 16 * ((Dungeon.depth - 1) / 5);
+		if (ty == 0) visual += 1;
+		if (tx == tileW - 1) visual += 2;
+		if (ty == tileH - 1) visual += 4;
+		if (tx == 0) visual += 8;
+		return visual;
 	}
 
-	// 缝只画在地毯矩形内部的洞上，矩形外贴着地毯的地板不画
+	// 缝只画在原本铺有地毯的范围内，跳过生成期预留的下楼口等空位。
 	private static boolean insideCarpet(int cell) {
 		Level level = Dungeon.level;
 		int w = level.width();
@@ -207,7 +264,10 @@ public class Carpet extends CustomTilemap {
 		for (CustomTilemap tile : level.customTiles) {
 			if (!(tile instanceof Carpet)) continue;
 			if (x >= tile.tileX && y >= tile.tileY
-					&& x < tile.tileX + tile.tileW && y < tile.tileY + tile.tileH) return true;
+					&& x < tile.tileX + tile.tileW && y < tile.tileY + tile.tileH) {
+				int index = x - tile.tileX + (y - tile.tileY) * tile.tileW;
+				if (((Carpet) tile).tileOverrides.get(index, 0) != SKIP) return true;
+			}
 		}
 		return false;
 	}

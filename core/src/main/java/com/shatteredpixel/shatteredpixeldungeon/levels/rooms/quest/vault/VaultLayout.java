@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.VaultTokenDoor;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.ImpStatue;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
@@ -173,6 +174,16 @@ public final class VaultLayout {
 		level.customTiles.add(gold);
 		level.customTiles.add(new VaultTiles.PlainFloor());
 		level.customTiles.add(new VaultTiles.EntranceCarpet());
+		// 按原地图的 c 标记保留特殊毯圈，不扩展成方框，也不在中央平台下铺毯。
+		for (int y = ENTRANCE_Y - 2; y <= ENTRANCE_Y + 2; y++) {
+			for (int x = ENTRANCE_X - 2; x <= ENTRANCE_X + 2; x++) {
+				if (Math.max(Math.abs(x - ENTRANCE_X), Math.abs(y - ENTRANCE_Y)) != 2
+						|| tile(x, y) != 'c') continue;
+				CellContent carpet = new CellContent(CellContent.CARPET, level.region());
+				carpet.properties(0, CellContent.BREAKABLE | CellContent.BURNABLE);
+				level.cellAt(x + y * WIDTH).addContent(carpet);
+			}
+		}
 		int[][] circles = {{20, 19}, {11, 25}, {29, 25}, {8, 35}, {32, 35}};
 		for (int[] circle : circles) {
 			VaultFinalRoom.MarkerTiles marker = new VaultFinalRoom.MarkerTiles();

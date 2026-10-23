@@ -145,8 +145,8 @@ public class CityBossLevel extends Level {
 		Painter.fill(this, entry.left+3, entry.top+3, 1, 5, CellPlacement.content(Terrain.BOOKSHELF));
 		Painter.fill(this, entry.right-4, entry.top+3, 1, 5, CellPlacement.content(Terrain.BOOKSHELF));
 
-		Painter.set(this, entry.left+5, entry.top+1, CellPlacement.content(Terrain.REGION_DECO));
-		Painter.set(this, entry.left+7, entry.top+1, CellPlacement.content(Terrain.REGION_DECO));
+		Painter.set(this, entry.left+5, entry.top+1, CellPlacement.reset(Terrain.EMPTY, Terrain.REGION_DECO));
+		Painter.set(this, entry.left+7, entry.top+1, CellPlacement.reset(Terrain.EMPTY, Terrain.REGION_DECO));
 
 		Point c = entry.center();
 
@@ -603,13 +603,9 @@ public class CityBossLevel extends Level {
 						data[++i] = 15*8 + 2;
 						data[++i] = 15*8 + 3;
 
-					//otherwise entrance carpets
-					} else if ((map[i-tileW] != Terrain.CUSTOM_DECO_EMPTY && map[i-tileW] != Terrain.EMPTY_SP) || map[i-2*tileW] == Terrain.CUSTOM_DECO){
-						data[i] = 13*8 + 0;
-					} else if (map[i+tileW] != Terrain.CUSTOM_DECO_EMPTY && map[i+tileW] != Terrain.EMPTY_SP){
-						data[i] = 15*8 + 0;
+					// 两条直毯由 Carpet 图层绘制，固定底图不再保留一份地毯。
 					} else {
-						data[i] = 14*8 + 0;
+						data[i] = -1;
 					}
 
 				//otherwise no tile here
