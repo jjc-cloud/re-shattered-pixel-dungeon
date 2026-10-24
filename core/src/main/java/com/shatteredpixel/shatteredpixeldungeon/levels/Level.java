@@ -31,6 +31,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.SacrificialFire;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.SewerSpring;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Web;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.WellWater;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Awareness;
@@ -181,6 +182,7 @@ public abstract class Level implements Bundlable {
 		terrainVisuals[cell] = cells[cell].terrain();
 		if (!flagsReady) return;
 		updateCellFlags(cell);
+		if (sewerSpring != null) sewerSpring.cellChanged(this, cell);
 		if (caveCollapse != null) caveCollapse.terrainChanged(cell, previous, terrainVisuals[cell]);
 		if (cell == hiddenEntranceCell) {
 			if (hiddenEntranceGrass
@@ -215,6 +217,8 @@ public abstract class Level implements Bundlable {
 
 	public TerrainInteractions terrainInteractions;
 	public CaveCollapse caveCollapse;
+	// 下水道出水口；只在 region 0 的楼层存在，其余楼层保持 null
+	public SewerSpring sewerSpring;
 
 	/** 只在生成器或测试场景显式配置交互时创建。运行时查询应直接检查可空字段。 */
 	public TerrainInteractions interactions() {
@@ -405,6 +409,8 @@ public abstract class Level implements Bundlable {
 					cellAt(i).place(Terrain.SEWER_BARREL_MARKED_ALT);
 				}
 			}
+			// 水已经铺完，把每处出水口相连的水体登记下来
+			SewerSpring.create(this);
 		}
 		
 		for (CustomTilemap tile : customTiles) if (tile instanceof Carpet) ((Carpet)tile).registerContents(this);
@@ -428,6 +434,7 @@ public abstract class Level implements Bundlable {
 		terrainInteractions = null;
 		flagsReady = false;
 		caveCollapse = null;
+		sewerSpring = null;
 		
 		width = w;
 		height = h;
@@ -602,6 +609,7 @@ public abstract class Level implements Bundlable {
 
 		buildFlagMaps();
 		cleanWalls();
+		sewerSpring = (SewerSpring) blobs.get(SewerSpring.class);
 		if (bundle.contains("cave_collapse")) {
 			caveCollapse = new CaveCollapse(this);
 			caveCollapse.restoreFromBundle(bundle.getBundle("cave_collapse"));
