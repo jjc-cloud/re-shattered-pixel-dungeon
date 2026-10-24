@@ -157,7 +157,7 @@ public class WildMagic extends ArmorAbility {
 										WondrousResin.forcePositive = true;
 										CursedWand.cursedZap(cur,
 												hero,
-												new Ballistica(hero.pos, cell, Ballistica.MAGIC_BOLT),
+												new Ballistica(hero.pos, cell, Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER),
 												new Callback() {
 													@Override
 													public void call() {
@@ -175,7 +175,7 @@ public class WildMagic extends ArmorAbility {
 								WondrousResin.forcePositive = true;
 								CursedWand.cursedZap(cur,
 										hero,
-										new Ballistica(hero.pos, cell, Ballistica.MAGIC_BOLT),
+										new Ballistica(hero.pos, cell, Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER),
 										new Callback() {
 											@Override
 											public void call() {
@@ -193,7 +193,7 @@ public class WildMagic extends ArmorAbility {
 			} else {
 				CursedWand.cursedZap(cur,
 						hero,
-						new Ballistica(hero.pos, cell, Ballistica.MAGIC_BOLT),
+						new Ballistica(hero.pos, cell, Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER),
 						new Callback() {
 							@Override
 							public void call() {

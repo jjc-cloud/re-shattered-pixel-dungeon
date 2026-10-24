@@ -14,6 +14,7 @@ public class CellFeatures extends Group {
 			Terrain.REGION_DECO, Terrain.REGION_DECO_ALT, Terrain.MINE_CRYSTAL, Terrain.MINE_BOULDER};
 	private final ArrayList<DungeonTilemap> layers = new ArrayList<>();
 	private final TerrainFeaturesTilemap plants;
+	public final Group overhead = new Group();
 
 	public CellFeatures() {
 		// 地毯的四条破损边和四个角各一层，先铺在地面内容之下。
@@ -31,6 +32,12 @@ public class CellFeatures extends Group {
 			add(layer);
 		}
 		plants = (TerrainFeaturesTilemap) layers.get(layers.size() - 1);
+		// 架构上下两部分共用现有贴图与地图刷新，绘制组沿用高草前景的层级。
+		for (int type : new int[]{TerrainFeaturesTilemap.OVERHEAD_BODY, TerrainFeaturesTilemap.OVERHEAD_TOP}) {
+			TerrainFeaturesTilemap layer = new TerrainFeaturesTilemap(null, null, type);
+			layers.add(layer);
+			overhead.add(layer);
+		}
 	}
 
 	public void map(int[] map, int width) { for (DungeonTilemap layer : layers) layer.map(map, width); }

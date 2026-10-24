@@ -55,7 +55,7 @@ public class WandOfTransfusion extends DamageWand {
 	{
 		image = ItemSpriteSheet.WAND_TRANSFUSION;
 
-		collisionProperties = Ballistica.PROJECTILE;
+		collisionProperties = Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER;
 	}
 
 	@Override

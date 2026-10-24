@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.scenes;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.badlogic.gdx.utils.IntArray;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
@@ -348,6 +349,7 @@ public class GameScene extends PixelScene {
 
 		raisedTerrain = new RaisedTerrainTilemap();
 		add( raisedTerrain );
+		add(terrainFeatures.overhead);
 
 		walls = new DungeonWallsTilemap();
 		add(walls);
@@ -1406,7 +1408,7 @@ public class GameScene extends PixelScene {
 
 			//clear hidden doors, it's floor 1 so there are only the entrance ones
 			for (int i = 0; i < Dungeon.level.length(); i++){
-				if (Dungeon.level.hasTerrain(i, Terrain.SECRET_DOOR)){
+				if (Door.is(Dungeon.level, i, Door.State.SECRET)){
 					Dungeon.level.discover(i);
 					discoverTile(i, Terrain.SECRET_DOOR);
 				}

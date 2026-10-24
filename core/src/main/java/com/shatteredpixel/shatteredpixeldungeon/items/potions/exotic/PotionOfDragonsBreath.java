@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
@@ -166,8 +167,8 @@ public class PotionOfDragonsBreath extends ExoticPotion {
 											}
 
 											//knock doors open
-											if (Dungeon.level.hasTerrain(cell, Terrain.DOOR)){
-												Level.set(cell, Terrain.OPEN_DOOR);
+											if (Door.is(Dungeon.level, cell, Door.State.CLOSED)){
+												Door.open(Dungeon.level, cell, Door.Opening.IMPACT);
 												GameScene.updateMap(cell);
 											}
 

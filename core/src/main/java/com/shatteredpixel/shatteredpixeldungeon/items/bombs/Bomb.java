@@ -184,7 +184,8 @@ public class Bomb extends Item {
 					: Dungeon.level.terrainInteractions.blastSurfaces(affectedCells, PathFinder.distance, explosionRange());
 			ArrayList<Integer> terrainCells = new ArrayList<>(affectedCells);
 			if (surfaces != null) for (int j = 0; j < surfaces.size; j++) terrainCells.add(surfaces.get(j));
-			terrainAffected |= Dungeon.level.interactions().affectCells(terrainCells, CellContent.BREAKABLE | CellContent.BURNABLE);
+			terrainAffected |= Dungeon.level.interactions().affectCells(terrainCells,
+					CellContent.BREAKABLE | CellContent.BURNABLE | CellContent.EXPLOSION_BREAKABLE);
 
 			for (int i : affectedCells){
 				if (Dungeon.level.heroFOV[i]) {

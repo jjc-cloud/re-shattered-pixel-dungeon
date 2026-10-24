@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
@@ -97,8 +98,8 @@ public class WandOfFireblast extends DamageWand {
 			}
 
 			//knock doors open
-			if (Dungeon.level.hasTerrain(cell, Terrain.DOOR)){
-				Level.set(cell, Terrain.OPEN_DOOR);
+			if (Door.is(Dungeon.level, cell, Door.State.CLOSED)){
+				Door.open(Dungeon.level, cell, Door.Opening.IMPACT);
 				GameScene.updateMap(cell);
 			}
 

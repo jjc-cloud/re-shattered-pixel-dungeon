@@ -62,6 +62,7 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 public abstract class YogFist extends Mob {
+	protected int rangedCollisionProperties = Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER;
 
 	{
 		HP = HT = 300;
@@ -103,7 +104,7 @@ public abstract class YogFist extends Mob {
 	@Override
 	protected boolean canAttack(Char enemy) {
 		if (rangedCooldown <= 0){
-			return new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos == enemy.pos;
+			return new Ballistica( pos, enemy.pos, rangedCollisionProperties).collisionPos == enemy.pos;
 		} else {
 			return super.canAttack(enemy);
 		}
@@ -485,6 +486,7 @@ public abstract class YogFist extends Mob {
 
 		{
 			spriteClass = FistSprite.Bright.class;
+			rangedCollisionProperties = Ballistica.MAGIC_BOLT | Ballistica.IGNORE_PROJECTILE_BARRIERS;
 
 			properties.add(Property.ELECTRIC);
 

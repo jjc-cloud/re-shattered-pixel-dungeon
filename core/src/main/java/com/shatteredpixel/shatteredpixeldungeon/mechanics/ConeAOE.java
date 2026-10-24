@@ -46,6 +46,8 @@ public class ConeAOE {
 	public ConeAOE( Ballistica core, float maxDist, float degrees, int ballisticaParams ){
 
 		coreRay = core;
+		// 范围传播不使用实体投射物遮挡，铁门等带缝隙的屏障允许其通过。
+		ballisticaParams = (ballisticaParams & ~Ballistica.STOP_PROJECTILE_COVER) | Ballistica.IGNORE_PROJECTILE_BARRIERS;
 
 		//we want to use true coordinates for our trig functions, not game cells
 		// so get the center of from and to as points

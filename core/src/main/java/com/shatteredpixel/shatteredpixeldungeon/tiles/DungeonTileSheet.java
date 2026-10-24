@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.tiles;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
 import com.shatteredpixel.shatteredpixeldungeon.levels.MiningLevel;
@@ -315,15 +316,9 @@ public class DungeonTileSheet {
 		else return -1;
 	}
 
-	private static int[] doorTiles = new int[]{
-			Terrain.DOOR, Terrain.LOCKED_DOOR, Terrain.HERO_LKD_DR, Terrain.CRYSTAL_DOOR, Terrain.OPEN_DOOR
-	};
-
-	public static boolean doorTile(int tile){
-		for (int i : doorTiles)
-			if (tile == i)
-				return true;
-		return false;
+	public static boolean doorTile(int tile) {
+		Door.State door = Door.state(tile);
+		return door != null && door != Door.State.SECRET;
 	}
 
 	private static final int RAISED_OTHER           =                       xy(9, 8);  //24 slots

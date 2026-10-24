@@ -337,12 +337,15 @@ public abstract class Char extends Actor {
 	
 	protected boolean moveSprite( int from, int to ) {
 		
-		//秘药影像跟随原精灵，感知范围内也必须播放移动补间与行走动画。
+		//听觉影像跟随原精灵，感知范围内也必须播放移动补间与行走动画。
 		boolean heardMovement = this instanceof Mob && Dungeon.hero != null
-				&& Dungeon.hero.buff(AcuteHearing.class) != null
 				&& Dungeon.hero.buff(HearingLoss.class) == null
-				&& Math.min(Dungeon.level.distance(Dungeon.hero.pos, from),
-						Dungeon.level.distance(Dungeon.hero.pos, to)) <= AcuteHearing.DISTANCE;
+				&& ((Dungeon.hero.buff(AcuteHearing.class) != null
+					&& Math.min(Dungeon.level.distance(Dungeon.hero.pos, from),
+							Dungeon.level.distance(Dungeon.hero.pos, to)) <= AcuteHearing.DISTANCE)
+				|| (Dungeon.hero.hasTalent(Talent.KEEN_HEARING) && ((Mob) this).state != ((Mob) this).SLEEPING
+					&& Math.min(Dungeon.level.distance(Dungeon.hero.pos, from),
+							Dungeon.level.distance(Dungeon.hero.pos, to)) <= 2 + Dungeon.hero.pointsInTalent(Talent.KEEN_HEARING)));
 		if (sprite.parent != null && (heardMovement
 				|| sprite.isVisible() && (Dungeon.level.heroFOV[from] || Dungeon.level.heroFOV[to]))) {
 			sprite.move( from, to );
@@ -419,6 +422,9 @@ public abstract class Char extends Actor {
 		boolean visibleFight = Dungeon.level.heroFOV[pos] || Dungeon.level.heroFOV[enemy.pos];
 
 		if (enemy.isInvulnerable(getClass())) {
+			if (enemy instanceof Hero) {
+				((Hero) enemy).interrupt();
+			}
 
 			if (visibleFight) {
 				enemy.sprite.showStatus( CharSprite.POSITIVE, Messages.get(this, "invulnerable") );
@@ -662,7 +668,9 @@ public abstract class Char extends Actor {
 		float acuStat = attacker.attackSkill( defender );
 		float defStat = defender.defenseSkill( attacker );
 
-		if (defender instanceof Hero && ((Hero) defender).damageInterrupt){
+		//攻击尝试本身就应中断动作，不能受“继续移动”对持续伤害的豁免影响。
+		//放在命中结果之前，普通闪避、必定闪避和远程法术未命中均会生效。
+		if (defender instanceof Hero){
 			((Hero) defender).interrupt();
 		}
 
@@ -1463,8 +1471,8 @@ public abstract class Char extends Actor {
 			}
 		}
 
-		if (Dungeon.level.hasTerrain(pos, Terrain.OPEN_DOOR)) {
-			Door.leave( pos );
+		if (Door.is(Dungeon.level, pos, Door.State.OPEN)) {
+			Door.leave(pos, this);
 		}
 
 		if (travelling){

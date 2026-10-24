@@ -93,7 +93,8 @@ public class ForceCube extends MissileWeapon {
 			int target = cell + offset;
 			if (Dungeon.level.insideMap(target)) affectedCells.add(target);
 		}
-		terrainAffected = Dungeon.level.interactions().affectCells(affectedCells, CellContent.BREAKABLE);
+		terrainAffected = Dungeon.level.interactions().affectCells(affectedCells,
+				CellContent.BREAKABLE | CellContent.SHOCKWAVE_BREAKABLE);
 		if (terrainAffected) Dungeon.observe();
 		Dungeon.level.pressCell(cell);
 		

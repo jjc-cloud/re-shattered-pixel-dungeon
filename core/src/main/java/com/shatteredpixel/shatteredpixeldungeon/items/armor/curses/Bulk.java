@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.armor.curses;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle;
@@ -41,7 +42,7 @@ public class Bulk extends Armor.Glyph {
 	//more of a reduction really
 	public static float speedBoost( Char owner, int level ){
 		if (level == -1 ||
-				(!Dungeon.level.hasTerrain(owner.pos, Terrain.DOOR) && !Dungeon.level.hasTerrain(owner.pos, Terrain.OPEN_DOOR) )) {
+				!Door.unlocked(Dungeon.level, owner.pos)) {
 			return 1;
 		} else {
 			if (owner.sprite != null){

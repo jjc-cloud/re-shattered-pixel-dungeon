@@ -85,7 +85,7 @@ public class HeroAction {
 		public InteractTerrain(int cell) {
 			dst = cell;
 			level = com.shatteredpixel.shatteredpixeldungeon.Dungeon.level;
-			content = level.cellAt(cell).firstWith(com.shatteredpixel.shatteredpixeldungeon.levels.CellContent.BREAKABLE);
+			content = level.cellAt(cell).firstWith(com.shatteredpixel.shatteredpixeldungeon.levels.CellContent.CLICK_BREAKABLE);
 			terrain = content == null ? level.terrainAt(cell) : content.type();
 		}
 	}

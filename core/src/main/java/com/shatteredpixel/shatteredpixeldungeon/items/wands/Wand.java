@@ -104,7 +104,7 @@ public abstract class Wand extends Item implements ChargeItem {
 	private float usesLeftToID = USES_TO_ID;
 	private float availableUsesToID = USES_TO_ID/2f;
 
-	protected int collisionProperties = Ballistica.MAGIC_BOLT;
+	protected int collisionProperties = Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER;
 	
 	{
 		defaultAction = AC_ZAP;
@@ -745,8 +745,8 @@ public abstract class Wand extends Item implements ChargeItem {
 	}
 
 	public int collisionProperties(int target){
-		if (cursed)     return Ballistica.MAGIC_BOLT;
-		else            return collisionProperties;
+		if (cursed) return Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER;
+		return collisionProperties;
 	}
 
 	public static class PlaceHolder extends Wand {
@@ -877,7 +877,7 @@ public abstract class Wand extends Item implements ChargeItem {
 						}
 						CursedWand.cursedZap(curWand,
 								curUser,
-								new Ballistica(curUser.pos, target, Ballistica.MAGIC_BOLT),
+								new Ballistica(curUser.pos, target, Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER),
 								new Callback() {
 									@Override
 									public void call() {
@@ -892,7 +892,7 @@ public abstract class Wand extends Item implements ChargeItem {
 									WondrousResin.forcePositive = true;
 									CursedWand.cursedZap(curWand,
 											curUser,
-											new Ballistica(curUser.pos, target, Ballistica.MAGIC_BOLT), new Callback() {
+											new Ballistica(curUser.pos, target, Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER), new Callback() {
 												@Override
 												public void call() {
 													WondrousResin.forcePositive = false;

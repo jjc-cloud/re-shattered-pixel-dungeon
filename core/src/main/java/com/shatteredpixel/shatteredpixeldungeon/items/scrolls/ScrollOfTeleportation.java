@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.scrolls;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -154,7 +155,7 @@ public class ScrollOfTeleportation extends Scroll {
 				boolean locked = false;
 				for (Point p : r.getPoints()){
 					terr = level.terrainAt(level.pointToCell(p));
-					if (terr == Terrain.LOCKED_DOOR || terr == Terrain.CRYSTAL_DOOR || terr == Terrain.BARRICADE){
+					if (Door.is(level, level.pointToCell(p), Door.State.LOCKED) || Door.is(level, level.pointToCell(p), Door.State.CRYSTAL) || terr == Terrain.BARRICADE){
 						locked = true;
 						break;
 					}
@@ -199,7 +200,7 @@ public class ScrollOfTeleportation extends Scroll {
 			appear( hero, pos );
 			Dungeon.level.occupyCell( hero );
 			Buff.detach(hero, Roots.class);
-			if (secretDoor && level.hasTerrain(doorPos, Terrain.SECRET_DOOR)){
+			if (secretDoor && Door.is(level, doorPos, Door.State.SECRET)){
 				Sample.INSTANCE.play( Assets.Sounds.SECRET );
 				int oldValue = Dungeon.level.terrainAt(doorPos);
 				GameScene.discoverTile( doorPos, oldValue );

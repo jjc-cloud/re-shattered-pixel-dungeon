@@ -52,7 +52,7 @@ public class CellBlockExitRoom extends CellBlockRoom {
 			if (level.terrainAt(level.pointToCell(p)) == Terrain.EMPTY_SP){
 				boolean valid = true;
 				for (int i : PathFinder.NEIGHBOURS8){
-					if (level.hasTerrain(level.pointToCell(p)+i, Terrain.DOOR)){
+					if (com.shatteredpixel.shatteredpixeldungeon.levels.features.Door.unlocked(level, level.pointToCell(p)+i)){
 						valid = false;
 					}
 				}

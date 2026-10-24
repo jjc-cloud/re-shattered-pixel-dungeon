@@ -21,10 +21,12 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.VaultTokenDoor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -76,6 +78,13 @@ public class WndInfoCell extends Window {
 
         ArrayList<Object> objects = GameScene.getObjectsAtCell(cell);
         ArrayList<Object> contents = new ArrayList<>(objects);
+        boolean vaultGatePresent = false;
+        for (Object object : objects) {
+            if (object instanceof VaultTokenDoor) {
+                vaultGatePresent = true;
+                break;
+            }
+        }
         StringBuilder desc = new StringBuilder();
         int top = state.terrain();
         boolean coveredGround = state.buried() || DungeonTileSheet.wallStitcheable(top);
@@ -90,6 +99,8 @@ public class WndInfoCell extends Window {
         for (CellContent content : state.contents()) {
             if (!state.exposed(content) || content.type() == CellContent.HIDDEN_ENTRANCE
                     || CellContent.family(content.type()) == Terrain.TRAP) continue;
+            // 魔法大门由实体提供检视信息，隐形阻挡内容不再重复显示为未知地板。
+            if (vaultGatePresent && content.type() == Terrain.CUSTOM_DECO) continue;
             contents.add(content);
             if (content.type() == CellContent.CARPET) {
                 if (!carpetDescribed) {
@@ -99,8 +110,8 @@ public class WndInfoCell extends Window {
                 }
                 continue;
             }
-            String name = Dungeon.level.tileName(content.type());
-            String detail = Dungeon.level.tileDesc(content.type());
+            String name = content instanceof Door ? ((Door) content).name() : Dungeon.level.tileName(content.type());
+            String detail = content instanceof Door ? ((Door) content).desc() : Dungeon.level.tileDesc(content.type());
             if (!contentNames.contains(name)) {
                 contentNames.add(name);
             }
@@ -220,8 +231,8 @@ public class WndInfoCell extends Window {
                             name = intact ? Messages.get(Carpet.class, "name") : Messages.get(WndInfoCell.this, "carpet");
                             detail = intact ? Messages.get(Carpet.class, "desc") : Messages.get(WndInfoCell.this, "carpet_desc");
                         } else {
-                            name = Dungeon.level.tileName(type);
-                            detail = Dungeon.level.tileDesc(type);
+                            name = content instanceof Door ? ((Door) content).name() : Dungeon.level.tileName(type);
+                            detail = content instanceof Door ? ((Door) content).desc() : Dungeon.level.tileDesc(type);
                             if (type == Terrain.GRASS && (detail == null || detail.isEmpty()))
                                 detail = Messages.get(Level.Feeling.class, "grass_desc");
                             if (detail == null || detail.isEmpty()) detail = Messages.get(WndInfoCell.this, "nothing");

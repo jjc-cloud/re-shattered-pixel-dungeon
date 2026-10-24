@@ -770,12 +770,15 @@ public abstract class Mob extends Char {
 	AlphaTweener shadowFade;
 	private Image hearingShadow;
 
-	/** 沿用宝库的感知显示层级，持续显示生物影像并揭示脚下地形。 */
+	/** 秘药感知所有生物，天赋持续感知范围内未睡眠的生物。 */
 	public void updateHearingShadow() {
 		boolean deaf = Dungeon.hero != null && Dungeon.hero.buff(HearingLoss.class) != null;
 		boolean heard = !deaf && Dungeon.hero != null && Dungeon.level != null
-				&& Dungeon.hero.buff(AcuteHearing.class) != null && isAlive()
-				&& Dungeon.level.distance(Dungeon.hero.pos, pos) <= AcuteHearing.DISTANCE
+				&& isAlive()
+				&& ((Dungeon.hero.buff(AcuteHearing.class) != null
+					&& Dungeon.level.distance(Dungeon.hero.pos, pos) <= AcuteHearing.DISTANCE)
+				|| (Dungeon.hero.hasTalent(Talent.KEEN_HEARING) && state != SLEEPING
+					&& Dungeon.level.distance(Dungeon.hero.pos, pos) <= 2 + Dungeon.hero.pointsInTalent(Talent.KEEN_HEARING)))
 				&& sprite != null && sprite.parent != null;
 		if (heard || deaf) {
 			if (shadowFade != null) { shadowFade.killAndErase(); shadowFade = null; }
@@ -827,29 +830,25 @@ public abstract class Mob extends Char {
 				&& !sprite.visible){
 			if (Dungeon.hero.buff(HearingLoss.class) != null
 					|| (Dungeon.hero.buff(AcuteHearing.class) != null
-					&& Dungeon.level.distance(pos, Dungeon.hero.pos) <= AcuteHearing.DISTANCE)) return;
+					&& Dungeon.level.distance(pos, Dungeon.hero.pos) <= AcuteHearing.DISTANCE)
+					|| (Dungeon.hero.hasTalent(Talent.KEEN_HEARING) && state != SLEEPING
+					&& Dungeon.level.distance(pos, Dungeon.hero.pos) <= 2 + Dungeon.hero.pointsInTalent(Talent.KEEN_HEARING))) return;
 			boolean vaultMovement = usingStealthGamePlay
 					&& Dungeon.level.distance(pos, Dungeon.hero.pos) <= 6;
 			//沿用水面波纹的八格范围和已知地形条件，离开水格才触发感知。
 			boolean waterMovement = !flying && Dungeon.level.water[previousPos]
 					&& sprite.canShowWaterRipple(previousPos);
-			//敏锐听觉感知范围内的所有单位移动，不受地形、飞行或阵营限制。
-			boolean heardMovement = Dungeon.hero.hasTalent(Talent.KEEN_HEARING)
-					&& Math.min(Dungeon.level.distance(previousPos, Dungeon.hero.pos),
-							Dungeon.level.distance(pos, Dungeon.hero.pos))
-					<= 2 + Dungeon.hero.pointsInTalent(Talent.KEEN_HEARING);
-			if (!vaultMovement && !waterMovement && !heardMovement){
+			if (!vaultMovement && !waterMovement){
 				return;
 			}
+			if (alignment == Alignment.ENEMY) {
+				Dungeon.hero.interrupt();
+			}
 
-			//敏锐听觉揭示单位脚下地形，宝库保留原有的六格路径限制。
-			if ((vaultMovement || heardMovement) && !Dungeon.level.visited[pos] && !Dungeon.level.mapped[pos]){
-				boolean revealTerrain = heardMovement;
-				if (!revealTerrain) {
-					PathFinder.buildDistanceMap(Dungeon.hero.pos, Dungeon.level.passable, 6);
-					revealTerrain = PathFinder.distance[pos] != Integer.MAX_VALUE;
-				}
-				if (revealTerrain) {
+			//宝库保留原有的六格路径限制，天赋与秘药由持续听觉影像揭示地形。
+			if (vaultMovement && !Dungeon.level.visited[pos] && !Dungeon.level.mapped[pos]){
+				PathFinder.buildDistanceMap(Dungeon.hero.pos, Dungeon.level.passable, 6);
+				if (PathFinder.distance[pos] != Integer.MAX_VALUE) {
 					Dungeon.level.visited[pos] = true;
 					GameScene.updateFog(pos, 1);
 				}

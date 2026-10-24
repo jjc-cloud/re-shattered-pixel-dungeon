@@ -14,6 +14,10 @@ import java.util.List;
 public final class TerrainInteractions {
 
     public enum Result { UNCHANGED, CHANGED }
+    /** 会移除内容的属性位；来源只传自己那一位，点击不再借用 BREAKABLE。 */
+    private static final int DESTRUCTIVE = CellContent.BREAKABLE | CellContent.BURNABLE
+            | CellContent.CLICK_BREAKABLE | CellContent.EXPLOSION_BREAKABLE
+            | CellContent.DISINTEGRATION_BREAKABLE | CellContent.SHOCKWAVE_BREAKABLE;
     private final Level level;
     private final ArrayDeque<TerrainPropagation> propagationPool = new ArrayDeque<>();
     public TerrainInteractions(Level level) { this.level = level; }
@@ -49,7 +53,7 @@ public final class TerrainInteractions {
     void releasePropagation(TerrainPropagation event) { propagationPool.addFirst(event); }
 
     public Result interact(int cell, int property) {
-        if (!level.insideMap(cell) || (property & (CellContent.BREAKABLE | CellContent.BURNABLE)) == 0) return Result.UNCHANGED;
+        if (!level.insideMap(cell) || (property & DESTRUCTIVE) == 0) return Result.UNCHANGED;
         return interact(cell, property, level.cellAt(cell).targets(property));
     }
 
@@ -69,7 +73,7 @@ public final class TerrainInteractions {
     }
 
     private Result interact(int cell, int property, List<CellContent> targets) {
-        if ((property & (CellContent.BREAKABLE | CellContent.BURNABLE)) == 0) return Result.UNCHANGED;
+        if ((property & DESTRUCTIVE) == 0) return Result.UNCHANGED;
         boolean changed = level.cellAt(cell).affect(property,
                 (property & CellContent.BURNABLE) != 0, targets);
         if (!changed) return Result.UNCHANGED;
@@ -92,7 +96,7 @@ public final class TerrainInteractions {
                 int next = cell + offset;
                 if (level.insideMap(next) && level.adjacent(cell, next)
                         && distance[next] == Integer.MAX_VALUE && level.solid[next]
-                        && allows(next, CellContent.BREAKABLE | CellContent.BURNABLE) && seen.add(next)) surfaces.add(next);
+                        && allows(next, CellContent.BREAKABLE | CellContent.BURNABLE | CellContent.EXPLOSION_BREAKABLE) && seen.add(next)) surfaces.add(next);
             }
         }
         return surfaces;

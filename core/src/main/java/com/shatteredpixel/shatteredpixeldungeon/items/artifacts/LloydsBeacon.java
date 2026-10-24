@@ -203,7 +203,7 @@ public class LloydsBeacon extends ChargedArtifact {
 				ScrollOfTeleportation.teleportChar(curUser);
 				curUser.spendAndNext(1f);
 			} else {
-				final Ballistica bolt = new Ballistica( curUser.pos, target, Ballistica.MAGIC_BOLT );
+				final Ballistica bolt = new Ballistica( curUser.pos, target, Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER );
 				final Char ch = Actor.findChar(bolt.collisionPos);
 
 				if (ch == curUser){

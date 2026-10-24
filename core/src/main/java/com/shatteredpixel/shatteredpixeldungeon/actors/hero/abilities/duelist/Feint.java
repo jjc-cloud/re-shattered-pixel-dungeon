@@ -105,8 +105,8 @@ public class Feint extends ArmorAbility {
 		hero.sprite.jump(hero.pos, target, 0, 0.1f, new Callback() {
 			@Override
 			public void call() {
-				if (Dungeon.level.hasTerrain(hero.pos, Terrain.OPEN_DOOR)) {
-					Door.leave( hero.pos );
+				if (Door.is(Dungeon.level, hero.pos, Door.State.OPEN)) {
+					Door.leave(hero.pos, hero);
 				}
 				hero.pos = target;
 				Dungeon.level.occupyCell(hero);

@@ -81,8 +81,8 @@ public class EbonyMimic extends Mimic {
 			CellEmitter.get(pos).burst(Speck.factory(Speck.STAR), 10);
 			Sample.INSTANCE.play(Assets.Sounds.MIMIC, 1, 0.85f);
 		}
-		if (Actor.chars().contains(this) && Dungeon.level.hasTerrain(pos, Terrain.DOOR)){
-			Door.enter( pos );
+		if (Actor.chars().contains(this) && Door.is(Dungeon.level, pos, Door.State.CLOSED)){
+			Door.enter( pos, Door.Opening.CHARACTER );
 		}
 	}
 

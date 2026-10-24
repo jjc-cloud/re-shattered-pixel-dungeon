@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.mechanics;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +45,8 @@ public class Ballistica {
 	public static final int STOP_SOLID = 4;     //ballistica will stop on solid terrain
 	public static final int IGNORE_SOFT_SOLID = 8; //ballistica will ignore soft solid terrain, such as doors and webs
 	public static final int PASS_DISINTEGRABLE = 16; //ballistica will pass through solid terrain that a disintegration ray would destroy
+	public static final int STOP_PROJECTILE_COVER = 32; //实体投射物受架空设施遮挡，范围传播与角色位移不使用此标记
+	public static final int IGNORE_PROJECTILE_BARRIERS = 64; //非弹道攻击可穿过仅拦截投射物的屏障
 
 	public static final int PROJECTILE =  	STOP_TARGET	| STOP_CHARS	| STOP_SOLID;
 
@@ -75,6 +78,9 @@ public class Ballistica {
 	private void build( int from, int to, boolean stopTarget, boolean stopChars, boolean stopTerrain, boolean ignoreSoftSolid ) {
 		int w = Dungeon.level.width();
 		boolean passDisintegrable = (collisionProperties & PASS_DISINTEGRABLE) > 0;
+		boolean passProjectileBarriers = (collisionProperties & IGNORE_PROJECTILE_BARRIERS) != 0;
+		boolean stopProjectileCover = (collisionProperties & STOP_PROJECTILE_COVER) != 0
+				&& !Dungeon.level.cellAt(from).has(CellContent.BLOCKS_PROJECTILES);
 
 		int x0 = from % w;
 		int x1 = to % w;
@@ -115,6 +121,12 @@ public class Ballistica {
 
 		int err = dA / 2;
 		while (Dungeon.level.insideMap(cell)) {
+			boolean passBarrier = passProjectileBarriers && Dungeon.level.cellAt(cell).has(CellContent.PASSES_NON_PROJECTILES);
+			// 从外侧射来的投射物停在架构前，不能命中同格内的角色；内部发射不受架构限制。
+			if (collisionPos == null && cell != sourcePos && stopProjectileCover
+					&& Dungeon.level.cellAt(cell).has(CellContent.BLOCKS_PROJECTILES)) {
+				collide(path.get(path.size() - 1));
+			}
 
 			//if we're in solid terrain, and there's no char there, collide with the previous cell.
 			// we don't use solid here because we don't want to stop short of closed doors.
@@ -123,6 +135,7 @@ public class Ballistica {
 					&& cell != sourcePos
 					&& !Dungeon.level.passable[cell]
 					&& !Dungeon.level.avoid[cell]
+					&& !passBarrier
 					&& !(passDisintegrable && Dungeon.level.passthroughDisintegrationRay(cell))
 					&& Actor.findChar(cell) == null) {
 				collide(path.get(path.size() - 1));
@@ -131,7 +144,7 @@ public class Ballistica {
 			path.add(cell);
 
 			if (collisionPos == null && stopTerrain && cell != sourcePos && Dungeon.level.solid[cell]) {
-				if (ignoreSoftSolid && (Dungeon.level.passable[cell] || Dungeon.level.avoid[cell])) {
+				if (passBarrier || (ignoreSoftSolid && (Dungeon.level.passable[cell] || Dungeon.level.avoid[cell]))) {
 					//do nothing
 				} else if (passDisintegrable && Dungeon.level.passthroughDisintegrationRay(cell)) {
 					//do nothing

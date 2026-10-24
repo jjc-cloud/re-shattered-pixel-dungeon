@@ -28,7 +28,19 @@ public class CellContent implements Bundlable {
 	public static final int CARPET = 256;
 	public static final int HIDDEN_ENTRANCE = 257;
 
-	private int type;
+	// 作用来源按位区分：点击、爆炸、解离、冲击波各自只查自己那一位。
+	// BREAKABLE 继续表示投射物/法杖等通用物理破坏。
+	public static final int CLICK_BREAKABLE = 1024;
+	public static final int EXPLOSION_BREAKABLE = 2048;
+	public static final int DISINTEGRATION_BREAKABLE = 4096;
+	public static final int SHOCKWAVE_BREAKABLE = 8192;
+	// 被破坏时留下灰烬，不等同于可燃（地毯不可烧但仍会留灰烬）。
+	public static final int LEAVES_EMBERS = 16384;
+	public static final int OVERHEAD = 32768;
+	public static final int BLOCKS_PROJECTILES = 65536;
+	public static final int PASSES_NON_PROJECTILES = 131072;
+
+	protected volatile int type;
 	private volatile int properties;
 	private int requiredSupport = SUPPORTS_COVER;
 
@@ -36,9 +48,12 @@ public class CellContent implements Bundlable {
 
 	public CellContent(int type, int region) {
 		this.type = type;
-		if (type == HIDDEN_ENTRANCE) { properties = BREAKABLE; return; }
+		if (type == HIDDEN_ENTRANCE) {
+			properties = EXPLOSION_BREAKABLE | SHOCKWAVE_BREAKABLE;
+			return;
+		}
 		if (type == CARPET) {
-			properties = BURNABLE | BREAKABLE | SURFACE_COVER;
+			properties = SURFACE_COVER | EXPLOSION_BREAKABLE | DISINTEGRATION_BREAKABLE | LEAVES_EMBERS;
 			return;
 		}
 		if ((Terrain.flags[type] & Terrain.SOLID) != 0 || family(type) == Terrain.DOOR
@@ -60,32 +75,35 @@ public class CellContent implements Bundlable {
 				break;
 			case Terrain.REGION_DECO: case Terrain.REGION_DECO_ALT:
 			case Terrain.SEWER_BARREL_MARKED: case Terrain.SEWER_BARREL_MARKED_ALT:
-				if (region == 0) properties |= BURNABLE | BREAKABLE;
-				else if (region == 1 || region == 2) properties |= CONDUCTIVE;
-				else if (region == 4) properties |= BREAKABLE;
+				if (region == 0) properties |= BURNABLE | BREAKABLE | CLICK_BREAKABLE;
+				else if (region == 1) properties |= CONDUCTIVE;
+				else if (region == 2) properties |= CONDUCTIVE | OVERHEAD | BLOCKS_PROJECTILES;
+				else if (region == 4) properties |= BREAKABLE | CLICK_BREAKABLE;
 				break;
 		}
+		// 塌方岩壁保留点击挖掘；路障/书架/雕像只响应非点击的破坏来源。
+		if (type == Terrain.COLLAPSE_WALL) properties |= CLICK_BREAKABLE;
 	}
 
 	public int type() { return type; }
 	public int properties() { return properties; }
 	public int requiredSupport() { return requiredSupport; }
-	public boolean has(int property) { return (properties & property) != 0; }
+	public boolean has(int property) { return (properties() & property) != 0; }
 	public void properties(int add, int remove) { properties = (properties | add) & ~remove; }
 
 	public int flags() {
 		int flags = type >= CARPET ? Terrain.PASSABLE : Terrain.flags[type];
+		// 架空设施允许从下方通过，实体弹道遮挡由发射位置另行判定。
+		if (has(OVERHEAD)) flags = (flags | Terrain.PASSABLE) & ~(Terrain.SOLID | Terrain.LOS_BLOCKING);
 		return has(BURNABLE) ? flags | Terrain.FLAMABLE : flags & ~Terrain.FLAMABLE;
 	}
 
 	/** 同一种内容的状态共享一个类别，不影响其他内容。 */
 	public static int family(int type) {
+		if (com.shatteredpixel.shatteredpixeldungeon.levels.features.Door.state(type) != null) return Terrain.DOOR;
 		switch (type) {
 			case Terrain.GRASS: case Terrain.HIGH_GRASS: case Terrain.FURROWED_GRASS:
 				return Terrain.GRASS;
-			case Terrain.DOOR: case Terrain.OPEN_DOOR: case Terrain.LOCKED_DOOR:
-			case Terrain.HERO_LKD_DR: case Terrain.CRYSTAL_DOOR: case Terrain.SECRET_DOOR:
-				return Terrain.DOOR;
 			case Terrain.WALL: case Terrain.WALL_DECO: case Terrain.COLLAPSE_WALL:
 				return Terrain.WALL;
 			case Terrain.TRAP: case Terrain.SECRET_TRAP: case Terrain.INACTIVE_TRAP:
@@ -117,7 +135,8 @@ public class CellContent implements Bundlable {
 				&& level.heroFOV[cell] && Game.scene() instanceof GameScene) {
 			CellEmitter.get(cell).burst(Speck.factory(Speck.ROCK), 2);
 		}
-		if (burned && has(BURNABLE)) level.cellAt(cell).addContent(new CellContent(Terrain.EMBERS, level.region()));
+		if ((burned && has(BURNABLE)) || has(LEAVES_EMBERS))
+			level.cellAt(cell).addContent(new CellContent(Terrain.EMBERS, level.region()));
 		if (family(type) == Terrain.REGION_DECO && level.region() == 0) {
 			if (type == Terrain.REGION_DECO || type == Terrain.SEWER_BARREL_MARKED) {
 				level.cellAt(cell).addContent(new CellContent(Terrain.WATER, level.region()));
@@ -143,5 +162,17 @@ public class CellContent implements Bundlable {
 		type = bundle.getInt("type");
 		properties = bundle.getInt("properties");
 		requiredSupport = bundle.getInt("required_support");
+		//旧存档补齐按来源区分的属性位；新存档写入的已经是新值，重复执行无副作用
+		if (type == CARPET) {
+			properties = SURFACE_COVER | EXPLOSION_BREAKABLE | DISINTEGRATION_BREAKABLE | LEAVES_EMBERS;
+		} else if (type == HIDDEN_ENTRANCE) {
+			properties = EXPLOSION_BREAKABLE | SHOCKWAVE_BREAKABLE;
+		} else if (type == Terrain.COLLAPSE_WALL) {
+			properties |= CLICK_BREAKABLE;
+		} else if ((type == Terrain.REGION_DECO || type == Terrain.REGION_DECO_ALT
+				|| type == Terrain.SEWER_BARREL_MARKED || type == Terrain.SEWER_BARREL_MARKED_ALT)
+				&& has(BREAKABLE)) {
+			properties |= CLICK_BREAKABLE;
+		}
 	}
 }

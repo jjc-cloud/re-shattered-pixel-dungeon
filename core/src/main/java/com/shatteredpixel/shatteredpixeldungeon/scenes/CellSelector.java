@@ -353,6 +353,7 @@ public class CellSelector extends ScrollArea {
 	};
 
 	private GameAction leftStickAction = SPDAction.NONE;
+	private boolean stickInterrupted;
 
 	@Override
 	public void update() {
@@ -360,6 +361,10 @@ public class CellSelector extends ScrollArea {
 
 		GameAction newLeftStick = actionFromStick(ControllerHandler.leftStickPosition.x,
 				ControllerHandler.leftStickPosition.y);
+		//中断后必须先松开摇杆，避免下一帧把同一次持续输入当成新动作。
+		if (newLeftStick == SPDAction.NONE) {
+			stickInterrupted = false;
+		}
 
 		//skip logic here if there's no input, or if input is blocked
 		if ((newLeftStick == leftStickAction
@@ -465,7 +470,7 @@ public class CellSelector extends ScrollArea {
 
 	public void processKeyHold() {
 		//prioritize moving by controller stick over moving via keys
-		if (!directionFromAction(leftStickAction).isZero() && heldDelay < 0) {
+		if (!stickInterrupted && !directionFromAction(leftStickAction).isZero() && heldDelay < 0) {
 			enabled = Dungeon.hero.ready = true;
 			Dungeon.observe();
 			if (moveFromActions(leftStickAction)) {
@@ -483,6 +488,9 @@ public class CellSelector extends ScrollArea {
 	
 	public void resetKeyHold(){
 		heldAction1 = heldAction2 = heldAction3 = SPDAction.NONE;
+		heldDelay = 0f;
+		delayingForRelease = false;
+		stickInterrupted = leftStickAction != SPDAction.NONE;
 	}
 	
 	public void cancel() {

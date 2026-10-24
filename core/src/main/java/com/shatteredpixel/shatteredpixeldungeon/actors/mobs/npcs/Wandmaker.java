@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -315,7 +316,7 @@ public class Wandmaker extends NPC {
 						validPos = false;
 					}
 					for (int i : PathFinder.NEIGHBOURS4){
-						if (level.hasTerrain(npc.pos+i, Terrain.DOOR)){
+						if (Door.is(level, npc.pos+i, Door.State.CLOSED)){
 							validPos = false;
 						}
 					}

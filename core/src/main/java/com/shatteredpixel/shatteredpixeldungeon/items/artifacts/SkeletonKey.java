@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.artifacts;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -145,7 +146,7 @@ public class SkeletonKey extends ChargedArtifact {
 						GLog.w(Messages.get(SkeletonKey.class, "wont_open"));
 						return;
 					}
-					if (Dungeon.level.hasTerrain(target, Terrain.LOCKED_DOOR)){
+					if (Door.is(Dungeon.level, target, Door.State.LOCKED)){
 						if (Dungeon.level.locked || Dungeon.branch != 0){
 							GLog.w(Messages.get(SkeletonKey.class, "wont_open"));
 							return;
@@ -159,7 +160,7 @@ public class SkeletonKey extends ChargedArtifact {
 							@Override
 							public void call() {
 								Buff.affect(curUser, KeyReplacementTracker.class).processIronLockOpened();
-								Level.set(target, Terrain.DOOR);
+								Door.unlock(Dungeon.level, target);
 								GameScene.updateMap(target);
 								spendCharge(1);
 								gainExp(2 + 1);
@@ -171,13 +172,13 @@ public class SkeletonKey extends ChargedArtifact {
 						curUser.busy();
 						return;
 
-					} else if (Dungeon.level.hasTerrain(target, Terrain.HERO_LKD_DR)) {
+					} else if (Door.is(Dungeon.level, target, Door.State.HERO_LOCKED)) {
 
 						Sample.INSTANCE.play(Assets.Sounds.UNLOCK);
 						curUser.sprite.operate(target, new Callback() {
 							@Override
 							public void call() {
-								Level.set(target, Terrain.DOOR);
+								Door.unlock(Dungeon.level, target);
 								GameScene.updateMap(target);
 								//no charge cost, no artifact on-use
 								curUser.spendAndNext(Actor.TICK);
@@ -186,7 +187,7 @@ public class SkeletonKey extends ChargedArtifact {
 						});
 						curUser.busy();
 						return;
-					} else if (Dungeon.level.hasTerrain(target, Terrain.CRYSTAL_DOOR)) {
+					} else if (Door.is(Dungeon.level, target, Door.State.CRYSTAL)) {
 
 						if (!canSpendCharge(curUser, 5)) {
 							GLog.i(Messages.get(SkeletonKey.class, "crystal_charges"));
@@ -197,13 +198,11 @@ public class SkeletonKey extends ChargedArtifact {
 							@Override
 							public void call() {
 								Buff.affect(curUser, KeyReplacementTracker.class).processCrystalLockOpened();
-								Dungeon.level.cellAt(target).removeTerrain(Terrain.CRYSTAL_DOOR);
+								Door.unlock(Dungeon.level, target);
 								GameScene.updateMap(target);
 								spendCharge(5);
 								gainExp(2 + 5);
 								Talent.onArtifactUsed(Dungeon.hero);
-								Sample.INSTANCE.play(Assets.Sounds.TELEPORT);
-								CellEmitter.get( target ).start( Speck.factory( Speck.DISCOVER ), 0.025f, 20 );
 								curUser.spendAndNext(Actor.TICK);
 								curUser.sprite.idle();
 
@@ -213,7 +212,7 @@ public class SkeletonKey extends ChargedArtifact {
 						});
 						curUser.busy();
 						return;
-					} else if (Dungeon.level.hasTerrain(target, Terrain.DOOR) || Dungeon.level.hasTerrain(target, Terrain.OPEN_DOOR)){
+					} else if (Door.unlocked(Dungeon.level, target)){
 
 						if (!canSpendCharge(curUser, 2)) {
 							GLog.i(Messages.get(SkeletonKey.class, "lock_charges"));
@@ -259,7 +258,7 @@ public class SkeletonKey extends ChargedArtifact {
 						curUser.sprite.operate(target, new Callback() {
 							@Override
 							public void call() {
-								Level.set(target, Terrain.HERO_LKD_DR);
+								Door.lock(Dungeon.level, target);
 								GameScene.updateMap(target);
 								spendCharge(2);
 								gainExp(2);
@@ -588,9 +587,9 @@ public class SkeletonKey extends ChargedArtifact {
 			}
 
 			for (int i = 0; i < Dungeon.level.length(); i++){
-				if (Dungeon.level.hasTerrain(i, Terrain.LOCKED_DOOR)){
+				if (Door.is(Dungeon.level, i, Door.State.LOCKED)){
 					ironKeysNeeded[Dungeon.depth]++;
-				} else if (Dungeon.level.hasTerrain(i, Terrain.CRYSTAL_DOOR)){
+				} else if (Door.is(Dungeon.level, i, Door.State.CRYSTAL)){
 					crystalKeysNeeded[Dungeon.depth]++;
 				}
 			}

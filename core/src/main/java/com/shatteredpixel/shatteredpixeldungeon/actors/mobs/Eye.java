@@ -187,7 +187,8 @@ public class Eye extends Mob {
 		Invisibility.dispel(this);
 		for (int pos : beam.subPath(1, beam.dist)) {
 
-			terrainAffected |= Dungeon.level.affectTerrain(pos, (CellContent.BREAKABLE | CellContent.BURNABLE));
+			terrainAffected |= Dungeon.level.affectTerrain(pos, (CellContent.BREAKABLE | CellContent.BURNABLE
+					| CellContent.DISINTEGRATION_BREAKABLE));
 
 			Char ch = Actor.findChar( pos );
 			if (ch == null) {

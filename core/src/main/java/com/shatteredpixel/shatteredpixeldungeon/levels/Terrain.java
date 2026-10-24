@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.levels;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
+
 public class Terrain {
 
 	public static final int CHASM			= 0;
@@ -92,29 +94,23 @@ public class Terrain {
 	
 	public static final int[] flags = new int[256];
 	static {
+		for (Door.State door : Door.State.values()) flags[door.terrain] = door.flags;
 		flags[CHASM]		= AVOID	| PIT;
 		flags[EMPTY]		= PASSABLE;
 		flags[GRASS]		= PASSABLE | FLAMABLE;
 		flags[EMPTY_WELL]	= PASSABLE;
 		flags[WATER]		= PASSABLE | LIQUID;
 		flags[WALL]			= LOS_BLOCKING | SOLID;
-		flags[DOOR]			= PASSABLE | LOS_BLOCKING | FLAMABLE | SOLID;
-		flags[OPEN_DOOR]	= PASSABLE | FLAMABLE;
 		flags[ENTRANCE]		= PASSABLE;
 		flags[ENTRANCE_SP]	= flags[ENTRANCE];
 		flags[EXIT]			= PASSABLE;
 		flags[EMBERS]		= PASSABLE;
-		flags[LOCKED_DOOR]	= LOS_BLOCKING | SOLID;
-		flags[HERO_LKD_DR]  = flags[LOCKED_DOOR];
-		flags[CRYSTAL_DOOR]	= SOLID;
 		flags[PEDESTAL]		= PASSABLE;
 		flags[WALL_DECO]	= flags[WALL];
 		flags[BARRICADE]	= FLAMABLE | SOLID | LOS_BLOCKING;
 		flags[EMPTY_SP]		= flags[EMPTY];
 		flags[HIGH_GRASS]	= PASSABLE | LOS_BLOCKING | FLAMABLE;
 		flags[FURROWED_GRASS]= flags[HIGH_GRASS];
-
-		flags[SECRET_DOOR]  = flags[WALL]  | SECRET;
 		flags[SECRET_TRAP]  = flags[EMPTY] | SECRET;
 		flags[TRAP]         = AVOID;
 		flags[INACTIVE_TRAP]= flags[EMPTY];

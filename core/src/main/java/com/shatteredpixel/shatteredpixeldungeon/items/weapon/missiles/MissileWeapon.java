@@ -213,7 +213,7 @@ abstract public class MissileWeapon extends Weapon {
 				&& Dungeon.level.distance(user.pos, dst) <= Math.round(projecting * Enchantment.genericProcChanceMultiplier(user))){
 			return dst;
 		} else {
-			Ballistica shot = new Ballistica(user.pos, dst, Ballistica.PROJECTILE);
+			Ballistica shot = new Ballistica(user.pos, dst, Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER);
 			int surface = shot.collisionPos == dst && !Dungeon.level.solid[dst] ? shot.collisionPos
 					: TerrainPropagation.impactCell(Dungeon.level, shot, CellContent.BREAKABLE);
 			return surface;

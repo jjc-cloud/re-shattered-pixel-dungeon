@@ -110,7 +110,8 @@ public class SuperNovaTracker extends Buff {
 					//9x bomb dmg when fully inside
 					//6x when along straight edge
 					//3x when outside straight edge
-					Dungeon.level.affectTerrain(i, (CellContent.BREAKABLE | CellContent.BURNABLE));
+					Dungeon.level.affectTerrain(i, (CellContent.BREAKABLE | CellContent.BURNABLE
+							| CellContent.EXPLOSION_BREAKABLE));
 					if (Actor.findChar(i) == Dungeon.hero){
 						GameScene.flash(0x80FFFFFF);
 					}

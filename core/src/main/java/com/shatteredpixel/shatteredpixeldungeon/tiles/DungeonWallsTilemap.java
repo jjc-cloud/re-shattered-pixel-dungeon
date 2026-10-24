@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.tiles;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
 
 import java.util.HashSet;
@@ -108,9 +109,9 @@ public class DungeonWallsTilemap extends DungeonTilemap {
 		} else if (pos + mapWidth < size && (map[pos+mapWidth] == Terrain.STATUE_SP)){
 			return DungeonTileSheet.STATUE_SP_OVERHANG;
 		} else if (pos + mapWidth < size && map[pos+mapWidth] == Terrain.REGION_DECO){
-			return DungeonTileSheet.REGION_DECO_OVERHANG;
+			return Dungeon.level.cellAt(pos + mapWidth).has(CellContent.OVERHEAD) ? -1 : DungeonTileSheet.REGION_DECO_OVERHANG;
 		} else if (pos + mapWidth < size && map[pos+mapWidth] == Terrain.REGION_DECO_ALT){
-			return DungeonTileSheet.REGION_DECO_ALT_OVERHANG;
+			return Dungeon.level.cellAt(pos + mapWidth).has(CellContent.OVERHEAD) ? -1 : DungeonTileSheet.REGION_DECO_ALT_OVERHANG;
 		} else if (pos + mapWidth < size && map[pos+mapWidth] == Terrain.SEWER_BARREL_MARKED){
 			return DungeonTileSheet.SEWER_BARREL_MARKED_OVERHANG;
 		} else if (pos + mapWidth < size && map[pos+mapWidth] == Terrain.SEWER_BARREL_MARKED_ALT){

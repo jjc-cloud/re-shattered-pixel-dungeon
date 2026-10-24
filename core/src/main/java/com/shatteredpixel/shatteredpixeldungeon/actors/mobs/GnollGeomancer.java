@@ -659,7 +659,7 @@ public class GnollGeomancer extends Mob {
 
 		for (int i = 0; i < Dungeon.level.length(); i++){
 			if (source.fieldOfView[i] && Dungeon.level.hasTerrain(i, Terrain.MINE_BOULDER)){
-				if (new Ballistica(i, target.pos, Ballistica.PROJECTILE).collisionPos == target.pos){
+				if (new Ballistica(i, target.pos, Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER).collisionPos == target.pos){
 					candidateRocks.add(i);
 				}
 			}
@@ -689,7 +689,7 @@ public class GnollGeomancer extends Mob {
 			}
 			int throwingToPos = target.pos;
 
-			return new Ballistica(throwingFromPos, throwingToPos, Ballistica.PROJECTILE);
+			return new Ballistica(throwingFromPos, throwingToPos, Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER);
 
 		}
 	}
@@ -709,7 +709,7 @@ public class GnollGeomancer extends Mob {
 			}
 		});
 
-		Ballistica rockPath = new Ballistica(from, to, Ballistica.MAGIC_BOLT);
+		Ballistica rockPath = new Ballistica(from, to, Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER);
 
 		Sample.INSTANCE.play(Assets.Sounds.MISS);
 		((MissileSprite)source.sprite.parent.recycle( MissileSprite.class )).

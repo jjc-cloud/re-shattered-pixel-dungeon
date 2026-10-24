@@ -64,7 +64,7 @@ public class DisintegrationTrap extends Trap {
 				float curDist = Dungeon.level.trueDistance(pos, ch.pos);
 				//invis targets are considered to be at max range
 				if (ch.invisible > 0) curDist = Math.max(curDist, range);
-				Ballistica bolt = new Ballistica(pos, ch.pos, Ballistica.PROJECTILE);
+						Ballistica bolt = new Ballistica(pos, ch.pos, Ballistica.PROJECTILE | Ballistica.IGNORE_PROJECTILE_BARRIERS);
 				if (bolt.collisionPos == ch.pos
 						&& ( curDist < closestDist || (curDist == closestDist && target instanceof Hero))){
 					target = ch;

@@ -141,7 +141,8 @@ public class TestStart {
 		}
 		if (best != -1) {
 			Level.set(best, Terrain.WALL_DECO, level);
-			level.interactions().propertiesAt(best, Terrain.WALL_DECO, CellContent.BREAKABLE, 0);
+			level.interactions().propertiesAt(best, Terrain.WALL_DECO,
+					CellContent.BREAKABLE | CellContent.CLICK_BREAKABLE, 0);
 		}
 	}
 

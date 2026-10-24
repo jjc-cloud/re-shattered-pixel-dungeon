@@ -133,11 +133,6 @@ public class PrisonPainter extends RegularPainter {
 	}
 
 	private static boolean isDoor( int terrain ) {
-		return terrain == Terrain.DOOR
-				|| terrain == Terrain.OPEN_DOOR
-				|| terrain == Terrain.LOCKED_DOOR
-				|| terrain == Terrain.HERO_LKD_DR
-				|| terrain == Terrain.CRYSTAL_DOOR
-				|| terrain == Terrain.SECRET_DOOR;
+		return com.shatteredpixel.shatteredpixeldungeon.levels.features.Door.state(terrain) != null;
 	}
 }

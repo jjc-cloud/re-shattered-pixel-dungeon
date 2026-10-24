@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.mage;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
@@ -219,8 +220,8 @@ public class ElementalBlast extends ArmorAbility {
 
 							//*** Wand of Fireblast ***
 							} else if (finalWandCls == WandOfFireblast.class){
-								if (Dungeon.level.hasTerrain(cell, Terrain.DOOR)){
-									Level.set(cell, Terrain.OPEN_DOOR);
+								if (Door.is(Dungeon.level, cell, Door.State.CLOSED)){
+									Door.open(Dungeon.level, cell, Door.Opening.IMPACT);
 									GameScene.updateMap(cell);
 								}
 								if (freeze != null){

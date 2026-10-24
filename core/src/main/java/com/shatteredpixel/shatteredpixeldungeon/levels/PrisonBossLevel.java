@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.levels;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.IronDoor;
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Bones;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
@@ -90,6 +92,10 @@ public class PrisonBossLevel extends Level {
 	
 	private State state;
 	private Tengu tengu;
+
+	@Override public Door createDoor(int terrain) {
+		return terrain == Terrain.CRYSTAL_DOOR ? super.createDoor(terrain) : new IronDoor(terrain);
+	}
 
 	@Override
 	public void playLevelMusic() {

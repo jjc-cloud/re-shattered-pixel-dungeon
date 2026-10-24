@@ -79,7 +79,7 @@ public class DM100 extends Mob {
 	@Override
 	protected boolean canAttack( Char enemy ) {
 		return super.canAttack(enemy)
-				|| new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos == enemy.pos;
+				|| new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT | Ballistica.IGNORE_PROJECTILE_BARRIERS).collisionPos == enemy.pos;
 	}
 	
 	//used so resistances can differentiate between melee and magical attacks
@@ -89,7 +89,7 @@ public class DM100 extends Mob {
 	protected boolean doAttack( Char enemy ) {
 
 		if (Dungeon.level.adjacent( pos, enemy.pos )
-				|| new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos != enemy.pos) {
+				|| new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT | Ballistica.IGNORE_PROJECTILE_BARRIERS).collisionPos != enemy.pos) {
 			
 			return super.doAttack( enemy );
 			

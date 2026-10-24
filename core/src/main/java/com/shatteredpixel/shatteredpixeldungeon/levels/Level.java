@@ -161,6 +161,9 @@ public abstract class Level implements Bundlable {
 	private int[] terrainVisuals;
 	private boolean flagsReady;
 
+	/** 只在放置新门时选择默认材质；已有门改变状态不会重新调用工厂。 */
+	public Door createDoor(int terrain) { return new Door(terrain); }
+
 	public CellState cellAt(int cell) { return cells[cell]; }
 	public int region() { return Dungeon.depth >= 1 ? (Dungeon.depth - 1) / 5 : -1; }
 	public int terrainAt(int cell) { return cells[cell].terrain(); }
@@ -179,10 +182,16 @@ public abstract class Level implements Bundlable {
 		if (!flagsReady) return;
 		updateCellFlags(cell);
 		if (caveCollapse != null) caveCollapse.terrainChanged(cell, previous, terrainVisuals[cell]);
-		if (cell == hiddenEntranceCell && hiddenEntranceGrass
-				&& cells[cell].content(Terrain.GRASS) == null
-				&& cells[cell].content(Terrain.HIGH_GRASS) == null
-				&& cells[cell].content(Terrain.FURROWED_GRASS) == null) revealHiddenEntrance(cell);
+		if (cell == hiddenEntranceCell) {
+			if (hiddenEntranceGrass
+					&& cells[cell].content(Terrain.GRASS) == null
+					&& cells[cell].content(Terrain.HIGH_GRASS) == null
+					&& cells[cell].content(Terrain.FURROWED_GRASS) == null) {
+				revealHiddenEntrance(cell);
+			} else if (hiddenEntranceWater && !cells[cell].hasTerrain(Terrain.WATER)) {
+				revealHiddenEntrance(cell);
+			}
+		}
 		if (this == Dungeon.level) GameScene.updateMap(cell);
 	}
 	public boolean[] visited;
@@ -223,7 +232,9 @@ public abstract class Level implements Bundlable {
 	 * 判定与 affectTerrain(cell, DISINTEGRATION) 的破坏结果一致，但不会改动地图。
 	 */
 	public boolean passthroughDisintegrationRay(int cell) {
-		return insideMap(cell) && !losBlocking[cell] && cellAt(cell).has(CellContent.BREAKABLE | CellContent.BURNABLE);
+		return insideMap(cell) && !losBlocking[cell]
+				&& cellAt(cell).has(CellContent.BREAKABLE | CellContent.BURNABLE
+						| CellContent.DISINTEGRATION_BREAKABLE);
 	}
 	
 	public Feeling feeling = Feeling.NONE;
@@ -234,6 +245,7 @@ public abstract class Level implements Bundlable {
 	public ArrayList<LevelTransition> transitions;
 	public int hiddenEntranceCell = -1;
 	public boolean hiddenEntranceGrass;
+	public boolean hiddenEntranceWater;
 
 	//when a boss level has become locked.
 	public boolean locked = false;
@@ -268,6 +280,7 @@ public abstract class Level implements Bundlable {
 	private static final String TRANSITIONS	= "transitions";
 	private static final String HIDDEN_ENTRANCE = "hidden_entrance";
 	private static final String HIDDEN_ENTRANCE_GRASS = "hidden_entrance_grass";
+	private static final String HIDDEN_ENTRANCE_WATER = "hidden_entrance_water";
 	private static final String LOCKED      = "locked";
 	private static final String HEAPS		= "heaps";
 	private static final String PLANTS		= "plants";
@@ -497,6 +510,7 @@ public abstract class Level implements Bundlable {
 		if (cellIndex != length) throw new IllegalArgumentException("格子存档尺寸不符");
 		hiddenEntranceCell = bundle.contains(HIDDEN_ENTRANCE) ? bundle.getInt(HIDDEN_ENTRANCE) : -1;
 		hiddenEntranceGrass = bundle.getBoolean(HIDDEN_ENTRANCE_GRASS);
+		hiddenEntranceWater = bundle.getBoolean(HIDDEN_ENTRANCE_WATER);
 		interactions();
 
 		visited	= bundle.getBooleanArray( VISITED );
@@ -608,6 +622,7 @@ public abstract class Level implements Bundlable {
 		}
 		bundle.put( HIDDEN_ENTRANCE, hiddenEntranceCell );
 		bundle.put( HIDDEN_ENTRANCE_GRASS, hiddenEntranceGrass );
+		bundle.put( HIDDEN_ENTRANCE_WATER, hiddenEntranceWater );
 		bundle.put( VISITED, visited );
 		bundle.put( MAPPED, mapped );
 		bundle.put( TRANSITIONS, transitions );
@@ -1100,6 +1115,14 @@ public abstract class Level implements Bundlable {
 		if (cell != hiddenEntranceCell) return;
 		hiddenEntranceCell = -1;
 		hiddenEntranceGrass = false;
+		hiddenEntranceWater = false;
+		// 楼梯口不保留水面、草地和灰烬
+		CellState state = cellAt(cell);
+		state.removeTerrain(Terrain.EMBERS);
+		state.removeTerrain(Terrain.WATER);
+		state.removeTerrain(Terrain.GRASS);
+		state.removeTerrain(Terrain.HIGH_GRASS);
+		state.removeTerrain(Terrain.FURROWED_GRASS);
 		Level.set(cell, Terrain.EXIT, this);
 		transitions.add(new LevelTransition(this, cell, LevelTransition.Type.BRANCH_EXIT,
 				Dungeon.depth, 2, LevelTransition.Type.BRANCH_ENTRANCE));
@@ -1295,9 +1318,9 @@ public abstract class Level implements Bundlable {
 	public void discover( int cell ) {
 		//隐藏门自身带有“覆盖内容”属性，不能当成压在物件上的墙直接跳过；
 		//否则搜索成功后地形仍停在 SECRET_DOOR，看上去还是墙。
-		boolean secretDoor = hasTerrain(cell, Terrain.SECRET_DOOR);
+		boolean secretDoor = Door.is(this, cell, Door.State.SECRET);
 		if (cellAt(cell).buried() && !secretDoor) return;
-		if (secretDoor) cellAt(cell).place(Terrain.discover(Terrain.SECRET_DOOR));
+		if (secretDoor) Door.reveal(this, cell);
 		Trap trap = traps.get(cell);
 		if (trap != null) trap.reveal();
 		else if (hasTerrain(cell, Terrain.SECRET_TRAP))
@@ -1394,10 +1417,10 @@ public abstract class Level implements Bundlable {
 			}
 			
 			//characters which are not the hero or a sheep 'soft' press cells
-			pressCell( ch.pos, ch instanceof Hero || ch instanceof Sheep);
+			pressCell( ch.pos, ch instanceof Hero || ch instanceof Sheep, Door.Opening.CHARACTER);
 		} else {
-			if (hasTerrain(ch.pos, Terrain.DOOR)){
-				Door.enter( ch.pos );
+			if (Door.is(this, ch.pos, Door.State.CLOSED)){
+				Door.enter( ch.pos, Door.Opening.CHARACTER );
 			}
 		}
 
@@ -1412,12 +1435,12 @@ public abstract class Level implements Bundlable {
 	
 	//public method for forcing the hard press of a cell. e.g. when an item lands on it
 	public void pressCell( int cell ){
-		pressCell( cell, true );
+		pressCell( cell, true, Door.Opening.IMPACT );
 	}
 	
 	//a 'soft' press ignores hidden traps
 	//a 'hard' press triggers all things
-	private void pressCell( int cell, boolean hard ) {
+	private void pressCell( int cell, boolean hard, Door.Opening opening ) {
 
 		if (cellAt(cell).buried()) return;
 		Trap trap = traps.get(cell);
@@ -1428,7 +1451,7 @@ public abstract class Level implements Bundlable {
 		}
 		if (hasTerrain(cell, Terrain.HIGH_GRASS) || hasTerrain(cell, Terrain.FURROWED_GRASS)) HighGrass.trample(this, cell);
 		if (cellAt(cell).ground() == Terrain.WELL) WellWater.affectCell(cell);
-		if (hasTerrain(cell, Terrain.DOOR)) Door.enter(cell);
+		if (Door.is(this, cell, Door.State.CLOSED)) Door.enter(cell, opening);
 
 		TimekeepersHourglass.timeFreeze timeFreeze =
 				Dungeon.hero.buff(TimekeepersHourglass.timeFreeze.class);
@@ -1824,6 +1847,8 @@ public abstract class Level implements Bundlable {
 	}
 	
 	public String tileName( int tile ) {
+		Door.State door = Door.state(tile);
+		if (door != null) return Messages.get(Level.class, door.nameKey);
 		
 		switch (tile) {
 			case Terrain.CHASM:
@@ -1840,12 +1865,7 @@ public abstract class Level implements Bundlable {
 				return Messages.get(Level.class, "water_name");
 			case Terrain.WALL:
 			case Terrain.WALL_DECO:
-			case Terrain.SECRET_DOOR:
 				return Messages.get(Level.class, "wall_name");
-			case Terrain.DOOR:
-				return Messages.get(Level.class, "closed_door_name");
-			case Terrain.OPEN_DOOR:
-				return Messages.get(Level.class, "open_door_name");
 			case Terrain.ENTRANCE:
 			case Terrain.ENTRANCE_SP:
 				return Messages.get(Level.class, "entrace_name");
@@ -1856,11 +1876,6 @@ public abstract class Level implements Bundlable {
 				return Messages.get(Level.class, "embers_name");
 			case Terrain.FURROWED_GRASS:
 				return Messages.get(Level.class, "furrowed_grass_name");
-			case Terrain.LOCKED_DOOR:
-			case Terrain.HERO_LKD_DR:
-				return Messages.get(Level.class, "locked_door_name");
-			case Terrain.CRYSTAL_DOOR:
-				return Messages.get(Level.class, "crystal_door_name");
 			case Terrain.PEDESTAL:
 				return Messages.get(Level.class, "pedestal_name");
 			case Terrain.BARRICADE:
@@ -1892,6 +1907,8 @@ public abstract class Level implements Bundlable {
 	}
 	
 	public String tileDesc( int tile ) {
+		Door.State door = Door.state(tile);
+		if (door != null) return door.descKey.isEmpty() ? "" : Messages.get(Level.class, door.descKey);
 		
 		switch (tile) {
 			case Terrain.CHASM:
@@ -1910,11 +1927,6 @@ public abstract class Level implements Bundlable {
 			case Terrain.HIGH_GRASS:
 			case Terrain.FURROWED_GRASS:
 				return Messages.get(Level.class, "high_grass_desc");
-			case Terrain.LOCKED_DOOR:
-			case Terrain.HERO_LKD_DR:
-				return Messages.get(Level.class, "locked_door_desc");
-			case Terrain.CRYSTAL_DOOR:
-				return Messages.get(Level.class, "crystal_door_desc");
 			case Terrain.LOCKED_EXIT:
 				return Messages.get(Level.class, "locked_exit_desc");
 			case Terrain.BARRICADE:

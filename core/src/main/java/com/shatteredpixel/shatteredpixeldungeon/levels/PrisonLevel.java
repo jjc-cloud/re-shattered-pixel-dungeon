@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.levels;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.IronDoor;
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
@@ -69,6 +71,10 @@ public class PrisonLevel extends RegularLevel {
 			= new String[]{Assets.Music.PRISON_1, Assets.Music.PRISON_2, Assets.Music.PRISON_2,
 			Assets.Music.PRISON_1, Assets.Music.PRISON_3, Assets.Music.PRISON_3};
 	public static final float[] PRISON_TRACK_CHANCES = new float[]{1f, 1f, 0.5f, 0.25f, 1f, 0.5f};
+
+	@Override public Door createDoor(int terrain) {
+		return terrain == Terrain.CRYSTAL_DOOR ? super.createDoor(terrain) : new IronDoor(terrain);
+	}
 
 	@Override
 	public void playLevelMusic() {

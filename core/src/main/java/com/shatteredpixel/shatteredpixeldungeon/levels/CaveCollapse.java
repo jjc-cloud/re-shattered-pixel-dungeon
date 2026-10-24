@@ -1,5 +1,6 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.badlogic.gdx.utils.IntArray;
 import com.badlogic.gdx.utils.IntSet;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
@@ -82,10 +83,9 @@ public final class CaveCollapse implements Hero.Doom {
 					if (protectedRoom) {
 						protectedCells[cell] = true;
 					} else {
-						int tile = level.terrainAt(cell);
 						int flags = level.cellAt(cell).flags();
 						if ((flags & (Terrain.PASSABLE | Terrain.AVOID)) != 0
-								&& (flags & Terrain.SOLID) == 0 && !DungeonTileSheet.doorTile(tile)) {
+								&& (flags & Terrain.SOLID) == 0 && Door.at(level, cell) == null) {
 							owner[cell] = i + 1;
 						}
 					}
@@ -94,7 +94,7 @@ public final class CaveCollapse implements Hero.Doom {
 		}
 		// Room.Door 也表示开放连接，保护范围以已经绘制出的实体门为准。
 		for (int cell = 0; cell < level.length(); cell++) {
-			if (DungeonTileSheet.doorTile(level.terrainAt(cell)) || level.hasTerrain(cell, Terrain.SECRET_DOOR)) {
+			if (Door.at(level, cell) != null) {
 				for (int offset : PathFinder.NEIGHBOURS4) {
 					int next = cell + offset;
 					if (level.insideMap(next) && level.distance(cell, next) <= 1
@@ -176,7 +176,7 @@ public final class CaveCollapse implements Hero.Doom {
 					int flags = level.cellAt(cell).flags();
 					if ((flags & (Terrain.PASSABLE | Terrain.AVOID)) == 0
 							|| (flags & (Terrain.SOLID | Terrain.PIT)) != 0
-							|| tile == Terrain.WELL || tile == Terrain.OPEN_DOOR) continue;
+							|| tile == Terrain.WELL || Door.at(level, cell) != null) continue;
 					if (contains(cell) || level.plants.get(cell) != null
 							|| level.heaps.get(cell) != null || level.findMob(cell) != null
 							|| level.getTransition(cell) != null) continue;

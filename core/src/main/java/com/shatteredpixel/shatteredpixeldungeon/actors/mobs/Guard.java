@@ -77,7 +77,7 @@ public class Guard extends Mob {
 	//how the chains travel toward their target. ordinary guards need a clear line of fire,
 	//the rare variant ignores terrain on the way and only needs to see its target.
 	protected Ballistica chainsBallistica( int target ){
-		return new Ballistica(pos, target, Ballistica.PROJECTILE);
+		return new Ballistica(pos, target, Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER);
 	}
 
 	//whether the thrown chains actually land on their target

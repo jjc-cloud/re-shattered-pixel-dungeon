@@ -58,6 +58,7 @@ public class WandOfLightning extends DamageWand {
 
 	{
 		image = ItemSpriteSheet.WAND_LIGHTNING;
+		collisionProperties = Ballistica.MAGIC_BOLT | Ballistica.IGNORE_PROJECTILE_BARRIERS;
 	}
 	
 	private ArrayList<Char> affected = new ArrayList<>();
@@ -161,7 +162,15 @@ public class WandOfLightning extends DamageWand {
 		}
 
 		ArrayList<Char> hitThisArc = new ArrayList<>();
-		PathFinder.buildDistanceMap( ch.pos, BArray.not( Dungeon.level.solid, null ), dist );
+		boolean[] arcPassable = BArray.not(Dungeon.level.solid, null);
+		int width = Dungeon.level.width();
+		for (int y = Math.max(0, ch.pos / width - dist); y <= Math.min(Dungeon.level.height() - 1, ch.pos / width + dist); y++) {
+			for (int x = Math.max(0, ch.pos % width - dist); x <= Math.min(width - 1, ch.pos % width + dist); x++) {
+				int cell = x + y * width;
+				if (!arcPassable[cell] && Dungeon.level.cellAt(cell).has(CellContent.PASSES_NON_PROJECTILES)) arcPassable[cell] = true;
+			}
+		}
+		PathFinder.buildDistanceMap(ch.pos, arcPassable, dist);
 		for (int i = 0; i < PathFinder.distance.length; i++) {
 			if (PathFinder.distance[i] < Integer.MAX_VALUE){
 				Char n = Actor.findChar( i );
@@ -177,6 +186,11 @@ public class WandOfLightning extends DamageWand {
 		affected.addAll(hitThisArc);
 		for (Char hit : hitThisArc){
 			arcs.add(new Lightning.Arc(ch.sprite.center(), hit.sprite.center()));
+			if (conducting) {
+				Ballistica contact = new Ballistica(ch.pos, hit.pos,
+						Ballistica.STOP_TARGET | Ballistica.STOP_SOLID | Ballistica.IGNORE_PROJECTILE_BARRIERS);
+				for (int cell : contact.subPath(0, contact.dist)) conduction.seed(cell, cell);
+			}
 			arc(hit);
 		}
 		if (conducting) conduction.touch(ch.pos);
@@ -225,6 +239,10 @@ public class WandOfLightning extends DamageWand {
 		int cell = TerrainPropagation.impactCell(Dungeon.level, bolt, CellContent.CONDUCTIVE);
 		impactCell = cell;
 		impactInWater = Dungeon.level.water[cell];
+		// 穿过导体也属于接触，不能只在最终落点和命中的生物附近启动导电。
+		if (conducting) {
+			for (int contact : bolt.subPath(0, bolt.path.indexOf(cell))) conduction.seed(contact, contact);
+		}
 
 		Char ch = Actor.findChar( cell );
 		if (ch != null) {

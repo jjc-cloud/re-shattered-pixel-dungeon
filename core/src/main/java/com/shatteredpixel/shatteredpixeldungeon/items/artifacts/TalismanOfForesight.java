@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.artifacts;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -329,7 +330,7 @@ public class TalismanOfForesight extends Artifact {
 
 					if (Dungeon.level.heroFOV[p]
 							&& Dungeon.level.secret[p]
-							&& !Dungeon.level.hasTerrain(p, Terrain.SECRET_DOOR)) {
+							&& !Door.is(Dungeon.level, p, Door.State.SECRET)) {
 						if (Dungeon.level.traps.get(p) != null && Dungeon.level.traps.get(p).canBeSearched) {
 							smthFound = true;
 						}

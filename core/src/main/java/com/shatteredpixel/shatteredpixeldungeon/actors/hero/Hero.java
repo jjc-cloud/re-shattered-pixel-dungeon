@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
@@ -36,6 +37,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.SacrificialFire;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AcuteHearing;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AdrenalineSurge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
@@ -50,6 +52,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Combo;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Drowsy;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Foresight;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.GreaterHaste;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.HearingLoss;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.HeroDisguise;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.HoldFast;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Hunger;
@@ -287,6 +290,7 @@ public class Hero extends Char {
 	public int HTBoost = 0;
 	
 	private ArrayList<Mob> visibleEnemies;
+	private ArrayList<Mob> heardEnemies = new ArrayList<>();
 
 	//This list is maintained so that some logic checks can be skipped
 	// for enemies we know we aren't seeing normally, resulting in better performance
@@ -1373,12 +1377,12 @@ public class Hero extends Char {
 				//keys currently do not apply to sub-floors
 				hasKey = false;
 
-			} else if (door == Terrain.LOCKED_DOOR
+			} else if (Door.is(Dungeon.level, doorCell, Door.State.LOCKED)
 					&& Notes.keyCount(new IronKey(Dungeon.depth)) > 0) {
 				
 				hasKey = true;
 
-			} else if (door == Terrain.HERO_LKD_DR){
+			} else if (Door.is(Dungeon.level, doorCell, Door.State.HERO_LOCKED)){
 
 				if (belongings.getItem(SkeletonKey.class) != null
 						&& !belongings.getItem(SkeletonKey.class).cursed){
@@ -1389,7 +1393,7 @@ public class Hero extends Char {
 					hasKey = true;
 				}
 				
-			} else if (door == Terrain.CRYSTAL_DOOR
+			} else if (Door.is(Dungeon.level, doorCell, Door.State.CRYSTAL)
 					&& Notes.keyCount(new CrystalKey(Dungeon.depth)) > 0) {
 
 				hasKey = true;
@@ -1442,7 +1446,7 @@ public class Hero extends Char {
 		if (Dungeon.level != action.level || !action.level.insideMap(action.dst)
 				|| (action.content == null || action.level.cellAt(action.dst).content(action.terrain) != action.content)
 				|| action.level.terrainInteractions == null
-				|| !action.level.terrainInteractions.allows(action.dst, CellContent.BREAKABLE)
+				|| !action.level.terrainInteractions.allows(action.dst, CellContent.CLICK_BREAKABLE)
 				|| (!(belongings.weapon() instanceof MeleeWeapon)
 						&& !(action.terrain == Terrain.COLLAPSE_WALL && belongings.lostInventory()))
 				|| (Actor.findChar(action.dst) != null && !(action.dst == pos && action.terrain == Terrain.COLLAPSE_WALL))) {
@@ -1469,7 +1473,7 @@ public class Hero extends Char {
 						&& canInteractTerrain(action.dst)
 						&& (Actor.findChar(action.dst) == null || (action.dst == pos && action.terrain == Terrain.COLLAPSE_WALL))
 						&& action.level.terrainInteractions != null
-						&& action.level.terrainInteractions.interact(action.dst, CellContent.BREAKABLE)
+						&& action.level.terrainInteractions.interact(action.dst, CellContent.CLICK_BREAKABLE)
 						== TerrainInteractions.Result.CHANGED) {
 					hitSound(Random.Float(0.87f, 1.15f));
 					if (!isAlive()) { next(); return; }
@@ -1829,9 +1833,11 @@ public class Hero extends Char {
 		Berserk berserk = buff(Berserk.class);
 		if (berserk != null) dmg = Math.round(berserk.modifyIncomingDamage(dmg, src));
 
-		//regular damage interrupt, triggers on any damage except specific mild DOT effects
-		// unless the player recently hit 'continue moving', in which case this is ignored
-		if (!(src instanceof Hunger || src instanceof Viscosity.DeferedDamage) && damageInterrupt) {
+		//“继续移动”只豁免环境或持续伤害，角色直接造成的伤害仍须中断。
+		//沿用实际施法者标记，覆盖不经过命中判定的怪物技能。
+		Char attacker = domainDamageActor != null ? domainDamageActor : src instanceof Char ? (Char) src : null;
+		if (!(src instanceof Hunger || src instanceof Viscosity.DeferedDamage)
+				&& (damageInterrupt || (attacker != null && attacker != this))) {
 			interrupt();
 		}
 
@@ -1922,11 +1928,24 @@ public class Hero extends Char {
 	
 	public void checkVisibleMobs() {
 		ArrayList<Mob> visible = new ArrayList<>();
+		ArrayList<Mob> heard = new ArrayList<>();
+		boolean canHear = buff(HearingLoss.class) == null;
+		boolean acuteHearing = canHear && buff(AcuteHearing.class) != null;
+		int hearingRange = canHear && hasTalent(Talent.KEEN_HEARING) ? 2 + pointsInTalent(Talent.KEEN_HEARING) : 0;
 
 		boolean newMob = false;
 
 		Mob target = null;
 		for (Mob m : Dungeon.level.mobs.toArray(new Mob[0])) {
+			//听觉只负责发现与中断，不提供视野或自动瞄准目标。
+			if (m.isAlive() && m.alignment == Alignment.ENEMY
+					&& ((acuteHearing && Dungeon.level.distance(pos, m.pos) <= AcuteHearing.DISTANCE)
+					|| (hearingRange > 0 && m.state != m.SLEEPING && Dungeon.level.distance(pos, m.pos) <= hearingRange))) {
+				heard.add(m);
+				if (!heardEnemies.contains(m) && !visibleEnemies.contains(m)) {
+					newMob = true;
+				}
+			}
 			if (fieldOfView[ m.pos ] && m.landmark() != null){
 				Notes.add(m.landmark());
 			}
@@ -1971,6 +1990,7 @@ public class Hero extends Char {
 		}
 
 		visibleEnemies = visible;
+		heardEnemies = heard;
 
 		//we also scan for blob landmarks here
 		for (Blob b : Dungeon.level.blobs.values().toArray(new Blob[0])){
@@ -2193,9 +2213,7 @@ public class Hero extends Char {
 				curAction = new HeroAction.OpenChest( cell );
 			}
 			
-		} else if (Dungeon.level.hasTerrain(cell, Terrain.LOCKED_DOOR)
-				|| Dungeon.level.hasTerrain(cell, Terrain.HERO_LKD_DR)
-				|| Dungeon.level.hasTerrain(cell, Terrain.CRYSTAL_DOOR)
+		} else if (Door.locked(Dungeon.level, cell)
 				|| Dungeon.level.terrainAt(cell) == Terrain.LOCKED_EXIT) {
 			
 			curAction = new HeroAction.Unlock( cell );
@@ -2213,7 +2231,7 @@ public class Hero extends Char {
 				&& (belongings.weapon() instanceof MeleeWeapon
 						|| (Dungeon.level.hasTerrain(cell, Terrain.COLLAPSE_WALL) && belongings.lostInventory()))
 				&& (fieldOfView[cell] || Dungeon.level.visited[cell] || Dungeon.level.mapped[cell])
-				&& Dungeon.level.terrainInteractions.allows(cell, CellContent.BREAKABLE)) {
+				&& Dungeon.level.terrainInteractions.allows(cell, CellContent.CLICK_BREAKABLE)) {
 			curAction = new HeroAction.InteractTerrain(cell);
 			lastAction = null;
 
@@ -2696,33 +2714,33 @@ public class Hero extends Char {
 				boolean hasKey = true;
 				if (Dungeon.branch != 0){
 					hasKey = false; //keys currently do not work in sub-floors
-				} else if (door == Terrain.LOCKED_DOOR) {
+				} else if (Door.is(Dungeon.level, doorCell, Door.State.LOCKED)) {
 					hasKey = Notes.remove(new IronKey(Dungeon.depth));
 					if (hasKey) {
 						if (keyUseTrack != null){
 							keyUseTrack.processIronLockOpened();
 						}
-						Level.set(doorCell, Terrain.DOOR);
+						Door.unlock(Dungeon.level, doorCell);
 					}
-				} else if (door == Terrain.HERO_LKD_DR) {
+				} else if (Door.is(Dungeon.level, doorCell, Door.State.HERO_LOCKED)) {
 					hasKey = true;
-					Level.set(doorCell, Terrain.DOOR);
+					Door.unlock(Dungeon.level, doorCell);
 					GLog.i( Messages.get(SkeletonKey.class, "force_lock"));
-				} else if (door == Terrain.CRYSTAL_DOOR) {
+				} else if (Door.is(Dungeon.level, doorCell, Door.State.CRYSTAL)) {
 					hasKey = Notes.remove(new CrystalKey(Dungeon.depth));
 					if (hasKey) {
 						if (keyUseTrack != null){
 							keyUseTrack.processCrystalLockOpened();
 						}
-						Dungeon.level.cellAt(doorCell).removeTerrain(Terrain.CRYSTAL_DOOR);
-						Sample.INSTANCE.play(Assets.Sounds.TELEPORT);
-						CellEmitter.get( doorCell ).start( Speck.factory( Speck.DISCOVER ), 0.025f, 20 );
+						Door.unlock(Dungeon.level, doorCell);
 					}
-				} else {
+				} else if (door == Terrain.LOCKED_EXIT) {
 					hasKey = Notes.remove(new WornKey(Dungeon.depth));
 					if (hasKey) {
 						Level.set(doorCell, Terrain.UNLOCKED_EXIT);
 					}
+				} else {
+					hasKey = false;
 				}
 				
 				if (hasKey) {

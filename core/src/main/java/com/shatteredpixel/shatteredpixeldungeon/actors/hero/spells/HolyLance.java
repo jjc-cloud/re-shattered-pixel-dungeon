@@ -79,7 +79,7 @@ public class HolyLance extends TargetedClericSpell {
 
 	@Override
 	public int targetingFlags() {
-		return Ballistica.PROJECTILE;
+		return Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER;
 	}
 
 	@Override

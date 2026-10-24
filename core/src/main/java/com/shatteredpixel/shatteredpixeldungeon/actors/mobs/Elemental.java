@@ -66,6 +66,7 @@ import com.watabou.utils.Random;
 import java.util.ArrayList;
 
 public abstract class Elemental extends Mob {
+	protected int rangedCollisionProperties = Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER;
 
 	{
 		HP = HT = 60;
@@ -134,7 +135,7 @@ public abstract class Elemental extends Mob {
 		if (super.canAttack(enemy)){
 			return true;
 		} else {
-			return rangedCooldown < 0 && new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT ).collisionPos == enemy.pos;
+			return rangedCooldown < 0 && new Ballistica( pos, enemy.pos, rangedCollisionProperties ).collisionPos == enemy.pos;
 		}
 	}
 	
@@ -142,7 +143,7 @@ public abstract class Elemental extends Mob {
 		
 		if (Dungeon.level.adjacent( pos, enemy.pos )
 				|| rangedCooldown > 0
-				|| new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT ).collisionPos != enemy.pos) {
+				|| new Ballistica( pos, enemy.pos, rangedCollisionProperties ).collisionPos != enemy.pos) {
 			
 			return super.doAttack( enemy );
 			
@@ -509,6 +510,7 @@ public abstract class Elemental extends Mob {
 		
 		{
 			spriteClass = ElementalSprite.Shock.class;
+			rangedCollisionProperties = Ballistica.MAGIC_BOLT | Ballistica.IGNORE_PROJECTILE_BARRIERS;
 			
 			loot = ScrollOfRecharging.class;
 			lootChance = 1/4f;

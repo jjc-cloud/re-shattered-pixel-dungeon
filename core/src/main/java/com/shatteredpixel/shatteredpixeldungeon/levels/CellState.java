@@ -1,5 +1,6 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -123,7 +124,14 @@ public class CellState implements Bundlable {
 		mutations++;
 		try {
 			if (isGround(content.type())) throw new IllegalArgumentException("地面应通过 setGround 设置");
-			if (content.type() == Terrain.EMBERS && !supports(CellContent.SUPPORTS_COVER)) return false;
+			if (content.type() == Terrain.EMBERS) {
+				if (!supports(CellContent.SUPPORTS_COVER)) return false;
+				// 灰烬不铺在水面和楼梯口上
+				if (hasTerrain(Terrain.WATER)) return false;
+				if (ground == Terrain.ENTRANCE || ground == Terrain.ENTRANCE_SP
+						|| ground == Terrain.EXIT || ground == Terrain.LOCKED_EXIT
+						|| ground == Terrain.UNLOCKED_EXIT) return false;
+			}
 			CellContent existing = content(content.type());
 			if (existing != null) return false;
 			if (content.type() == Terrain.WATER) {
@@ -178,7 +186,17 @@ public class CellState implements Bundlable {
 				changed();
 				return;
 			}
-			CellContent replacement = new CellContent(terrain, level.region());
+			Door.State doorState = Door.state(terrain);
+			if (doorState != null && doorState != Door.State.CRYSTAL) {
+				for (CellContent current : contents) {
+					if (current instanceof Door && ((Door) current).state() != Door.State.CRYSTAL) {
+						((Door) current).changeState(level, cell, doorState);
+						return;
+					}
+				}
+			}
+			CellContent replacement = doorState == null
+					? new CellContent(terrain, level.region()) : level.createDoor(terrain);
 			for (CellContent current : new ArrayList<>(contents)) {
 				if (CellContent.family(terrain) == Terrain.WALL && CellContent.family(current.type()) == Terrain.WALL) {
 					replacement.properties(current.properties(), 0);

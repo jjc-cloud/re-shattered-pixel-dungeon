@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
@@ -260,8 +261,8 @@ public class AscensionChallenge extends Buff {
 
 				//doors locked by the hero are reset, to prevent blocking out enemies
 				for (int i = 0; i < Dungeon.level.length(); i++){
-					if (Dungeon.level.hasTerrain(i, Terrain.HERO_LKD_DR)){
-						Level.set(i, Terrain.DOOR, Dungeon.level);
+					if (Door.is(Dungeon.level, i, Door.State.HERO_LOCKED)){
+						Door.unlock(Dungeon.level, i);
 					}
 				}
 

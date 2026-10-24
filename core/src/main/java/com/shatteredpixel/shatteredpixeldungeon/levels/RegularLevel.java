@@ -753,6 +753,13 @@ public abstract class RegularLevel extends Level {
 					entranceCandidates.add(cell);
 				} else if (room == roomExit) fallback.add(cell);
 				else preferred.add(cell);
+			} else if (hasTerrain(cell, Terrain.WATER)) {
+				//隐藏入口也可以藏在水面下，水面被清除时显现
+				if (room == roomEntrance) {
+					fallback.add(cell);
+					entranceCandidates.add(cell);
+				} else if (room == roomExit) fallback.add(cell);
+				else preferred.add(cell);
 			} else if (terrain == Terrain.EMPTY_SP) {
 				convertible.add(cell);
 				if (room == roomEntrance) entranceConvertible.add(cell);
@@ -766,7 +773,8 @@ public abstract class RegularLevel extends Level {
 		if (terrainAt(cell) == Terrain.EMPTY_SP) Level.set(cell, Terrain.EMPTY, this);
 		hiddenEntranceCell = cell;
 		hiddenEntranceGrass = hasTerrain(cell, Terrain.GRASS);
-		if (!hiddenEntranceGrass) {
+		hiddenEntranceWater = hasTerrain(cell, Terrain.WATER);
+		if (!hiddenEntranceGrass && !hiddenEntranceWater) {
 			cellAt(cell).addContent(new CellContent(CellContent.HIDDEN_ENTRANCE, region()));
 		}
 		return true;

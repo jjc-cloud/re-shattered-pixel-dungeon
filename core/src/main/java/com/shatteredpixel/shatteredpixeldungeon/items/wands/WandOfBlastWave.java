@@ -63,7 +63,7 @@ public class WandOfBlastWave extends DamageWand {
 	{
 		image = ItemSpriteSheet.WAND_BLAST_WAVE;
 
-		collisionProperties = Ballistica.PROJECTILE;
+		collisionProperties = Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER;
 	}
 
 	public int min(int lvl){
@@ -84,7 +84,8 @@ public class WandOfBlastWave extends DamageWand {
 			int cell = bolt.collisionPos + offset;
 			if (Dungeon.level.insideMap(cell)) affectedCells.add(cell);
 		}
-		terrainAffected = Dungeon.level.interactions().affectCells(affectedCells, CellContent.BREAKABLE);
+		terrainAffected = Dungeon.level.interactions().affectCells(affectedCells,
+				CellContent.BREAKABLE | CellContent.SHOCKWAVE_BREAKABLE);
 		if (terrainAffected) Dungeon.observe();
 
 		//presses all tiles in the AOE first, with the exception of tengu dart traps
@@ -191,8 +192,8 @@ public class WandOfBlastWave extends DamageWand {
 						Dungeon.fail(cause);
 					}
 				}
-				if (closeDoors && Dungeon.level.hasTerrain(oldPos, Terrain.OPEN_DOOR)){
-					Door.leave(oldPos);
+				if (closeDoors && Door.is(Dungeon.level, oldPos, Door.State.OPEN)){
+					Door.leave(oldPos, ch);
 				}
 				Dungeon.level.occupyCell(ch);
 				if (ch == Dungeon.hero){

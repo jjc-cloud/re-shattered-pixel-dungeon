@@ -115,7 +115,8 @@ public class WandOfDisintegration extends DamageWand {
 			CellEmitter.center( c ).burst( PurpleParticle.BURST, Random.IntRange( 1, 2 ) );
 		}
 		
-		boolean contentChanged = Dungeon.level.interactions().affectCells(terrainCells, CellContent.BREAKABLE | CellContent.BURNABLE);
+		boolean contentChanged = Dungeon.level.interactions().affectCells(terrainCells,
+				CellContent.BREAKABLE | CellContent.BURNABLE | CellContent.DISINTEGRATION_BREAKABLE);
 		if (contentChanged) Sample.INSTANCE.play(Assets.Sounds.HIT_MAGIC, 1, Random.Float(0.87f, 1.15f));
 		terrainAffected |= contentChanged;
 		if (terrainAffected) {

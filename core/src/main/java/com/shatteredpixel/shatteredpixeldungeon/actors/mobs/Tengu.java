@@ -240,7 +240,7 @@ public class Tengu extends Mob {
 	
 	@Override
 	protected boolean canAttack( Char enemy ) {
-		return new Ballistica( pos, enemy.pos, Ballistica.PROJECTILE).collisionPos == enemy.pos;
+		return new Ballistica( pos, enemy.pos, Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER).collisionPos == enemy.pos;
 	}
 	
 	private void jump() {
