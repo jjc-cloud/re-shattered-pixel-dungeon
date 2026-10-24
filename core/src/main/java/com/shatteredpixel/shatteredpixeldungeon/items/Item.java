@@ -103,9 +103,9 @@ public class Item implements Bundlable {
 	public int shopOrderTag = 0;
 	public boolean shopOrderFree = false;
 
-	// These items are preserved even if the hero's inventory is lost via unblessed ankh
-	// this is largely set by the resurrection window, items can override this to always be kept
-	public boolean keptThoughLostInvent = false;
+	// 遗物状态下是否随英雄可用。默认可用；只有复活时留在遗物里的那批会被置为 false，
+	// 之后以任何方式获得的物品都保持默认值，不受遗物状态限制。
+	public boolean keptThoughLostInvent = true;
 
 	// whether an item can be included in heroes remains
 	public boolean bones = false;
@@ -155,7 +155,7 @@ public class Item implements Bundlable {
 
 	//resets an item's properties, to ensure consistency between runs
 	public void reset(){
-		keptThoughLostInvent = false;
+		keptThoughLostInvent = true;
 	}
 
 	public boolean keptThroughLostInventory(){

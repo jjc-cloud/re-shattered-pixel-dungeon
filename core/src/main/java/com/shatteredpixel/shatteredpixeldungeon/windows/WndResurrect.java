@@ -130,6 +130,12 @@ public class WndResurrect extends Window {
 
 		ankh.detach(Dungeon.hero.belongings.backpack);
 
+		// 没被选中的物品随遗物封存，取回遗物前不可用；选中的两件立刻可用。
+		// 之后新获得的物品不会被标记，遗物状态下照常可拾取、可使用。
+		for (Item i : Dungeon.hero.belongings){
+			i.keptThoughLostInvent = false;
+		}
+
 		if (btnItem1.item() != null){
 			btnItem1.item().keptThoughLostInvent = true;
 		}
