@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.blobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.effects.BlobEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
@@ -215,24 +216,28 @@ public class Blob extends Actor {
 			for (int j = area.left-1; j <= area.right; j++) {
 				cell = j + i*Dungeon.level.width();
 				if (Dungeon.level.insideMap(cell)) {
-					if (!blocking[cell]) {
+					if (!blocking[cell] || Dungeon.level.cellAt(cell).has(CellContent.PASSES_NON_PROJECTILES)) {
 
 						int count = 1;
 						int sum = cur[cell];
 
-						if (j > area.left && !blocking[cell-1]) {
+						if (j > area.left && (!blocking[cell-1]
+								|| Dungeon.level.cellAt(cell-1).has(CellContent.PASSES_NON_PROJECTILES))) {
 							sum += cur[cell-1];
 							count++;
 						}
-						if (j < area.right && !blocking[cell+1]) {
+						if (j < area.right && (!blocking[cell+1]
+								|| Dungeon.level.cellAt(cell+1).has(CellContent.PASSES_NON_PROJECTILES))) {
 							sum += cur[cell+1];
 							count++;
 						}
-						if (i > area.top && !blocking[cell-Dungeon.level.width()]) {
+						if (i > area.top && (!blocking[cell-Dungeon.level.width()]
+								|| Dungeon.level.cellAt(cell-Dungeon.level.width()).has(CellContent.PASSES_NON_PROJECTILES))) {
 							sum += cur[cell-Dungeon.level.width()];
 							count++;
 						}
-						if (i < area.bottom && !blocking[cell+Dungeon.level.width()]) {
+						if (i < area.bottom && (!blocking[cell+Dungeon.level.width()]
+								|| Dungeon.level.cellAt(cell+Dungeon.level.width()).has(CellContent.PASSES_NON_PROJECTILES))) {
 							sum += cur[cell+Dungeon.level.width()];
 							count++;
 						}

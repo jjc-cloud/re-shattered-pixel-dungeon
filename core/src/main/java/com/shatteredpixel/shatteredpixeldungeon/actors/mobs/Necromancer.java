@@ -34,6 +34,9 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.IronDoor;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
@@ -196,6 +199,13 @@ public class Necromancer extends Mob {
 	}
 
 	public void summonMinion(){
+		Door door = Door.at(Dungeon.level, summoningPos);
+		if (door instanceof IronDoor && door.state() != Door.State.OPEN) {
+			summoning = false;
+			((NecromancerSprite) sprite).cancelSummoning();
+			spend(TICK);
+			return;
+		}
 		Char existing = Actor.findChar(summoningPos);
 		if ((existing != null && existing != mySkeleton) || !Dungeon.level.passable[summoningPos]) {
 
@@ -203,6 +213,9 @@ public class Necromancer extends Mob {
 			for (int c : PathFinder.NEIGHBOURS8) {
 				if (Actor.findChar(summoningPos + c) == null
 						&& Dungeon.level.passable[summoningPos + c]
+						&& (existing != null && !hasProp(existing, Property.IMMOVABLE)
+								|| !(Door.at(Dungeon.level, summoningPos + c) instanceof IronDoor)
+								|| Door.is(Dungeon.level, summoningPos + c, Door.State.OPEN))
 						&& (Dungeon.level.openSpace[summoningPos + c] || !hasProp(Actor.findChar(summoningPos), Property.LARGE))
 						&& Dungeon.level.trueDistance(pos, summoningPos + c) > Dungeon.level.trueDistance(pos, pushPos)) {
 					pushPos = summoningPos + c;
@@ -297,15 +310,20 @@ public class Necromancer extends Mob {
 				
 				summoningPos = -1;
 
-				//we can summon around blocking terrain, but not through it, except unlocked doors
+				// Summoning can cross unlocked doors and barriers that pass non-projectile effects.
 				boolean[] passable = BArray.not(Dungeon.level.solid, null);
 				BArray.or(Dungeon.level.passable, passable, passable);
+				for (int i = 0; i < passable.length; i++) {
+					passable[i] |= Dungeon.level.cellAt(i).has(CellContent.PASSES_NON_PROJECTILES);
+				}
 				PathFinder.buildDistanceMap(pos, passable, Dungeon.level.distance(pos, enemy.pos)+3);
 
 				for (int c : PathFinder.NEIGHBOURS8){
 					if (Actor.findChar(enemy.pos+c) == null
 							&& PathFinder.distance[enemy.pos+c] != Integer.MAX_VALUE
 							&& Dungeon.level.passable[enemy.pos+c]
+							&& (!(Door.at(Dungeon.level, enemy.pos+c) instanceof IronDoor)
+									|| Door.is(Dungeon.level, enemy.pos+c, Door.State.OPEN))
 							&& (!hasProp(Necromancer.this, Property.LARGE) || Dungeon.level.openSpace[enemy.pos+c])
 							&& fieldOfView[enemy.pos+c]
 							&& Dungeon.level.trueDistance(pos, enemy.pos+c) < Dungeon.level.trueDistance(pos, summoningPos)){
@@ -342,6 +360,8 @@ public class Necromancer extends Mob {
 						for (int c : PathFinder.NEIGHBOURS8){
 							if (Actor.findChar(enemy.pos+c) == null
 									&& Dungeon.level.passable[enemy.pos+c]
+									&& (!(Door.at(Dungeon.level, enemy.pos+c) instanceof IronDoor)
+											|| Door.is(Dungeon.level, enemy.pos+c, Door.State.OPEN))
 									&& fieldOfView[enemy.pos+c]
 									&& (Dungeon.level.openSpace[enemy.pos+c] || !Char.hasProp(mySkeleton, Property.LARGE))
 									&& Dungeon.level.trueDistance(pos, enemy.pos+c) < Dungeon.level.trueDistance(pos, telePos)){

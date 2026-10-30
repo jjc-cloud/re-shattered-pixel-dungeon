@@ -123,7 +123,7 @@ public class Ballistica {
 		while (Dungeon.level.insideMap(cell)) {
 			boolean passBarrier = passProjectileBarriers && Dungeon.level.cellAt(cell).has(CellContent.PASSES_NON_PROJECTILES);
 			// 从外侧射来的投射物停在架构前，不能命中同格内的角色；内部发射不受架构限制。
-			if (collisionPos == null && cell != sourcePos && stopProjectileCover
+			if (collisionPos == null && cell != sourcePos && stopProjectileCover && !passBarrier
 					&& Dungeon.level.cellAt(cell).has(CellContent.BLOCKS_PROJECTILES)) {
 				collide(path.get(path.size() - 1));
 			}

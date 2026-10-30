@@ -28,6 +28,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRemoveCurse;
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.IronDoor;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SpectralNecromancerSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
@@ -102,6 +104,13 @@ public class SpectralNecromancer extends Necromancer {
 
 	@Override
 	public void summonMinion() {
+		Door door = Door.at(Dungeon.level, summoningPos);
+		if (door instanceof IronDoor && door.state() != Door.State.OPEN) {
+			summoning = false;
+			((SpectralNecromancerSprite) sprite).cancelSummoning();
+			spend(TICK);
+			return;
+		}
 		if (Actor.findChar(summoningPos) != null) {
 
 			int pushPos = pos;

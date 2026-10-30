@@ -84,11 +84,12 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V061_STAIRS, "地形重构",
 				"\n-现在地形由基础地格与其内容物构成，所有地形交互直接按来源处理，不再单独一对一映射结果。"
 				+ "\n-下水道区域与墙壁出水口相连的水域在被清除后会逐渐恢复。"
-				+ "\n-监狱区域的门替换为铁门，铁门不会遮挡视野，也不会被投掷物撞开。"
 				+ "\n-矿洞区域金属架构现在可以自由进入，且会挡住外部的投射物。"
 			));
-		changes.addButton(new ChangeButton(ChangeIcons.V021_KEEN_HEARING, "新天赋",
-				"\n-敏锐听觉：感知周围非睡眠怪物的声音。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V021_IRON_DOOR, "铁门",
+				"\n替换监狱的门为铁门，铁门不会被投射物打开、遮挡视野、阻断气体。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V021_KEEN_HEARING, "新天赋与成就",
+				"\n-天赋敏锐听觉：感知周围非睡眠怪物的声音。\n-成就财货两空：没能追上偷走物品的水晶宝箱怪。"));
 
 
 		changes = new ChangeInfo("增强", false, null);

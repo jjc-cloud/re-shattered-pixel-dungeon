@@ -33,6 +33,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.EtherealChains;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.MasterThievesArmband;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -77,7 +78,8 @@ public class Guard extends Mob {
 	//how the chains travel toward their target. ordinary guards need a clear line of fire,
 	//the rare variant ignores terrain on the way and only needs to see its target.
 	protected Ballistica chainsBallistica( int target ){
-		return new Ballistica(pos, target, Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER);
+		return new Ballistica(pos, target, Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER
+				| Ballistica.IGNORE_PROJECTILE_BARRIERS);
 	}
 
 	//whether the thrown chains actually land on their target
@@ -119,7 +121,9 @@ public class Guard extends Mob {
 			int newPos = -1;
 			for (int i : chain.subPath(1, chain.dist)){
 				//find the closest position to the guard that's open for the target
-				if (!Dungeon.level.solid[i] && Actor.findChar(i) == null
+				if ((!Dungeon.level.solid[i] || Dungeon.level.passable[i]
+						&& Dungeon.level.cellAt(i).has(CellContent.PASSES_NON_PROJECTILES))
+						&& Actor.findChar(i) == null
 						&& (Dungeon.level.openSpace[i] || !Char.hasProp(enemy, Property.LARGE))){
 					newPos = i;
 					break;
