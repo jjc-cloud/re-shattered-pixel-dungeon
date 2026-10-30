@@ -80,7 +80,8 @@ public class PrisonPainter extends RegularPainter {
 				for (int x = r.left+1; x < r.right; x++){
 					if (level.terrainAt(cell) == Terrain.CHASM && level.terrainAt(cell-level.width()) == Terrain.CHASM){
 						if (Random.Int(chance) == 0){
-							level.cellAt(cell).reset(Terrain.EMPTY, Terrain.REGION_DECO_ALT);
+							//悬吊牢笼挂在深渊上，不能把底下铺成地板
+							level.cellAt(cell).reset(Terrain.CHASM, Terrain.REGION_DECO_ALT);
 						}
 					}
 					cell++;

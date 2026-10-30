@@ -216,9 +216,9 @@ public class WandOfLivingEarth extends DamageWand {
 
 	@Override
 	public void fx(Ballistica bolt, Callback callback) {
-		MagicMissile.boltFromChar(curUser.sprite.parent,
+		MagicMissile.boltFromChar(fxSource().parent,
 				MagicMissile.EARTH,
-				curUser.sprite,
+				fxSource(),
 				bolt.collisionPos,
 				callback);
 		Sample.INSTANCE.play(Assets.Sounds.ZAP);

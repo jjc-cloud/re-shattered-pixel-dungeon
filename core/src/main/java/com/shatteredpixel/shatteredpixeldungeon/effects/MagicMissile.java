@@ -276,6 +276,10 @@ public class MagicMissile extends Emitter {
 		width = height = size;
 	}
 	
+	public float travelTime() {
+		return callback == null ? 0 : time;
+	}
+
 	public void setSpeed( float newSpeed ){
 		PointF d = PointF.diff( to, new PointF(x, y) );
 		PointF speed = new PointF( d ).normalize().scale( newSpeed );

@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items;
 
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
@@ -28,6 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Degrade;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Belongings;
@@ -698,7 +701,11 @@ public class Item implements Bundlable {
 	}
 
 	public int throwPos( Hero user, int dst){
-		return new Ballistica( user.pos, dst, Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER ).collisionPos;
+		return throwPos(user, user.pos, dst);
+	}
+
+	public int throwPos(Hero user, int from, int dst) {
+		return new Ballistica(from, dst, Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER).collisionPos;
 	}
 
 	public void throwSound(){
@@ -706,6 +713,25 @@ public class Item implements Bundlable {
 	}
 	
 	public void cast( final Hero user, final int dst ) {
+		if (user.buff(TimekeepersHourglass.timeFreeze.class) != null) {
+			int cell = throwPos(user, dst);
+			float delay = castDelay(user, cell);
+			Item missile = detach(user.belongings.backpack);
+			if (missile == null) return;
+			user.sprite.zap(cell);
+			user.busy();
+			throwSound();
+			QuickSlotButton.target(Actor.findChar(cell));
+			FrozenAttack.missile(user, missile, dst);
+			Invisibility.dispel(user);
+			if (user.buff(Talent.LethalMomentumTracker.class) != null) {
+				user.buff(Talent.LethalMomentumTracker.class).detach();
+				user.next();
+			} else {
+				user.spendAndNext(delay);
+			}
+			return;
+		}
 		
 		final int cell = throwPos( user, dst );
 		user.sprite.zap( cell );
@@ -751,6 +777,21 @@ public class Item implements Bundlable {
 		else missile.reset(user.sprite, cell, this, onImpact);
 	}
 	
+	/** 物品已在时停期间从背包取出；这里仅执行命中，不重复扣物品或行动时间。 */
+	public void resolveFrozenThrow(Hero user, int cell) {
+		setCurrent(user);
+		Char enemy = Actor.findChar(cell);
+		onThrow(cell);
+		if (enemy != null && user.hasTalent(Talent.IMPROVISED_PROJECTILES)
+				&& !(this instanceof MissileWeapon)
+				&& user.buff(Talent.ImprovisedProjectileCooldown.class) == null
+				&& enemy.alignment != user.alignment) {
+			Sample.INSTANCE.play(Assets.Sounds.HIT);
+			Buff.affect(enemy, Blindness.class, 1f + 2f * user.pointsInTalent(Talent.IMPROVISED_PROJECTILES));
+			Buff.affect(user, Talent.ImprovisedProjectileCooldown.class, 70f - 20f * user.pointsInTalent(Talent.IMPROVISED_PROJECTILES));
+		}
+	}
+
 	public float castDelay( Char user, int cell ){
 		return TIME_TO_THROW;
 	}
@@ -761,6 +802,11 @@ public class Item implements Bundlable {
 	
 	protected static Hero curUser = null;
 	protected static Item curItem = null;
+
+	public static Item currentItem() {
+		return curItem;
+	}
+
 	public void setCurrent( Hero hero ){
 		curUser = hero;
 		curItem = this;

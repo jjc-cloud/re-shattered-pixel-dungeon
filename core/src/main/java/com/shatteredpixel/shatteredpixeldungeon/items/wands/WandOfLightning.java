@@ -83,7 +83,7 @@ public class WandOfLightning extends DamageWand {
 		int impact = impactCell;
 
 		for (Char ch : affected.toArray(new Char[0])){
-			if (ch != curUser && ch.alignment == curUser.alignment && ch.pos != impact){
+			if (!ch.isAlive() || ch != curUser && ch.alignment == curUser.alignment && ch.pos != impact){
 				affected.remove(ch);
 			} else if (ch.buff(LightningCharge.class) != null){
 				affected.remove(ch);
@@ -97,6 +97,7 @@ public class WandOfLightning extends DamageWand {
 		if (impactInWater) multiplier = 1f;
 
 		for (Char ch : affected){
+			if (ch instanceof DwarfKing) Statistics.qualifiedForBossChallengeBadge = false;
 			if (ch == Dungeon.hero) PixelScene.shake( 2, 0.3f );
 			ch.sprite.centerEmitter().burst( SparkParticle.FACTORY, 3 );
 			ch.sprite.flash();
@@ -246,15 +247,11 @@ public class WandOfLightning extends DamageWand {
 
 		Char ch = Actor.findChar( cell );
 		if (ch != null) {
-			if (ch instanceof DwarfKing){
-				Statistics.qualifiedForBossChallengeBadge = false;
-			}
-
 			affected.add( ch );
-			arcs.add( new Lightning.Arc(curUser.sprite.center(), ch.sprite.center()));
+			arcs.add( new Lightning.Arc(fxSource().center(), ch.sprite.center()));
 			arc(ch);
 		} else {
-			arcs.add( new Lightning.Arc(curUser.sprite.center(), DungeonTilemap.raisedTileCenterToWorld(cell)));
+			arcs.add( new Lightning.Arc(fxSource().center(), DungeonTilemap.raisedTileCenterToWorld(cell)));
 			CellEmitter.center( cell ).burst( SparkParticle.FACTORY, 3 );
 			if (conducting) conduction.touch(cell);
 		}
@@ -265,7 +262,7 @@ public class WandOfLightning extends DamageWand {
 		}
 
 		//don't want to wait for the effect before processing damage.
-		curUser.sprite.parent.addToFront( new Lightning( arcs, null ) );
+		fxSource().parent.addToFront( new Lightning( arcs, null ) );
 		Sample.INSTANCE.play( Assets.Sounds.LIGHTNING );
 		callback.call();
 	}

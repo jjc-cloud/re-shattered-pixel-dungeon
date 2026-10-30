@@ -115,7 +115,6 @@ public class HallwayRoom extends StandardRoom {
 			carpet.overrideTile(1, 1, Carpet.SKIP);
 		} else if (Random.Int(2) == 0) {
 			Painter.fill(level, c.left + 1, c.top + 1, 1, 1, CellPlacement.ground(Terrain.EMPTY_SP, Terrain.STATUE_SP));
-			carpet.overrideTile(1, 1, Carpet.CITY_STATUE);
 		} else {
 			Painter.fill(level, c.left + 1, c.top + 1, 1, 1, CellPlacement.content(Terrain.REGION_DECO_ALT));
 			carpet.overrideTile(1, 1, Carpet.CITY_PEDESTAL);

@@ -77,30 +77,51 @@ public class ReShatteredChanges {
 		changes.hardlight(Window.TITLE_COLOR);
 		changeInfos.add(changes);
 
+		changes = new ChangeInfo("新内容", false, null);
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+
+		changes.addButton(new ChangeButton(ChangeIcons.V061_STAIRS, "地形重构",
+				"\n-现在地形由基础地格与其内容物构成，所有地形交互直接按来源处理，不再单独一对一映射结果。"
+				+ "\n-下水道区域与墙壁出水口相连的水域在被清除后会逐渐恢复。"
+				+ "\n-监狱区域的门替换为铁门，铁门不会遮挡视野，也不会被投掷物撞开。"
+				+ "\n-矿洞区域金属架构现在可以自由进入，且会挡住外部的投射物。"
+			));
+		changes.addButton(new ChangeButton(ChangeIcons.V021_KEEN_HEARING, "新天赋",
+				"\n-敏锐听觉：感知周围非睡眠怪物的声音。"));
+
+
 		changes = new ChangeInfo("增强", false, null);
 		changes.hardlight(CharSprite.POSITIVE);
 		changeInfos.add(changes);
 		
 		changes.addButton(new ChangeButton(ChangeIcons.V062_ROGUE_HEROARM, "疾行者",
 				"\n-灵猴之护改为被动收益。\n-飞速投掷现在绑定移动速度，根据移动速度造成额外伤害。"));
+		changes.addButton(new ChangeButton(ChangeIcons.PD_EYE, "邪眼",
+				"\n邪眼的蓄力攻击会无视可破坏地形。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V011_ANKH, "重生十字架",
+				"\n遗物状态下不再限制物品的获取与使用。"));
 
 		changes = new ChangeInfo("改动", false, null);
 		changes.hardlight(CharSprite.WARNING);
 		changeInfos.add(changes);
 
 		changes.addButton(new ChangeButton(ChangeIcons.V20_DUELIST_HEROARM, "勇士",
-				"\n上调复合损伤基础数值，但削减数值上限。现在会根据攻速差进行补偿，攻速差越大补偿越高，而非无条件使用副武器进行完整追击。"));
+				"\n上调复合损伤基础数值，削减数值上限。现在会根据攻速差进行补偿，攻速差越大补偿越高，而非无条件使用副武器进行完整追击。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V023_HOURGLASS, "时光沙漏",
+				"\n伤害性动作不再打断效果。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V080_NECROMANCER, "死灵法师",
+				"\n为补偿不遮挡视野的铁门，死灵法师的骷髅在不可达位置上时不再被重复召唤。"));
+
 
 		changes.addButton(new ChangeButton(ChangeIcons.V081_MISC, "杂项改动",
 				"\n-取消强制新手流程，首次开局即可自由选择英雄与挑战，无需先进入地牢取得手册。"
 				+ "\n-随机模式不再要求通关，首次开局即可设置随机天赋与随机挑战。"
 				+ "\n-踩到隐藏楼层入口时始终显示回响提示，不再要求关闭音效或将音效音量设为零。"
-				+ "\n-邪眼的解离射线现在会穿透可摧毁地形。\n-文本改动。"
+				+ "\n-移除了中文与英文以外的不支持语言。"
 			));
 		changes.addButton(new ChangeButton(ChangeIcons.V061_BUGFIX, "bug修复",
-				"\n-修复地毯被摧毁后，残留的过渡贴图仍阻止水覆盖下层地形的问题。"
-				+ "\n-修复检查破损地毯时仍显示地毯残片的问题，现在显示其下的地形。"
-				+ "\n-修复带有余烬的特殊地砖可以长草的问题。"
+				"\n-修复带有余烬的特殊地砖可以长草的问题。"
 				+ "\n-修复宝库Boss房内无圆点地砖被草覆盖后变成普通地板的问题。"
 				+ "\n-修复击败Boss后解锁的宝库门在开启时显示普通地砖、门顶部仍有残留的问题。"
 			));

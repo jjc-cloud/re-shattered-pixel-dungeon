@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
@@ -145,11 +147,15 @@ public abstract class Wand extends Item implements ChargeItem {
 
 	/** 瞄准、动画与命中共用同一弹道；贯穿与锥形法术保留自己的作用路径。 */
 	public final Ballistica prepareZap(Hero owner, int target) {
-		Ballistica bolt = new Ballistica(owner.pos, target, collisionProperties(target));
+		return prepareZap(owner.pos, target);
+	}
+
+	public final Ballistica prepareZap(int from, int target) {
+		Ballistica bolt = new Ballistica(from, target, collisionProperties(target));
 		if (!cursed && this instanceof DamageWand && !(this instanceof WandOfDisintegration)
 				&& !(this instanceof WandOfFireblast)) {
 			Ballistica contact = (bolt.collisionProperties & Ballistica.STOP_SOLID) != 0 ? bolt
-					: new Ballistica(owner.pos, target, bolt.collisionProperties | Ballistica.STOP_SOLID);
+					: new Ballistica(from, target, bolt.collisionProperties | Ballistica.STOP_SOLID);
 			int surface = (contact.collisionProperties & Ballistica.STOP_TARGET) != 0
 					&& contact.collisionPos == target && !Dungeon.level.solid[target] ? contact.collisionPos
 					: TerrainPropagation.impactCell(Dungeon.level, contact, CellContent.BREAKABLE);
@@ -493,6 +499,7 @@ public abstract class Wand extends Item implements ChargeItem {
 
 	@Override
 	public int buffedLvl() {
+		if (frozenLevel >= 0) return frozenLevel;
 		int lvl = super.buffedLvl();
 
 		if (charger != null && charger.target != null) {
@@ -531,6 +538,15 @@ public abstract class Wand extends Item implements ChargeItem {
 		return lvl;
 	}
 
+	public int frozenLevel = -1;
+
+	/** 每次命中独立保留弹道与等级，仅同步法杖自身累计的效果状态。 */
+	public void copyZapState(Wand source) {}
+
+	protected com.watabou.noosa.Visual fxSource() {
+		return FrozenAttack.visualSource(curUser);
+	}
+
 	public void updateLevel() {
 		maxCharges = Math.min( initialCharges() + level(), 10 );
 		curCharges = Math.min( curCharges, maxCharges );
@@ -545,9 +561,9 @@ public abstract class Wand extends Item implements ChargeItem {
 	}
 	
 	public void fx(Ballistica bolt, Callback callback) {
-		MagicMissile.boltFromChar( curUser.sprite.parent,
+		MagicMissile.boltFromChar( fxSource().parent,
 				MagicMissile.MAGIC_MISSILE,
-				curUser.sprite,
+				fxSource(),
 				bolt.collisionPos,
 				callback);
 		Sample.INSTANCE.play( Assets.Sounds.ZAP );
@@ -834,7 +850,8 @@ public abstract class Wand extends Item implements ChargeItem {
 
 					//完美处决：法杖命中叠1层
 					Char zapped = Actor.findChar(cell);
-					if (zapped != null && zapped != curUser && zapped.isAlive()
+					if (curUser.buff(TimekeepersHourglass.timeFreeze.class) == null
+							&& zapped != null && zapped != curUser && zapped.isAlive()
 							&& zapped.alignment == Char.Alignment.ENEMY){
 						Talent.onExecutionStack(curUser, Talent.EXEC_COND_WAND);
 					}
@@ -871,6 +888,13 @@ public abstract class Wand extends Item implements ChargeItem {
 						}
 					}
 					
+					if (FrozenAttack.wand(curUser, curWand, target)) {
+						if (curWand.cursed && !curWand.cursedKnown) GLog.n(Messages.get(Wand.class, "curse_discover", curWand.name()));
+						curWand.cursedKnown = true;
+						curWand.wandUsed();
+						return;
+					}
+
 					if (curWand.cursed){
 						if (!curWand.cursedKnown){
 							GLog.n(Messages.get(Wand.class, "curse_discover", curWand.name()));

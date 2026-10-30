@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
@@ -196,6 +197,11 @@ abstract public class MissileWeapon extends Weapon {
 	
 	@Override
 	public int throwPos(Hero user, int dst) {
+		return throwPos(user, user.pos, dst);
+	}
+
+	@Override
+	public int throwPos(Hero user, int from, int dst) {
 
 		int projecting = 0;
 		if (hasEnchant(Projecting.class, user)){
@@ -210,10 +216,10 @@ abstract public class MissileWeapon extends Weapon {
 
 		if (projecting > 0
 				&& (Dungeon.level.passable[dst] || Dungeon.level.avoid[dst] || Actor.findChar(dst) != null)
-				&& Dungeon.level.distance(user.pos, dst) <= Math.round(projecting * Enchantment.genericProcChanceMultiplier(user))){
+				&& Dungeon.level.distance(from, dst) <= Math.round(projecting * Enchantment.genericProcChanceMultiplier(user))){
 			return dst;
 		} else {
-			Ballistica shot = new Ballistica(user.pos, dst, Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER);
+			Ballistica shot = new Ballistica(from, dst, Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER);
 			int surface = shot.collisionPos == dst && !Dungeon.level.solid[dst] ? shot.collisionPos
 					: TerrainPropagation.impactCell(Dungeon.level, shot, CellContent.BREAKABLE);
 			return surface;
@@ -230,7 +236,7 @@ abstract public class MissileWeapon extends Weapon {
 	}
 
 	protected float adjacentAccFactor(Char owner, Char target){
-		if (Dungeon.level.adjacent( owner.pos, target.pos )) {
+		if (Dungeon.level.adjacent( FrozenAttack.origin(owner), target.pos )) {
 			//melee throws are less accurate, the point blank talent softens that
 			if (owner instanceof Hero){
 				return (0.5f + 0.25f*((Hero) owner).pointsInTalent(Talent.POINT_BLANK));
@@ -288,7 +294,7 @@ abstract public class MissileWeapon extends Weapon {
 			}
 		}
 		Char enemy = Actor.findChar( cell );
-		if (enemy == null || enemy == curUser) {
+		if (enemy == null || (enemy == curUser && !FrozenAttack.resolving())) {
 			parent = null;
 
 			//metamorphed seer shot logic

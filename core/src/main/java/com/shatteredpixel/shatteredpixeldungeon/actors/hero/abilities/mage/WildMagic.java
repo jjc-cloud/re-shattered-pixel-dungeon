@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.mage;
 
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -143,6 +144,10 @@ public class WildMagic extends ArmorAbility {
 
 		float startTime = Game.timeTotal;
 		if (cur.beginZap(hero, cell)) {
+			if (FrozenAttack.wand(hero, cur, cell)) {
+				afterZap(cur, wands, hero, cell);
+				return;
+			}
 			if (!cur.cursed) {
 				cur.fx(aim, new Callback() {
 					@Override

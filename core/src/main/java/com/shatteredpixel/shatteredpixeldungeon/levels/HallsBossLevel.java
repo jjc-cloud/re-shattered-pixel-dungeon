@@ -149,7 +149,8 @@ public class HallsBossLevel extends Level {
 
 		patch = Patch.generate(width, height, 0.30f, 3, true);
 		for (int i = 0; i < length(); i++) {
-			if ((terrainAt(i) == Terrain.EMPTY || hasTerrain(i, Terrain.STATUE) || hasTerrain(i, Terrain.REGION_DECO)) && patch[i]) {
+			// 水只铺在空地上：瓦砾和雕像不再泡在水里
+			if (terrainAt(i) == Terrain.EMPTY && patch[i]) {
 				cellAt(i).place(Terrain.WATER);
 			}
 		}

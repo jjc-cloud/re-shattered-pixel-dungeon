@@ -210,8 +210,9 @@ public class TerrainFeaturesTilemap extends DungeonTilemap {
 		if (type == Terrain.STATUE || type == Terrain.STATUE_SP) {
 			Pixmap foreground = image.texture.bitmap;
 			Pixmap terrain = TextureCache.get(Dungeon.level.tilesTex()).bitmap;
-			int raised = type == Terrain.STATUE ? DungeonTileSheet.RAISED_STATUE : DungeonTileSheet.RAISED_STATUE_SP;
-			int floor = type == Terrain.STATUE ? DungeonTileSheet.FLOOR : DungeonTileSheet.FLOOR_SP;
+			// 普通与特殊地板雕像共用透明本体和阴影；特殊底图里的阴影并未按特殊地板着色。
+			int raised = DungeonTileSheet.RAISED_STATUE;
+			int floor = DungeonTileSheet.FLOOR;
 			int[] pixels = new int[SIZE * SIZE];
 			for (int y = 0; y < SIZE; y++) for (int x = 0; x < SIZE; x++) {
 				int rgba = foreground.getPixel(visual % 16 * SIZE + x, visual / 16 * SIZE + y);

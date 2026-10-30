@@ -83,7 +83,7 @@ public class v4_X_Changes {
 		changeInfos.add(changes);
 
 		changes.addButton(new ChangeButton(ChangeIcons.V40_GREATSWORD_CRYSTAL, "附魔平衡调整",
-				"\n-魔晶附魔的额外魔法伤害由25%提高至33%。\n-近战魔晶武器的平均耐久由约33次攻击调整为+0时50次，随等级递减至+6及以上时30次；魔晶灵能弓保持平均50次。\n-魔晶投掷武器的使用次数上限由50次降低至30次。\n-异质与腐化附魔的基础触发概率由20%提高至25%。\n-繁茂附魔的基础平均催生草地数量由1提高至1.5。"));
+				"\n-魔晶附魔的额外魔法伤害由25%提高至33%。\n-近战魔晶武器的平均耐久由约33次攻击调整为+0时50次，随等级递减至+6及以上时30次；魔晶灵能弓保持平均50次。\n-魔晶投掷武器的使用次数上限由50次降低至30次。\n-腐化附魔的基础触发概率由20%提高至25%。\n-繁茂附魔的基础平均催生草地数量由1提高至1.5。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V33_IMP, "宝库调整",
 				"\n-听见视野外敌人移动时，会显示短暂的敌人轮廓，并揭示六格路径范围内的目标地形。\n-入口附近额外生成一瓶治疗药剂，入口相邻房间不再出现清醒的高阶敌人。\n-圆形哨兵房与激光房的攻击节奏放缓，交替火焰房增加一格安全边缘。\n-巨型元素切换形态时会播放对应音效。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V061_BUGFIX, "上游修复",
@@ -142,11 +142,9 @@ public class v4_X_Changes {
 				"I expect to continue releasing waves of new art and tweaks each major update for the forseeable future, **please let me know what you think!**"));
 
 		changes.addButton( new ChangeButton( ChangeIcons.V40_GREATSWORD_CRYSTAL, "New Enchantments!",
-				"**Four new enchantments and two new curses** have been added for weapons! Long-time players will recognize several of these as reworked enchantments that were previously removed years ago.\n" +
+				"**Two new enchantments and two new curses** have been added for weapons! Long-time players will recognize several of these as reworked enchantments that were previously removed years ago.\n" +
 				"\n" +
-				"**- Venomous** is a returning common enchant that can apply stacking poison on a delay.\n" +
 				"**- Vorpal** is a returning uncommon enchant that can convert damage into non-stacking bleed.\n" +
-				"**- Eldritch** is a returning uncommon enchant that can apply fear to all nearby enemies except your primary target.\n" +
 				"**- Crystal** is a new rare enchant that boosts damage, but requires you to work around limited durability.\n" +
 				"**- Pressurized** is a new curse that can create a geyser of water, pushing both you and enemies away.\n" +
 				"**- Wondrous** is a new curse that can trigger random cursed wand effects."));

@@ -73,6 +73,13 @@ public class WandOfRegrowth extends Wand {
 	private int totChrgUsed = 0;
 	private int chargesOverLimit = 0;
 
+	@Override
+	public void copyZapState(Wand source) {
+		WandOfRegrowth wand = (WandOfRegrowth) source;
+		totChrgUsed = wand.totChrgUsed;
+		chargesOverLimit = wand.chargesOverLimit;
+	}
+
 	ConeAOE cone;
 	int target;
 
@@ -264,18 +271,18 @@ public class WandOfRegrowth extends Wand {
 			if (longestRay == null || ray.dist > longestRay.dist){
 				longestRay = ray;
 			}
-			((MagicMissile)curUser.sprite.parent.recycle( MagicMissile.class )).reset(
+			((MagicMissile)fxSource().parent.recycle( MagicMissile.class )).reset(
 					MagicMissile.FOLIAGE_CONE,
-					curUser.sprite,
+					fxSource(),
 					ray.path.get(ray.dist),
 					null
 			);
 		}
 
 		//final zap at half distance of the longest ray, for timing of the actual wand effect
-		MagicMissile.boltFromChar( curUser.sprite.parent,
+		MagicMissile.boltFromChar( fxSource().parent,
 				MagicMissile.FOLIAGE_CONE,
-				curUser.sprite,
+				fxSource(),
 				longestRay.path.get(longestRay.dist/2),
 				callback );
 		Sample.INSTANCE.play( Assets.Sounds.ZAP );

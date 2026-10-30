@@ -187,8 +187,11 @@ public class Eye extends Mob {
 		Invisibility.dispel(this);
 		for (int pos : beam.subPath(1, beam.dist)) {
 
-			terrainAffected |= Dungeon.level.affectTerrain(pos, (CellContent.BREAKABLE | CellContent.BURNABLE
-					| CellContent.DISINTEGRATION_BREAKABLE));
+			// 雕像/台柱对解离免疫，仍可被爆炸等其他来源破坏。
+			if (!Dungeon.level.cellAt(pos).has(CellContent.DISINTEGRATION_PROOF)) {
+				terrainAffected |= Dungeon.level.affectTerrain(pos, (CellContent.BREAKABLE | CellContent.BURNABLE
+						| CellContent.DISINTEGRATION_BREAKABLE));
+			}
 
 			Char ch = Actor.findChar( pos );
 			if (ch == null) {

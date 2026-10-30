@@ -141,8 +141,9 @@ public class Terrain {
 				CUSTOM_DECO_EMPTY, ENTRANCE, ENTRANCE_SP, EXIT, UNLOCKED_EXIT, PEDESTAL}) {
 			flags[ground] |= SUPPORTS_COVER;
 		}
-		// 随机水、草和陷阱只布置在普通地板上；特殊地板和装饰地板保持固定结构。
+		// 随机水、草和陷阱只避开不能长草的特殊地砖；地面装饰仍是普通地板，照旧可以积水长草。
 		flags[EMPTY] |= GROWABLE | FLOODABLE | SCATTERABLE;
+		flags[EMPTY_DECO] |= GROWABLE | FLOODABLE | SCATTERABLE;
 		// 固定设施所在的地面不参与随机环境布置，但仍可承载运行时产生的覆盖物。
 		for (int ground : new int[]{EMPTY_WELL, CUSTOM_DECO_EMPTY, ENTRANCE, ENTRANCE_SP,
 				EXIT, LOCKED_EXIT, UNLOCKED_EXIT, PEDESTAL, WELL}) flags[ground] |= RESERVED;

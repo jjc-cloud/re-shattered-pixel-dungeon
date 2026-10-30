@@ -172,9 +172,9 @@ public class WandOfWarding extends Wand {
 
 	@Override
 	public void fx(Ballistica bolt, Callback callback) {
-		MagicMissile m = MagicMissile.boltFromChar(curUser.sprite.parent,
+		MagicMissile m = MagicMissile.boltFromChar(fxSource().parent,
 				MagicMissile.WARD,
-				curUser.sprite,
+				fxSource(),
 				bolt.collisionPos,
 				callback);
 		

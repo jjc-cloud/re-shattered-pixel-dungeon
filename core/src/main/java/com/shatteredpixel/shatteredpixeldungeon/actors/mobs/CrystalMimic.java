@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -42,6 +43,7 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MimicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
+import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
@@ -49,10 +51,25 @@ import java.util.ArrayList;
 
 public class CrystalMimic extends Mimic {
 
+	private boolean hasStolenItem;
+	private static final String HAS_STOLEN_ITEM = "has_stolen_item";
+
 	{
 		spriteClass = MimicSprite.Crystal.class;
 
 		FLEEING = new Fleeing();
+	}
+
+	@Override
+	public void storeInBundle(Bundle bundle) {
+		super.storeInBundle(bundle);
+		bundle.put(HAS_STOLEN_ITEM, hasStolenItem);
+	}
+
+	@Override
+	public void restoreFromBundle(Bundle bundle) {
+		super.restoreFromBundle(bundle);
+		hasStolenItem = bundle.getBoolean(HAS_STOLEN_ITEM);
 	}
 
 	@Override
@@ -163,9 +180,11 @@ public class CrystalMimic extends Mimic {
 
 			if (item instanceof Honeypot){
 				items.add(((Honeypot)item).shatter(this, this.pos));
-				item.detach( hero.belongings.backpack );
+				hasStolenItem |= item.detach(hero.belongings.backpack) != null;
 			} else {
-				items.add(item.detach( hero.belongings.backpack ));
+				Item stolen = item.detach(hero.belongings.backpack);
+				items.add(stolen);
+				hasStolenItem |= stolen != null;
 				if ( item instanceof Honeypot.ShatteredPot)
 					((Honeypot.ShatteredPot)item).pickupPot(this);
 			}
@@ -187,6 +206,7 @@ public class CrystalMimic extends Mimic {
 		protected void escaped() {
 			if (!Dungeon.level.heroFOV[pos] && Dungeon.level.distance(Dungeon.hero.pos, pos) >= 6) {
 				GLog.n(Messages.get(CrystalMimic.class, "escaped"));
+				if (hasStolenItem) Badges.validateCrystalMimicEscaped();
 				destroy();
 				sprite.killAndErase();
 			} else {

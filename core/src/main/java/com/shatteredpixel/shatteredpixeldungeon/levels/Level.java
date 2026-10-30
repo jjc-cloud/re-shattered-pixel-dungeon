@@ -409,7 +409,7 @@ public abstract class Level implements Bundlable {
 					cellAt(i).place(Terrain.SEWER_BARREL_MARKED_ALT);
 				}
 			}
-			// 水已经铺完，把每处出水口相连的水体登记下来
+			// 下水道区域统一登记出水口水域，包含第五层 Boss 入口房与战斗区域。
 			SewerSpring.create(this);
 		}
 		
@@ -610,6 +610,7 @@ public abstract class Level implements Bundlable {
 		buildFlagMaps();
 		cleanWalls();
 		sewerSpring = (SewerSpring) blobs.get(SewerSpring.class);
+		if (sewerSpring != null) sewerSpring.ensureIndex(this);
 		if (bundle.contains("cave_collapse")) {
 			caveCollapse = new CaveCollapse(this);
 			caveCollapse.restoreFromBundle(bundle.getBundle("cave_collapse"));

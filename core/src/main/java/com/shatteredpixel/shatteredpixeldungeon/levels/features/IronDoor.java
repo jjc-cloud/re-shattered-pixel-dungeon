@@ -28,4 +28,12 @@ public class IronDoor extends Door {
 		if (unlocked()) return Messages.get(this, state() == State.OPEN ? "open_name" : "name");
 		return super.name();
 	}
+
+	/** 关闭的铁门对投射物等同墙体：投射物停在门外，不能压在门上。 */
+	@Override public int properties() {
+		int properties = super.properties();
+		return state() == State.OPEN
+				? properties & ~BLOCKS_PROJECTILES
+				: properties | BLOCKS_PROJECTILES;
+	}
 }

@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items;
 
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
@@ -281,7 +282,8 @@ abstract public class KindOfWeapon extends EquipableItem {
 	
 	public boolean canReach( Char owner, int target){
 		int reach = reachFactor(owner);
-		if (Dungeon.level.distance( owner.pos, target ) > reach){
+		int from = FrozenAttack.origin(owner);
+		if (Dungeon.level.distance( from, target ) > reach){
 			return false;
 		} else {
 			boolean[] passable = BArray.not(Dungeon.level.solid, null);
@@ -291,7 +293,7 @@ abstract public class KindOfWeapon extends EquipableItem {
 			
 			PathFinder.buildDistanceMap(target, passable, reach);
 			
-			return PathFinder.distance[owner.pos] <= reach;
+			return PathFinder.distance[from] <= reach;
 		}
 	}
 

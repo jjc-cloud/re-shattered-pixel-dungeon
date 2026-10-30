@@ -167,8 +167,13 @@ public class Dart extends MissileWeapon {
 
 	@Override
 	public int throwPos(Hero user, int dst) {
+		return throwPos(user, user.pos, dst);
+	}
+
+	@Override
+	public int throwPos(Hero user, int from, int dst) {
 		updateCrossbow();
-		return super.throwPos(user, dst);
+		return super.throwPos(user, from, dst);
 	}
 
 	@Override

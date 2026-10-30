@@ -119,8 +119,10 @@ public class SecretPetrifiedRoom extends SecretRoom {
 			} else if (roll < 35) {
 				if (Dungeon.depth >= 6 && Dungeon.depth <= 10) {
 					int prisonDecoration = Random.Int(3);
+					//悬吊牢笼底下留深渊，不能铺成地板
 					Painter.set(level, p, prisonDecoration == 0 ? CellPlacement.content(Terrain.REGION_DECO)
-							: prisonDecoration == 1 ? CellPlacement.content(Terrain.REGION_DECO_ALT) : CellPlacement.content(Terrain.STATUE));
+							: prisonDecoration == 1 ? CellPlacement.ground(Terrain.CHASM, Terrain.REGION_DECO_ALT)
+							: CellPlacement.content(Terrain.STATUE));
 				} else {
 					Painter.set(level, p, Random.Int(2) == 0
 							? CellPlacement.content(Terrain.REGION_DECO) : CellPlacement.content(Terrain.STATUE));

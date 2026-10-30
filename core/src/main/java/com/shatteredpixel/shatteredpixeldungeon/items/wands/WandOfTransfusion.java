@@ -71,6 +71,11 @@ public class WandOfTransfusion extends DamageWand {
 	private boolean freeCharge = false;
 
 	@Override
+	public void copyZapState(Wand source) {
+		freeCharge = ((WandOfTransfusion) source).freeCharge;
+	}
+
+	@Override
 	public void onZap(Ballistica beam) {
 
 		for (int c : beam.subPath(0, beam.dist))
@@ -172,8 +177,8 @@ public class WandOfTransfusion extends DamageWand {
 
 	@Override
 	public void fx(Ballistica beam, Callback callback) {
-		curUser.sprite.parent.add(
-				new Beam.HealthRay(curUser.sprite.center(), DungeonTilemap.raisedTileCenterToWorld(beam.collisionPos)));
+		fxSource().parent.add(
+				new Beam.HealthRay(fxSource().center(), DungeonTilemap.raisedTileCenterToWorld(beam.collisionPos)));
 		Sample.INSTANCE.play( Assets.Sounds.RAY );
 		callback.call();
 	}

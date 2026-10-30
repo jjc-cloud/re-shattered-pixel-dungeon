@@ -150,17 +150,21 @@ public class HiddenLevel extends Level {
 			}
 		} else {
 			//下水道木桶 / 监狱铁笼 / 矿洞金属架构 / 恶魔大厅岩石瓦砾，全是 REGION_DECO
+			//监狱的 _ALT 是悬吊牢笼，底下留深渊，不能铺成地板
+			CellPlacement altDeco = region == 1
+					? CellPlacement.ground(Terrain.CHASM, Terrain.REGION_DECO_ALT)
+					: CellPlacement.content(Terrain.REGION_DECO_ALT);
 			int placed = 0;
 			for (int cell : new ArrayList<>(edgeCells)) {
 				if (Random.Int(3) == 0) {
-					Painter.set(this, cell, Random.Int(3) == 0 ? CellPlacement.content(Terrain.REGION_DECO_ALT) : CellPlacement.content(Terrain.REGION_DECO));
+					Painter.set(this, cell, Random.Int(3) == 0 ? altDeco : CellPlacement.content(Terrain.REGION_DECO));
 					placed++;
 				}
 			}
 			//小房间贴墙空地少时按概率可能一个都出不来，保底铺三个
 			while (placed < 3 && !edgeCells.isEmpty()) {
 				int pos = edgeCells.remove(Random.Int(edgeCells.size()));
-				Painter.set(this, pos, Random.Int(3) == 0 ? CellPlacement.content(Terrain.REGION_DECO_ALT) : CellPlacement.content(Terrain.REGION_DECO));
+				Painter.set(this, pos, Random.Int(3) == 0 ? altDeco : CellPlacement.content(Terrain.REGION_DECO));
 				placed++;
 			}
 		}

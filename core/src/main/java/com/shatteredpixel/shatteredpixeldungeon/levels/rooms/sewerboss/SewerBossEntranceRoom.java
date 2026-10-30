@@ -60,7 +60,8 @@ public class SewerBossEntranceRoom extends EntranceRoom {
 			door.set( Room.Door.Type.REGULAR );
 			
 			if (door.y == top || door.y == top+1){
-				Painter.drawInside( level, this, door, 1, CellPlacement.content(Terrain.WATER));
+				// 门内的水路需要挖开装饰墙，不能只把水叠在墙下。
+				Painter.drawInside( level, this, door, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.WATER));
 			}
 		}
 		

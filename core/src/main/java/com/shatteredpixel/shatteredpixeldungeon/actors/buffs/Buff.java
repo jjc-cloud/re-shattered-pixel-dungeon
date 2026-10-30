@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -82,6 +83,7 @@ public class Buff extends Actor {
 	}
 	
 	public void detach() {
+		if (FrozenAttack.detachBuff(this)) return;
 		if (target.remove( this ) && target.sprite != null) fx( false );
 	}
 	

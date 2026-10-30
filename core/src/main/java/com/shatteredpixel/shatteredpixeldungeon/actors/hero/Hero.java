@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero;
 
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 
@@ -599,6 +600,7 @@ public class Hero extends Char {
 	
 	@Override
 	public boolean attack(Char enemy, float dmgMulti, float dmgBonus, float accMulti) {
+		if (FrozenAttack.melee(this, enemy, dmgMulti, dmgBonus, accMulti, false)) return false;
 		if (this == Dungeon.hero && enemy instanceof Mob && enemy.isAlive()
 				&& enemy.alignment == Alignment.ENEMY && enemy.invisible <= 0) {
 			//沿用灵壤泥人的仇恨指定；实际攻击动作才通知哨位，未命中也算攻击。
@@ -2613,20 +2615,11 @@ public class Hero extends Char {
 		}
 		
 		AttackIndicator.target(attackTarget);
-		boolean wasEnemy = attackTarget.alignment == Alignment.ENEMY
-				|| (attackTarget instanceof Mimic && attackTarget.alignment == Alignment.NEUTRAL);
-
-		boolean hit = attackWithWeapons(attackTarget);
-		
-		Invisibility.dispel();
-		spend( attackDelay() );
-
-		if (hit && subClass == HeroSubClass.GLADIATOR && wasEnemy){
-			Buff.affect( this, Combo.class ).hit(attackTarget);
-		}
-
-		if (hit && heroClass == HeroClass.DUELIST && wasEnemy){
-			Buff.affect( this, Sai.ComboStrikeTracker.class).addHit( attackTarget );
+		if (FrozenAttack.melee(this, attackTarget, 1f, 0f, 1f, true)) {
+			Invisibility.dispel();
+			spend(attackDelay());
+		} else {
+			resolveMeleeAttack(attackTarget);
 		}
 
 		curAction = null;
@@ -2636,6 +2629,24 @@ public class Hero extends Char {
 	}
 
 	private boolean secondaryAttack;
+
+	public void resolveMeleeAttack(Char target) {
+		Char previousTarget = attackTarget;
+		attackTarget = target;
+		try {
+			boolean wasEnemy = target.alignment == Alignment.ENEMY
+					|| (target instanceof Mimic && target.alignment == Alignment.NEUTRAL);
+			boolean hit = attackWithWeapons(target);
+			if (!FrozenAttack.resolving()) {
+				Invisibility.dispel();
+				spend(attackDelay());
+			}
+			if (hit && subClass == HeroSubClass.GLADIATOR && wasEnemy) Buff.affect(this, Combo.class).hit(target);
+			if (hit && heroClass == HeroClass.DUELIST && wasEnemy) Buff.affect(this, Sai.ComboStrikeTracker.class).addHit(target);
+		} finally {
+			attackTarget = previousTarget;
+		}
+	}
 
 	public boolean attackWithWeapons(Char target) {
 		boolean hit = attack(target);

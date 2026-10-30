@@ -1,37 +1,48 @@
 package com.shatteredpixel.shatteredpixeldungeon.tiles;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellState;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.AmbitiousImpRoom;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
-import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.Carpet;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.custom.VaultTiles;
 import com.watabou.gltextures.TextureCache;
 import com.watabou.noosa.Image;
+import com.watabou.noosa.Camera;
+import com.watabou.noosa.Game;
 import com.watabou.utils.PointF;
 import com.watabou.utils.RectF;
 
 import java.util.ArrayList;
 
-/** 检查窗口使用实际格子的叠图，不需要创建“灰烬地板”等组合类型。 */
+/** 顶部快照截取地图实际渲染帧，单项查询图标仍独立取图。 */
 public class CellPreview extends Image {
+	private static final ArrayList<CellPreview> pendingSnapshots = new ArrayList<>();
 	private final ArrayList<Image> layers = new ArrayList<>();
 	private final ArrayList<Image> fixedLayers = new ArrayList<>();
 	private final int contentType;
+	private int snapshotCell = -1;
+	private Level snapshotLevel;
 
-	// 不指定内容时显示整格；指定类型时只显示该内容；传入图像时只做居中快照。
+	// 不指定内容时请求实际帧；指定内容或图像时只生成独立查询图标。
 	public CellPreview(int cell, Object... content) {
 		width = height = DungeonTilemap.SIZE;
 		contentType = content.length > 0 && content[0] instanceof Integer ? (Integer) content[0] : -1;
+		if (content.length == 0) {
+			snapshotCell = cell;
+			snapshotLevel = Dungeon.level;
+			height += 4; // 雕像等物件向本格上方伸出的部分也保留。
+			synchronized (pendingSnapshots) {
+				pendingSnapshots.add(this);
+			}
+			return;
+		}
 		CellState state = Dungeon.level.cellAt(cell);
 		if (content.length > 0 && content[0] instanceof Image) {
 			layers.add((Image) content[0]);
@@ -50,47 +61,6 @@ public class CellPreview extends Image {
 					image = new Image(Dungeon.level.tilesTex(), visual % 16 * DungeonTilemap.SIZE,
 							visual / 16 * DungeonTilemap.SIZE, DungeonTilemap.SIZE, DungeonTilemap.SIZE);
 				}
-				layers.add(image);
-			}
-		} else {
-			int terrain = state.terrain();
-			boolean structure = DungeonTileSheet.wallStitcheable(terrain) || DungeonTileSheet.doorTile(terrain);
-			if (state.hasTerrain(Terrain.WATER) && !structure) {
-				Image water = new Image(Dungeon.level.waterTex());
-				water.frame(0, 0, 16, 16);
-				layers.add(water);
-			} else if (structure) {
-				int visual = DungeonTileSheet.directFlatVisuals.get(terrain, DungeonTileSheet.FLAT_WALL);
-				layers.add(new Image(Dungeon.level.tilesTex(), visual % 16 * DungeonTilemap.SIZE,
-						visual / 16 * DungeonTilemap.SIZE, DungeonTilemap.SIZE, DungeonTilemap.SIZE));
-			} else layers.add(DungeonTerrainTilemap.tile(cell, state.ground()));
-			if (!structure && !CellState.isGround(terrain) && terrain != Terrain.WATER
-					&& CellContent.family(terrain) != Terrain.TRAP
-					&& TerrainFeaturesTilemap.contentVisual(cell, terrain) < 0) {
-				layers.add(DungeonTerrainTilemap.tile(cell, terrain));
-			}
-			addCustom(cell, Dungeon.level.customTiles);
-			addCarpetSeams(cell);
-			if (!state.buried()) {
-				for (int type : CellFeatures.CONTENT_TYPES) if (state.hasTerrain(type)) {
-					Image image = TerrainFeaturesTilemap.contentImage(cell, type);
-					if (image != null) layers.add(image);
-				}
-				Trap trap = Dungeon.level.traps.get(cell);
-				if (trap != null && trap.visible) layers.add(TerrainFeaturesTilemap.getTrapVisual(trap));
-				Plant plant = Dungeon.level.plants.get(cell);
-				if (plant != null) layers.add(TerrainFeaturesTilemap.getPlantVisual(plant));
-			}
-			addCustom(cell, Dungeon.level.customTerrain);
-			Heap heap = Dungeon.level.heaps.get(cell);
-			if (heap != null && heap.seen && !state.buried()) {
-				ItemSprite image = new ItemSprite();
-				image.view(heap);
-				layers.add(image);
-			}
-			Char ch = Actor.findChar(cell);
-			if (ch != null && ch.sprite != null && Dungeon.level.heroFOV[cell] && ch.sprite.visible) {
-				Image image = new Image(ch.sprite);
 				layers.add(image);
 			}
 		}
@@ -112,6 +82,53 @@ public class CellPreview extends Image {
 				maxY = Math.max(maxY, py);
 			}
 			if (maxX >= minX && maxY >= minY) image.frame(minX, minY, maxX - minX + 1, maxY - minY + 1);
+		}
+	}
+
+	/** 仅在地图画完、界面画出前由渲染线程调用，每个窗口只截一次。 */
+	public static void capturePending() {
+		ArrayList<CellPreview> requests;
+		synchronized (pendingSnapshots) {
+			if (pendingSnapshots.isEmpty()) return;
+			requests = new ArrayList<>(pendingSnapshots);
+			pendingSnapshots.clear();
+		}
+		Camera camera = Camera.main;
+		int bufferWidth = Gdx.graphics.getBackBufferWidth();
+		int bufferHeight = Gdx.graphics.getBackBufferHeight();
+		float pixelScaleX = bufferWidth / (float) Game.width;
+		float pixelScaleY = bufferHeight / (float) Game.height;
+		for (CellPreview preview : requests) {
+			if (!preview.alive || preview.snapshotLevel != Dungeon.level) continue;
+			float worldX = preview.snapshotCell % Dungeon.level.width() * DungeonTilemap.SIZE;
+			float worldY = preview.snapshotCell / Dungeon.level.width() * DungeonTilemap.SIZE - 4;
+			// 直接使用这一帧的相机矩阵，缩放、平移和震屏都与地图一致。
+			int left = Math.round((worldX * camera.matrix[0] + camera.matrix[12] + 1) * bufferWidth / 2);
+			int top = Math.round((1 - worldY * camera.matrix[5] - camera.matrix[13]) * bufferHeight / 2);
+			int width = Math.max(1, Math.round(preview.width * camera.zoom * pixelScaleX));
+			int height = Math.max(1, Math.round(preview.height * camera.zoom * pixelScaleY));
+			int clipLeft = Math.max(left, Math.max(0, Math.round(camera.x * pixelScaleX)));
+			int clipTop = Math.max(top, Math.max(0, Math.round(camera.y * pixelScaleY)));
+			int clipRight = Math.min(left + width, Math.min(bufferWidth,
+					Math.round((camera.x + camera.screenWidth()) * pixelScaleX)));
+			int clipBottom = Math.min(top + height, Math.min(bufferHeight,
+					Math.round((camera.y + camera.screenHeight()) * pixelScaleY)));
+			int[] pixels = new int[width * height];
+			java.util.Arrays.fill(pixels, 0x000000FF);
+			if (clipRight > clipLeft && clipBottom > clipTop) {
+				Pixmap frame = Pixmap.createFromFrameBuffer(clipLeft, bufferHeight - clipBottom,
+						clipRight - clipLeft, clipBottom - clipTop);
+				try {
+					for (int y = 0; y < frame.getHeight(); y++) for (int x = 0; x < frame.getWidth(); x++) {
+						// OpenGL 从底向上读回，转成图像的从顶向下行序。
+						pixels[x + clipLeft - left + (y + clipTop - top) * width]
+								= frame.getPixel(x, frame.getHeight() - 1 - y) | 0xFF;
+					}
+				} finally {
+					frame.dispose();
+				}
+			}
+			preview.layers.add(new Image(TextureCache.createPixels(preview, width, height, pixels)));
 		}
 	}
 
@@ -180,6 +197,14 @@ public class CellPreview extends Image {
 
 	@Override public void draw() {
 		for (Image image : layers) {
+			if (snapshotCell >= 0) {
+				image.scale.set(scale.x * width / image.width, scale.y * height / image.height);
+				image.x = x;
+				image.y = y;
+				image.camera = camera();
+				image.draw();
+				continue;
+			}
 			float fit = Math.min(1f, DungeonTilemap.SIZE / Math.max(image.width, image.height));
 			image.scale.set(scale).scale(fit);
 			image.x = x + (width * scale.x - image.width()) / 2;
@@ -190,9 +215,13 @@ public class CellPreview extends Image {
 	}
 
 	@Override public void destroy() {
+		synchronized (pendingSnapshots) {
+			pendingSnapshots.remove(this);
+		}
 		for (Image image : layers) image.destroy();
 		layers.clear();
 		fixedLayers.clear();
+		if (snapshotCell >= 0) TextureCache.remove(this);
 		super.destroy();
 	}
 }

@@ -266,14 +266,18 @@ public class CellState implements Bundlable {
 
 	public List<CellContent> targets(int property) {
 		ArrayList<CellContent> targets = new ArrayList<>();
-		for (CellContent content : contents) if (exposed(content) && content.has(property)) targets.add(content);
+		for (CellContent content : contents) if (exposed(content) && content.has(property)
+				&& ((property & CellContent.DISINTEGRATION_BREAKABLE) == 0
+				|| !content.has(CellContent.DISINTEGRATION_PROOF))) targets.add(content);
 		return targets;
 	}
 
 	/** 范围作用只处理开始时捕获的对象，不把同次作用新生成的内容再次当作目标。 */
 	public synchronized boolean affect(int property, boolean burned, List<CellContent> targets) {
 		ArrayList<CellContent> affected = new ArrayList<>();
-		for (CellContent content : targets) if (contents.contains(content) && content.has(property)) affected.add(content);
+		for (CellContent content : targets) if (contents.contains(content) && content.has(property)
+				&& ((property & CellContent.DISINTEGRATION_BREAKABLE) == 0
+				|| !content.has(CellContent.DISINTEGRATION_PROOF))) affected.add(content);
 		if (affected.isEmpty()) return false;
 		contents.removeAll(affected);
 		// 先公布移除后的通行状态，再结算产物，掉落才会落在物件原来所在的格子。

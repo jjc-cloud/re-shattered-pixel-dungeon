@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells;
 
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
@@ -137,6 +138,11 @@ public class MindForm extends ClericSpell {
 					else
 						QuickSlotButton.target(Actor.findChar(cell));
 
+					if (FrozenAttack.wand(Dungeon.hero, wand, target)) {
+						((ClassArmor)Dungeon.hero.belongings.armor()).charge -= Trinity.trinityChargeUsePerEffect(wand.getClass());
+						wand.wandUsed();
+						return;
+					}
 					wand.fx(shot, new Callback() {
 						public void call() {
 							wand.resolveZap(shot);

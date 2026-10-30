@@ -39,6 +39,8 @@ public class CellContent implements Bundlable {
 	public static final int OVERHEAD = 32768;
 	public static final int BLOCKS_PROJECTILES = 65536;
 	public static final int PASSES_NON_PROJECTILES = 131072;
+	// 解离射线不破坏：雕像/台柱仍吃爆炸、冲击波、投射物等其他来源。
+	public static final int DISINTEGRATION_PROOF = 262144;
 
 	protected volatile int type;
 	private volatile int properties;
@@ -69,9 +71,11 @@ public class CellContent implements Bundlable {
 		if (type == Terrain.WALL || type == Terrain.WALL_DECO || type == Terrain.SECRET_DOOR || type == Terrain.COLLAPSE_WALL) properties |= COVERS_CONTENTS;
 		switch (type) {
 			case Terrain.BARRICADE: case Terrain.BOOKSHELF:
-			case Terrain.STATUE: case Terrain.STATUE_SP:
 			case Terrain.COLLAPSE_WALL:
 				properties |= BREAKABLE;
+				break;
+			case Terrain.STATUE: case Terrain.STATUE_SP:
+				properties |= BREAKABLE | DISINTEGRATION_PROOF;
 				break;
 			case Terrain.REGION_DECO: case Terrain.REGION_DECO_ALT:
 			case Terrain.SEWER_BARREL_MARKED: case Terrain.SEWER_BARREL_MARKED_ALT:

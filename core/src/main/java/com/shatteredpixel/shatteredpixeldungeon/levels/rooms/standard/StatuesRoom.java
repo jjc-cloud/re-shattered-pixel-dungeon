@@ -77,10 +77,6 @@ public class StatuesRoom extends StandardRoom {
 
 				Carpet carpet = new Carpet();
 				carpet.setRect(left, top, w, h);
-				carpet.overrideTile(0, 0, Carpet.CITY_STATUE_TL);
-				carpet.overrideTile(carpet.tileW-1, 0, Carpet.CITY_STATUE_TR);
-				carpet.overrideTile(0, carpet.tileH-1, Carpet.CITY_STATUE_BL);
-				carpet.overrideTile(carpet.tileW-1, carpet.tileH-1, Carpet.CITY_STATUE_BR);
 				level.customTiles.add(carpet);
 
 				//place a flaming pedestal or entrance/exit in the center

@@ -57,10 +57,10 @@ public class WandOfPetrification extends Wand {
 
 	@Override
 	public void fx(Ballistica bolt, Callback callback) {
-		Beam.LightRay beam = new Beam.LightRay(curUser.sprite.center(),
+		Beam.LightRay beam = new Beam.LightRay(fxSource().center(),
 				DungeonTilemap.raisedTileCenterToWorld(bolt.collisionPos));
 		beam.tint(0.5f, 0.5f, 0.5f, 1f);
-		curUser.sprite.parent.add(beam);
+		fxSource().parent.add(beam);
 		Sample.INSTANCE.play(Assets.Sounds.RAY);
 		callback.call();
 	}

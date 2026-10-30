@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
@@ -152,9 +153,9 @@ public class CursedWand {
 		}
 
 		public void FX(final Item origin, final Char user, final Ballistica bolt, final Callback callback){
-			MagicMissile.boltFromChar(user.sprite.parent,
+			MagicMissile.boltFromChar(FrozenAttack.visualSource(user).parent,
 					MagicMissile.RAINBOW,
-					user.sprite,
+					FrozenAttack.visualSource(user),
 					bolt.collisionPos,
 					callback);
 			Sample.INSTANCE.play( Assets.Sounds.ZAP );
@@ -328,9 +329,9 @@ public class CursedWand {
 
 		@Override
 		public void FX(Item origin, Char user, Ballistica bolt, Callback callback) {
-			MagicMissile.boltFromChar(user.sprite.parent,
+			MagicMissile.boltFromChar(FrozenAttack.visualSource(user).parent,
 					MagicMissile.SPECK + Speck.BUBBLE,
-					user.sprite,
+					FrozenAttack.visualSource(user),
 					bolt.collisionPos,
 					callback);
 			Sample.INSTANCE.play( Assets.Sounds.ZAP );
@@ -534,9 +535,9 @@ public class CursedWand {
 		public void FX(Item origin, Char user, Ballistica bolt, Callback callback) {
 			Char ch = Actor.findChar( bolt.collisionPos );
 			if (ch != null){
-				user.sprite.parent.addToFront(new Lightning(user.sprite.center(), ch.sprite.center(), null));
+				FrozenAttack.visualSource(user).parent.addToFront(new Lightning(FrozenAttack.visualSource(user).center(), ch.sprite.center(), null));
 			} else {
-				user.sprite.parent.addToFront(new Lightning(user.sprite.center(), DungeonTilemap.raisedTileCenterToWorld(bolt.collisionPos), null));
+				FrozenAttack.visualSource(user).parent.addToFront(new Lightning(FrozenAttack.visualSource(user).center(), DungeonTilemap.raisedTileCenterToWorld(bolt.collisionPos), null));
 			}
 			Sample.INSTANCE.play( Assets.Sounds.LIGHTNING );
 			callback.call();
@@ -860,18 +861,18 @@ public class CursedWand {
 				if (longestRay == null || ray.dist > longestRay.dist){
 					longestRay = ray;
 				}
-				((MagicMissile)user.sprite.parent.recycle( MagicMissile.class )).reset(
+				((MagicMissile)FrozenAttack.visualSource(user).parent.recycle( MagicMissile.class )).reset(
 						MagicMissile.RAINBOW_CONE,
-						user.sprite,
+						FrozenAttack.visualSource(user),
 						ray.path.get(ray.dist),
 						null
 				);
 			}
 
 			//final zap at half distance of the longest ray, for timing of the actual effect
-			MagicMissile.boltFromChar( user.sprite.parent,
+			MagicMissile.boltFromChar( FrozenAttack.visualSource(user).parent,
 					MagicMissile.RAINBOW_CONE,
-					user.sprite,
+					FrozenAttack.visualSource(user),
 					longestRay.path.get(longestRay.dist/2),
 					callback );
 			Sample.INSTANCE.play( Assets.Sounds.ZAP );

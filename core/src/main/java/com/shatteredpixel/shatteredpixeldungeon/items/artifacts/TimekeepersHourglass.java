@@ -36,6 +36,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfEnergy;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Catalog;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -52,6 +53,7 @@ import com.watabou.noosa.Image;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.noosa.particles.Emitter;
 import com.watabou.utils.Bundle;
+import com.watabou.utils.Bundlable;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
@@ -358,6 +360,16 @@ public class TimekeepersHourglass extends ChargedArtifact {
 		float turnsToCost = 2f;
 
 		ArrayList<Integer> presses = new ArrayList<>();
+		private ArrayList<FrozenAttack> attacks = new ArrayList<>();
+
+		public void addAttack(FrozenAttack attack) {
+			attacks.add(attack);
+			attack.show();
+		}
+
+		public void restoreAttackVisuals() {
+			for (FrozenAttack attack : attacks) attack.show();
+		}
 
 		public void processTime(float time){
 			turnsToCost -= time;
@@ -432,9 +444,12 @@ public class TimekeepersHourglass extends ChargedArtifact {
 
 		@Override
 		public void detach(){
+			if (!attacks.isEmpty() && target instanceof Hero) ((Hero) target).busy();
 			updateQuickslot();
 			super.detach();
 			activeBuff = null;
+			FrozenAttack.release(attacks);
+			attacks = new ArrayList<>();
 			triggerPresses();
 			target.next();
 		}
@@ -492,6 +507,7 @@ public class TimekeepersHourglass extends ChargedArtifact {
 			bundle.put( PRESSES , values );
 
 			bundle.put( TURNSTOCOST , turnsToCost);
+			bundle.put("attacks", attacks);
 		}
 
 		@Override
@@ -503,6 +519,7 @@ public class TimekeepersHourglass extends ChargedArtifact {
 				presses.add(value);
 
 			turnsToCost = bundle.getFloat( TURNSTOCOST );
+			for (Bundlable attack : bundle.getCollection("attacks")) attacks.add((FrozenAttack) attack);
 		}
 	}
 

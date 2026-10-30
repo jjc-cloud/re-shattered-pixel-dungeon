@@ -228,7 +228,8 @@ public class Badges {
 		SPEEDRUN_3                  ( 142 ),
 		VICTORY_NO_FOOD             ( 143 ),
 		VICTORY_LOW_STRENGTH        ( 144 ),
-		VICTORY_NO_ALCHEMY          ( 145 );
+		VICTORY_NO_ALCHEMY          ( 145 ),
+		CRYSTAL_MIMIC_ESCAPED       ( 152 );
 
 		public boolean meta;
 
@@ -1149,6 +1150,12 @@ public class Badges {
 		}
 	}
 
+	public static void validateCrystalMimicEscaped() {
+		if (local.add(Badge.CRYSTAL_MIMIC_ESCAPED)) {
+			displayBadge(Badge.CRYSTAL_MIMIC_ESCAPED);
+		}
+	}
+
 	public static void validateFistSlain(YogFist fist) {
 		if ((fist instanceof YogFist.BrightFist || fist instanceof YogFist.DarkFist)
 				&& !fist.hasTeleported && local.add(Badge.FIST_WITHOUT_TELEPORT)) {
@@ -1156,12 +1163,16 @@ public class Badges {
 		}
 	}
 
+	/** 致死来源是友军单位：同一次死亡一并结算「闹乌龙」，两条死因不互相截断。 */
 	public static void validateDeathFromAlly(Object cause) {
 		if (cause instanceof Char && cause != Dungeon.hero
-				&& ((Char) cause).alignment == Char.Alignment.ALLY
-				&& local.add(Badge.DEATH_FROM_ALLY)) {
-			displayBadge(Badge.DEATH_FROM_ALLY);
-			validateDeathFromAll();
+				&& ((Char) cause).alignment == Char.Alignment.ALLY) {
+			if (local.add(Badge.DEATH_FROM_ALLY)) {
+				displayBadge(Badge.DEATH_FROM_ALLY);
+				validateDeathFromAll();
+			}
+			//友军致死同时也是「死于自己的魔法物品」，紧跟着一起记
+			validateDeathFromFriendlyMagic();
 		}
 	}
 

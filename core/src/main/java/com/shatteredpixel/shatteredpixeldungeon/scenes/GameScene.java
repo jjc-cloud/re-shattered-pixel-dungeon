@@ -92,6 +92,7 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.DiscardedItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.HeroSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.CustomTilemap;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.CellPreview;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTerrainTilemap;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTileSheet;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
@@ -382,6 +383,12 @@ public class GameScene extends PixelScene {
 		add( spells );
 
 		add(overFogEffects);
+		// 地图（含阴影、粒子、迷雾）已画完，界面与窗口尚未覆盖它。
+		add(new Gizmo() {
+			@Override public void draw() {
+				CellPreview.capturePending();
+			}
+		});
 
 		checkedCells = new Group();
 		add(checkedCells);
@@ -808,6 +815,10 @@ public class GameScene extends PixelScene {
 		if (cata != null && cata.hasRolledTrinkets()){
 			addToFront(new TrinketCatalyst.WndTrinket(cata));
 		}
+
+		com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass.timeFreeze freeze =
+				Dungeon.hero.buff(com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass.timeFreeze.class);
+		if (freeze != null) freeze.restoreAttackVisuals();
 
 		if (!invVisible) toggleInvPane();
 		fadeIn();
@@ -2051,9 +2062,25 @@ public class GameScene extends PixelScene {
 				textLines.add(1, "_" + Messages.get(GameScene.class, "examine") + "_");
 			}
 
-			RightClickMenu menu = new RightClickMenu(image,
+			final Image menuIcon = image;
+			RightClickMenu menu = new RightClickMenu(menuIcon,
 					title,
 					textLines.toArray(new String[0])){
+				{
+					if (objects.size() > 1) {
+						RightClickMenu cellMenu = this;
+						add(new PointerArea(menuIcon) {
+							@Override
+							protected void onClick(PointerEvent event) {
+								if (event.button != PointerEvent.LEFT) return;
+								cellMenu.destroy();
+								cellMenu.killAndErase();
+								examineCell(cell);
+							}
+						});
+					}
+				}
+
 				@Override
 				public void onSelect(int index) {
 					if (index == 0){

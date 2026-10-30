@@ -105,6 +105,7 @@ public class WandOfDisintegration extends DamageWand {
 				terrainPassed++;
 			}
 
+			// 按内容结算免疫，雕像不被解离也不妨碍移除它下面的地毯。
 			terrainCells.add(c);
 			// 蛛网独立于底下地形清除，地形拒绝破坏也不影响射线破网。
 			if (web != null && web.volume > 0 && web.cur[c] > 0) {
@@ -150,7 +151,7 @@ public class WandOfDisintegration extends DamageWand {
 	public void fx(Ballistica beam, Callback callback) {
 		
 		int cell = beam.path.get(Math.min(beam.dist, distance()));
-		curUser.sprite.parent.add(new Beam.DeathRay(curUser.sprite.center(), DungeonTilemap.raisedTileCenterToWorld( cell )));
+		fxSource().parent.add(new Beam.DeathRay(fxSource().center(), DungeonTilemap.raisedTileCenterToWorld( cell )));
 		Sample.INSTANCE.play( Assets.Sounds.RAY );
 		callback.call();
 	}
