@@ -32,12 +32,10 @@ public class CellFeatures extends Group {
 			add(layer);
 		}
 		plants = (TerrainFeaturesTilemap) layers.get(layers.size() - 1);
-		// 架构上下两部分共用现有贴图与地图刷新，绘制组沿用高草前景的层级。
-		for (int type : new int[]{TerrainFeaturesTilemap.OVERHEAD_BODY, TerrainFeaturesTilemap.OVERHEAD_TOP}) {
-			TerrainFeaturesTilemap layer = new TerrainFeaturesTilemap(null, null, type);
-			layers.add(layer);
-			overhead.add(layer);
-		}
+		// 架构上层固定在前景，下层由 GameScene 与单位一起按纵坐标排序。
+		TerrainFeaturesTilemap top = new TerrainFeaturesTilemap(null, null, TerrainFeaturesTilemap.OVERHEAD_TOP);
+		layers.add(top);
+		overhead.add(top);
 	}
 
 	public void map(int[] map, int width) { for (DungeonTilemap layer : layers) layer.map(map, width); }

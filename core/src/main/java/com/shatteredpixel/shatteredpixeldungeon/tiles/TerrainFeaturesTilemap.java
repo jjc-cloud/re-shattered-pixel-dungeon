@@ -40,7 +40,6 @@ import com.watabou.utils.RectF;
 import com.watabou.utils.SparseArray;
 
 public class TerrainFeaturesTilemap extends DungeonTilemap {
-	public static final int OVERHEAD_BODY = -4;
 	public static final int OVERHEAD_TOP = -5;
 
 	private static TerrainFeaturesTilemap instance;
@@ -73,16 +72,15 @@ public class TerrainFeaturesTilemap extends DungeonTilemap {
 		}
 
 		if (contentType != Terrain.STATUE && contentType != Terrain.STATUE_SP
-				&& contentType != OVERHEAD_BODY && contentType != OVERHEAD_TOP) instance = this;
+				&& contentType != OVERHEAD_TOP) instance = this;
 	}
 
 	protected int getTileVisual(int pos, int tile, boolean flat){
-		if (contentType == OVERHEAD_BODY || contentType == OVERHEAD_TOP) {
-			int cell = contentType == OVERHEAD_TOP ? pos + mapWidth : pos;
+		if (contentType == OVERHEAD_TOP) {
+			int cell = pos + mapWidth;
 			if (cell >= size) return -1;
 			CellContent frame = Dungeon.level.cellAt(cell).firstWith(CellContent.OVERHEAD);
 			if (frame == null) return -1;
-			if (contentType == OVERHEAD_BODY) return contentVisual(cell, frame.type());
 			return frame.type() == Terrain.REGION_DECO_ALT
 					? DungeonTileSheet.REGION_DECO_ALT_OVERHANG : DungeonTileSheet.REGION_DECO_OVERHANG;
 		}
