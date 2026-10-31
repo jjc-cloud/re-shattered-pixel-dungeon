@@ -122,7 +122,7 @@ public class MindForm extends ClericSpell {
 				Wand wand = wand();
 				if (wand.tryToZap(Dungeon.hero, target)) {
 
-					final Ballistica shot = wand.prepareZap(Dungeon.hero, target);
+					final Ballistica shot = wand.prepareZapForCast(Dungeon.hero, target);
 					final int cell = shot.collisionPos;
 
 					if (target == Dungeon.hero.pos || cell == Dungeon.hero.pos) {
@@ -138,7 +138,7 @@ public class MindForm extends ClericSpell {
 					else
 						QuickSlotButton.target(Actor.findChar(cell));
 
-					if (FrozenAttack.wand(Dungeon.hero, wand, target)) {
+					if (FrozenAttack.wand(Dungeon.hero, wand, target, shot)) {
 						((ClassArmor)Dungeon.hero.belongings.armor()).charge -= Trinity.trinityChargeUsePerEffect(wand.getClass());
 						wand.wandUsed();
 						return;
@@ -150,7 +150,8 @@ public class MindForm extends ClericSpell {
 								WondrousResin.forcePositive = true;
 								CursedWand.cursedZap(wand,
 										Dungeon.hero,
-										new Ballistica(Dungeon.hero.pos, cell, Ballistica.MAGIC_BOLT), new Callback() {
+										Ballistica.projectile(Dungeon.hero, Dungeon.hero.pos, cell,
+												Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER), new Callback() {
 											@Override
 											public void call() {
 												WondrousResin.forcePositive = false;

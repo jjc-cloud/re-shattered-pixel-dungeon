@@ -713,6 +713,17 @@ public class Item implements Bundlable {
 	}
 	
 	public void cast( final Hero user, final int dst ) {
+		if (this instanceof MissileWeapon && Ballistica.currentProjectile() == null) {
+			Ballistica.Projectile projectile = new Ballistica.Projectile(user);
+			Ballistica.Projectile previous = Ballistica.setProjectile(projectile);
+			try {
+				cast(user, dst);
+			} finally {
+				projectile.finish();
+				Ballistica.setProjectile(previous);
+			}
+			return;
+		}
 		if (user.buff(TimekeepersHourglass.timeFreeze.class) != null) {
 			int cell = throwPos(user, dst);
 			float delay = castDelay(user, cell);

@@ -87,6 +87,7 @@ public class FrozenAttack implements Bundlable {
 	private boolean positiveCurse;
 	private CursedWand.CursedEffect curse;
 	private Ballistica shot;
+	private Ballistica.Projectile projectile;
 	private Effects effects;
 	private boolean arrived;
 	private float arrivalTime;
@@ -173,6 +174,7 @@ public class FrozenAttack implements Bundlable {
 
 	public static void missile(Hero hero, Item missile, int aim) {
 		FrozenAttack attack = new FrozenAttack();
+		attack.projectile = Ballistica.currentProjectile();
 		attack.kind = THROW;
 		attack.item = missile;
 		attack.from = hero.pos;
@@ -190,15 +192,24 @@ public class FrozenAttack implements Bundlable {
 			attack.bowBonus = bow.sniperSpecialBonusDamage;
 			attack.from = hero.pos;
 			attack.aim = aim;
+			attack.projectile = i == 0 ? Ballistica.currentProjectile() : new Ballistica.Projectile(hero);
+			Ballistica.Projectile previous = Ballistica.setProjectile(attack.projectile);
+			try {
+				((SpiritBow) attack.item).knockArrow().throwPos(hero, attack.from, aim);
+			} finally {
+				attack.projectile.finish();
+				Ballistica.setProjectile(previous);
+			}
 			if (i == 0) attack.captureAttackBuffs(hero);
 			hero.buff(TimekeepersHourglass.timeFreeze.class).addAttack(attack);
 		}
 	}
 
-	public static boolean wand(Hero hero, Wand wand, int aim) {
+	public static boolean wand(Hero hero, Wand wand, int aim, Ballistica shot) {
 		TimekeepersHourglass.timeFreeze freeze = hero.buff(TimekeepersHourglass.timeFreeze.class);
 		if (freeze == null) return false;
 		FrozenAttack attack = new FrozenAttack();
+		attack.projectile = shot.projectile;
 		attack.kind = WAND;
 		attack.item = wand.duplicate();
 		attack.originalWand = wand;
@@ -209,6 +220,8 @@ public class FrozenAttack implements Bundlable {
 		if (!wand.cursed && Random.Float() < WondrousResin.extraCurseEffectChance()) {
 			FrozenAttack extra = new FrozenAttack();
 			extra.kind = WAND;
+			extra.projectile = Ballistica.projectile(hero, hero.pos, aim,
+					Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER).projectile;
 			extra.item = wand.duplicate();
 			extra.wandLevel = attack.wandLevel;
 			extra.from = hero.pos;
@@ -256,6 +269,7 @@ public class FrozenAttack implements Bundlable {
 		source.parent = effects;
 		Callback arrival = () -> arrived = true;
 		effectSource = source;
+		Ballistica.Projectile previousProjectile = Ballistica.setProjectile(projectile);
 		try {
 			if (kind == WAND) {
 				Wand wand = (Wand) item;
@@ -267,7 +281,8 @@ public class FrozenAttack implements Bundlable {
 				}
 				shot = wand.prepareZap(from, aim);
 				if (wand.cursed || forcedCurse) {
-					shot = new Ballistica(from, aim, Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER);
+					shot = new Ballistica(from, aim, Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER
+							| Ballistica.IRON_DOOR_CHANCE);
 					if (curse == null) {
 						if (curseClass == null) {
 							positiveCurse = forcedCurse || Random.Float() < WondrousResin.positiveCurseEffectChance();
@@ -309,6 +324,8 @@ public class FrozenAttack implements Bundlable {
 				}
 			}
 		} finally {
+			if (projectile != null) projectile.finish();
+			Ballistica.setProjectile(previousProjectile);
 			effectSource = null;
 			if (previousItem != null) previousItem.setCurrent(hero);
 		}
@@ -378,7 +395,12 @@ public class FrozenAttack implements Bundlable {
 					((SpiritBow) item).resolveFrozenArrow(hero, shot.collisionPos);
 				} else {
 					// 闪现符石等物品仍复用自己的路径准备逻辑，不能沿用另一发的静态缓存。
-					item.throwPos(hero, from, aim);
+					Ballistica.Projectile previous = Ballistica.setProjectile(projectile);
+					try {
+						item.throwPos(hero, from, aim);
+					} finally {
+						Ballistica.setProjectile(previous);
+					}
 					item.resolveFrozenThrow(hero, shot.collisionPos);
 				}
 			}
@@ -455,6 +477,7 @@ public class FrozenAttack implements Bundlable {
 		bundle.put("aim", aim);
 		bundle.put("target", targetID);
 		bundle.put("item", item);
+		bundle.put("projectile", projectile);
 		bundle.put("second_weapon", secondWeapon);
 		ArrayList<KindOfWeapon> weapons = Dungeon.hero.belongings.getAllItems(KindOfWeapon.class);
 		bundle.put("weapon_index", weapons.indexOf(item));
@@ -487,6 +510,7 @@ public class FrozenAttack implements Bundlable {
 		aim = bundle.getInt("aim");
 		targetID = bundle.getInt("target");
 		item = (Item) bundle.get("item");
+		projectile = (Ballistica.Projectile) bundle.get("projectile");
 		secondWeapon = (KindOfWeapon) bundle.get("second_weapon");
 		weaponIndex = bundle.getInt("weapon_index");
 		secondWeaponIndex = bundle.getInt("second_weapon_index");

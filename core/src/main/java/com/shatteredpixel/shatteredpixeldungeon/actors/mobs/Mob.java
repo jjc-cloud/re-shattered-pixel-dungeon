@@ -88,6 +88,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Lucky;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicJavelin;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.Dart;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
@@ -1055,7 +1056,8 @@ public abstract class Mob extends Char {
 				if (state != HUNTING) {
 					alerted = true;
 					//assume the hero is hitting us in these common cases
-					if (src instanceof Wand || src instanceof ClericSpell || src instanceof ArmorAbility) {
+					if (src instanceof Wand || src instanceof ClericSpell || src instanceof ArmorAbility
+							|| src instanceof MagicJavelin) {
 						aggro(Dungeon.hero);
 						target = Dungeon.hero.pos;
 					}

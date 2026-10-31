@@ -24,7 +24,13 @@ package com.shatteredpixel.shatteredpixeldungeon.mechanics;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.IronDoor;
+import com.watabou.utils.Bundlable;
+import com.watabou.utils.Bundle;
+import com.watabou.utils.Random;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +44,8 @@ public class Ballistica {
 	public Integer collisionPos = null;
 	public Integer collisionProperties = null;
 	public Integer dist = 0;
+	public final Projectile projectile;
+	private static final ThreadLocal<Projectile> castingProjectile = new ThreadLocal<>();
 
 	//parameters to specify the colliding cell
 	public static final int STOP_TARGET = 1;    //ballistica will stop at the target cell
@@ -47,6 +55,7 @@ public class Ballistica {
 	public static final int PASS_DISINTEGRABLE = 16; //ballistica will pass through solid terrain that a disintegration ray would destroy
 	public static final int STOP_PROJECTILE_COVER = 32; //实体投射物受架空设施遮挡，范围传播与角色位移不使用此标记
 	public static final int IGNORE_PROJECTILE_BARRIERS = 64; //非弹道攻击可穿过仅拦截投射物的屏障
+	public static final int IRON_DOOR_CHANCE = 128; //攻击弹道预览允许穿铁门，实际发射复用本发的 roll 结果
 
 	public static final int PROJECTILE =  	STOP_TARGET	| STOP_CHARS	| STOP_SOLID;
 
@@ -56,6 +65,11 @@ public class Ballistica {
 
 
 	public Ballistica( int from, int to, int params ){
+		this(from, to, params, castingProjectile.get());
+	}
+
+	public Ballistica(int from, int to, int params, Projectile projectile) {
+		this.projectile = projectile;
 		sourcePos = from;
 		collisionProperties = params;
 		build(from, to,
@@ -72,6 +86,65 @@ public class Ballistica {
 			path.add(from);
 			collisionPos = from;
 			dist = 0;
+		}
+	}
+
+	public static Projectile currentProjectile() {
+		return castingProjectile.get();
+	}
+
+	public static Projectile setProjectile(Projectile projectile) {
+		Projectile previous = castingProjectile.get();
+		if (projectile == null) castingProjectile.remove();
+		else castingProjectile.set(projectile);
+		return previous;
+	}
+
+	public static Ballistica projectile(Hero hero, int from, int to, int params) {
+		Projectile projectile = new Projectile(hero);
+		Ballistica shot = new Ballistica(from, to, params | IRON_DOOR_CHANCE, projectile);
+		projectile.finish();
+		return shot;
+	}
+
+	public static class Projectile implements Bundlable {
+		private int accuracy, evasion;
+		private boolean rolled, passed, finished;
+
+		public Projectile() { }
+
+		public Projectile(Hero hero) {
+			accuracy = hero.baseAttackSkill();
+			evasion = 5 + Dungeon.depth;
+		}
+
+		private synchronized boolean passesIronDoor() {
+			if (!rolled && !finished) {
+				passed = Random.Float(accuracy) >= Random.Float(evasion);
+				rolled = true;
+			}
+			return passed;
+		}
+
+		public synchronized void finish() {
+			finished = true;
+		}
+
+		@Override
+		public synchronized void storeInBundle(Bundle bundle) {
+			bundle.put("accuracy", accuracy);
+			bundle.put("evasion", evasion);
+			bundle.put("rolled", rolled);
+			bundle.put("passed", passed);
+		}
+
+		@Override
+		public void restoreFromBundle(Bundle bundle) {
+			accuracy = bundle.getInt("accuracy");
+			evasion = bundle.getInt("evasion");
+			rolled = bundle.getBoolean("rolled");
+			passed = bundle.getBoolean("passed");
+			finished = true;
 		}
 	}
 
@@ -122,6 +195,14 @@ public class Ballistica {
 		int err = dA / 2;
 		while (Dungeon.level.insideMap(cell)) {
 			boolean passBarrier = passProjectileBarriers && Dungeon.level.cellAt(cell).has(CellContent.PASSES_NON_PROJECTILES);
+			if (collisionPos == null && cell != sourcePos && !passBarrier
+					&& (stopTerrain || stopProjectileCover)
+					&& (collisionProperties & IRON_DOOR_CHANCE) != 0
+					&& Dungeon.level.cellAt(cell).has(CellContent.BLOCKS_PROJECTILES)
+					&& Door.at(Dungeon.level, cell) instanceof IronDoor
+					&& !Door.is(Dungeon.level, cell, Door.State.SECRET)) {
+				passBarrier = projectile == null || projectile.passesIronDoor();
+			}
 			// 从外侧射来的投射物停在架构前，不能命中同格内的角色；内部发射不受架构限制。
 			if (collisionPos == null && cell != sourcePos && stopProjectileCover && !passBarrier
 					&& Dungeon.level.cellAt(cell).has(CellContent.BLOCKS_PROJECTILES)) {

@@ -219,7 +219,8 @@ abstract public class MissileWeapon extends Weapon {
 				&& Dungeon.level.distance(from, dst) <= Math.round(projecting * Enchantment.genericProcChanceMultiplier(user))){
 			return dst;
 		} else {
-			Ballistica shot = new Ballistica(from, dst, Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER);
+			Ballistica shot = new Ballistica(from, dst, Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER
+					| Ballistica.IRON_DOOR_CHANCE);
 			int surface = shot.collisionPos == dst && !Dungeon.level.solid[dst] ? shot.collisionPos
 					: TerrainPropagation.impactCell(Dungeon.level, shot, CellContent.BREAKABLE);
 			return surface;
@@ -310,7 +311,7 @@ abstract public class MissileWeapon extends Weapon {
 				}
 			}
 
-			if (!spawnedForEffect) super.onThrow( cell );
+			if (!spawnedForEffect && !(this instanceof MagicJavelin)) super.onThrow( cell );
 		} else {
 			if (!curUser.shoot( enemy, this )) {
 				rangedMiss( cell );
@@ -565,7 +566,7 @@ abstract public class MissileWeapon extends Weapon {
 		int damage = augment.damageFactor(super.damageRoll( owner ));
 		
 		if (owner instanceof Hero) {
-			int exStr = ((Hero)owner).STR() - STRReq();
+			int exStr = this instanceof MagicJavelin ? 0 : ((Hero)owner).STR() - STRReq();
 			if (exStr > 0) {
 				damage += Hero.heroDamageIntRange( 0, exStr );
 			}
@@ -692,8 +693,8 @@ abstract public class MissileWeapon extends Weapon {
 		String info = super.info();
 
 		if (levelKnown) {
-			info += "\n\n" + Messages.get(MissileWeapon.class, "stats_known", tier, augment.damageFactor(min()), augment.damageFactor(max()), STRReq());
-			if (Dungeon.hero != null) {
+			info += "\n\n" + Messages.get(this, "stats_known", tier, augment.damageFactor(min()), augment.damageFactor(max()), STRReq());
+			if (Dungeon.hero != null && !(this instanceof MagicJavelin)) {
 				if (STRReq() > Dungeon.hero.STR()) {
 					info += " " + Messages.get(Weapon.class, "too_heavy");
 				} else if (Dungeon.hero.STR() > STRReq()) {
@@ -701,7 +702,7 @@ abstract public class MissileWeapon extends Weapon {
 				}
 			}
 		} else {
-			info += "\n\n" + Messages.get(MissileWeapon.class, "stats_unknown", tier, min(0), max(0), STRReq(0));
+			info += "\n\n" + Messages.get(this, "stats_unknown", tier, min(0), max(0), STRReq(0));
 			if (Dungeon.hero != null && STRReq(0) > Dungeon.hero.STR()) {
 				info += " " + Messages.get(MissileWeapon.class, "probably_too_heavy");
 			}
@@ -724,7 +725,7 @@ abstract public class MissileWeapon extends Weapon {
 		info += "\n\n";
 		String statsInfo = statsInfo();
 		if (!statsInfo.equals("")) info += statsInfo + " ";
-		info += Messages.get(MissileWeapon.class, "distance");
+		info += Messages.get(this, "distance");
 
 		switch (augment) {
 			case SPEED:

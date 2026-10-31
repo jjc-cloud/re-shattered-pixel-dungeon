@@ -849,7 +849,8 @@ public class CursedWand {
 		public void FX(Item origin, Char user, Ballistica bolt, Callback callback) {
 
 			//need to re-do bolt as it should go through chars
-			bolt = new Ballistica(bolt.sourcePos, bolt.collisionPos, Ballistica.STOP_SOLID);
+			bolt = new Ballistica(bolt.sourcePos, bolt.collisionPos,
+					Ballistica.STOP_SOLID | (bolt.collisionProperties & Ballistica.IRON_DOOR_CHANCE), bolt.projectile);
 
 			cone = new ConeAOE( bolt,
 					8,

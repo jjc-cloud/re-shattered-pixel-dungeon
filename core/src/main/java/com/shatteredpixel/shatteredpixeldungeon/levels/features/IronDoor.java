@@ -29,7 +29,7 @@ public class IronDoor extends Door {
 		return super.name();
 	}
 
-	/** 关闭的铁门对投射物等同墙体：投射物停在门外，不能压在门上。 */
+	/** 铁门默认拦截投射物；攻击弹道通过独立 roll 决定能否穿缝，普通物品仍停在门外。 */
 	@Override public int properties() {
 		int properties = super.properties();
 		return state() == State.OPEN

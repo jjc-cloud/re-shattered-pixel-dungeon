@@ -138,13 +138,11 @@ public class WildMagic extends ArmorAbility {
 	private void zapWand( ArrayList<Wand> wands, Hero hero, int cell){
 		Wand cur = wands.remove(0);
 
-		Ballistica aim = cur.prepareZap(hero, cell);
-
-		hero.sprite.zap(aim.collisionPos);
-
 		float startTime = Game.timeTotal;
 		if (cur.beginZap(hero, cell)) {
-			if (FrozenAttack.wand(hero, cur, cell)) {
+			final Ballistica aim = cur.prepareZapForCast(hero, cell);
+			hero.sprite.zap(aim.collisionPos);
+			if (FrozenAttack.wand(hero, cur, cell, aim)) {
 				afterZap(cur, wands, hero, cell);
 				return;
 			}
@@ -162,7 +160,7 @@ public class WildMagic extends ArmorAbility {
 										WondrousResin.forcePositive = true;
 										CursedWand.cursedZap(cur,
 												hero,
-												new Ballistica(hero.pos, cell, Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER),
+												Ballistica.projectile(hero, hero.pos, cell, Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER),
 												new Callback() {
 													@Override
 													public void call() {
@@ -180,7 +178,7 @@ public class WildMagic extends ArmorAbility {
 								WondrousResin.forcePositive = true;
 								CursedWand.cursedZap(cur,
 										hero,
-										new Ballistica(hero.pos, cell, Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER),
+										Ballistica.projectile(hero, hero.pos, cell, Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER),
 										new Callback() {
 											@Override
 											public void call() {
@@ -198,7 +196,7 @@ public class WildMagic extends ArmorAbility {
 			} else {
 				CursedWand.cursedZap(cur,
 						hero,
-						new Ballistica(hero.pos, cell, Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER),
+						aim,
 						new Callback() {
 							@Override
 							public void call() {

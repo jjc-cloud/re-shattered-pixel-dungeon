@@ -141,7 +141,8 @@ public abstract class Wand extends Item implements ChargeItem {
 	@Override
 	public int targetingPos(Hero user, int dst) {
 		if (this instanceof WandOfDisintegration && (!cursed || !cursedKnown)) return dst;
-		if (cursed && !cursedKnown) return new Ballistica(user.pos, dst, collisionProperties).collisionPos;
+		if (cursed && !cursedKnown) return new Ballistica(user.pos, dst,
+				collisionProperties | Ballistica.IRON_DOOR_CHANCE).collisionPos;
 		return prepareZap(user, dst).collisionPos;
 	}
 
@@ -150,8 +151,19 @@ public abstract class Wand extends Item implements ChargeItem {
 		return prepareZap(owner.pos, target);
 	}
 
+	public final Ballistica prepareZapForCast(Hero owner, int target) {
+		Ballistica.Projectile projectile = new Ballistica.Projectile(owner);
+		Ballistica.Projectile previous = Ballistica.setProjectile(projectile);
+		try {
+			return prepareZap(owner, target);
+		} finally {
+			projectile.finish();
+			Ballistica.setProjectile(previous);
+		}
+	}
+
 	public final Ballistica prepareZap(int from, int target) {
-		Ballistica bolt = new Ballistica(from, target, collisionProperties(target));
+		Ballistica bolt = new Ballistica(from, target, collisionProperties(target) | Ballistica.IRON_DOOR_CHANCE);
 		if (!cursed && this instanceof DamageWand && !(this instanceof WandOfDisintegration)
 				&& !(this instanceof WandOfFireblast)) {
 			Ballistica contact = (bolt.collisionProperties & Ballistica.STOP_SOLID) != 0 ? bolt
@@ -802,8 +814,8 @@ public abstract class Wand extends Item implements ChargeItem {
 					return;
 				}
 
-				final Ballistica shot = curWand.prepareZap(curUser, target);
-				int cell = shot.collisionPos;
+				Ballistica preview = curWand.prepareZap(curUser, target);
+				int cell = preview.collisionPos;
 				
 				if (target == curUser.pos || cell == curUser.pos) {
 					if (target == curUser.pos && curUser.hasTalent(Talent.SHIELD_BATTERY)){
@@ -835,7 +847,6 @@ public abstract class Wand extends Item implements ChargeItem {
 				}
 
 				curWand.normalZap = true;
-				curUser.sprite.zap(cell);
 
 				//attempts to target the cell aimed at if something is there, otherwise targets the collision pos.
 				if (Actor.findChar(target) != null)
@@ -844,12 +855,14 @@ public abstract class Wand extends Item implements ChargeItem {
 					QuickSlotButton.target(Actor.findChar(cell));
 				
 				if (curWand.beginZap(curUser, target)) {
+					final Ballistica shot = curWand.prepareZapForCast(curUser, target);
+					curUser.sprite.zap(shot.collisionPos);
 
 					//交叉火力：法杖攻击动作做出即触发（无论是否命中）
 					Talent.onCrossfireHeroAttack();
 
 					//完美处决：法杖命中叠1层
-					Char zapped = Actor.findChar(cell);
+					Char zapped = Actor.findChar(shot.collisionPos);
 					if (curUser.buff(TimekeepersHourglass.timeFreeze.class) == null
 							&& zapped != null && zapped != curUser && zapped.isAlive()
 							&& zapped.alignment == Char.Alignment.ENEMY){
@@ -888,7 +901,7 @@ public abstract class Wand extends Item implements ChargeItem {
 						}
 					}
 					
-					if (FrozenAttack.wand(curUser, curWand, target)) {
+					if (FrozenAttack.wand(curUser, curWand, target, shot)) {
 						if (curWand.cursed && !curWand.cursedKnown) GLog.n(Messages.get(Wand.class, "curse_discover", curWand.name()));
 						curWand.cursedKnown = true;
 						curWand.wandUsed();
@@ -901,7 +914,7 @@ public abstract class Wand extends Item implements ChargeItem {
 						}
 						CursedWand.cursedZap(curWand,
 								curUser,
-								new Ballistica(curUser.pos, target, Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER),
+								shot,
 								new Callback() {
 									@Override
 									public void call() {
@@ -916,7 +929,8 @@ public abstract class Wand extends Item implements ChargeItem {
 									WondrousResin.forcePositive = true;
 									CursedWand.cursedZap(curWand,
 											curUser,
-											new Ballistica(curUser.pos, target, Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER), new Callback() {
+											Ballistica.projectile(curUser, curUser.pos, target,
+													Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER), new Callback() {
 												@Override
 												public void call() {
 													WondrousResin.forcePositive = false;

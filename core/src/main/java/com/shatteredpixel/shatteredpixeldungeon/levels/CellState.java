@@ -101,6 +101,8 @@ public class CellState implements Bundlable {
 
 	/** 随机布置检查承载和占用；不通过最上层的贴图编号判断空地。 */
 	public boolean canPlace(CellContent incoming) {
+		if (CellContent.family(incoming.type()) == Terrain.TRAP
+				&& (ground != Terrain.EMPTY || !contents.isEmpty())) return false;
 		if ((Terrain.flags[ground] & (Terrain.RESERVED | Terrain.SCATTERABLE)) != Terrain.SCATTERABLE
 				|| buried() || !supports(incoming.requiredSupport())) return false;
 		if ((level.traps != null && level.traps.get(cell) != null)

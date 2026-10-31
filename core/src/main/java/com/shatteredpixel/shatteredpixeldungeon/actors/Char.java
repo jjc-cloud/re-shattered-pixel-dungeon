@@ -141,6 +141,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Shocki
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Vorpal;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sickle;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicJavelin;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.ShockingDart;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
@@ -420,8 +421,11 @@ public abstract class Char extends Actor {
 		}
 
 		boolean visibleFight = Dungeon.level.heroFOV[pos] || Dungeon.level.heroFOV[enemy.pos];
+		MagicJavelin magicJavelin = this instanceof Hero
+				&& ((Hero) this).belongings.attackingWeapon() instanceof MagicJavelin
+				? (MagicJavelin) ((Hero) this).belongings.attackingWeapon() : null;
 
-		if (enemy.isInvulnerable(getClass())) {
+		if (enemy.isInvulnerable(magicJavelin != null ? magicJavelin.getClass() : getClass())) {
 			if (enemy instanceof Hero) {
 				((Hero) enemy).interrupt();
 			}
@@ -436,7 +440,7 @@ public abstract class Char extends Actor {
 
 		} else if (hit( this, enemy, accMulti, false )) {
 			
-			int dr = Math.round(enemy.drRoll() * AscensionChallenge.statModifier(enemy));
+			int dr = magicJavelin != null ? 0 : Math.round(enemy.drRoll() * AscensionChallenge.statModifier(enemy));
 			
 			if (this instanceof Hero){
 				Hero h = (Hero)this;
@@ -532,16 +536,16 @@ public abstract class Char extends Actor {
 				dmg *= 0.67f;
 			}
 
-			boolean physicalDamageBlocked = blocksDomainDamage(this, true);
-			int effectiveDamage = enemy.defenseProc(this, physicalDamageBlocked ? 0 : Math.round(dmg));
+			boolean attackDamageBlocked = blocksDomainDamage(magicJavelin != null ? magicJavelin : this, magicJavelin == null);
+			int effectiveDamage = enemy.defenseProc(this, attackDamageBlocked ? 0 : Math.round(dmg));
 			//反击等命中机制照常触发，但被屏蔽的本体不消耗受击护盾。
 			//附魔仍按本次攻击的伤害计算自己的独立魔法段。
-			if (physicalDamageBlocked) effectiveDamage = Math.round(dmg);
+			if (attackDamageBlocked) effectiveDamage = Math.round(dmg);
 			//do not trigger on-hit logic if defenseProc returned a negative value
 			if (effectiveDamage >= 0) {
 				effectiveDamage = Math.max(effectiveDamage - dr, 0);
 
-				if (!physicalDamageBlocked && enemy.buff(Viscosity.ViscosityTracker.class) != null) {
+				if (!attackDamageBlocked && enemy.buff(Viscosity.ViscosityTracker.class) != null) {
 					effectiveDamage = enemy.buff(Viscosity.ViscosityTracker.class).deferDamage(effectiveDamage, this);
 					enemy.buff(Viscosity.ViscosityTracker.class).detach();
 				}
@@ -565,7 +569,7 @@ public abstract class Char extends Actor {
 				return true;
 			}
 
-			if (physicalDamageBlocked) {
+			if (attackDamageBlocked) {
 				//本体被屏蔽时，仍单独结算允许的死神魔法追加，后续刺杀机制照常执行。
 				int grimDamage = enemy.resolveGrimDamage(this);
 				if (grimDamage > 0) {
@@ -576,10 +580,12 @@ public abstract class Char extends Actor {
 					else if (enemy.HP == 0) DeathMark.processFearTheReaper(enemy);
 				}
 				effectiveDamage = 0;
+			} else if (magicJavelin != null) {
+				enemy.damage(effectiveDamage, magicJavelin, this);
 			} else {
 				enemy.damagePhysical(effectiveDamage, this, this);
 			}
-			//按本次物理攻击的伤害积怒，护盾吸收与剩余生命值不影响积累。
+			//按本次攻击的伤害积怒，护盾吸收与剩余生命值不影响积累。
 			if (berserk != null) berserk.onAttackResolved(effectiveDamage);
 
 			if (buff(FireImbue.class) != null)  buff(FireImbue.class).proc(enemy);
@@ -939,8 +945,10 @@ public abstract class Char extends Actor {
 			return;
 		}
 
-		//被角色攻击（用于野蛮寄生的触发判定）
-		boolean charAttacked = dmg > 0 && src instanceof Char && src != this;
+		// 魔法标枪保留投掷者，附魔和受击机制仍按角色攻击处理。
+		Char sourceAttacker = src instanceof Char ? (Char) src
+				: src instanceof MagicJavelin ? domainDamageActor : null;
+		boolean charAttacked = dmg > 0 && sourceAttacker != null && sourceAttacker != this;
 
 		if (!(this instanceof Hero) && src instanceof Wand && Dungeon.hero != null) {
 			Berserk berserk = Dungeon.hero.buff(Berserk.class);
@@ -983,7 +991,7 @@ public abstract class Char extends Actor {
 		float damage = dmg;
 
 		//if dmg is from a character we already reduced it in Char.attack
-		if (!(src instanceof Char)) {
+		if (sourceAttacker == null) {
 			if (Dungeon.hero.alignment == alignment
 					&& Dungeon.hero.buff(AuraOfProtection.AuraBuff.class) != null
 					&& (Dungeon.level.distance(pos, Dungeon.hero.pos) <= 2 || buff(LifeLinkSpell.LifeLinkSpellBuff.class) != null)) {
@@ -1009,7 +1017,7 @@ public abstract class Char extends Actor {
 		}
 		Charm c = buff(Charm.class);
 		if (c != null){
-			c.recover(src);
+			c.recover(sourceAttacker != null ? sourceAttacker : src);
 		}
 		if (this.buff(Frost.class) != null){
 			Buff.detach( this, Frost.class );
@@ -1028,18 +1036,18 @@ public abstract class Char extends Actor {
 		//we do this before modifiers are applied back to dmg as we don't want to stack them twice (from this and bleed)
 		float bleedAmt = 0;
 		Class bleedSrc = null;
-		if (src instanceof Char && ((Char) src).buff(Sickle.HarvestBleedTracker.class) != null){
+		if (sourceAttacker != null && sourceAttacker.buff(Sickle.HarvestBleedTracker.class) != null){
 			if (!isImmune(Bleeding.class)){
 				bleedAmt = dmg;
 				bleedSrc = Sickle.HarvestBleedTracker.class;
 			}
-			((Char) src).buff(Sickle.HarvestBleedTracker.class).detach();
-		} else if (src instanceof Char && ((Char) src).buff(Vorpal.VorpalTracker.class) != null){
+			sourceAttacker.buff(Sickle.HarvestBleedTracker.class).detach();
+		} else if (sourceAttacker != null && sourceAttacker.buff(Vorpal.VorpalTracker.class) != null){
 			if (!isImmune(Bleeding.class)){
-				bleedAmt = ((Char) src).buff(Vorpal.VorpalTracker.class).powerMulti*(2+dmg/2f);
+				bleedAmt = sourceAttacker.buff(Vorpal.VorpalTracker.class).powerMulti*(2+dmg/2f);
 				bleedSrc = Vorpal.class;
 			}
-			((Char) src).buff(Vorpal.VorpalTracker.class).detach();
+			sourceAttacker.buff(Vorpal.VorpalTracker.class).detach();
 		}
 
 		if (isImmune( srcClass )) {
@@ -1112,7 +1120,7 @@ public abstract class Char extends Actor {
 		if (dmg > 0
 				&& this != Dungeon.hero
 				&& alignment == Alignment.ENEMY
-				&& src instanceof Char && src != Dungeon.hero && src != this
+				&& sourceAttacker != null && sourceAttacker != Dungeon.hero && sourceAttacker != this
 				&& Dungeon.hero != null){
 			Talent.CrossfireTracker crossfire = Dungeon.hero.buff(Talent.CrossfireTracker.class);
 			if (crossfire != null && crossfire.stacks > 0 && Dungeon.hero.hasTalent(Talent.CROSSFIRE)){
@@ -1130,22 +1138,22 @@ public abstract class Char extends Actor {
 
 		HP -= dmg;
 
-		if (src instanceof Char) dmg += resolveGrimDamage((Char) src);
+		if (sourceAttacker != null) dmg += resolveGrimDamage(sourceAttacker);
 
-		if (src instanceof Char && ((Char) src).buff(Kinetic.KineticTracker.class) != null){
+		if (sourceAttacker != null && sourceAttacker.buff(Kinetic.KineticTracker.class) != null){
 			int dmgToAdd = 0;
 			//hitting an ally can spend conserved dmg, but not build it
-			if (HP < 0 && alignment != ((Char) src).alignment){
+			if (HP < 0 && alignment != sourceAttacker.alignment){
 				dmgToAdd = -HP;
-				dmgToAdd -= ((Char) src).buff(Kinetic.KineticTracker.class).conservedDamage;
-				dmgToAdd = Math.round(dmgToAdd * Weapon.Enchantment.genericProcChanceMultiplier((Char) src));
+				dmgToAdd -= sourceAttacker.buff(Kinetic.KineticTracker.class).conservedDamage;
+				dmgToAdd = Math.round(dmgToAdd * Weapon.Enchantment.genericProcChanceMultiplier(sourceAttacker));
 			}
 			if (dmgToAdd > 0){
-				Buff.affect((Char) src, Kinetic.ConservedDamage.class).setBonus(dmgToAdd);
-			} else if (((Char) src).buff(Kinetic.ConservedDamage.class) != null){
-				((Char) src).buff(Kinetic.ConservedDamage.class).detach();
+				Buff.affect(sourceAttacker, Kinetic.ConservedDamage.class).setBonus(dmgToAdd);
+			} else if (sourceAttacker.buff(Kinetic.ConservedDamage.class) != null){
+				sourceAttacker.buff(Kinetic.ConservedDamage.class).detach();
 			}
-			((Char) src).buff(Kinetic.KineticTracker.class).detach();
+			sourceAttacker.buff(Kinetic.KineticTracker.class).detach();
 		}
 		
 		if (sprite != null) {

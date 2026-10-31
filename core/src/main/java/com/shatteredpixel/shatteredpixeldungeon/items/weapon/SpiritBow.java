@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon;
 
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
@@ -423,6 +424,17 @@ public class SpiritBow extends Weapon {
 
 		@Override
 		public void cast(final Hero user, final int dst) {
+			if (Ballistica.currentProjectile() == null) {
+				Ballistica.Projectile projectile = new Ballistica.Projectile(user);
+				Ballistica.Projectile previous = Ballistica.setProjectile(projectile);
+				try {
+					cast(user, dst);
+				} finally {
+					projectile.finish();
+					Ballistica.setProjectile(previous);
+				}
+				return;
+			}
 			final int cell = throwPos( user, dst );
 			SpiritBow.this.targetPos = cell;
 			if (user.buff(TimekeepersHourglass.timeFreeze.class) != null) {

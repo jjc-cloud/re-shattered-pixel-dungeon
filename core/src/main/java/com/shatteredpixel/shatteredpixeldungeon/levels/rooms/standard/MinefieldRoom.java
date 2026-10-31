@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.TrapMechanism;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
@@ -31,6 +32,8 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ExplosiveTrap;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
+
+import java.util.ArrayList;
 
 public class MinefieldRoom extends StandardRoom {
 
@@ -69,19 +72,14 @@ public class MinefieldRoom extends StandardRoom {
 
 		float revealedChance = TrapMechanism.revealHiddenTrapChance();
 		float revealInc = 0;
+		CellContent mechanism = new CellContent(Terrain.TRAP, level.region());
+		ArrayList<Integer> minePositions = new ArrayList<>();
 		for (int i = 0; i < mines; i++ ){
 			int pos;
 			do {
 				pos = level.pointToCell(random(1));
-			} while (level.traps.get(pos) != null);
-
-			//randomly places some embers around the mines
-			for (int j = 0; j < 8; j ++){
-				int c = PathFinder.NEIGHBOURS8[Random.Int(8)];
-				if (level.traps.get(pos+c) == null && level.terrainAt(pos+c) == Terrain.EMPTY){
-					Painter.set(level, pos+c, CellPlacement.content(Terrain.EMBERS));
-				}
-			}
+			} while (!level.cellAt(pos).canPlace(mechanism));
+			minePositions.add(pos);
 
 			revealInc += revealedChance;
 			if (revealInc >= 1) {
@@ -93,6 +91,16 @@ public class MinefieldRoom extends StandardRoom {
 				level.setTrap(new ExplosiveTrap().rollOutdatedRandom(level).hide(), pos);
 			}
 
+		}
+
+		CellContent embers = new CellContent(Terrain.EMBERS, level.region());
+		for (int pos : minePositions) {
+			for (int j = 0; j < 8; j++) {
+				int cell = pos + PathFinder.NEIGHBOURS8[Random.Int(8)];
+				if (level.cellAt(cell).canPlace(embers)) {
+					Painter.set(level, cell, CellPlacement.content(Terrain.EMBERS));
+				}
+			}
 		}
 
 	}

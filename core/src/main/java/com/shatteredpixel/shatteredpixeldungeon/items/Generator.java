@@ -182,6 +182,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.FishingSpe
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ForceCube;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.HeavyBoomerang;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Javelin;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicJavelin;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Kunai;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Shuriken;
@@ -526,9 +527,10 @@ public class Generator {
 			MIS_T4.classes = new Class<?>[]{
 					Javelin.class,
 					Tomahawk.class,
-					HeavyBoomerang.class
+					HeavyBoomerang.class,
+					MagicJavelin.class
 			};
-			MIS_T4.defaultProbs = new float[]{ 3, 3, 3 };
+			MIS_T4.defaultProbs = new float[]{ 3, 3, 3, 3 };
 			MIS_T4.probs = MIS_T4.defaultProbs.clone();
 			
 			MIS_T5.classes = new Class<?>[]{
