@@ -1,0 +1,41 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:9.2.0'
+    }
+}
+
+allprojects {
+
+    ext {
+        appName = 'Re-Shattered Pixel Dungeon'
+        appPackageName = 'com.seven.reshatteredpixeldungeon'
+
+        //Full releases gets +2 on version code, needed for an F-Droid quirk
+        //这个版本号同时也是存档格式版本(Level.java 会写入存档并在读取时校验)，
+        //必须 >= ShatteredPixelDungeon.v3_1_1(850)，否则存档会被判定为"old save"而无法读取。
+        appVersionCode = 911
+        appVersionName = '0.2.1'
+
+        appJavaCompatibility = JavaVersion.VERSION_11
+
+        appAndroidCompileSDK = 36   //Android 15
+        appAndroidMinSDK = 21       //Android 5.0
+        appAndroidTargetSDK = 36    //Android 15
+
+        gdxVersion = '1.14.0'
+        gdxControllersVersion = '2.2.4'
+        robovmVersion = '2.3.24'
+    }
+    version = appVersionName
+
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://central.sonatype.com/repository/maven-snapshots/' }
+    }
+
+}
