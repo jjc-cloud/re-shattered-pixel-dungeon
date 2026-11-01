@@ -30,6 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
@@ -170,6 +171,7 @@ public class Swiftthistle extends Plant {
 		@Override
 		public void detach(){
 			super.detach();
+			if (!FrozenAttack.isFrozen(target)) Buff.detach(target, FrozenAttack.Queue.class);
 			triggerPresses();
 			target.next();
 		}
@@ -177,6 +179,7 @@ public class Swiftthistle extends Plant {
 		@Override
 		public void fx(boolean on) {
 			if (!(target instanceof Hero)) return;
+			on = on || FrozenAttack.isFrozen(target);
 			Emitter.freezeEmitters = on;
 			if (on){
 				for (Mob mob : Dungeon.level.mobs.toArray(new Mob[0])) {

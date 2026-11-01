@@ -46,6 +46,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.RunicBlade;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sickle;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sword;
+import com.shatteredpixel.shatteredpixeldungeon.plants.Swiftthistle;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
 import com.watabou.noosa.Game;
@@ -95,6 +96,44 @@ public class FrozenAttack implements Bundlable {
 	// 仅在构造特效或执行一次命中时设置，不能把玩家移回原发射格。
 	private static Visual effectSource;
 	private static FrozenAttack resolving;
+
+	public static boolean isFrozen(Char user) {
+		return user.buff(TimekeepersHourglass.timeFreeze.class) != null
+				|| user.buff(Swiftthistle.TimeBubble.class) != null;
+	}
+
+	private static void addAttack(Hero hero, FrozenAttack attack) {
+		Buff.affect(hero, Queue.class).attacks.add(attack);
+		attack.show();
+	}
+
+	public static class Queue extends Buff {
+		private ArrayList<FrozenAttack> attacks = new ArrayList<>();
+
+		public void restoreAttackVisuals() {
+			for (FrozenAttack attack : attacks) attack.show();
+		}
+
+		@Override
+		public void detach() {
+			if (!attacks.isEmpty() && target instanceof Hero) ((Hero) target).busy();
+			super.detach();
+			FrozenAttack.release(attacks);
+			attacks = new ArrayList<>();
+		}
+
+		@Override
+		public void storeInBundle(Bundle bundle) {
+			super.storeInBundle(bundle);
+			bundle.put("attacks", attacks);
+		}
+
+		@Override
+		public void restoreFromBundle(Bundle bundle) {
+			super.restoreFromBundle(bundle);
+			for (Bundlable attack : bundle.getCollection("attacks")) attacks.add((FrozenAttack) attack);
+		}
+	}
 
 	public static Visual visualSource(Char user) {
 		return effectSource == null ? user.sprite : effectSource;
@@ -147,8 +186,7 @@ public class FrozenAttack implements Bundlable {
 
 	private static boolean melee(Hero hero, Char target, float damageMultiplier,
 	                             float damageBonus, float accuracyMultiplier, boolean normal, int effect) {
-		TimekeepersHourglass.timeFreeze freeze = hero.buff(TimekeepersHourglass.timeFreeze.class);
-		if (freeze == null || resolving() || target == null) return false;
+		if (!isFrozen(hero) || resolving() || target == null) return false;
 		FrozenAttack attack = new FrozenAttack();
 		attack.kind = MELEE;
 		attack.from = hero.pos;
@@ -162,7 +200,7 @@ public class FrozenAttack implements Bundlable {
 		attack.abilityAttack = hero.belongings.abilityWeapon != null;
 		attack.meleeEffect = effect;
 		attack.captureAttackBuffs(hero);
-		freeze.addAttack(attack);
+		addAttack(hero, attack);
 		return true;
 	}
 
@@ -180,7 +218,7 @@ public class FrozenAttack implements Bundlable {
 		attack.from = hero.pos;
 		attack.aim = aim;
 		attack.captureAttackBuffs(hero);
-		hero.buff(TimekeepersHourglass.timeFreeze.class).addAttack(attack);
+		addAttack(hero, attack);
 	}
 
 	public static void bow(Hero hero, SpiritBow bow, int aim, int count) {
@@ -201,13 +239,12 @@ public class FrozenAttack implements Bundlable {
 				Ballistica.setProjectile(previous);
 			}
 			if (i == 0) attack.captureAttackBuffs(hero);
-			hero.buff(TimekeepersHourglass.timeFreeze.class).addAttack(attack);
+			addAttack(hero, attack);
 		}
 	}
 
 	public static boolean wand(Hero hero, Wand wand, int aim, Ballistica shot) {
-		TimekeepersHourglass.timeFreeze freeze = hero.buff(TimekeepersHourglass.timeFreeze.class);
-		if (freeze == null) return false;
+		if (!isFrozen(hero)) return false;
 		FrozenAttack attack = new FrozenAttack();
 		attack.projectile = shot.projectile;
 		attack.kind = WAND;
@@ -216,7 +253,7 @@ public class FrozenAttack implements Bundlable {
 		attack.wandLevel = wand.buffedLvl();
 		attack.from = hero.pos;
 		attack.aim = aim;
-		freeze.addAttack(attack);
+		addAttack(hero, attack);
 		if (!wand.cursed && Random.Float() < WondrousResin.extraCurseEffectChance()) {
 			FrozenAttack extra = new FrozenAttack();
 			extra.kind = WAND;
@@ -227,7 +264,7 @@ public class FrozenAttack implements Bundlable {
 			extra.from = hero.pos;
 			extra.aim = aim;
 			extra.forcedCurse = extra.positiveCurse = true;
-			freeze.addAttack(extra);
+			addAttack(hero, extra);
 		}
 		return true;
 	}
@@ -247,7 +284,7 @@ public class FrozenAttack implements Bundlable {
 	public void show() {
 		if (kind == MELEE) return;
 		Game.runOnRenderThread(() -> {
-			if (Dungeon.hero.sprite != null && Dungeon.hero.buff(TimekeepersHourglass.timeFreeze.class) != null) {
+			if (Dungeon.hero.sprite != null && isFrozen(Dungeon.hero)) {
 				buildEffects();
 				Dungeon.hero.sprite.parent.add(effects);
 			}

@@ -53,7 +53,6 @@ import com.watabou.noosa.Image;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.noosa.particles.Emitter;
 import com.watabou.utils.Bundle;
-import com.watabou.utils.Bundlable;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
@@ -360,16 +359,6 @@ public class TimekeepersHourglass extends ChargedArtifact {
 		float turnsToCost = 2f;
 
 		ArrayList<Integer> presses = new ArrayList<>();
-		private ArrayList<FrozenAttack> attacks = new ArrayList<>();
-
-		public void addAttack(FrozenAttack attack) {
-			attacks.add(attack);
-			attack.show();
-		}
-
-		public void restoreAttackVisuals() {
-			for (FrozenAttack attack : attacks) attack.show();
-		}
 
 		public void processTime(float time){
 			turnsToCost -= time;
@@ -444,12 +433,10 @@ public class TimekeepersHourglass extends ChargedArtifact {
 
 		@Override
 		public void detach(){
-			if (!attacks.isEmpty() && target instanceof Hero) ((Hero) target).busy();
 			updateQuickslot();
 			super.detach();
 			activeBuff = null;
-			FrozenAttack.release(attacks);
-			attacks = new ArrayList<>();
+			if (!FrozenAttack.isFrozen(target)) Buff.detach(target, FrozenAttack.Queue.class);
 			triggerPresses();
 			target.next();
 		}
@@ -457,6 +444,7 @@ public class TimekeepersHourglass extends ChargedArtifact {
 		@Override
 		public void fx(boolean on) {
 			if (!(target instanceof Hero)) return;
+			on = on || FrozenAttack.isFrozen(target);
 			Emitter.freezeEmitters = on;
 			if (on){
 				for (Mob mob : Dungeon.level.mobs.toArray(new Mob[0])) {
@@ -507,7 +495,6 @@ public class TimekeepersHourglass extends ChargedArtifact {
 			bundle.put( PRESSES , values );
 
 			bundle.put( TURNSTOCOST , turnsToCost);
-			bundle.put("attacks", attacks);
 		}
 
 		@Override
@@ -519,7 +506,6 @@ public class TimekeepersHourglass extends ChargedArtifact {
 				presses.add(value);
 
 			turnsToCost = bundle.getFloat( TURNSTOCOST );
-			for (Bundlable attack : bundle.getCollection("attacks")) attacks.add((FrozenAttack) attack);
 		}
 	}
 

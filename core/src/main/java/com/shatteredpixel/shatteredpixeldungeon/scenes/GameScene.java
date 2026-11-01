@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.scenes;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.badlogic.gdx.utils.IntArray;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
@@ -827,9 +828,8 @@ public class GameScene extends PixelScene {
 			addToFront(new TrinketCatalyst.WndTrinket(cata));
 		}
 
-		com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass.timeFreeze freeze =
-				Dungeon.hero.buff(com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass.timeFreeze.class);
-		if (freeze != null) freeze.restoreAttackVisuals();
+		FrozenAttack.Queue attacks = Dungeon.hero.buff(FrozenAttack.Queue.class);
+		if (attacks != null) attacks.restoreAttackVisuals();
 
 		if (!invVisible) toggleInvPane();
 		fadeIn();

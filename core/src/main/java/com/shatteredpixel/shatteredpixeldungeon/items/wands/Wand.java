@@ -21,7 +21,6 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
-import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 
@@ -863,7 +862,7 @@ public abstract class Wand extends Item implements ChargeItem {
 
 					//完美处决：法杖命中叠1层
 					Char zapped = Actor.findChar(shot.collisionPos);
-					if (curUser.buff(TimekeepersHourglass.timeFreeze.class) == null
+					if (!FrozenAttack.isFrozen(curUser)
 							&& zapped != null && zapped != curUser && zapped.isAlive()
 							&& zapped.alignment == Char.Alignment.ENEMY){
 						Talent.onExecutionStack(curUser, Talent.EXEC_COND_WAND);

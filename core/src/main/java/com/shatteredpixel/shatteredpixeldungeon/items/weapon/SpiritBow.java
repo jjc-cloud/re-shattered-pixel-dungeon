@@ -21,7 +21,6 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon;
 
-import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
@@ -437,7 +436,7 @@ public class SpiritBow extends Weapon {
 			}
 			final int cell = throwPos( user, dst );
 			SpiritBow.this.targetPos = cell;
-			if (user.buff(TimekeepersHourglass.timeFreeze.class) != null) {
+			if (FrozenAttack.isFrozen(user)) {
 				float delay = castDelay(user, cell);
 				int count = sniperSpecial && SpiritBow.this.augment == Augment.SPEED ? 3 : 1;
 				FrozenAttack.bow(user, SpiritBow.this, dst, count);

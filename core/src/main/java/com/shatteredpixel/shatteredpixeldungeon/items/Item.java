@@ -21,7 +21,6 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items;
 
-import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
@@ -724,7 +723,7 @@ public class Item implements Bundlable {
 			}
 			return;
 		}
-		if (user.buff(TimekeepersHourglass.timeFreeze.class) != null) {
+		if (FrozenAttack.isFrozen(user)) {
 			int cell = throwPos(user, dst);
 			float delay = castDelay(user, cell);
 			Item missile = detach(user.belongings.backpack);
