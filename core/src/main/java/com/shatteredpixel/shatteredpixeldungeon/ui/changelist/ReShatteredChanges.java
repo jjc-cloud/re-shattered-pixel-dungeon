@@ -88,6 +88,8 @@ public class ReShatteredChanges {
 			));
 		changes.addButton(new ChangeButton(ChangeIcons.V021_IRON_DOOR, "铁门",
 				"\n替换监狱的门为铁门，铁门不会被投射物打开、遮挡视野、阻断气体。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V021_MAGICJAVELIN, "新武器",
+				"\n-新增四阶投掷武器魔法标枪，魔法标枪造成魔法伤害，无限耐久，但只要未命中就会消失。\n-新增五阶武器斩龙，根据使用者的受伤程度提高伤害下限，替换巨剑。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V021_KEEN_HEARING, "新天赋与成就",
 				"\n-天赋敏锐听觉：感知周围非睡眠怪物的声音。\n-成就财货两空：没能追上偷走物品的水晶宝箱怪。"));
 
@@ -98,6 +100,8 @@ public class ReShatteredChanges {
 		
 		changes.addButton(new ChangeButton(ChangeIcons.V062_ROGUE_HEROARM, "疾行者",
 				"\n-灵猴之护改为被动收益。\n-飞速投掷现在绑定移动速度，根据移动速度造成额外伤害。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V073_TOMAHAWK, "飞斧",
+				"\n流血伤害调整为6-9，成长为1-3。"));
 		changes.addButton(new ChangeButton(ChangeIcons.PD_EYE, "邪眼",
 				"\n邪眼的蓄力攻击会无视可破坏地形。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V011_ANKH, "重生十字架",
@@ -119,6 +123,7 @@ public class ReShatteredChanges {
 				"\n-取消强制新手流程，首次开局即可自由选择英雄与挑战，无需先进入地牢取得手册。"
 				+ "\n-随机模式不再要求通关，首次开局即可设置随机天赋与随机挑战。"
 				+ "\n-踩到隐藏楼层入口时始终显示回响提示，不再要求关闭音效或将音效音量设为零。"
+				+ "\n-投矛类武器现在会对食人鱼造成额外伤害。"
 				+ "\n-移除了中文与英文以外的不支持语言。"
 			));
 		changes.addButton(new ChangeButton(ChangeIcons.V061_BUGFIX, "bug修复",
