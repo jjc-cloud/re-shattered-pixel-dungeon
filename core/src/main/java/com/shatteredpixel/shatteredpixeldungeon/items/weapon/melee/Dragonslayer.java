@@ -22,15 +22,16 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
-public class Greatsword extends MeleeWeapon {
+public class Dragonslayer extends MeleeWeapon {
 
 	{
-		image = ItemSpriteSheet.GREATSWORD;
+		image = ItemSpriteSheet.DRAGONSLAYER;
 		hitSound = Assets.Sounds.HIT_SLASH;
 		hitSoundPitch = 1f;
 
@@ -61,16 +62,26 @@ public class Greatsword extends MeleeWeapon {
 	@Override
 	public String abilityInfo() {
 		int dmgBoost = levelKnown ? 7 + buffedLvl() : 7;
+		int minDamage = levelKnown ? min() : min(0);
+		if (Dungeon.hero != null && Dungeon.hero.HT > 0) {
+			float missingHealth = Math.max(0f, Math.min(0.8f, (Dungeon.hero.HT - Dungeon.hero.HP) / (float) Dungeon.hero.HT));
+			minDamage = Math.round(minDamage * (1f + missingHealth));
+		}
 		if (levelKnown){
-			return Messages.get(this, "ability_desc", augment.damageFactor(min()+dmgBoost), augment.damageFactor(max()+dmgBoost));
+			return Messages.get(this, "ability_desc", augment.damageFactor(minDamage)+augment.damageFactor(dmgBoost), augment.damageFactor(max())+augment.damageFactor(dmgBoost));
 		} else {
-			return Messages.get(this, "typical_ability_desc", min(0)+dmgBoost, max(0)+dmgBoost);
+			return Messages.get(this, "typical_ability_desc", minDamage+dmgBoost, max(0)+dmgBoost);
 		}
 	}
 
 	public String upgradeAbilityStat(int level){
 		int dmgBoost = 7 + level;
-		return augment.damageFactor(min(level)+dmgBoost) + "-" + augment.damageFactor(max(level)+dmgBoost);
+		int minDamage = min(level);
+		if (Dungeon.hero != null && Dungeon.hero.HT > 0) {
+			float missingHealth = Math.max(0f, Math.min(0.8f, (Dungeon.hero.HT - Dungeon.hero.HP) / (float) Dungeon.hero.HT));
+			minDamage = Math.round(minDamage * (1f + missingHealth));
+		}
+		return (augment.damageFactor(minDamage)+augment.damageFactor(dmgBoost)) + "-" + (augment.damageFactor(max(level))+augment.damageFactor(dmgBoost));
 	}
 
 }
