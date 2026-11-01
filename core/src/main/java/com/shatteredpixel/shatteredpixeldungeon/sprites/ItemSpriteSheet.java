@@ -302,7 +302,7 @@ public class ItemSpriteSheet {
 	}
 
 	private static final int WEP_TIER5      =                               xy(1, 13);   //16 slots
-	public static final int GREATSWORD      = WEP_TIER5+0;
+	public static final int DRAGONSLAYER    = WEP_TIER5+0;
 	public static final int WAR_HAMMER      = WEP_TIER5+1;
 	public static final int GLAIVE          = WEP_TIER5+2;
 	public static final int GREATAXE        = WEP_TIER5+3;
@@ -310,7 +310,7 @@ public class ItemSpriteSheet {
 	public static final int GAUNTLETS       = WEP_TIER5+5;
 	public static final int WAR_SCYTHE      = WEP_TIER5+6;
 	static{
-		assignItemRect(GREATSWORD,  16, 16);
+		assignItemRect(DRAGONSLAYER,  16, 16);
 		assignItemRect(WAR_HAMMER,  16, 16);
 		assignItemRect(GLAIVE,      16, 16);
 		assignItemRect(GREATAXE,    12, 16);
