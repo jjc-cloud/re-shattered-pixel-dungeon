@@ -40,8 +40,8 @@ public class MagicJavelin extends MissileWeapon {
 	}
 
 	@Override
-	public int min(int lvl) {
-		return 10 + lvl;
+	public int max(int lvl) {
+		return 16 + tier*lvl;
 	}
 
 	@Override
