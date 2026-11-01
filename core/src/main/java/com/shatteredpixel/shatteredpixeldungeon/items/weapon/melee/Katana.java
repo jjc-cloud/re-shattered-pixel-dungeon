@@ -57,7 +57,7 @@ public class Katana extends MeleeWeapon {
 	protected void duelistAbility(Hero hero, Integer target) {
 		//+(8+2*lvl) damage, roughly +67% damage
 		int dmgBoost = augment.damageFactor(8 + Math.round(2f*buffedLvl()));
-		Rapier.lungeAbility(hero, target, 1, dmgBoost, this);
+		Rapier.swordWaveAbility(hero, target, 1, dmgBoost, this);
 	}
 
 	@Override

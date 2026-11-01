@@ -65,7 +65,7 @@ public class Dragonslayer extends MeleeWeapon {
 		int minDamage = levelKnown ? min() : min(0);
 		if (Dungeon.hero != null && Dungeon.hero.HT > 0) {
 			float missingHealth = Math.max(0f, Math.min(0.8f, (Dungeon.hero.HT - Dungeon.hero.HP) / (float) Dungeon.hero.HT));
-			minDamage = Math.round(minDamage * (1f + missingHealth));
+			minDamage += Math.round(((levelKnown ? max() : max(0)) - minDamage) * missingHealth);
 		}
 		if (levelKnown){
 			return Messages.get(this, "ability_desc", augment.damageFactor(minDamage)+augment.damageFactor(dmgBoost), augment.damageFactor(max())+augment.damageFactor(dmgBoost));
@@ -79,7 +79,7 @@ public class Dragonslayer extends MeleeWeapon {
 		int minDamage = min(level);
 		if (Dungeon.hero != null && Dungeon.hero.HT > 0) {
 			float missingHealth = Math.max(0f, Math.min(0.8f, (Dungeon.hero.HT - Dungeon.hero.HP) / (float) Dungeon.hero.HT));
-			minDamage = Math.round(minDamage * (1f + missingHealth));
+			minDamage += Math.round((max(level) - minDamage) * missingHealth);
 		}
 		return (augment.damageFactor(minDamage)+augment.damageFactor(dmgBoost)) + "-" + (augment.damageFactor(max(level))+augment.damageFactor(dmgBoost));
 	}

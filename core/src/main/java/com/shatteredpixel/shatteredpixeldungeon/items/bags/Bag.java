@@ -191,12 +191,20 @@ public class Bag extends Item implements Iterable<Item> {
 	}
 
 	public boolean canHold( Item item ){
-		if (!loading && owner != null && owner.buff(LostInventory.class) != null
+		boolean lostInventory = owner != null && owner.buff(LostInventory.class) != null;
+		if (!loading && lostInventory
 			&& !item.keptThroughLostInventory()){
 			return false;
 		}
 
-		if (items.contains(item) || item instanceof Bag || items.size() < capacity()){
+		int usedSlots = items.size();
+		if (lostInventory) {
+			for (Item stored : items) {
+				if (!(stored instanceof Bag) && !stored.keptThroughLostInventory()) usedSlots--;
+			}
+		}
+
+		if (items.contains(item) || item instanceof Bag || usedSlots < capacity()){
 			return true;
 		} else if (item.stackable) {
 			for (Item i : items) {

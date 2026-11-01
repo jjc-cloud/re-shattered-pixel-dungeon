@@ -22,12 +22,14 @@
 package com.shatteredpixel.shatteredpixeldungeon.items;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LostInventory;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.CloakOfShadows;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HolyTome;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
@@ -70,6 +72,31 @@ public class LostBackpack extends Item {
 				} else if (i instanceof MagesStaff){
 					((MagesStaff) i).applyWandChargeBuff(hero);
 				}
+			}
+		}
+
+		for (Bag bag : hero.belongings.getBags()) {
+			for (Item item : bag.items.toArray(new Item[0])) {
+				if (!item.stackable || !bag.items.contains(item)) continue;
+				Item similar = hero.belongings.getSimilar(item);
+				if (similar == null || !similar.stackable) continue;
+				similar.merge(item);
+				if (item.quantity() == 0) {
+					bag.items.remove(item);
+					int slot = Dungeon.quickslot.getSlot(item);
+					if (slot != -1) {
+						Dungeon.quickslot.clearSlot(slot);
+						if (!Dungeon.quickslot.contains(similar)) Dungeon.quickslot.setSlot(slot, similar);
+					}
+				}
+			}
+		}
+		for (Bag bag : hero.belongings.getBags()) bag.grabItems();
+		for (Bag bag : hero.belongings.getBags()) {
+			for (Item item : bag.items.toArray(new Item[0])) {
+				if (bag.items.size() <= bag.capacity()) break;
+				if (item instanceof Bag || !bag.items.contains(item)) continue;
+				Dungeon.level.drop(item.detachAll(bag), hero.pos).sprite.drop();
 			}
 		}
 

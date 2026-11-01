@@ -113,8 +113,8 @@ public class ReShatteredChanges {
 
 		changes.addButton(new ChangeButton(ChangeIcons.V20_DUELIST_HEROARM, "勇士",
 				"\n上调复合损伤基础数值，削减数值上限。现在会根据攻速差进行补偿，攻速差越大补偿越高，而非无条件使用副武器进行完整追击。"));
-		changes.addButton(new ChangeButton(ChangeIcons.V023_HOURGLASS, "时光沙漏",
-				"\n伤害性动作不再打断效果。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V023_HOURGLASS, "时停",
+				"\n伤害性动作不再打断时间停止类效果。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V080_NECROMANCER, "死灵法师",
 				"\n为补偿不遮挡视野的铁门，死灵法师的骷髅在不可达位置上时不再被重复召唤。"));
 

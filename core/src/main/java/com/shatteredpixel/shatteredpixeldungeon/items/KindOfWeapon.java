@@ -265,7 +265,7 @@ abstract public class KindOfWeapon extends EquipableItem {
 		int minDamage = min();
 		if (this instanceof Dragonslayer && owner.HT > 0) {
 			float missingHealth = Math.max(0f, Math.min(0.8f, (owner.HT - owner.HP) / (float) owner.HT));
-			minDamage = Math.round(minDamage * (1f + missingHealth));
+			minDamage += Math.round((max() - minDamage) * missingHealth);
 		}
 		if (owner instanceof Hero){
 			return Hero.heroDamageIntRange(minDamage, max());
