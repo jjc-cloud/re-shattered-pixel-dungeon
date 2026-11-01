@@ -65,6 +65,7 @@ public class WndQuickBag extends Window {
 		ArrayList<Item> items = new ArrayList<>();
 
 		for (Item i : bag == null ? Dungeon.hero.belongings : bag){
+			if (Dungeon.hero.belongings.lostInventory() && !i.keptThroughLostInventory()) continue;
 			if (i.defaultAction() == null){
 				continue;
 			}

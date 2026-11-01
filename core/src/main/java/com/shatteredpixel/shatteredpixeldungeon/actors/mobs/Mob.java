@@ -843,10 +843,6 @@ public abstract class Mob extends Char {
 			if (!vaultMovement && !waterMovement){
 				return;
 			}
-			if (alignment == Alignment.ENEMY) {
-				Dungeon.hero.interrupt();
-			}
-
 			//宝库保留原有的六格路径限制，天赋与秘药由持续听觉影像揭示地形。
 			if (vaultMovement && !Dungeon.level.visited[pos] && !Dungeon.level.mapped[pos]){
 				PathFinder.buildDistanceMap(Dungeon.hero.pos, Dungeon.level.passable, 6);

@@ -44,6 +44,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRecharging
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Crystal;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.CellSelector;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
@@ -162,6 +163,10 @@ public class MeleeWeapon extends Weapon {
 
 	@Override
 	public int targetingPos(Hero user, int dst) {
+		if (this instanceof Rapier || this instanceof Katana) {
+			return new Ballistica(user.pos, dst, Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER
+					| Ballistica.IRON_DOOR_CHANCE).collisionPos;
+		}
 		return dst; //weapon abilities do not use projectile logic, no autoaim
 	}
 

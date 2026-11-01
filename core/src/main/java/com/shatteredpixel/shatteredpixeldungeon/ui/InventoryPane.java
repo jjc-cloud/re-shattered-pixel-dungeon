@@ -404,10 +404,13 @@ public class InventoryPane extends Component {
 		equipped.get(4).item(stuff.ring == null ? new WndBag.Placeholder( ItemSpriteSheet.RING_HOLDER ) : stuff.ring);
 
 		ArrayList<Item> items = (ArrayList<Item>) lastBag.items.clone();
+		if (stuff.lostInventory()) {
+			items.removeIf(item -> !(item instanceof Bag) && !item.keptThroughLostInventory());
+		}
 
 		if (lastBag == stuff.backpack && Dungeon.hero.hasSecondWeaponSlot()
-				&& (stuff.secondWep != null || items.size() < stuff.backpack.capacity())){
-			items.add(0, stuff.secondWep != null ? stuff.secondWep : new WndBag.Placeholder(ItemSpriteSheet.WEAPON_HOLDER));
+				&& (stuff.secondWep() != null || items.size() < stuff.backpack.capacity())){
+			items.add(0, stuff.secondWep() != null ? stuff.secondWep() : new WndBag.Placeholder(ItemSpriteSheet.WEAPON_HOLDER));
 		}
 
 		int j = 0;

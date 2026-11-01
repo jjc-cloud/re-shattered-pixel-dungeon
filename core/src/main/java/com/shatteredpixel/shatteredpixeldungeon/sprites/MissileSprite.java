@@ -150,7 +150,12 @@ public class MissileSprite extends ItemSprite implements Tweener.Listener {
 		
 		angle = 135 - (float)(Math.atan2( d.x, d.y ) / 3.1415926 * 180);
 		
-		if (d.x >= 0){
+		if (item.image() == ItemSpriteSheet.SWORD_WAVE) {
+			angularSpeed = 0;
+			angle = (float) Math.toDegrees(Math.atan2(d.y, d.x));
+			flipHorizontal = false;
+			updateFrame();
+		} else if (d.x >= 0){
 			flipHorizontal = false;
 			updateFrame();
 			

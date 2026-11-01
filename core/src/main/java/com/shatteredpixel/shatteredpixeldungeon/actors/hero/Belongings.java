@@ -62,7 +62,7 @@ public class Belongings implements Iterable<Item> {
 					cap++;
 				}
 			}
-			if (Dungeon.hero != null && Dungeon.hero.belongings.secondWep != null){
+			if (Dungeon.hero != null && Dungeon.hero.belongings.secondWep() != null){
 				//secondary weapons still occupy an inv. slot
 				cap--;
 			}

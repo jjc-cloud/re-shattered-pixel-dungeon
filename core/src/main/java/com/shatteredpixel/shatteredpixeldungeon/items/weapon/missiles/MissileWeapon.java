@@ -191,8 +191,8 @@ abstract public class MissileWeapon extends Weapon {
 	}
 
 	public boolean isSimilar( Item item ) {
-		return trueLevel() == item.trueLevel() && getClass() == item.getClass()
-				&& isVaultLoot() == item.isVaultLoot() && setID == (((MissileWeapon) item).setID);
+		return super.isSimilar(item) && trueLevel() == item.trueLevel()
+				&& setID == (((MissileWeapon) item).setID);
 	}
 	
 	@Override

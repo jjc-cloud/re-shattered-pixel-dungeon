@@ -257,16 +257,16 @@ public class WndBag extends WndTabbed {
 			placeItem(container);
 			count--; //don't count this one, as it's not actually inside of itself
 		} else if (Dungeon.hero.hasSecondWeaponSlot()
-				&& (stuff.secondWep != null || container.items.size() < container.capacity())) {
+				&& (stuff.secondWep() != null || container.items.size() < container.capacity())) {
 			//second weapon always goes to the front of view on main bag
-			placeItem(stuff.secondWep != null ? stuff.secondWep : new Placeholder(ItemSpriteSheet.WEAPON_HOLDER));
-			if (stuff.secondWep != null) equipped++;
+			placeItem(stuff.secondWep() != null ? stuff.secondWep() : new Placeholder(ItemSpriteSheet.WEAPON_HOLDER));
+			if (stuff.secondWep() != null) equipped++;
 		}
 
 		// Items in the bag, except other containers (they have tags at the bottom)
 		for (Item item : container.items.toArray(new Item[0])) {
 			if (!(item instanceof Bag)) {
-				placeItem( item );
+				if (!stuff.lostInventory() || item.keptThroughLostInventory()) placeItem( item );
 			} else {
 				count++;
 			}
@@ -356,7 +356,8 @@ public class WndBag extends WndTabbed {
 		slot.setRect( x, y, slotWidth, slotHeight );
 		add(slot);
 
-		if (item == null || (selector != null && !selector.itemSelectable(item))){
+		if (item == null || (Dungeon.hero.belongings.lostInventory() && !item.keptThroughLostInventory())
+				|| (selector != null && !selector.itemSelectable(item))){
 			slot.enable(false);
 		}
 		

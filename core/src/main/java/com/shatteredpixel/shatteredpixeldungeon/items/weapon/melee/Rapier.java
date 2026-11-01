@@ -25,19 +25,18 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
-import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
+import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Callback;
-import com.watabou.utils.PathFinder;
 
 public class Rapier extends MeleeWeapon {
 
@@ -71,7 +70,7 @@ public class Rapier extends MeleeWeapon {
 	protected void duelistAbility(Hero hero, Integer target) {
 		//+(5+1.5*lvl) damage, roughly +111% base damage, +100% scaling
 		int dmgBoost =  augment.damageFactor(5 + Math.round(1.5f*buffedLvl()));
-		lungeAbility(hero, target, 1, dmgBoost, this);
+		swordWaveAbility(hero, target, 1, dmgBoost, this);
 	}
 
 	@Override
@@ -89,90 +88,50 @@ public class Rapier extends MeleeWeapon {
 		return augment.damageFactor(min(level)+dmgBoost) + "-" + augment.damageFactor(max(level)+dmgBoost);
 	}
 
-	public static void lungeAbility(Hero hero, Integer target, float dmgMulti, int dmgBoost, MeleeWeapon wep){
+	public static void swordWaveAbility(Hero hero, Integer target, float dmgMulti, int dmgBoost, MeleeWeapon wep){
 		if (target == null){
 			return;
 		}
 
-		Char enemy = Actor.findChar(target);
-		//duelist can lunge out of her FOV, but this wastes the ability instead of cancelling if there is no target
-		if (Dungeon.level.heroFOV[target]) {
-			if (enemy == null || enemy == hero || hero.isCharmedBy(enemy)) {
-				GLog.w(Messages.get(wep, "ability_no_target"));
-				return;
-			}
-		}
-
-		if (hero.rooted || Dungeon.level.distance(hero.pos, target) < 2
-				|| Dungeon.level.distance(hero.pos, target)-1 > wep.reachFactor(hero)){
-			GLog.w(Messages.get(wep, "ability_target_range"));
-			if (hero.rooted) PixelScene.shake( 1, 1f );
+		Char selected = Actor.findChar(target);
+		if (target == hero.pos
+				|| (selected != null && (!selected.isAlive() || hero.isCharmedBy(selected)))) {
+			GLog.w(Messages.get(wep, "ability_no_target"));
 			return;
 		}
 
-		int lungeCell = -1;
-		for (int i : PathFinder.NEIGHBOURS8){
-			if (Dungeon.level.distance(hero.pos+i, target) <= wep.reachFactor(hero)
-					&& Actor.findChar(hero.pos+i) == null
-					&& (Dungeon.level.passable[hero.pos+i] || (Dungeon.level.avoid[hero.pos+i] && hero.flying))){
-				if (lungeCell == -1 || Dungeon.level.trueDistance(hero.pos + i, target) < Dungeon.level.trueDistance(lungeCell, target)){
-					lungeCell = hero.pos + i;
-				}
-			}
-		}
-
-		if (lungeCell == -1){
-			GLog.w(Messages.get(wep, "ability_target_range"));
-			return;
-		}
-
-		final int dest = lungeCell;
+		boolean ranged = selected == null || !Dungeon.level.adjacent(hero.pos, target);
+		Ballistica shot = ranged ? Ballistica.projectile(hero, hero.pos, target,
+				Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER) : null;
+		int cell = shot == null ? target : shot.collisionPos;
 
 		hero.busy();
-		Sample.INSTANCE.play(Assets.Sounds.MISS);
-		hero.sprite.jump(hero.pos, dest, 0, 0.1f, new Callback() {
-			@Override
-			public void call() {
-				if (Door.is(Dungeon.level, hero.pos, Door.State.OPEN)) {
-					Door.leave(hero.pos, hero);
-				}
-				hero.pos = dest;
-				Dungeon.level.occupyCell(hero);
-				Dungeon.observe();
-
-				hero.belongings.abilityWeapon = wep; //set this early to we can check canAttack
-				if (enemy != null && hero.canAttack(enemy)) {
-					hero.sprite.attack(enemy.pos, new Callback() {
-						@Override
-						public void call() {
-
-							wep.beforeAbilityUsed(hero, enemy);
-							AttackIndicator.target(enemy);
-							if (hero.attack(enemy, dmgMulti, dmgBoost, Char.INFINITE_ACCURACY)) {
-								Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
-								if (!enemy.isAlive()) {
-									wep.onAbilityKill(hero, enemy);
-								}
-							}
-							Invisibility.dispel();
-							hero.spendAndNext(hero.attackDelay());
-							wep.afterAbilityUsed(hero);
-						}
-					});
-				} else {
-					//spends charge but otherwise does not count as an ability use
-					Charger charger = Buff.affect(hero, Charger.class);
-					charger.partialCharge -= 1;
-					while (charger.partialCharge < 0 && charger.charges > 0) {
-						charger.charges--;
-						charger.partialCharge++;
-					}
-					hero.belongings.abilityWeapon = null;
-					updateQuickslot();
-					GLog.w(Messages.get(Rapier.class, "ability_no_target"));
-					hero.spendAndNext(1/hero.speed());
-				}
+		Callback attack = () -> {
+			Char enemy = Actor.findChar(cell);
+			wep.beforeAbilityUsed(hero, enemy);
+			if (enemy != null && enemy != hero) AttackIndicator.target(enemy);
+			boolean delayed = ranged && FrozenAttack.swordWave(hero, cell, dmgMulti, dmgBoost, shot.projectile);
+			if (!delayed && enemy != null && enemy != hero && enemy.isAlive()
+					&& FrozenAttack.attack(hero, enemy, ranged ? dmgMulti : 1f, ranged ? dmgBoost : 0,
+							Char.INFINITE_ACCURACY, 0)) {
+				Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
+				if (!enemy.isAlive()) wep.onAbilityKill(hero, enemy);
 			}
-		});
+			Invisibility.dispel(hero);
+			hero.spendAndNext(hero.attackDelay());
+			wep.afterAbilityUsed(hero);
+		};
+		if (ranged) {
+			hero.sprite.zap(target);
+			if (FrozenAttack.isFrozen(hero)) {
+				attack.call();
+			} else {
+				Item wave = new Item();
+				wave.image = ItemSpriteSheet.SWORD_WAVE;
+				((MissileSprite) hero.sprite.parent.recycle(MissileSprite.class)).reset(hero.sprite, cell, wave, attack);
+			}
+		} else {
+			hero.sprite.attack(target, attack);
+		}
 	}
 }

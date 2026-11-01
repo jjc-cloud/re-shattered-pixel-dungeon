@@ -220,6 +220,12 @@ public class Item implements Bundlable {
 	public boolean collect( Bag container ) {
 		Item identity = identityItem();
 		if (identity != this) return identity.collect(container);
+		if (!Belongings.bundleRestoring && container.owner instanceof Hero) {
+			Hero owner = (Hero) container.owner;
+			if (owner.belongings.lostInventory() && !owner.belongings.backpack.contains(this) && !isEquipped(owner)) {
+				keptThoughLostInvent = true;
+			}
+		}
 		// Only explicitly marked loans belong in the pocket; location does not determine ownership.
 		if (isVaultLoot() && !(container instanceof MagicPocket)
 				&& !Belongings.bundleRestoring && Dungeon.hero != null && container.owner == Dungeon.hero) {
@@ -405,7 +411,10 @@ public class Item implements Bundlable {
 	}
 	
 	public boolean isSimilar( Item item ) {
-		return getClass() == item.getClass() && isVaultLoot() == item.isVaultLoot();
+		return getClass() == item.getClass() && isVaultLoot() == item.isVaultLoot()
+				&& (keptThroughLostInventory() == item.keptThroughLostInventory()
+						|| (!Belongings.bundleRestoring
+								&& (Dungeon.hero == null || !Dungeon.hero.belongings.lostInventory())));
 	}
 
 	/**

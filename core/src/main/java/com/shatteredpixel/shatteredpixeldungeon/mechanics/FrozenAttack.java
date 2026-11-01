@@ -48,6 +48,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sickle;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sword;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Swiftthistle;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.Gizmo;
@@ -69,7 +70,7 @@ import java.util.Comparator;
 public class FrozenAttack implements Bundlable {
 
 	private static final int MELEE = 0, THROW = 1, WAND = 2, BOW = 3;
-	public static final int CLEAVE = 1, CRUSH = 2, SPIKE = 3;
+	public static final int CLEAVE = 1, CRUSH = 2, SPIKE = 3, SWORD_WAVE = 4;
 	private int kind, from, aim, targetID;
 	private Item item;
 	private KindOfWeapon secondWeapon;
@@ -181,16 +182,20 @@ public class FrozenAttack implements Bundlable {
 
 	public static boolean melee(Hero hero, Char target, float damageMultiplier,
 	                            float damageBonus, float accuracyMultiplier, boolean normal) {
-		return melee(hero, target, damageMultiplier, damageBonus, accuracyMultiplier, normal, 0);
+		return melee(hero, target, damageMultiplier, damageBonus, accuracyMultiplier, normal, 0,
+				target == null ? hero.pos : target.pos, Ballistica.currentProjectile());
 	}
 
 	private static boolean melee(Hero hero, Char target, float damageMultiplier,
-	                             float damageBonus, float accuracyMultiplier, boolean normal, int effect) {
-		if (!isFrozen(hero) || resolving() || target == null) return false;
+	                             float damageBonus, float accuracyMultiplier, boolean normal, int effect, int cell,
+	                             Ballistica.Projectile projectile) {
+		if (!isFrozen(hero) || resolving() || (target == null && effect != SWORD_WAVE)) return false;
 		FrozenAttack attack = new FrozenAttack();
 		attack.kind = MELEE;
 		attack.from = hero.pos;
-		attack.targetID = target.id();
+		attack.targetID = target == null ? -1 : target.id();
+		attack.aim = cell;
+		attack.projectile = projectile;
 		attack.item = hero.belongings.attackingWeapon();
 		attack.secondWeapon = hero.belongings.secondWep();
 		attack.damageMultiplier = damageMultiplier;
@@ -206,8 +211,15 @@ public class FrozenAttack implements Bundlable {
 
 	public static boolean attack(Hero hero, Char target, float damageMultiplier,
 	                             float damageBonus, float accuracyMultiplier, int effect) {
-		if (melee(hero, target, damageMultiplier, damageBonus, accuracyMultiplier, false, effect)) return false;
+		if (melee(hero, target, damageMultiplier, damageBonus, accuracyMultiplier, false, effect,
+				target == null ? hero.pos : target.pos, Ballistica.currentProjectile())) return false;
 		return hero.attack(target, damageMultiplier, damageBonus, accuracyMultiplier);
+	}
+
+	public static boolean swordWave(Hero hero, int cell, float damageMultiplier, float damageBonus,
+	                                Ballistica.Projectile projectile) {
+		return melee(hero, Actor.findChar(cell), damageMultiplier, damageBonus,
+				Char.INFINITE_ACCURACY, false, SWORD_WAVE, cell, projectile);
 	}
 
 	public static void missile(Hero hero, Item missile, int aim) {
@@ -282,7 +294,7 @@ public class FrozenAttack implements Bundlable {
 
 	/** 场景重建时也从保存的攻击记录恢复真实特效。 */
 	public void show() {
-		if (kind == MELEE) return;
+		if (kind == MELEE && meleeEffect != SWORD_WAVE) return;
 		Game.runOnRenderThread(() -> {
 			if (Dungeon.hero.sprite != null && isFrozen(Dungeon.hero)) {
 				buildEffects();
@@ -294,8 +306,8 @@ public class FrozenAttack implements Bundlable {
 	private void buildEffects() {
 		if (effects != null) effects.killAndErase();
 		effects = new Effects();
-		arrived = kind == MELEE;
-		if (kind == MELEE) return;
+		arrived = kind == MELEE && meleeEffect != SWORD_WAVE;
+		if (arrived) return;
 		Hero hero = Dungeon.hero;
 		Item previousItem = Item.currentItem();
 		item.setCurrent(hero);
@@ -308,7 +320,14 @@ public class FrozenAttack implements Bundlable {
 		effectSource = source;
 		Ballistica.Projectile previousProjectile = Ballistica.setProjectile(projectile);
 		try {
-			if (kind == WAND) {
+			if (kind == MELEE) {
+				Item wave = new Item();
+				wave.image = ItemSpriteSheet.SWORD_WAVE;
+				shot = new Ballistica(from, aim, Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER
+						| Ballistica.IRON_DOOR_CHANCE);
+				MissileSprite missile = (MissileSprite) effects.recycle(MissileSprite.class);
+				missile.reset(source, shot.collisionPos, wave, arrival);
+			} else if (kind == WAND) {
 				Wand wand = (Wand) item;
 				wand.frozenLevel = wandLevel;
 				wand.tryToZap(hero, aim);
@@ -374,8 +393,8 @@ public class FrozenAttack implements Bundlable {
 		for (Buff buff : attackBuffs) buff.target = hero;
 		try {
 			if (kind == MELEE) {
-				Char target = (Char) Actor.findById(targetID);
-				if (target == null || !target.isAlive()) return;
+				Char target = meleeEffect == SWORD_WAVE ? Actor.findChar(shot.collisionPos) : (Char) Actor.findById(targetID);
+				if (target == null || !target.isAlive() || (target == hero && meleeEffect != SWORD_WAVE)) return;
 				ArrayList<KindOfWeapon> weapons = hero.belongings.getAllItems(KindOfWeapon.class);
 				if (weaponIndex >= 0 && weaponIndex < weapons.size() && item != null
 						&& weapons.get(weaponIndex).getClass() == item.getClass()) item = weapons.get(weaponIndex);
