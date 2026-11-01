@@ -59,7 +59,7 @@ public class Tomahawk extends MissileWeapon {
 	}
 
 	public float minBleed(int lvl){
-		return 3 + lvl/2f;
+		return 6 + lvl;
 	}
 
 	public float maxBleed(){
@@ -67,15 +67,11 @@ public class Tomahawk extends MissileWeapon {
 	}
 
 	public float maxBleed(int lvl){
-		return 6 + lvl;
+		return 9 + 3*lvl;
 	}
 	
 	@Override
 	public int proc( Char attacker, Char defender, int damage ) {
-		//33% damage roll as bleed, but ignores armor and str bonus
-		//currently 2-5.3, plus 0.33-1 per level
-		//increasing to 40% results in: 2.4-6.4, plus 0.4-1.2 per level
-		//maybe standardize that to 3-6 plus 0.5-1 per level
 		Buff.affect( defender, Bleeding.class ).set( augment.damageFactor(Random.NormalFloat(minBleed(), maxBleed())) );
 		return super.proc( attacker, defender, damage );
 	}
