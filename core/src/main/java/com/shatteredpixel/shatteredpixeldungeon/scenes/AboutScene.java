@@ -64,6 +64,33 @@ public class AboutScene extends PixelScene {
 		Component content = list.content();
 		content.clear();
 
+		// 本作介绍独立置顶，图标后的光芒沿用 CreditsBlock 的高亮色。
+		final int RESHATTERED_COLOR = 0xFF88CC;
+		CreditsBlock reshattered = new CreditsBlock(true, RESHATTERED_COLOR,
+				"Re-Shattered Pixel Dungeon",
+				Icons.RESHATTERED.get(),
+				"Developed by: _jjc-cloud_\nBased on Shattered Pixel Dungeon's open source.\nBelow is the GitHub repository link:",
+				"ReShatteredPixel.com",
+				"https://github.com/jjc-cloud/re-shattered-pixel-dungeon"
+			);
+		reshattered.setRect((w - fullWidth) / 2f, insets.top + 6, fullWidth, 0);
+		content.add(reshattered);
+		//额外内容
+		CreditsBlock extra = new CreditsBlock(true, RESHATTERED_COLOR,
+        null, null, // 不重复显示标题和头像
+        "If you're interested in this project or have any ideas to share, feel free to join our QQ group:",
+        "QQ group：1128292113",
+        "https://qm.qq.com/q/xQzI9cY31S");
+
+		extra.setRect(
+        reshattered.left(),
+        reshattered.bottom() + 3,
+        reshattered.width(),
+        0);
+		content.add(extra);
+		float creditsTop = extra.bottom() + 12;
+		addLine(creditsTop - 4, content);
+
 		//*** Shattered Pixel Dungeon Credits ***
 
 		CreditsBlock shpx = new CreditsBlock(true, Window.SHPX_COLOR,
@@ -73,9 +100,9 @@ public class AboutScene extends PixelScene {
 				"ShatteredPixel.com",
 				"https://ShatteredPixel.com");
 		if (landscape()){
-			shpx.setRect((w - fullWidth)/2f - 6, insets.top + 26, 120, 0);
+			shpx.setRect((w - fullWidth)/2f - 6, creditsTop + 20, 120, 0);
 		} else {
-			shpx.setRect((w - fullWidth)/2f, insets.top + 6, 120, 0);
+			shpx.setRect((w - fullWidth)/2f, creditsTop, 120, 0);
 		}
 		content.add(shpx);
 
@@ -87,7 +114,7 @@ public class AboutScene extends PixelScene {
 				"https://www.alekskomitov.com/");
 		aleks.setSize(colWidth/2f, 0);
 		if (landscape()){
-			aleks.setPos(shpx.right(), insets.top+6);
+			aleks.setPos(shpx.right(), creditsTop);
 		} else {
 			aleks.setPos(w/2f - colWidth/2f, shpx.bottom()+6);
 		}

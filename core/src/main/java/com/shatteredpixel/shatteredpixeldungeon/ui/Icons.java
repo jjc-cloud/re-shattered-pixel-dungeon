@@ -136,7 +136,8 @@ public enum Icons {
 	CUBE_CODE,
 	PURIGRO,
 	ARCNOR,
-	ALASTAIR;
+	ALASTAIR,
+	RESHATTERED;
 
 	public Image get() {
 		return get( this );
@@ -441,6 +442,10 @@ public enum Icons {
 			case ALASTAIR:
 				icon.frame( icon.texture.uvRectBySize( 192, 96, 32, 32 ) );
 				icon.scale.set(PixelScene.align(0.49f));
+				break;
+			case RESHATTERED:
+				icon.frame( icon.texture.uvRectBySize( 224, 96, 32, 32 ) );
+				icon.scale.set(PixelScene.align(0.59f));
 				break;
 
 		}
