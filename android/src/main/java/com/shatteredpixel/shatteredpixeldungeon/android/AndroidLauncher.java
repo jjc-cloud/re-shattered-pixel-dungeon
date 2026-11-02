@@ -42,8 +42,6 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreeType;
 import com.badlogic.gdx.utils.GdxNativesLoader;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
-import com.shatteredpixel.shatteredpixeldungeon.services.news.News;
-import com.shatteredpixel.shatteredpixeldungeon.services.news.NewsImpl;
 import com.shatteredpixel.shatteredpixeldungeon.services.updates.UpdateImpl;
 import com.shatteredpixel.shatteredpixeldungeon.services.updates.Updates;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Button;
@@ -93,7 +91,7 @@ public class AndroidLauncher extends AndroidApplication {
 			Gdx.app = this;
 
 			//we want to try and ID if we were installed by a 3rd party appstore.
-			// If so we vary update and news checking a bit.
+			// If so we vary update checking a bit.
 			String installer;
 			try {
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
@@ -110,14 +108,6 @@ public class AndroidLauncher extends AndroidApplication {
 			if (UpdateImpl.supportsUpdates()
 					&& !installer.contains("fdroid") && !installer.contains("com.looker.droidify") && !installer.contains("com.uptodown")) {
 				Updates.service = UpdateImpl.getUpdateService();
-			}
-
-			//F-Droid specifically considers auto news checking to be an 'anti-feature', so default it to false
-			if (NewsImpl.supportsNews()) {
-				if (installer.contains("fdroid") || installer.contains("com.looker.droidify")){
-					SPDSettings.newsDefault = false;
-				}
-				News.service = NewsImpl.getNewsService();
 			}
 
 			FileUtils.setDefaultFileProperties(Files.FileType.Local, "");

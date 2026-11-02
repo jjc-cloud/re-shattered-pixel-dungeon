@@ -24,23 +24,18 @@ package com.shatteredpixel.shatteredpixeldungeon.scenes;
 import com.shatteredpixel.shatteredpixeldungeon.Chrome;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
-import com.shatteredpixel.shatteredpixeldungeon.messages.Languages;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.services.news.News;
 import com.shatteredpixel.shatteredpixeldungeon.services.news.NewsArticle;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ExitButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
-import com.shatteredpixel.shatteredpixeldungeon.ui.TitleBackground;
-import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
+import com.shatteredpixel.shatteredpixeldungeon.ui.ScrollPane;
 import com.shatteredpixel.shatteredpixeldungeon.ui.StyledButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
+import com.shatteredpixel.shatteredpixeldungeon.ui.TitleBackground;
 import com.shatteredpixel.shatteredpixeldungeon.windows.IconTitle;
-import com.shatteredpixel.shatteredpixeldungeon.windows.WndTitledMessage;
-import com.watabou.noosa.BitmapText;
 import com.watabou.noosa.Camera;
-import com.watabou.noosa.Game;
 import com.watabou.noosa.NinePatch;
 import com.watabou.noosa.ui.Component;
 import com.watabou.utils.RectF;
@@ -49,248 +44,120 @@ import java.util.ArrayList;
 
 public class NewsScene extends PixelScene {
 
-	boolean displayingNoArticles = false;
-
-	private static final int BTN_HEIGHT = 22;
-	private static final int BTN_WIDTH = 100;
-
 	@Override
 	public void create() {
 		super.create();
-
 		uiCamera.visible = false;
 
 		int w = Camera.main.width;
 		int h = Camera.main.height;
 		RectF insets = getCommonInsets();
-
-		TitleBackground BG = new TitleBackground(w, h);
-		add(BG);
-
+		add(new TitleBackground(w, h));
 		w -= insets.left + insets.right;
 		h -= insets.top + insets.bottom;
 
-		int fullWidth = PixelScene.landscape() ? 202 : 100;
-		int left = (int)insets.left + (w - fullWidth)/2;
-
-		ExitButton btnExit = new ExitButton();
-		btnExit.setPos(insets.left + w - btnExit.width(), insets.top);
-		add(btnExit);
-
-		IconTitle title = new IconTitle( Icons.NEWS.get(), Messages.get(this, "title"));
-		title.setSize(200, 0);
-		title.setPos(
-				insets.left + (w - title.reqWidth()) / 2f,
-				insets.top + (20 - title.height()) / 2f
-		);
+		IconTitle title = new IconTitle(Icons.NEWS.get(), Messages.get(this, "title"));
+		title.setSize(w - 40, 0);
+		title.setPos(insets.left + (w - title.reqWidth()) / 2f, insets.top + 2);
 		align(title);
 		add(title);
 
-		float top = 18 + insets.top;
+		NinePatch panel = Chrome.get(Chrome.Type.TOAST);
+		panel.size(Math.min(w - 8, landscape() ? 280 : 220), h - 28);
+		panel.x = insets.left + (w - panel.width()) / 2f;
+		panel.y = insets.top + 24;
+		align(panel);
 
-		displayingNoArticles = !News.articlesAvailable();
-		if (displayingNoArticles || Messages.lang() != Languages.ENGLISH) {
-
-			Component newsInfo = new NewsInfo();
-			newsInfo.setRect(left, top, fullWidth, 0);
-			add(newsInfo);
-
-			top = newsInfo.bottom();
-
-		}
-
-		if (!displayingNoArticles) {
-			ArrayList<NewsArticle> articles = News.articles();
-
-			float articleSpace = h - top - 2 + insets.top;
-			int rows = articles.size();
-			if (PixelScene.landscape()){
-				rows /= 2;
-			}
-			rows++;
-
-			while ((articleSpace) / (BTN_HEIGHT+0.5f) < rows) {
-				articles.remove(articles.size() - 1);
-				if (PixelScene.landscape()) {
-					articles.remove(articles.size() - 1);
-				}
-				rows--;
-			}
-
-			float gap = ((articleSpace) - (BTN_HEIGHT * rows)) / (float)rows;
-
-			boolean rightCol = false;
-			for (NewsArticle article : articles) {
-				StyledButton b = new ArticleButton(article);
-				b.multiline = true;
-				if (!rightCol) {
-					top += gap;
-					b.setRect( left, top, BTN_WIDTH, BTN_HEIGHT);
-				} else {
-					b.setRect( left + fullWidth - BTN_WIDTH, top, BTN_WIDTH, BTN_HEIGHT);
-				}
-				align(b);
-				add(b);
-				if (!PixelScene.landscape()) {
-					top += BTN_HEIGHT;
-				} else {
-					if (rightCol){
-						top += BTN_HEIGHT;
-					}
-					rightCol = !rightCol;
-				}
-			}
-			top += gap;
-		} else {
-			top += 20;
-		}
-
-		StyledButton btnSite = new StyledButton(Chrome.Type.GREY_BUTTON_TR, Messages.get(this, "read_more")){
+		ArrayList<ArticleButton> buttons = new ArrayList<>();
+		ScrollPane list = new ScrollPane(new Component()) {
 			@Override
-			protected void onClick() {
-				super.onClick();
-				ShatteredPixelDungeon.platform.openURI("https://ShatteredPixel.com");
+			public void onClick(float x, float y) {
+				for (ArticleButton button : buttons) {
+					if (button.inside(x, y)) {
+						button.onClick();
+						return;
+					}
+				}
 			}
 		};
-		btnSite.icon(Icons.get(Icons.NEWS));
-		btnSite.textColor(Window.TITLE_COLOR);
-		btnSite.setRect(left, top, fullWidth, BTN_HEIGHT);
-		add(btnSite);
+		add(list);
+		Component content = list.content();
+		int textWidth = (int)panel.innerWidth();
+		float cardWidth = (textWidth - 2) / 2f;
+		News.checkForNews();
+		for (NewsArticle article : News.articles()) {
+			ArticleButton button = new ArticleButton(article);
+			button.setRect(0, 0, cardWidth, 0);
+			buttons.add(button);
+			content.add(button);
+		}
+		float top = 0;
+		for (int i = 0; i < buttons.size(); i += 2) {
+			ArticleButton left = buttons.get(i);
+			ArticleButton right = i + 1 < buttons.size() ? buttons.get(i + 1) : null;
+			float rowHeight = right == null ? left.height() : Math.max(left.height(), right.height());
+			left.setRect(0, top, cardWidth, rowHeight);
+			if (right != null) right.setRect(cardWidth + 2, top, cardWidth, rowHeight);
+			top += rowHeight + 2;
+		}
+		if (!News.articlesAvailable()) {
+			RenderedTextBlock empty = renderTextBlock(Messages.get(this, "no_articles"), 6);
+			empty.maxWidth(textWidth);
+			content.add(empty);
+			top = empty.bottom() + 2;
+		}
+		content.setSize(textWidth, (int)Math.ceil(top));
+		list.setRect(panel.x + panel.marginLeft(), panel.y + panel.marginTop() - 1,
+				panel.innerWidth() + 2, panel.innerHeight() + 2);
+		list.scrollTo(0, 0);
 
+		ExitButton exit = new ExitButton();
+		exit.setPos(insets.left + w - exit.width(), insets.top);
+		add(exit);
 	}
 
 	@Override
 	protected void onBackPressed() {
-		ShatteredPixelDungeon.switchNoFade( TitleScene.class );
-	}
-
-	@Override
-	public void update() {
-		if (displayingNoArticles && News.articlesAvailable()){
-			ShatteredPixelDungeon.seamlessResetScene();
-		}
-		super.update();
-	}
-
-	private static class NewsInfo extends Component {
-
-		NinePatch bg;
-		RenderedTextBlock text;
-		RedButton button;
-
-		@Override
-		protected void createChildren() {
-			bg = Chrome.get(Chrome.Type.GREY_BUTTON_TR);
-			add(bg);
-			
-			String message = "";
-
-			if (Messages.lang() != Languages.ENGLISH){
-				message += Messages.get(this, "english_warn");
-			}
-			
-			if (!News.articlesAvailable()){
-				if (SPDSettings.news()) {
-					if (SPDSettings.WiFi() && !Game.platform.connectedToUnmeteredNetwork()) {
-						message += "\n\n" + Messages.get(this, "metered_network");
-
-						button = new RedButton(Messages.get(this, "enable_data")) {
-							@Override
-							protected void onClick() {
-								super.onClick();
-								SPDSettings.WiFi(false);
-								News.checkForNews();
-								ShatteredPixelDungeon.seamlessResetScene();
-							}
-						};
-						add(button);
-					} else {
-						message += "\n\n" + Messages.get(this, "no_internet");
-					}
-				} else {
-					message += "\n\n" + Messages.get(this, "news_disabled");
-
-					button = new RedButton(Messages.get(this, "enable_news")) {
-						@Override
-						protected void onClick() {
-							super.onClick();
-							SPDSettings.news(true);
-							News.checkForNews();
-							ShatteredPixelDungeon.seamlessResetScene();
-						}
-					};
-					add(button);
-				}
-			}
-
-			if (message.startsWith("\n\n")) message = message.replaceFirst("\n\n", "");
-			
-			text = PixelScene.renderTextBlock(message, 6);
-			text.hardlight(CharSprite.WARNING);
-			add(text);
-		}
-
-		@Override
-		protected void layout() {
-			bg.x = x;
-			bg.y = y;
-
-			text.maxWidth((int)width - bg.marginHor());
-			text.setPos(x + bg.marginLeft(), y + bg.marginTop()+1);
-
-			height = (text.bottom()) - y;
-
-			if (button != null){
-				height += 4;
-				button.multiline = true;
-				button.setSize(width - bg.marginHor(), 16);
-				button.setSize(width - bg.marginHor(), Math.max(button.reqHeight(), 16));
-				button.setPos(x + (width - button.width())/2, y + height);
-				height = button.bottom() - y;
-			}
-
-			height += bg.marginBottom() + 1;
-
-			bg.size(width, height);
-
-		}
+		ShatteredPixelDungeon.switchNoFade(TitleScene.class);
 	}
 
 	private static class ArticleButton extends StyledButton {
-
-		NewsArticle article;
-
-		BitmapText date;
+		private final NewsArticle article;
+		private final RenderedTextBlock summary;
+		private final RenderedTextBlock date;
 
 		public ArticleButton(NewsArticle article) {
 			super(Chrome.Type.GREY_BUTTON_TR, article.title, 6);
 			this.article = article;
-
 			icon(News.parseArticleIcon(article));
-			long lastRead = SPDSettings.newsLastRead();
-			if (lastRead > 0 && article.date.getTime() > lastRead) {
-				textColor(Window.SHPX_COLOR);
-			}
-
-			date = new BitmapText( News.parseArticleDate(article), pixelFont);
-			date.scale.set(PixelScene.align(0.5f));
-			date.hardlight( 0x888888 );
-			date.measure();
+			textColor(article.date.getTime() > SPDSettings.newsLastRead() ? Window.SHPX_COLOR : Window.WHITE);
+			summary = renderTextBlock(article.summary, 6);
+			summary.setHightlighting(false);
+			add(summary);
+			date = renderTextBlock(News.parseArticleDate(article), 5);
+			date.hardlight(0x888888);
 			add(date);
 		}
 
 		@Override
 		protected void layout() {
 			super.layout();
-
-			icon.x = x + bg.marginLeft() + (16-icon.width())/2f;
-			PixelScene.align(icon);
-			text.setPos(x + bg.marginLeft() + 18, text.top());
-
-			if (date != null) {
-				date.x = x + width - bg.marginRight() - date.width() + 1;
-				date.y = y + height - bg.marginBottom() - date.height() + 2.5f;
-				align(date);
+			if (icon == null) return;
+			float left = x + bg.marginLeft() + 2;
+			float top = y + bg.marginTop() + 2;
+			icon.x = left;
+			icon.y = top;
+			align(icon);
+			text.maxWidth(Math.max(1, (int)(width - bg.marginHor() - icon.width() - 6)));
+			text.setPos(left + icon.width() + 2, top);
+			align(text);
+			if (summary != null && date != null) {
+				summary.maxWidth(Math.max(1, (int)(width - bg.marginHor() - 4)));
+				summary.setPos(left, Math.max(text.bottom(), icon.y + icon.height()) + 4);
+				date.maxWidth(Math.max(1, (int)(width - bg.marginHor() - 4)));
+				date.setPos(left, summary.bottom() + 4);
+				height = Math.max(height, date.bottom() - y + bg.marginBottom() + 2);
+				bg.size(width, height);
 			}
 		}
 
@@ -298,31 +165,34 @@ public class NewsScene extends PixelScene {
 		protected void onClick() {
 			super.onClick();
 			textColor(Window.WHITE);
-			if (article.date.getTime() > SPDSettings.newsLastRead()){
-				SPDSettings.newsLastRead(article.date.getTime());
-			}
+			SPDSettings.newsLastRead(Math.max(SPDSettings.newsLastRead(), article.date.getTime()));
 			ShatteredPixelDungeon.scene().addToFront(new WndArticle(article));
 		}
 	}
 
-	private static class WndArticle extends WndTitledMessage {
+	private static class WndArticle extends Window {
+		public WndArticle(NewsArticle article) {
+			super();
+			int width = Math.min(landscape() ? 220 : 160, (int)uiCamera.width - 20);
+			IconTitle title = new IconTitle(News.parseArticleIcon(article), article.title);
+			title.setRect(0, 0, width, 0);
+			add(title);
+			RenderedTextBlock date = renderTextBlock(News.parseArticleDate(article), 6);
+			date.hardlight(0x888888);
+			date.setPos(0, title.bottom() + 2);
+			add(date);
 
-		public WndArticle(NewsArticle article ) {
-			super(News.parseArticleIcon(article), article.title, article.summary);
-
-			RedButton link = new RedButton(Messages.get(NewsScene.class, "read_more")){
-				@Override
-				protected void onClick() {
-					super.onClick();
-					ShatteredPixelDungeon.platform.openURI(article.URL);
-				}
-			};
-			link.setRect(0, height + 2, width, BTN_HEIGHT);
-			add(link);
-			resize(width, (int) link.bottom());
+			ScrollPane scroll = new ScrollPane(new Component());
+			add(scroll);
+			RenderedTextBlock body = renderTextBlock(article.body, 6);
+			body.maxWidth(width - 2);
+			scroll.content().add(body);
+			scroll.content().setSize(width, body.height() + 2);
+			float top = date.bottom() + 4;
+			int bodyHeight = (int)Math.ceil(Math.min(body.height() + 2, uiCamera.height - top - 20));
+			resize(width, (int)Math.ceil(top) + bodyHeight);
+			scroll.setRect(0, top, width, bodyHeight);
+			scroll.scrollTo(0, 0);
 		}
-
-
 	}
-
 }
