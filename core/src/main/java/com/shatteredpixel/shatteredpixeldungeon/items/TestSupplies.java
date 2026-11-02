@@ -2,6 +2,8 @@ package com.shatteredpixel.shatteredpixeldungeon.items;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
+import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.Trinket;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Catalog;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -128,7 +130,8 @@ public class TestSupplies extends Item {
 			if (item instanceof com.shatteredpixel.shatteredpixeldungeon.items.keys.Key) {
 				((com.shatteredpixel.shatteredpixeldungeon.items.keys.Key)item).depth = Dungeon.depth;
 			}
-			if (item.isUpgradable()) item.upgrade(level);
+			if (item instanceof Artifact) ((Artifact)item).transferUpgrade(level);
+			else if (item.isUpgradable() || item instanceof Trinket) item.upgrade(level);
 			item.identify();
 			if (item.stackable) { item.quantity(count); result.add(item); break; }
 			result.add(item);

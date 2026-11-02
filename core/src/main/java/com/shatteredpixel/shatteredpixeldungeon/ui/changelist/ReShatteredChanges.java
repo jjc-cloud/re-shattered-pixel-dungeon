@@ -90,6 +90,8 @@ public class ReShatteredChanges {
 				"\n替换监狱的门为铁门，铁门不会被投射物打开、遮挡视野、阻断气体。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V021_MAGICSPEAR, "新武器",
 				"\n-新增三阶投掷武器魔法长枪，魔法长枪造成魔法伤害，无限耐久，但只要未命中就会消失。\n-新增五阶武器斩龙，根据使用者的受伤程度提高伤害下限，替换巨剑。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V22_KATANA, "剑气",
+				"\n移除武技弓步刺，新增武技剑气，剑气可对非相邻的单位使出，对相邻单位使出则只造成一次普通伤害。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V021_KEEN_HEARING, "新天赋与成就",
 				"\n-天赋敏锐听觉：感知周围非睡眠怪物的声音。\n-成就财货两空：没能追上偷走物品的水晶宝箱怪。"));
 
