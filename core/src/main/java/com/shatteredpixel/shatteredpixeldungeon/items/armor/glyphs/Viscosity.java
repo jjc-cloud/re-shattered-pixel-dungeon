@@ -30,7 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor.Glyph;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicJavelin;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicSpear;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
@@ -91,9 +91,9 @@ public class Viscosity extends Glyph {
 			if (amount > 0){
 				DeferedDamage deferred = Buff.affect( target, DeferedDamage.class );
 				Object origin = attacker instanceof Hero
-						&& ((Hero) attacker).belongings.attackingWeapon() instanceof MagicJavelin
+						&& ((Hero) attacker).belongings.attackingWeapon() instanceof MagicSpear
 						? ((Hero) attacker).belongings.attackingWeapon() : attacker;
-				deferred.extend(amount, attacker, origin, !(origin instanceof MagicJavelin));
+				deferred.extend(amount, attacker, origin, !(origin instanceof MagicSpear));
 
 				target.sprite.showStatus( CharSprite.WARNING, Messages.get(Viscosity.class, "deferred", amount) );
 			}

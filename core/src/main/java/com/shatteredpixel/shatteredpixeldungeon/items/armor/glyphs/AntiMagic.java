@@ -67,7 +67,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Crysta
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Grim;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Shocking;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.HolyDart;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicJavelin;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicSpear;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.DisintegrationTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.GrimTrap;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
@@ -98,7 +98,7 @@ public class AntiMagic extends Armor.Glyph {
 		RESISTS.add( ScrollOfPsionicBlast.class );
 		RESISTS.add( ScrollOfTeleportation.class );
 		RESISTS.add( HolyDart.class );
-		RESISTS.add( MagicJavelin.class );
+		RESISTS.add( MagicSpear.class );
 
 		RESISTS.add( GuidingLight.class );
 		RESISTS.add( HolyWeapon.class );
