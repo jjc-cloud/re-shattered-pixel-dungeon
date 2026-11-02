@@ -211,7 +211,7 @@ public class TitleScene extends PixelScene {
 			}
 		};
 		btnAbout.icon(Icons.get(Icons.RESHATTERED));
-		btnAbout.icon().scale.set(PixelScene.align(0.50f));
+		btnAbout.icon().scale.set(0.54f);
 		add(btnAbout);
 		
 		final int BTN_HEIGHT = 20;
