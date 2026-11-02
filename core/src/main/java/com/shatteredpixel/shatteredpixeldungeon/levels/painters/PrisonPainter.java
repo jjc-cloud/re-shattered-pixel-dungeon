@@ -24,12 +24,14 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.painters;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection.PrisonHallRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.SpecialRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.ChasmBridgeRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.FissureRoom;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class PrisonPainter extends RegularPainter {
 	
@@ -39,6 +41,84 @@ public class PrisonPainter extends RegularPainter {
 		int w = level.width();
 		int l = level.length();
 		int[] map = level.terrainVisuals();
+		if (level.feeling == Level.Feeling.CHASM) {
+			// 悬空连接不留孤立门，房间墙体支撑的门继续保留。
+			for (Room r : rooms) for (Room.Door door : r.connected.values()) {
+				if (door == null) continue;
+				int cell = door.x + door.y * w;
+				if (isDoor(map[cell]) && !isWall(map[cell - 1]) && !isWall(map[cell + 1])
+						&& !isWall(map[cell - w]) && !isWall(map[cell + w])) {
+					level.cellAt(cell).removeTerrain(map[cell]);
+					door.type = Room.Door.Type.EMPTY;
+				}
+			}
+		}
+
+		// 按实际廊段重建中心线，装饰间距沿弯曲主廊计算，不按直线坐标取模。
+		boolean[] hallFloor = new boolean[l];
+		boolean[] centerLine = new boolean[l];
+		int origin = -1;
+		for (Room r : rooms) if (r instanceof PrisonHallRoom) {
+			int cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2;
+			centerLine[cx + cy * w] = true;
+			for (int y = r.top + 1; y < r.bottom; y++) {
+				for (int x = r.left + 1; x < r.right; x++) hallFloor[x + y * w] = true;
+			}
+			int arms = 0, endOffset = 0;
+			for (Room n : r.connected.keySet()) {
+				if (!(n instanceof PrisonHallRoom)) {
+					// 门只覆盖内容，脚下仍是主廊特殊地砖。
+					Room.Door door = r.connected.get(n);
+					if (door != null) level.cellAt(door.x + door.y * w).setGround(Terrain.EMPTY_SP);
+					continue;
+				}
+				arms++;
+				int nx = (n.left + n.right) / 2, ny = (n.top + n.bottom) / 2;
+				endOffset = Integer.signum(cx - nx) + Integer.signum(cy - ny) * w;
+				for (int y = Math.min(cy, ny); y <= Math.max(cy, ny); y++) {
+					for (int x = Math.min(cx, nx); x <= Math.max(cx, nx); x++) {
+						centerLine[x + y * w] = true;
+						for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {
+							hallFloor[x + dx + (y + dy) * w] = true;
+						}
+					}
+				}
+			}
+			if (arms == 1) {
+				int end = cx + cy * w + endOffset;
+				centerLine[end] = true;
+				// 尽头中间一格也铺特殊地砖，与两侧边带连成完整收边。
+				level.cellAt(end).setGround(Terrain.EMPTY_SP);
+			}
+			if (((PrisonHallRoom) r).arm == -1) origin = cx + cy * w;
+		}
+		// 按完整廊道铺边带，包含转弯外侧凸角，也不会因开门缺少邻墙而断砖。
+		for (int cell = w + 1; cell < l - w - 1; cell++) if (hallFloor[cell] && !centerLine[cell]) {
+			level.cellAt(cell).setGround(Terrain.EMPTY_SP);
+		}
+		if (origin != -1) {
+			int[] distance = new int[l];
+			Arrays.fill(distance, -1);
+			int[] queue = new int[l];
+			int[] neighbours = {-w, 1, w, -1};
+			int head = 0, tail = 0;
+			queue[tail++] = origin;
+			distance[origin] = 0;
+			while (head < tail) {
+				int cell = queue[head++];
+				for (int offset : neighbours) {
+					int next = cell + offset;
+					if (centerLine[next] && distance[next] == -1) {
+						distance[next] = distance[cell] + 1;
+						queue[tail++] = next;
+					}
+				}
+				if (distance[cell] % 5 != 0) continue;
+				// 铁笼沿主廊中线摆放，底座为特殊地板，两侧仍可绕行。
+				level.cellAt(cell).setGround(Terrain.EMPTY_SP);
+				level.cellAt(cell).place(Terrain.REGION_DECO);
+			}
+		}
 		
 		for (int i=w + 1; i < l - w - 1; i++) {
 			if (level.terrainAt(i) == Terrain.EMPTY) {
@@ -94,6 +174,7 @@ public class PrisonPainter extends RegularPainter {
 			if (level.hasTerrain(i, Terrain.WALL) &&
 					isOpenFloor(undecoratedMap[i + w]) &&
 					!isAdjacentToDoor(undecoratedMap, i, w) &&
+					!isAdjacentToTorch(level, i, w) &&
 					Random.Int( 6 ) == 0) {
 				
 				level.cellAt(i).place(Terrain.WALL_DECO);
@@ -103,11 +184,19 @@ public class PrisonPainter extends RegularPainter {
 		for (int y=1; y < level.height()-1; y++) {
 			for (int x=1; x < w-1; x++) {
 				int cell = x + y*w;
-				if (isTorchWallCandidate(undecoratedMap, cell, w) && Random.Int( 3 ) == 0) {
+				if (isTorchWallCandidate(undecoratedMap, cell, w) &&
+						!isAdjacentToTorch(level, cell, w) && Random.Int( 6 ) == 0) {
 					level.cellAt(cell).place(Terrain.WALL_DECO);
 				}
 			}
 		}
+	}
+
+	private static boolean isAdjacentToTorch( Level level, int cell, int width ) {
+		return cell >= width && level.hasTerrain(cell - width, Terrain.WALL_DECO)
+				|| cell + width < level.length() && level.hasTerrain(cell + width, Terrain.WALL_DECO)
+				|| cell % width > 0 && level.hasTerrain(cell - 1, Terrain.WALL_DECO)
+				|| cell % width < width - 1 && level.hasTerrain(cell + 1, Terrain.WALL_DECO);
 	}
 
 	protected static boolean isTorchWallCandidate( int[] map, int cell, int width ) {
