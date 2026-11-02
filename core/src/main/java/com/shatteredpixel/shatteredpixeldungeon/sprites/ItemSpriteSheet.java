@@ -342,7 +342,7 @@ public class ItemSpriteSheet {
 	public static final int JAVELIN         = MISSILE_TIER4+0;
 	public static final int TOMAHAWK        = MISSILE_TIER4+1;
 	public static final int BOOMERANG       = MISSILE_TIER4+2;
-	public static final int MAGIC_JAVELIN   = MISSILE_TIER4+3;
+	public static final int MAGIC_SPEAR   = MISSILE_TIER4+3;
 
 	private static final int MISSILE_TIER5 = xy(1, 18);
 	public static final int TRIDENT         = MISSILE_TIER5+0;
@@ -367,7 +367,7 @@ public class ItemSpriteSheet {
 		assignItemRect(JAVELIN,         16, 16);
 		assignItemRect(TOMAHAWK,        13, 13);
 		assignItemRect(BOOMERANG,       14, 14);
-		assignItemRect(MAGIC_JAVELIN,   16, 16);
+		assignItemRect(MAGIC_SPEAR,   16, 16);
 		
 		assignItemRect(TRIDENT,         16, 16);
 		assignItemRect(THROWING_HAMMER, 12, 12);

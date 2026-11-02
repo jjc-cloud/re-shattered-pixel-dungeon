@@ -28,14 +28,13 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
-import com.watabou.noosa.audio.Sample;
 
-public class MagicJavelin extends MissileWeapon {
+public class MagicSpear extends MissileWeapon {
 
 	{
-		image = ItemSpriteSheet.MAGIC_JAVELIN;
+		image = ItemSpriteSheet.MAGIC_SPEAR;
 		hitSound = Assets.Sounds.HIT_MAGIC;
-		tier = 4;
+		tier = 3;
 		sticky = false;
 	}
 
@@ -66,7 +65,6 @@ public class MagicJavelin extends MissileWeapon {
 		if (!spawnedForEffect) {
 			if (collect(curUser.belongings.backpack)) {
 				GameScene.pickUp(this, cell);
-				Sample.INSTANCE.play(Assets.Sounds.ITEM);
 			} else {
 				Dungeon.level.drop(this, curUser.pos).sprite.drop();
 			}

@@ -141,7 +141,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Shocki
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Vorpal;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sickle;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicJavelin;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicSpear;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.ShockingDart;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
@@ -421,11 +421,11 @@ public abstract class Char extends Actor {
 		}
 
 		boolean visibleFight = Dungeon.level.heroFOV[pos] || Dungeon.level.heroFOV[enemy.pos];
-		MagicJavelin magicJavelin = this instanceof Hero
-				&& ((Hero) this).belongings.attackingWeapon() instanceof MagicJavelin
-				? (MagicJavelin) ((Hero) this).belongings.attackingWeapon() : null;
+		MagicSpear magicSpear = this instanceof Hero
+				&& ((Hero) this).belongings.attackingWeapon() instanceof MagicSpear
+				? (MagicSpear) ((Hero) this).belongings.attackingWeapon() : null;
 
-		if (enemy.isInvulnerable(magicJavelin != null ? magicJavelin.getClass() : getClass())) {
+		if (enemy.isInvulnerable(magicSpear != null ? magicSpear.getClass() : getClass())) {
 			if (enemy instanceof Hero) {
 				((Hero) enemy).interrupt();
 			}
@@ -440,7 +440,7 @@ public abstract class Char extends Actor {
 
 		} else if (hit( this, enemy, accMulti, false )) {
 			
-			int dr = magicJavelin != null ? 0 : Math.round(enemy.drRoll() * AscensionChallenge.statModifier(enemy));
+			int dr = magicSpear != null ? 0 : Math.round(enemy.drRoll() * AscensionChallenge.statModifier(enemy));
 			
 			if (this instanceof Hero){
 				Hero h = (Hero)this;
@@ -536,7 +536,7 @@ public abstract class Char extends Actor {
 				dmg *= 0.67f;
 			}
 
-			boolean attackDamageBlocked = blocksDomainDamage(magicJavelin != null ? magicJavelin : this, magicJavelin == null);
+			boolean attackDamageBlocked = blocksDomainDamage(magicSpear != null ? magicSpear : this, magicSpear == null);
 			int effectiveDamage = enemy.defenseProc(this, attackDamageBlocked ? 0 : Math.round(dmg));
 			//反击等命中机制照常触发，但被屏蔽的本体不消耗受击护盾。
 			//附魔仍按本次攻击的伤害计算自己的独立魔法段。
@@ -580,8 +580,8 @@ public abstract class Char extends Actor {
 					else if (enemy.HP == 0) DeathMark.processFearTheReaper(enemy);
 				}
 				effectiveDamage = 0;
-			} else if (magicJavelin != null) {
-				enemy.damage(effectiveDamage, magicJavelin, this);
+			} else if (magicSpear != null) {
+				enemy.damage(effectiveDamage, magicSpear, this);
 			} else {
 				enemy.damagePhysical(effectiveDamage, this, this);
 			}
@@ -947,7 +947,7 @@ public abstract class Char extends Actor {
 
 		// 魔法标枪保留投掷者，附魔和受击机制仍按角色攻击处理。
 		Char sourceAttacker = src instanceof Char ? (Char) src
-				: src instanceof MagicJavelin ? domainDamageActor : null;
+				: src instanceof MagicSpear ? domainDamageActor : null;
 		boolean charAttacked = dmg > 0 && sourceAttacker != null && sourceAttacker != this;
 
 		if (!(this instanceof Hero) && src instanceof Wand && Dungeon.hero != null) {

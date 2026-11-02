@@ -114,7 +114,7 @@ abstract public class MissileWeapon extends Weapon {
 	
 	@Override
 	public int min(int lvl) {
-		return  2 * tier +                      //base
+		return  (this instanceof MagicSpear ? 8 : 2 * tier) + //base
 				lvl;                            //level scaling
 	}
 	
@@ -311,7 +311,7 @@ abstract public class MissileWeapon extends Weapon {
 				}
 			}
 
-			if (!spawnedForEffect && !(this instanceof MagicJavelin)) super.onThrow( cell );
+			if (!spawnedForEffect && !(this instanceof MagicSpear)) super.onThrow( cell );
 		} else {
 			if (!curUser.shoot( enemy, this )) {
 				rangedMiss( cell );
@@ -566,7 +566,7 @@ abstract public class MissileWeapon extends Weapon {
 		int damage = augment.damageFactor(super.damageRoll( owner ));
 		
 		if (owner instanceof Hero) {
-			int exStr = this instanceof MagicJavelin ? 0 : ((Hero)owner).STR() - STRReq();
+			int exStr = this instanceof MagicSpear ? 0 : ((Hero)owner).STR() - STRReq();
 			if (exStr > 0) {
 				damage += Hero.heroDamageIntRange( 0, exStr );
 			}
@@ -694,7 +694,7 @@ abstract public class MissileWeapon extends Weapon {
 
 		if (levelKnown) {
 			info += "\n\n" + Messages.get(this, "stats_known", tier, augment.damageFactor(min()), augment.damageFactor(max()), STRReq());
-			if (Dungeon.hero != null && !(this instanceof MagicJavelin)) {
+			if (Dungeon.hero != null && !(this instanceof MagicSpear)) {
 				if (STRReq() > Dungeon.hero.STR()) {
 					info += " " + Messages.get(Weapon.class, "too_heavy");
 				} else if (Dungeon.hero.STR() > STRReq()) {

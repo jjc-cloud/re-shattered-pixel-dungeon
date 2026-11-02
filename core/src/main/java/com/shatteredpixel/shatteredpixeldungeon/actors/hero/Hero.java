@@ -155,7 +155,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.RoundShield;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sai;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Scimitar;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WornShortsword;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicJavelin;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicSpear;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Catalog;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Document;
@@ -1857,7 +1857,7 @@ public class Hero extends Char {
 		float damage = dmg;
 
 		Endure.EndureTracker endure = buff(Endure.EndureTracker.class);
-		if (!(src instanceof Char || src instanceof MagicJavelin)){
+		if (!(src instanceof Char || src instanceof MagicSpear)){
 			//reduce damage here if it isn't coming from a character (if it is we already reduced it)
 			if (endure != null){
 				damage = endure.adjustDamageTaken(dmg);
@@ -1875,7 +1875,7 @@ public class Hero extends Char {
 		//unused, could be removed
 		CapeOfThorns.Thorns thorns = buff( CapeOfThorns.Thorns.class );
 		if (thorns != null) {
-			damage = thorns.proc((int)damage, (src instanceof MagicJavelin ? attacker
+			damage = thorns.proc((int)damage, (src instanceof MagicSpear ? attacker
 					: src instanceof Char ? (Char)src : null), this);
 		}
 
