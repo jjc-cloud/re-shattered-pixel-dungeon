@@ -21,55 +21,44 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.services.news;
 
-import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
-import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
+import com.badlogic.gdx.utils.XmlReader;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.watabou.noosa.Image;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Locale;
 
 public class News {
 
-	public static NewsService service;
-
-	public static boolean supportsNews(){
-		return service != null;
-	}
-
-	private static Date lastCheck = null;
-	private static final long CHECK_DELAY = 1000*60*60; //1 hour
+	private static ArrayList<NewsArticle> articles;
 
 	public static void checkForNews(){
-		if (!supportsNews()) return;
-		if (lastCheck != null && (new Date().getTime() - lastCheck.getTime()) < CHECK_DELAY) return;
-
-		boolean useHTTPS = true;
-		if (Gdx.app.getType() == Application.ApplicationType.Android && Gdx.app.getVersion() < 20){
-			useHTTPS = false; //android versions below 5.0 don't support TLSv1.2 by default
+		// 中文新闻随安装包发布，不保留远端新闻缓存。
+		articles = new ArrayList<>();
+		try {
+			XmlReader.Element root = new XmlReader().parse(Gdx.files.internal("news/news_zh.xml"));
+			SimpleDateFormat dateParser = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT);
+			dateParser.setLenient(false);
+			for (XmlReader.Element entry : root.getChildrenByName("entry")) {
+				NewsArticle article = new NewsArticle();
+				article.title = entry.get("title").trim();
+				article.date = dateParser.parse(entry.get("published").trim());
+				article.summary = entry.get("summary").trim();
+				article.body = entry.get("body").trim();
+				article.icon = entry.get("icon", "ICON: NEWS").trim();
+				articles.add(article);
+			}
+		} catch (Exception e) {
+			ShatteredPixelDungeon.reportException(e);
 		}
-		service.checkForArticles(!SPDSettings.WiFi(), useHTTPS, new NewsService.NewsResultCallback() {
-			@Override
-			public void onArticlesFound(ArrayList<NewsArticle> articles) {
-				lastCheck = new Date();
-				News.articles = articles;
-			}
-
-			@Override
-			public void onConnectionFailed() {
-				lastCheck = null;
-				News.articles = null;
-			}
-		});
-
 	}
-
-	private static ArrayList<NewsArticle> articles;
 
 	public static synchronized boolean articlesAvailable(){
 		return articles != null && !articles.isEmpty();
@@ -87,11 +76,6 @@ public class News {
 			}
 		}
 		return unread;
-	}
-
-	public static synchronized void clearArticles(){
-		articles = null;
-		lastCheck = null;
 	}
 
 	public static Image parseArticleIcon(NewsArticle article){

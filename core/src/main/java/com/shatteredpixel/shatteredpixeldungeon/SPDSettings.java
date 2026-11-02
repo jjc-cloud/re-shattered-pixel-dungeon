@@ -311,22 +311,11 @@ public class SPDSettings extends GameSettings {
 
 	//Connectivity
 
-	public static final String KEY_NEWS     = "news";
 	public static final String KEY_UPDATES	= "updates";
 	public static final String KEY_BETAS	= "betas";
 	public static final String KEY_WIFI     = "wifi";
 
-	public static final String KEY_NEWS_LAST_READ = "news_last_read";
-
-	public static void news(boolean value){
-		put(KEY_NEWS, value);
-	}
-
-	public static boolean newsDefault = true;
-
-	public static boolean news(){
-		return getBoolean(KEY_NEWS, newsDefault);
-	}
+	public static final String KEY_NEWS_LAST_READ = "local_news_last_read";
 
 	public static void updates(boolean value){
 		put(KEY_UPDATES, value);

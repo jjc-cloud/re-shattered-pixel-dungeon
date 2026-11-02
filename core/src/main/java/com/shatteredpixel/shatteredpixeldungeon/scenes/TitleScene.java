@@ -352,7 +352,7 @@ public class TitleScene extends PixelScene {
 
 		public NewsButton(Chrome.Type type, String label ){
 			super(type, label);
-			if (SPDSettings.news()) News.checkForNews();
+			News.checkForNews();
 		}
 
 		int unreadCount = -1;
