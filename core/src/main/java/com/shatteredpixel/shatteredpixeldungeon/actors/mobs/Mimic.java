@@ -163,7 +163,8 @@ public class Mimic extends Mob {
 			Dungeon.hero.busy();
 			Dungeon.hero.sprite.operate(pos, () -> {
 				Dungeon.hero.sprite.idle();
-				Dungeon.hero.onOperateComplete();
+				// actInteract already prepared the turn; only undo busy() after the animation.
+				Dungeon.hero.ready = true;
 				GameScene.openChest(new ChestSession(this));
 			});
 			return false;

@@ -78,7 +78,7 @@ public class Hunger extends Buff implements Hero.Doom {
 
 			if (isStarving()) {
 
-				partialDamage += target.HT/1000f / (hero.heroClass == HeroClass.ROGUE ? 1.2f : 1f);
+				partialDamage += target.HT/1000f * (hero.heroClass == HeroClass.ROGUE ? 0.5f : 1f);
 
 				if (partialDamage > 1){
 					target.damage( (int)partialDamage, this);
@@ -87,7 +87,7 @@ public class Hunger extends Buff implements Hero.Doom {
 				
 			} else {
 
-				float hungerDelay = hero.heroClass == HeroClass.ROGUE ? 1.2f : 1f;
+				float hungerDelay = 1f;
 				if (target.buff(Shadows.class) != null){
 					hungerDelay *= 1.5f;
 				}
@@ -143,6 +143,7 @@ public class Hunger extends Buff implements Hero.Doom {
 		}
 
 		float oldLevel = level;
+		boolean rogue = target instanceof Hero && ((Hero)target).heroClass == HeroClass.ROGUE;
 
 		level -= energy;
 		if (level < 0 && !overrideLimits) {
@@ -150,7 +151,7 @@ public class Hunger extends Buff implements Hero.Doom {
 		} else if (level > STARVING) {
 			float excess = level - STARVING;
 			level = STARVING;
-			partialDamage += excess * (target.HT/1000f);
+			partialDamage += excess * (target.HT/1000f) * (rogue ? 0.7f : 1f);
 			if (partialDamage > 1f){
 				target.damage( (int)partialDamage, this );
 				partialDamage -= (int)partialDamage;
