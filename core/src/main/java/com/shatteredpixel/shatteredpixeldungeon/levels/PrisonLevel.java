@@ -32,7 +32,11 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.particles.FlameParticle;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.WindParticle;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.PrisonPainter;
+import com.shatteredpixel.shatteredpixeldungeon.levels.builders.Builder;
+import com.shatteredpixel.shatteredpixeldungeon.levels.builders.PrisonBuilder;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection.PrisonHallRoom;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.StandardRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.AlarmTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.BurningTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ChillingTrap;
@@ -89,6 +93,48 @@ public class PrisonLevel extends RegularLevel {
 	@Override
 	protected ArrayList<Room> initRooms() {
 		return Wandmaker.Quest.spawnRoom(super.initRooms());
+	}
+
+	@Override
+	protected Builder builder() {
+		return new PrisonBuilder();
+	}
+
+	@Override
+	protected int randomDropCell() {
+		int standardRooms = 0;
+		boolean[] arms = new boolean[4];
+		int hallRooms = 0;
+		for (Room r : rooms) {
+			if (r instanceof StandardRoom && r != roomEntrance) standardRooms++;
+			if (r instanceof PrisonHallRoom) {
+				int arm = ((PrisonHallRoom) r).arm;
+				if (arm >= 0 && arm < arms.length && !arms[arm]) {
+					arms[arm] = true;
+					hallRooms++;
+				}
+			}
+		}
+		// 每条支线与一个普通房间等权，不按主廊小段数量增加刷物权重。
+		if (hallRooms > 0 && Random.Int(standardRooms + hallRooms) >= standardRooms) {
+			int cell = super.randomDropCell(PrisonHallRoom.class);
+			if (cell != -1) return cell;
+		}
+		return super.randomDropCell();
+	}
+
+	@Override
+	protected Room randomRoom(Class<? extends Room> type) {
+		if (type != PrisonHallRoom.class) return super.randomRoom(type);
+		ArrayList<ArrayList<Room>> arms = new ArrayList<>();
+		for (int i = 0; i < 4; i++) arms.add(new ArrayList<>());
+		for (Room r : rooms) if (r instanceof PrisonHallRoom) {
+			int arm = ((PrisonHallRoom) r).arm;
+			if (arm >= 0 && arm < arms.size()) arms.get(arm).add(r);
+		}
+		for (int i = arms.size() - 1; i >= 0; i--) if (arms.get(i).isEmpty()) arms.remove(i);
+		if (arms.isEmpty()) return null;
+		return Random.element(Random.element(arms));
 	}
 
 	@Override
