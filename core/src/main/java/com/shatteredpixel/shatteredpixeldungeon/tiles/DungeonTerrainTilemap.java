@@ -21,19 +21,41 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.tiles;
 
+import com.badlogic.gdx.graphics.Pixmap;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.MiningLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
+import com.watabou.gltextures.TextureCache;
 import com.watabou.noosa.Image;
+import com.watabou.noosa.TextureFilm;
 import com.watabou.utils.PathFinder;
 
 public class DungeonTerrainTilemap extends DungeonTilemap {
 
 	static DungeonTerrainTilemap instance;
+	private final int alchemyFloorOffset;
 
 	public DungeonTerrainTilemap(){
 		super(Dungeon.level.tilesTex());
+
+		Pixmap terrain = texture.bitmap;
+		int width = terrain.getWidth(), height = terrain.getHeight();
+		alchemyFloorOffset = width / SIZE * (height / SIZE);
+		int[] pixels = new int[width * (height + SIZE * 2)];
+		int potX = DungeonTileSheet.RAISED_ALCHEMY_POT % (width / SIZE) * SIZE;
+		int potY = DungeonTileSheet.RAISED_ALCHEMY_POT / (width / SIZE) * SIZE;
+		// 保留原地板及其变体，仅按旧炼金锅的透明锅口挖空，让底层动态水面透出。
+		for (int y = 0; y < height + SIZE * 2; y++) for (int x = 0; x < width; x++) {
+			int rgba = terrain.getPixel(x, y < height ? y : y - height);
+			if (y >= height && (terrain.getPixel(potX + x % SIZE, potY + (y - height) % SIZE) & 0xFF) == 0) {
+				rgba = 0;
+			}
+			pixels[x + y * width] = rgba;
+		}
+		texture = TextureCache.createPixels("alchemy-floor:" + Dungeon.level.tilesTex(),
+				width, height + SIZE * 2, pixels);
+		tileset = new TextureFilm(texture, SIZE, SIZE);
 
 		map( Dungeon.level.terrainVisuals(), Dungeon.level.width() );
 
@@ -65,7 +87,12 @@ public class DungeonTerrainTilemap extends DungeonTilemap {
 					}
 				}
 			}
-			return DungeonTileSheet.getVisualWithAlts(visual, pos);
+			visual = DungeonTileSheet.getVisualWithAlts(visual, pos);
+			if (!flat && visual < 32 && !Dungeon.level.cellAt(pos).buried()
+					&& Dungeon.level.cellAt(pos).hasTerrain(Terrain.ALCHEMY)) {
+				return alchemyFloorOffset + visual;
+			}
+			return visual;
 		}
 
 		if (tile == Terrain.WATER) {
