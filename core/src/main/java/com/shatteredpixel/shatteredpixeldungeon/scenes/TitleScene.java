@@ -40,7 +40,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.ExitButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.IconButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.StyledButton;
-import com.shatteredpixel.shatteredpixeldungeon.ui.TitleBackground;
+import com.shatteredpixel.shatteredpixeldungeon.ui.Archs;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndSettings;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndVictoryCongrats;
@@ -94,7 +94,8 @@ public class TitleScene extends PixelScene {
 
 		RectF insets = getCommonInsets();
 
-		TitleBackground BG = new TitleBackground( w, h );
+		Archs BG = new Archs();
+		BG.setSize(w, h);
 		add( BG );
 
 		w -= insets.left + insets.right;
@@ -210,8 +211,7 @@ public class TitleScene extends PixelScene {
 				ShatteredPixelDungeon.switchScene( AboutScene.class );
 			}
 		};
-		btnAbout.icon(Icons.get(Icons.RESHATTERED));
-		btnAbout.icon().scale.set(0.54f);
+		btnAbout.icon(Icons.get(Icons.ABOUT));
 		add(btnAbout);
 		
 		final int BTN_HEIGHT = 20;

@@ -21,8 +21,6 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.services.news;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.utils.XmlReader;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
@@ -40,21 +38,31 @@ public class News {
 	private static ArrayList<NewsArticle> articles;
 
 	public static void checkForNews(){
-		// 中文新闻随安装包发布，不保留远端新闻缓存。
+		// 中文新闻直接在这里编辑，按代码顺序显示；新增新闻放在旧新闻前面。
 		articles = new ArrayList<>();
 		try {
-			XmlReader.Element root = new XmlReader().parse(Gdx.files.internal("news/news_zh.xml"));
 			SimpleDateFormat dateParser = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT);
 			dateParser.setLenient(false);
-			for (XmlReader.Element entry : root.getChildrenByName("entry")) {
-				NewsArticle article = new NewsArticle();
-				article.title = entry.get("title").trim();
-				article.date = dateParser.parse(entry.get("published").trim());
-				article.summary = entry.get("summary").trim();
-				article.body = entry.get("body").trim();
-				article.icon = entry.get("icon", "ICON: NEWS").trim();
-				articles.add(article);
-			}
+			NewsArticle article;
+
+			article = new NewsArticle();
+   			article.title = "Coming soon...";
+			article.date = dateParser.parse("2026-11-02");
+			article.icon = "ICON: NEWS";
+			article.summary = "矿洞区域地形改造。";
+			article.body = "\n监狱区域的改造暂时完成，后续会根据实际体验，依情况进行调整。\n"
+       		 + "接下来就是矿洞区域的地形改造与DM300 BOSS战重做，这一部分目前已经有了大致的改造方向。\n"
+       		 + "这一部分的时间可能会比较漫长，敬请期待。";
+			articles.add(article);
+
+			// 新增新闻时复制这一段，正文用 \n 换行，\n\n 分段。
+			article = new NewsArticle();
+			article.title = "模板新闻";
+			article.date = dateParser.parse("2026-11-02");
+			article.icon = "ICON: NEWS";
+			article.summary = "这是一条新闻模板，点击查看完整内容。";
+			article.body = "\n后续开发路线、作者的话将在此处展示。";
+			articles.add(article);
 		} catch (Exception e) {
 			ShatteredPixelDungeon.reportException(e);
 		}

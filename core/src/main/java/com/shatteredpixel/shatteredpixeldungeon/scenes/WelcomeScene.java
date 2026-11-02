@@ -37,7 +37,7 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.shatteredpixel.shatteredpixeldungeon.ui.StyledButton;
-import com.shatteredpixel.shatteredpixeldungeon.ui.TitleBackground;
+import com.shatteredpixel.shatteredpixeldungeon.ui.Archs;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndError;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndHardNotification;
 import com.watabou.glwrap.Blending;
@@ -97,7 +97,8 @@ public class WelcomeScene extends PixelScene {
 		int h = Camera.main.height;
 		RectF insets = getCommonInsets();
 
-		TitleBackground BG = new TitleBackground(w, h);
+		Archs BG = new Archs();
+		BG.setSize(w, h);
 		add( BG );
 
 		//darkens the arches

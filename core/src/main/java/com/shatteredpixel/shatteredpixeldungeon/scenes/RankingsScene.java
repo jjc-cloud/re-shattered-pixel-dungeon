@@ -37,7 +37,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.ExitButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.IconButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
-import com.shatteredpixel.shatteredpixeldungeon.ui.TitleBackground;
+import com.shatteredpixel.shatteredpixeldungeon.ui.Archs;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 import com.shatteredpixel.shatteredpixeldungeon.windows.IconTitle;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndDailies;
@@ -76,7 +76,8 @@ public class RankingsScene extends PixelScene {
 		int h = Camera.main.height;
 		RectF insets = getCommonInsets();
 
-		TitleBackground BG = new TitleBackground(w, h);
+		Archs BG = new Archs();
+		BG.setSize(w, h);
 		add( BG );
 
 		w -= insets.left + insets.right;

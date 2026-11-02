@@ -43,7 +43,7 @@ public class PrisonBuilder extends Builder {
 	// 额外门与已有门候选墙段之间至少隔四格，避免连续挨着开门。
 	public static final int EXTRA_DOOR_MIN_DISTANCE = 4;
 	public static final int MAX_EXTRA_HALL_CONNECTIONS_PER_ROOM = 1;
-	public static final float ROOM_AREA_SCALE = 1.20f;
+	public static final float ROOM_AREA_SCALE = 1.50f;
 	public static final int MAX_HALL_STRAIGHT_SEGMENTS = 3;
 	public static final int MAX_TUNNEL_STRAIGHT_STEPS = 3;
 	// 大多数普通房间直接贴主廊；其余留在区域内部由普通走廊接入。
@@ -119,8 +119,8 @@ public class PrisonBuilder extends Builder {
 			else leaves.add(r);
 		}
 		if (entrance == null || exit == null || core.size() < 3) return null;
-		// 按房间面积紧凑分配，避免四条主廊把小型楼层也撑到五十多格。
-		int cells = Math.max(8, (int) Math.ceil(Math.sqrt(area * 1.4f + 100) / 4));
+		// 按房间面积估算主廊网格，给放大的房间和连接走廊留出容量。
+		int cells = Math.max(8, (int) Math.ceil(Math.sqrt(area * 1.8f + 100) / 4));
 		// 放不下时逐级补容量；不能在固定上限内无限重试同一组必需房间。
 		cells += attempts++ / 32;
 		size = cells * 4 + 1;

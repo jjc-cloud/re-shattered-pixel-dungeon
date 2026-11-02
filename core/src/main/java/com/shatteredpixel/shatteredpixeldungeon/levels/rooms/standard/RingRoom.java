@@ -97,7 +97,7 @@ public class RingRoom extends StandardRoom {
 	}
 
 	protected CellPlacement centerDecoTiles(){
-		return CellPlacement.reset(Terrain.EMPTY, Terrain.REGION_DECO_ALT);
+		return CellPlacement.reset(Terrain.EMPTY_SP, Terrain.REGION_DECO_ALT);
 	}
 
 	protected void placeCenterDetail(Level level, int pos){
