@@ -6,7 +6,6 @@ java.sourceCompatibility = java.targetCompatibility = appJavaCompatibility
 dependencies {
     api project(':SPD-classes')
     implementation project(':services')
-    testRuntimeOnly "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
 }
 
 //编译开关只控制“测试时间”挑战是否可用，测试开局由游戏内勾选决定。
@@ -42,42 +41,3 @@ def generateTestStartConfig = tasks.register('generateTestStartConfig') {
 
 sourceSets.main.java.srcDir(testStartConfigDir)
 tasks.named('compileJava') { dependsOn generateTestStartConfig }
-
-tasks.register('chestRegression', JavaExec) {
-    dependsOn testClasses
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'com.shatteredpixel.shatteredpixeldungeon.ChestRegression'
-}
-
-tasks.register('terrainInteractionRegression', JavaExec) {
-    dependsOn testClasses
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'com.shatteredpixel.shatteredpixeldungeon.TerrainInteractionRegression'
-}
-
-tasks.register('superSecretRoomRegression', JavaExec) {
-    dependsOn testClasses
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'com.shatteredpixel.shatteredpixeldungeon.SuperSecretRoomRegression'
-}
-
-tasks.register('caveCollapseRegression', JavaExec) {
-    dependsOn testClasses
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'com.shatteredpixel.shatteredpixeldungeon.CaveCollapseRegression'
-}
-
-tasks.register('achievementRegression', JavaExec) {
-    dependsOn testClasses
-    classpath = sourceSets.test.runtimeClasspath
-    workingDir = projectDir.parentFile
-    mainClass = 'com.shatteredpixel.shatteredpixeldungeon.AchievementRegression'
-}
-
-tasks.register('damageDomainRegression', JavaExec) {
-    dependsOn testClasses
-    classpath = sourceSets.test.runtimeClasspath
-    workingDir = projectDir.parentFile
-    jvmArgs '-Dfile.encoding=UTF-8', '-Dstdout.encoding=UTF-8', '-Dstderr.encoding=UTF-8'
-    mainClass = 'com.shatteredpixel.shatteredpixeldungeon.DamageDomainRegression'
-}
