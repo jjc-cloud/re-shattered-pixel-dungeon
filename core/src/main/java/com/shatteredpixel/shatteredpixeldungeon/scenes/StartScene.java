@@ -32,7 +32,7 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Button;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ExitButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
-import com.shatteredpixel.shatteredpixeldungeon.ui.TitleBackground;
+import com.shatteredpixel.shatteredpixeldungeon.ui.Archs;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.shatteredpixel.shatteredpixeldungeon.ui.StyledButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
@@ -65,7 +65,8 @@ public class StartScene extends PixelScene {
 		int h = Camera.main.height;
 		RectF insets = getCommonInsets();
 
-		TitleBackground BG = new TitleBackground(w, h);
+		Archs BG = new Archs();
+		BG.setSize(w, h);
 		add( BG );
 
 		w -= insets.left + insets.right;

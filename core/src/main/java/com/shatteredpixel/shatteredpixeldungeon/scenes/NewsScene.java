@@ -33,7 +33,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ScrollPane;
 import com.shatteredpixel.shatteredpixeldungeon.ui.StyledButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
-import com.shatteredpixel.shatteredpixeldungeon.ui.TitleBackground;
+import com.shatteredpixel.shatteredpixeldungeon.ui.Archs;
 import com.shatteredpixel.shatteredpixeldungeon.windows.IconTitle;
 import com.watabou.noosa.Camera;
 import com.watabou.noosa.NinePatch;
@@ -52,7 +52,9 @@ public class NewsScene extends PixelScene {
 		int w = Camera.main.width;
 		int h = Camera.main.height;
 		RectF insets = getCommonInsets();
-		add(new TitleBackground(w, h));
+		Archs BG = new Archs();
+		BG.setSize(w, h);
+		add(BG);
 		w -= insets.left + insets.right;
 		h -= insets.top + insets.bottom;
 
@@ -127,10 +129,10 @@ public class NewsScene extends PixelScene {
 		private final RenderedTextBlock date;
 
 		public ArticleButton(NewsArticle article) {
-			super(Chrome.Type.GREY_BUTTON_TR, article.title, 6);
+			super(Chrome.Type.GREY_BUTTON_TR, article.title, 9);
 			this.article = article;
 			icon(News.parseArticleIcon(article));
-			textColor(article.date.getTime() > SPDSettings.newsLastRead() ? Window.SHPX_COLOR : Window.WHITE);
+			textColor(Window.TITLE_COLOR);
 			summary = renderTextBlock(article.summary, 6);
 			summary.setHightlighting(false);
 			add(summary);
@@ -164,7 +166,6 @@ public class NewsScene extends PixelScene {
 		@Override
 		protected void onClick() {
 			super.onClick();
-			textColor(Window.WHITE);
 			SPDSettings.newsLastRead(Math.max(SPDSettings.newsLastRead(), article.date.getTime()));
 			ShatteredPixelDungeon.scene().addToFront(new WndArticle(article));
 		}

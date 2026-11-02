@@ -43,6 +43,7 @@ public enum Icons {
 	PREFS,
 	SHPX,
 	JOURNAL,
+	ABOUT,
 
 	//grey icons, mainly used for buttons, spacing for 16x16
 	EXIT,
@@ -173,6 +174,9 @@ public enum Icons {
 				break;
 			case JOURNAL:
 				icon.frame( icon.texture.uvRectBySize( 136, 0, 17, 15 ) );
+				break;
+			case ABOUT:
+				icon.frame( icon.texture.uvRectBySize( 240, 0, 16, 16 ) );
 				break;
 
 			case EXIT:

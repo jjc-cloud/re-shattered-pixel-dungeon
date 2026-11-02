@@ -88,6 +88,8 @@ public class ReShatteredChanges {
 			));
 		changes.addButton(new ChangeButton(ChangeIcons.V021_IRON_DOOR, "铁门",
 				"\n替换监狱的门为铁门，铁门不会被投射物打开、遮挡视野、阻断气体。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V021_PRISON_STATUE, "监狱地图改造",
+				"\n重构监狱区域的地图生成逻辑。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V021_MAGICSPEAR, "新武器",
 				"\n-新增三阶投掷武器魔法长枪，魔法长枪造成魔法伤害，无限耐久，但只要未命中就会消失。\n-新增五阶武器斩龙，根据使用者的受伤程度提高伤害下限，替换巨剑。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V22_KATANA, "剑气",
@@ -228,7 +230,9 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V010_FLUORESCENT_MOSS, "双向环境光源",
 				"\n环境光真正提供照明，不论是英雄还是敌人都享有光源的视野。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V020_BUCKET, "环境交互",
-				"\n-现在地图中的元素接入了响应系统，会响应特定的动作，新增了一种特殊的木桶，其中装有随机的宝物。\n-矿洞地形改造，在矿洞中薄弱的墙壁可以被直接摧毁，拾取支撑会引其塌方。"));
+				"\n-现在地图中的元素接入了响应系统，会响应特定的动作，新增了一种特殊的木桶，其中装有随机的宝物。\n-矿洞地形改造，在矿洞中薄弱的墙壁可以被直接摧毁，失去支撑会引其塌方。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V021_PRISON_STATUE, "监狱地图改造",
+				"\n重构监狱区域的地图生成逻辑。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V33_IMP, "宝库突袭",
 				"\n重构四区小恶魔任务。新任务中玩家需直接迎战三元素BOSS，巨型元素的AI调整，现在更加智能。首次引入多BOSS战。"));
 	}

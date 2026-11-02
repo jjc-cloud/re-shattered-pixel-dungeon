@@ -27,7 +27,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.ExitButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ScrollPane;
-import com.shatteredpixel.shatteredpixeldungeon.ui.TitleBackground;
+import com.shatteredpixel.shatteredpixeldungeon.ui.Archs;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 import com.watabou.input.PointerEvent;
 import com.watabou.noosa.Camera;
@@ -52,7 +52,8 @@ public class AboutScene extends PixelScene {
 
 		RectF insets = getCommonInsets();
 
-		TitleBackground BG = new TitleBackground( w, h );
+		Archs BG = new Archs();
+		BG.setSize(w, h);
 		add( BG );
 
 		//darkens the arches
