@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero;
 
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.Noise;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 
@@ -2594,6 +2595,7 @@ public class Hero extends Char {
 				GLog.i(Messages.get(this, "hidden_entrance_hint"));
 			} else if (Dungeon.level.water[pos]) {
 				Sample.INSTANCE.play( Assets.Sounds.WATER, 1, Random.Float( 0.8f, 1.25f ) );
+				Noise.emit(this, pos, Noise.WATER_RANGE);
 			} else if (Dungeon.level.terrainAt(pos) == Terrain.EMPTY_SP) {
 				Sample.INSTANCE.play( Assets.Sounds.STURDY, 1, Random.Float( 0.96f, 1.05f ) );
 			} else if (Dungeon.level.hasTerrain(pos, Terrain.GRASS)

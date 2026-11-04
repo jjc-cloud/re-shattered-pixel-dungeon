@@ -44,6 +44,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.Tipp
 import com.shatteredpixel.shatteredpixeldungeon.journal.Catalog;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.Noise;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.CellSelector;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -770,6 +771,7 @@ public class Item implements Bundlable {
 				Item i = Item.this.detach(user.belongings.backpack);
 				if (enemy == null && !(Item.this instanceof MissileWeapon)) {
 					user.spend(delay);
+					Noise.emit(user, cell, Noise.THROW_RANGE);
 					if (i != null) i.onThrow(cell);
 					user.next();
 					return;

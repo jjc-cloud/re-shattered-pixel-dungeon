@@ -54,6 +54,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Languages;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.Noise;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
@@ -154,6 +155,7 @@ public class Bomb extends Item {
 		}
 
 		Sample.INSTANCE.play( Assets.Sounds.BLAST );
+		Noise.emit(null, cell, Noise.EXPLOSION_RANGE);
 
 		if (explodesDestructively()) {
 
