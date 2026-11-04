@@ -419,11 +419,10 @@ public class AlchemyScene extends PixelScene {
 				updateState();
 			}
 		};
-		float experimentalEnergyCenter = combines[0].left() + combines[0].width()/2f;
-		experimentalEnergyMinus.setRect(experimentalEnergyCenter - 20, inputs[0].top() + 8, 14, 12);
 		experimentalEnergyMinus.textColor(0xFFFF00);
 		add(experimentalEnergyMinus);
 
+		//实验性炼金的能量投入：数值与合成箭头共用中列，具体位置在 updateExperimentalState 里统一排布
 		experimentalEnergyText = PixelScene.renderTextBlock(6);
 		experimentalEnergyText.hardlight(0x44CCFF);
 		add(experimentalEnergyText);
@@ -435,7 +434,6 @@ public class AlchemyScene extends PixelScene {
 				updateState();
 			}
 		};
-		experimentalEnergyPlus.setRect(experimentalEnergyCenter + 9, inputs[0].top() + 8, 14, 12);
 		experimentalEnergyPlus.textColor(0xFFFF00);
 		add(experimentalEnergyPlus);
 
@@ -783,10 +781,21 @@ public class AlchemyScene extends PixelScene {
 		experimentalEnergyMinus.visible = experimentalEnergyPlus.visible = experimentalEnergyText.visible = true;
 		experimentalEnergyMinus.enable(experimentalEnergy > 0);
 		experimentalEnergyPlus.enable(experimentalEnergy < availableEnergy());
-		experimentalEnergyText.text(Integer.toString(experimentalEnergy));
-		experimentalEnergyText.setPos(
-				experimentalEnergyMinus.left() + 22 - experimentalEnergyText.width()/2f,
-				experimentalEnergyMinus.top() + (experimentalEnergyMinus.height() - experimentalEnergyText.height())/2f);
+
+		//中列竖排：投入能量沿用原炼金的「能量：N」文案，贴着合成箭头上方显示；
+		//加减按钮再往上分列两侧，留出间距避免误触，同时宽度始终不越出中列。
+		final float buttonSize = 14;
+		final float buttonGap = 8;
+		float centerX = combines[0].left() + combines[0].width()/2f;
+		experimentalEnergyText.text(
+				Messages.get(AlchemyScene.class, "energy") + " " + experimentalEnergy);
+		float textTop = combines[0].top() - experimentalEnergyText.height();
+		experimentalEnergyText.setPos(centerX - experimentalEnergyText.width()/2f, textTop);
+		PixelScene.align(experimentalEnergyText);
+
+		float buttonsTop = textTop - 1 - buttonSize;
+		experimentalEnergyMinus.setRect(centerX - buttonGap/2f - buttonSize, buttonsTop, buttonSize, buttonSize);
+		experimentalEnergyPlus.setRect(centerX + buttonGap/2f, buttonsTop, buttonSize, buttonSize);
 	}
 	
 	private void combine( int slot ){
