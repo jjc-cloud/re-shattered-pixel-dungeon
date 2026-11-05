@@ -771,7 +771,7 @@ public class Item implements Bundlable {
 				Item i = Item.this.detach(user.belongings.backpack);
 				if (enemy == null && !(Item.this instanceof MissileWeapon)) {
 					user.spend(delay);
-					Noise.emit(user, cell, Noise.THROW_RANGE);
+					Noise.emit(user, cell, Noise.THROW_RANGE, true);
 					if (i != null) i.onThrow(cell);
 					user.next();
 					return;

@@ -155,7 +155,7 @@ public class Bomb extends Item {
 		}
 
 		Sample.INSTANCE.play( Assets.Sounds.BLAST );
-		Noise.emit(null, cell, Noise.EXPLOSION_RANGE);
+		Noise.emit(null, cell, Noise.EXPLOSION_RANGE, true);
 
 		if (explodesDestructively()) {
 

@@ -352,7 +352,8 @@ public class Necromancer extends Mob {
 				
 				spend(TICK);
 
-				if (!fieldOfView[mySkeleton.pos]){
+				//远程传送骷髅同样受召唤距离限制；铁门不遮挡视野，隔铁门仍可传送
+				if (!fieldOfView[mySkeleton.pos] && Dungeon.level.distance(pos, enemy.pos) <= 4){
 
 					//teleport them to the closest spot next to the enemy that can be seen
 					if (!Dungeon.level.adjacent(mySkeleton.pos, enemy.pos)){

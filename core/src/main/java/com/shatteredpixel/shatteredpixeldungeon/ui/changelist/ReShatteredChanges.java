@@ -119,10 +119,8 @@ public class ReShatteredChanges {
 				"\n上调复合损伤基础数值，削减数值上限。现在会根据攻速差进行补偿，攻速差越大补偿越高，而非无条件使用副武器进行完整追击。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V023_HOURGLASS, "时停",
 				"\n伤害性动作不再打断时间停止类效果。"));
-		changes.addButton(new ChangeButton(ChangeIcons.V080_NECROMANCER, "死灵法师",
-				"\n为补偿不遮挡视野的铁门，死灵法师的骷髅在不可达位置上时不再被重复召唤。"));
-
-
+		changes.addButton(new ChangeButton(ChangeIcons.V064_CHALLENGES, "集群智能",
+				"\n集群智能调整，现在集群智能只会在首次发现敌方单位时触发，且非怪物发出的声音会让怪物前往声源检查。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V081_MISC, "杂项改动",
 				"\n-取消强制新手流程，首次开局即可自由选择英雄与挑战，无需先进入地牢取得手册。"
 				+ "\n-随机模式不再要求通关，首次开局即可设置随机天赋与随机挑战。"
@@ -135,6 +133,15 @@ public class ReShatteredChanges {
 				+ "\n-修复宝库Boss房内无圆点地砖被草覆盖后变成普通地板的问题。"
 				+ "\n-修复击败Boss后解锁的宝库门在开启时显示普通地砖、门顶部仍有残留的问题。"
 			));
+
+		changes = new ChangeInfo("削弱", false, null);
+		changes.hardlight(CharSprite.NEGATIVE);
+		changeInfos.add(changes);
+
+		changes.addButton(new ChangeButton(ChangeIcons.V080_NECROMANCER, "死灵法师",
+				"\n-为补偿不遮挡视野的铁门，死灵法师的骷髅在不可达位置上时不再被重复召唤。\n-为补偿额外视野，死灵法师传送骷髅依旧受到召唤距离的限制。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V035_WARRIOR_HEROARM, "角斗士",
+				"\n每损失40%生命免费触发一次护盾下调为60%。"));
 	}
 
 	public static void add_v0_2_0_Changes(ArrayList<ChangeInfo> changeInfos) {
@@ -227,8 +234,8 @@ public class ReShatteredChanges {
 
 		changes.addButton(new ChangeButton(ChangeIcons.V23_ARROWS, "基础属性调整",
 				"\n只有女猎手使用投掷武器享有额外的精准加成，其他角色使用投掷武器不再享有额外的精准加成。"));
-		changes.addButton(new ChangeButton(ChangeIcons.V010_FLUORESCENT_MOSS, "双向环境光源",
-				"\n环境光真正提供照明，不论是英雄还是敌人都享有光源的视野。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V010_FLUORESCENT_MOSS, "双向环境感知",
+				"\n环境光真正提供照明，不论是英雄还是敌人都享有光源的视野。开启挑战下，怪物同样享有听觉能力。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V020_BUCKET, "环境交互",
 				"\n-现在地图中的元素接入了响应系统，会响应特定的动作，新增了一种特殊的木桶，其中装有随机的宝物。\n-矿洞地形改造，在矿洞中薄弱的墙壁可以被直接摧毁，失去支撑会引其塌方。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V021_PRISON_STATUE, "监狱地图改造",
