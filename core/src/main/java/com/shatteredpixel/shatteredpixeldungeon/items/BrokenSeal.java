@@ -334,10 +334,10 @@ public class BrokenSeal extends Item {
 			return false;
 		}
 
-		// The gladiator works toward a cumulative 40% of max HP in health loss.
+		// The gladiator works toward a cumulative 60% of max HP in health loss.
 		// Actual triggering and UI display must both go through this.
 		private int gladiatorDamageThreshold() {
-			return Math.max(1, (target.HT * 4 + 9) / 10);
+			return Math.max(1, (target.HT * 6 + 9) / 10);
 		}
 
 		// Only actual HP loss counts, never damage absorbed by any shield.

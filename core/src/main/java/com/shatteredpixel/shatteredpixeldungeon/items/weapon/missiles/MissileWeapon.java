@@ -36,7 +36,6 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.RevealedArea;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.quest.vault.VaultBossElemental;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
@@ -313,7 +312,11 @@ abstract public class MissileWeapon extends Weapon {
 				}
 			}
 
-			if (!spawnedForEffect && !(this instanceof MagicSpear)) super.onThrow( cell );
+			if (!spawnedForEffect && !(this instanceof MagicSpear)) {
+				//投掷武器落在空地上同样会发出声音
+				Noise.emit(curUser, cell, Noise.THROW_RANGE, true);
+				super.onThrow( cell );
+			}
 		} else {
 			if (!curUser.shoot( enemy, this )) {
 				rangedMiss( cell );
@@ -453,18 +456,18 @@ abstract public class MissileWeapon extends Weapon {
 					return;
 				}
 			}
+			//投掷武器命中后落地同样会发出声音
+			Noise.emit(curUser, cell, Noise.THROW_RANGE, true);
 			Dungeon.level.drop( this, cell ).sprite.drop();
 		}
 	}
-	
+
 	protected void rangedMiss( int cell ) {
 		parent = null;
 		if (!spawnedForEffect) {
-			//被闪避的投掷落地：发出声音，并惊醒被攻击的怪物
+			//被闪避的投掷落地：发出声音，惊醒范围内的怪物
 			if (curUser == Dungeon.hero) {
-				Noise.emit(curUser, cell, Noise.THROW_RANGE);
-				Char target = Actor.findChar(cell);
-				if (target instanceof Mob) Noise.wake((Mob) target, cell);
+				Noise.emit(curUser, cell, Noise.THROW_RANGE, true);
 			}
 			super.onThrow(cell);
 		}
