@@ -67,6 +67,8 @@ public class ReShatteredChanges {
 			));
 		changes.addButton(new ChangeButton(ChangeIcons.V021_IRON_DOOR, "铁门",
 				"\n替换监狱的门为铁门，铁门不会被投射物打开、遮挡视野、阻断气体。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V021_SKELETON_REMAINS, "骷髅遗骸",
+				"\n新增骷髅遗骸怪，偶尔会替换普通的遗骸。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V021_PRISON_STATUE, "监狱地图改造",
 				"\n重构监狱区域的地图生成逻辑。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V021_MAGICSPEAR, "新武器",
