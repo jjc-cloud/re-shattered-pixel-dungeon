@@ -35,6 +35,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.EbonyMimic;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.GoldenMimic;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.SkeletonRemains;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Statue;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
@@ -692,6 +693,22 @@ public abstract class RegularLevel extends Level {
 				drop( Generator.randomUsingDefaults(), cell).hidden = true;
 			}
 		Random.popGenerator();
+
+		//遗骸堆有概率伪装成骷髅：下水道不出现，监狱 1/2，往后每个区域分母 +1
+		if (region() >= 1) {
+			int denominator = region() + 1;
+			for (Heap heap : heaps.valueList()) {
+				if (heap.type == Heap.Type.SKELETON && findMob(heap.pos) == null
+						&& Random.Int(denominator) == 0) {
+					SkeletonRemains remains = new SkeletonRemains();
+					remains.pos = heap.pos;
+					remains.items = new ArrayList<>(heap.items);
+					heaps.remove(heap.pos);
+					heap.items.clear();
+					mobs.add(remains);
+				}
+			}
+		}
 
 	}
 
