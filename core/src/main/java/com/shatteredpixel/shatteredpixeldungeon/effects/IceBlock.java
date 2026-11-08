@@ -36,7 +36,8 @@ public class IceBlock extends Gizmo {
 	private float phase;
 	
 	private CharSprite target;
-	private boolean stone;
+	private SmartTexture livingTexture;
+	private SmartTexture stoneTexture;
 	
 	public IceBlock( CharSprite target ) {
 		super();
@@ -48,7 +49,7 @@ public class IceBlock extends Gizmo {
 	@Override
 	public void update() {
 		super.update();
-		if (stone) {
+		if (stoneTexture != null) {
 			if (!target.alive) {
 				killAndErase();
 				return;
@@ -68,11 +69,20 @@ public class IceBlock extends Gizmo {
 	
 	public void melt() {
 
-		target.resetColor();
+		if (stoneTexture == null) {
+			target.resetColor();
+		} else {
+			if (target.texture == stoneTexture) {
+				RectF pose = target.frame();
+				target.texture(livingTexture);
+				target.frame(pose);
+			}
+			target.hardlight(1f, 1f, 1f);
+		}
 		killAndErase();
 
 		if (visible) {
-			Splash.at( target.center(), 0xFFB2D6FF, 5 );
+			Splash.at( target.center(), stoneTexture == null ? 0xFFB2D6FF : 0xFF888888, 5 );
 			Sample.INSTANCE.play( Assets.Sounds.SHATTER );
 		}
 	}
@@ -104,7 +114,8 @@ public class IceBlock extends Gizmo {
 		sprite.texture(gray);
 		sprite.frame(pose);
 		IceBlock block = new IceBlock(sprite);
-		block.stone = true;
+		block.livingTexture = source;
+		block.stoneTexture = gray;
 		sprite.paused = true;
 		if (sprite.parent != null) sprite.parent.add(block);
 		return block;

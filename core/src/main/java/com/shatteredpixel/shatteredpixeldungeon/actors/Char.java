@@ -411,6 +411,8 @@ public abstract class Char extends Actor {
 	public boolean attack( Char enemy, float dmgMulti, float dmgBonus, float accMulti ) {
 
 		if (enemy == null) return false;
+		// Lock in the target's neighbors before defense effects can add more.
+		float bullyMultiplier = enemy.bullyDamageMultiplier(this);
 
 		//交叉火力：英雄的近战/投掷攻击动作做出即触发，无论是否命中（法杖攻击在Wand处触发）；
 		//除英雄外的任何单位每次攻击敌方单位也会叠加1层
@@ -581,10 +583,10 @@ public abstract class Char extends Actor {
 					else if (enemy.HP == 0) DeathMark.processFearTheReaper(enemy);
 				}
 				effectiveDamage = 0;
-			} else if (magicSpear != null) {
-				enemy.damage(effectiveDamage, magicSpear, this);
 			} else {
-				enemy.damagePhysical(effectiveDamage, this, this);
+				Object source = magicSpear != null ? magicSpear : this;
+				effectiveDamage = enemy.damageWithSource(effectiveDamage, source, this, source,
+						magicSpear == null, bullyMultiplier);
 			}
 			//按本次攻击的伤害积怒，护盾吸收与剩余生命值不影响积累。
 			if (berserk != null) berserk.onAttackResolved(effectiveDamage);
@@ -903,15 +905,31 @@ public abstract class Char extends Actor {
 
 	//保留原伤害来源供抗性、死亡记录和怪物逻辑使用，另行传递实际施法者。
 	public final void damage(int dmg, Object source, Char attacker) {
-		damageWithSource(dmg, source, attacker, source, false);
+		float bullyMultiplier = dmg > 0 && source instanceof Wand ? bullyDamageMultiplier(attacker) : 1f;
+		damageWithSource(dmg, source, attacker, source, false, bullyMultiplier);
 	}
 
 	public final void damagePhysical(int dmg, Object source, Char attacker) {
-		damageWithSource(dmg, source, attacker, source, true);
+		damageWithSource(dmg, source, attacker, source, true, 1f);
 	}
 
-	private void damageWithSource(int dmg, Object source, Char attacker, Object origin, boolean physical) {
-		if (dmg >= 0 && attacker != null && attacker.blocksDomainDamage(origin, physical)) return;
+	private float bullyDamageMultiplier(Char attacker) {
+		if (attacker == null || attacker != Dungeon.hero || attacker == this || Dungeon.level == null) return 1f;
+		int points = Dungeon.hero.pointsInTalent(Talent.BULLY);
+		if (points <= 0) return 1f;
+		float modifier = 0.5f * points;
+		for (Char other : Actor.chars()) {
+			if (other != attacker && other.alignment != Alignment.ALLY && Dungeon.level.adjacent(pos, other.pos)
+					&& other.isAlive() && !hasProp(other, Property.OBJECT)) {
+				return 1f - modifier;
+			}
+		}
+		return 1f + modifier;
+	}
+
+	private int damageWithSource(int dmg, Object source, Char attacker, Object origin, boolean physical, float bullyMultiplier) {
+		if (dmg >= 0 && attacker != null && attacker.blocksDomainDamage(origin, physical)) return dmg;
+		if (dmg > 0 && bullyMultiplier != 1f) dmg = Math.round(dmg * bullyMultiplier);
 		Char previousActor = domainDamageActor;
 		Object previousOrigin = domainDamageOrigin;
 		boolean previousPhysical = domainPhysicalDamage;
@@ -925,6 +943,7 @@ public abstract class Char extends Actor {
 			domainDamageOrigin = previousOrigin;
 			domainPhysicalDamage = previousPhysical;
 		}
+		return dmg;
 	}
 
 	private int resolveGrimDamage(Char attacker) {
@@ -934,6 +953,11 @@ public abstract class Char extends Actor {
 		float chance = grim.maxChance * (float) Math.pow((HT - HP) / (float) HT, 2);
 		if (Random.Float() >= chance) return 0;
 		int damage = Math.round(HP * resist(Grim.class));
+		Petrification petrification = buff(Petrification.class);
+		if (damage > 0 && petrification != null && hasProp(this, Property.BOSS)) {
+			if (petrification.progress() >= 1f) damage = Math.round(damage * 1.5f);
+			petrification.detach();
+		}
 		HP -= damage;
 		if (sprite != null) sprite.emitter().burst(ShadowParticle.UP, 5);
 		if (!isAlive() && grim.qualifiesForBadge) Badges.validateGrimWeapon();
@@ -975,7 +999,7 @@ public abstract class Char extends Actor {
 				Char ch = (Char)Actor.findById(link.object);
 				if (ch != null) {
 					ch.damageWithSource(dmg, link, domainDamageActor,
-							domainDamageOrigin != null ? domainDamageOrigin : src, domainPhysicalDamage);
+							domainDamageOrigin != null ? domainDamageOrigin : src, domainPhysicalDamage, 1f);
 					if (!ch.isAlive()) {
 						link.detach();
 						if (ch == Dungeon.hero){
@@ -1127,6 +1151,12 @@ public abstract class Char extends Actor {
 			if (crossfire != null && crossfire.stacks > 0 && Dungeon.hero.hasTalent(Talent.CROSSFIRE)){
 				dmg = Math.round(dmg * (1f + Dungeon.hero.pointsInTalent(Talent.CROSSFIRE)*(crossfire.stacks - 1)));
 			}
+		}
+
+		Petrification petrification = buff(Petrification.class);
+		if (dmg > 0 && petrification != null && hasProp(this, Property.BOSS)) {
+			if (petrification.progress() >= 1f) dmg = Math.round(dmg * 1.5f);
+			petrification.detach();
 		}
 
 		int shielded = dmg;
@@ -1586,8 +1616,7 @@ public abstract class Char extends Actor {
 
 	public enum Property{
 		BOSS ( new HashSet<Class>( Arrays.asList(Grim.class, GrimTrap.class, ScrollOfRetribution.class, ScrollOfPsionicBlast.class)),
-				new HashSet<Class>( Arrays.asList(AllyBuff.class, Dread.class,
-						Petrification.class) )),
+				new HashSet<Class>( Arrays.asList(AllyBuff.class, Dread.class) )),
 		MINIBOSS ( new HashSet<Class>(),
 				new HashSet<Class>( Arrays.asList(AllyBuff.class, Dread.class) )),
 		BOSS_MINION,

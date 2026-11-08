@@ -5,6 +5,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.gltextures.SmartTexture;
@@ -13,7 +14,6 @@ import com.watabou.glwrap.Texture;
 import com.watabou.noosa.Image;
 import com.watabou.utils.Bundle;
 
-/** Progress persists, but only an actively channeling eye can increase it. */
 public class Petrification extends Buff implements Hero.Doom {
 	private float progress;
 
@@ -37,9 +37,14 @@ public class Petrification extends Buff implements Hero.Doom {
 		if (!canAffect(victim)) return false;
 		Petrification buff = Buff.affect(victim, Petrification.class);
 		if (buff.target != victim) return false;
-		buff.progress += victim.resist(Petrification.class) * amount;
+		if (buff.progress >= 1f) return true;
+		buff.progress = Math.min(1f, buff.progress + victim.resist(Petrification.class) * amount);
 		BuffIndicator.refreshHero();
 		if (buff.progress >= 1f) {
+			if (Char.hasProp(victim, Char.Property.BOSS)) {
+				if (victim.sprite != null) buff.fx(true);
+				return true;
+			}
 			Buff.detach(victim, Petrification.class);
 			victim.HP = 0;
 			// Hero.isAlive triggers the berserker's normal death-defiance rules.
@@ -50,7 +55,13 @@ public class Petrification extends Buff implements Hero.Doom {
 	}
 
 	public float progress() { return progress; }
-	public float speedFactor() { return Math.max(0.0001f, 1f - progress); }
+	public float speedFactor() { return progress >= 1f ? 1f : Math.max(0.0001f, 1f - progress); }
+
+	@Override public void fx(boolean on) {
+		if (progress < 1f) return;
+		if (on) target.sprite.add(CharSprite.State.PETRIFIED);
+		else target.sprite.remove(CharSprite.State.PETRIFIED);
+	}
 
 	@Override public int icon() { return BuffIndicator.INVISIBLE; }
 	@Override public void tintIcon(Image icon) {

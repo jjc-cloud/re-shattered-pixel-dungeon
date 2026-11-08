@@ -76,7 +76,7 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V22_KATANA, "剑气",
 				"\n移除武技弓步刺，新增武技剑气，剑气可对非相邻的单位使出，对相邻单位使出则只造成一次普通伤害。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V021_KEEN_HEARING, "新天赋与成就",
-				"\n-天赋敏锐听觉：感知周围非睡眠怪物的声音。\n-成就财货两空：没能追上偷走物品的水晶宝箱怪。"));
+				"\n-天赋敏锐听觉：感知周围非睡眠怪物的声音。\n-天赋恃强凌弱：对孤立的敌人造成额外伤害，反之降低伤害。\n-成就财货两空：没能追上偷走物品的水晶宝箱怪。"));
 
 
 		changes = new ChangeInfo("增强", false, null);
@@ -87,6 +87,8 @@ public class ReShatteredChanges {
 				"\n-灵猴之护改为被动收益。\n-飞速投掷现在绑定移动速度，根据移动速度造成额外伤害。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V073_TOMAHAWK, "飞斧",
 				"\n流血伤害调整为6-9，成长为1-3。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V010_WAND_OF_PETRIFICATION, "石化法杖",
+				"\nBOSS属性敌人不再免疫石化效果，但受到任何伤害都会清空石化状态。"));
 		changes.addButton(new ChangeButton(ChangeIcons.PD_EYE, "邪眼",
 				"\n邪眼的蓄力攻击会无视可破坏地形。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V011_ANKH, "重生十字架",

@@ -39,6 +39,8 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.TorchHalo;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.FlameParticle;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SnowParticle;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
@@ -88,7 +90,7 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 	public boolean visibleOutOfFFOV = false;
 
 	public enum State {
-		BURNING, LEVITATING, INVISIBLE, PARALYSED, FROZEN, ILLUMINATED, CHILLED, DARKENED, MARKED, HEALING, SHIELDED, HEARTS, GLOWING, AURA
+		BURNING, LEVITATING, INVISIBLE, PARALYSED, FROZEN, PETRIFIED, ILLUMINATED, CHILLED, DARKENED, MARKED, HEALING, SHIELDED, HEARTS, GLOWING, AURA
 	}
 	
 	protected Animation idle;
@@ -110,6 +112,7 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 	protected Emitter hearts;
 	
 	protected IceBlock iceBlock;
+	private IceBlock petrifiedBlock;
 	protected DarkBlock darkBlock;
 	protected GlowBlock glowBlock;
 	protected TorchHalo light;
@@ -457,6 +460,9 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 				if (iceBlock != null) iceBlock.killAndErase();
 				iceBlock = IceBlock.freeze(this);
 				break;
+			case PETRIFIED:
+				if (petrifiedBlock == null) petrifiedBlock = IceBlock.petrify(this);
+				break;
 			case ILLUMINATED:
 				if (light != null) light.putOut();
 				GameScene.effect(light = new TorchHalo(this));
@@ -557,6 +563,15 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 					iceBlock = null;
 				}
 				break;
+			case PETRIFIED:
+				if (petrifiedBlock != null) {
+					petrifiedBlock.visible = visible;
+					petrifiedBlock.melt();
+					petrifiedBlock = null;
+					paused = ch != null && ch.paralysed > 0;
+					if (flashTime > 0) flash();
+				}
+				break;
 			case ILLUMINATED:
 				if (light != null) {
 					light.putOut();
@@ -615,8 +630,16 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 	
 	@Override
 	public void update() {
-		if (paused && ch != null && curAnim != null && !curAnim.looped && !finished){
-			listener.onComplete(curAnim);
+		Animation pausedAnimation = null;
+		synchronized (State.class) {
+			// A mob can start attacking as soon as its petrification buff is removed.
+			if (stateRemovals.remove(State.PETRIFIED)) processStateRemoval(State.PETRIFIED);
+			if (paused && ch != null && curAnim != null && !curAnim.looped && !finished) {
+				pausedAnimation = curAnim;
+			}
+		}
+		if (pausedAnimation != null) {
+			listener.onComplete(pausedAnimation);
 			finished = true;
 		}
 		
@@ -646,6 +669,9 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 		}
 		if (iceBlock != null) {
 			iceBlock.visible = visible;
+		}
+		if (petrifiedBlock != null) {
+			petrifiedBlock.visible = visible;
 		}
 		if (light != null) {
 			light.visible = visible;
@@ -823,6 +849,11 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 		if (texture == null || (!dirty && buffer == null))
 			return;
 
+		Level level = Dungeon.level;
+		int cell = ch == null ? -1 : ch.pos;
+		float opacity = level != null && cell >= 0 && cell < level.length()
+				&& level.cellAt(cell).has(CellContent.OVERHEAD) ? 0.2f : 1f;
+
 		if (renderShadow) {
 			if (dirty) {
 				((Buffer)verticesBuffer).position(0);
@@ -844,14 +875,26 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 
 			script.uModel.valueM4(shadowMatrix);
 			script.lighting(
-					0, 0, 0, am * .6f,
-					0, 0, 0, aa * .6f);
+					0, 0, 0, am * .6f * opacity,
+					0, 0, 0, aa * .6f * opacity);
 
 			script.drawQuad(buffer);
 		}
 
-		super.draw();
-
+		if (opacity == 1f) {
+			super.draw();
+		} else {
+			float originalAm = am;
+			float originalAa = aa;
+			am *= opacity;
+			aa *= opacity;
+			try {
+				super.draw();
+			} finally {
+				am = originalAm;
+				aa = originalAa;
+			}
+		}
 	}
 
 	@Override

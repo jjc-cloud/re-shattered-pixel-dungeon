@@ -87,8 +87,6 @@ public class TerrainFeaturesTilemap extends DungeonTilemap {
 		if (Dungeon.level.cellAt(pos).buried()) return -1;
 		if (contentType >= 0) {
 			if (!Dungeon.level.cellAt(pos).hasTerrain(contentType)) return -1;
-			CellContent content = Dungeon.level.cellAt(pos).content(contentType);
-			if (content != null && content.has(CellContent.OVERHEAD)) return -1;
 			if (contentType == Terrain.STATUE && Dungeon.level instanceof VaultLevel
 					&& ((VaultLevel) Dungeon.level).customStatueCell(pos)) return -1;
 			return contentType == Terrain.STATUE || contentType == Terrain.STATUE_SP

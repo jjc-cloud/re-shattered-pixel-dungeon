@@ -80,7 +80,6 @@ import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Document;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Journal;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
-import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.RegularLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
@@ -168,7 +167,6 @@ import com.watabou.utils.Point;
 import com.watabou.utils.PointF;
 import com.watabou.utils.Random;
 import com.watabou.utils.RectF;
-import com.watabou.utils.SparseArray;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -191,7 +189,6 @@ public class GameScene extends PixelScene {
 	private GridTileMap visualGrid;
 	private WallOcclusionTilemap occlusion;
 	private com.shatteredpixel.shatteredpixeldungeon.tiles.CellFeatures terrainFeatures;
-	private final SparseArray<Image> overheadBodies = new SparseArray<>();
 	private RaisedTerrainTilemap raisedTerrain;
 	private DungeonWallsTilemap walls;
 	private WallBlockingTilemap wallBlocking;
@@ -340,14 +337,7 @@ public class GameScene extends PixelScene {
 		emoicons = new Group();
 		overFogEffects = new Group();
 
-		mobs = new Group() {
-			@Override
-			public void draw() {
-				// 移动动画中按显示位置排序，同格单位在架构后方，下方单位在架构前方。
-				if (overheadBodies.size > 0) sortMobSprites();
-				super.draw();
-			}
-		};
+		mobs = new Group();
 		add( mobs );
 
 		hero = new HeroSprite();
@@ -361,7 +351,6 @@ public class GameScene extends PixelScene {
 
 		raisedTerrain = new RaisedTerrainTilemap();
 		add( raisedTerrain );
-		add(terrainFeatures.overhead);
 
 		walls = new DungeonWallsTilemap();
 		add(walls);
@@ -1503,33 +1492,6 @@ public class GameScene extends PixelScene {
 				updateFog(cell, 1);
 			}
 			updateCustomTiles(cell);
-		}
-		// 与地图刷新一起维护下层图片，不在每帧扫描地图或创建图片。
-		for (int i = 0, count = all ? Dungeon.level.length() : changed.length; i < count; i++) {
-			int cell = all ? i : changed[i];
-			if (cell < 0 || cell >= Dungeon.level.length()) continue;
-			CellContent frame = Dungeon.level.cellAt(cell).firstWith(CellContent.OVERHEAD);
-			Image body = overheadBodies.get(cell);
-			if (frame == null) {
-				if (body != null) {
-					overheadBodies.remove(cell);
-					body.killAndErase();
-					body.destroy();
-				}
-			} else {
-				if (body == null) {
-					body = TerrainFeaturesTilemap.contentImage(cell, frame.type());
-					if (body == null) continue;
-					body.active = false;
-					overheadBodies.put(cell, body);
-					mobs.add(body);
-				} else {
-					int visual = TerrainFeaturesTilemap.contentVisual(cell, frame.type());
-					body.frame(visual % 16 * DungeonTilemap.SIZE, visual / 16 * DungeonTilemap.SIZE,
-							DungeonTilemap.SIZE, DungeonTilemap.SIZE);
-				}
-				body.point(DungeonTilemap.tileToWorld(cell));
-			}
 		}
 	}
 

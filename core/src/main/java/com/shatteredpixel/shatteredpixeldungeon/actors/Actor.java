@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Petrification;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.VaultTokenDoor;
 import com.shatteredpixel.shatteredpixeldungeon.effects.TargetedCell;
@@ -298,7 +299,13 @@ public abstract class Actor implements Bundlable {
 					doNext = false;
 					current = null;
 				} else {
-					doNext = acting.act();
+					Petrification petrification = acting instanceof Char ? ((Char) acting).buff(Petrification.class) : null;
+					if (petrification != null && petrification.progress() >= 1f) {
+						acting.spendConstant(TICK);
+						doNext = true;
+					} else {
+						doNext = acting.act();
+					}
 					if (doNext && (Dungeon.hero == null || !Dungeon.hero.isAlive())) {
 						doNext = false;
 						current = null;
