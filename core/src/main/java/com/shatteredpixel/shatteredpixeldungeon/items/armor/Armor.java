@@ -363,11 +363,16 @@ public class Armor extends EquipableItem {
 	}
 
 	public int DRMax(int lvl){
+		return DRMax(lvl, stoneDefense());
+	}
+
+	private int DRMax(int lvl, boolean stone){
+		if (stone) lvl++;
 		if (Dungeon.isChallenged(Challenges.NO_ARMOR)){
 			return 1 + tier + lvl + augment.defenseFactor(lvl);
 		}
 
-		int max = tier * (2 + lvl) + augment.defenseFactor(lvl);
+		int max = 2 * tier + (tier + (stone ? 1 : 0)) * lvl + augment.defenseFactor(lvl);
 		if (lvl > max){
 			return ((lvl - max)+1)/2;
 		} else {
@@ -380,16 +385,36 @@ public class Armor extends EquipableItem {
 	}
 
 	public int DRMin(int lvl){
+		return DRMin(lvl, stoneDefense());
+	}
+
+	private int DRMin(int lvl, boolean stone){
 		if (Dungeon.isChallenged(Challenges.NO_ARMOR)){
 			return 0;
 		}
 
-		int max = DRMax(lvl);
+		int max = DRMax(lvl, stone);
+		if (stone) lvl++;
 		if (lvl >= max){
 			return (lvl - max);
 		} else {
 			return lvl;
 		}
+	}
+
+	private boolean stoneDefense() {
+		Hero hero = Dungeon.hero;
+		return isEquipped(hero) ? hasGlyph(Stone.class, hero) : glyph instanceof Stone;
+	}
+
+	public int drRoll(Char owner) {
+		boolean stone = hasGlyph(Stone.class, owner);
+		int level = buffedLvl();
+		int defense = Random.NormalIntRange(DRMin(level, stone), DRMax(level, stone));
+		if (owner instanceof Hero) {
+			defense -= 2 * Math.max(0, STRReq() - ((Hero) owner).STR());
+		}
+		return Math.max(0, defense);
 	}
 
 	//This exists so we can test what a char's base evasion would be without armor affecting it
@@ -398,10 +423,6 @@ public class Armor extends EquipableItem {
 	
 	public float evasionFactor( Char owner, float evasion ){
 		if (testingNoArmDefSkill) return evasion;
-		
-		if (hasGlyph(Stone.class, owner) && !Stone.testingEvasion()){
-			return 0;
-		}
 		
 		if (owner instanceof Hero){
 			int aEnc = STRReq() - ((Hero) owner).STR();
@@ -414,7 +435,8 @@ public class Armor extends EquipableItem {
 			}
 		}
 		
-		return evasion + augment.evasionFactor(buffedLvl());
+		evasion += augment.evasionFactor(buffedLvl());
+		return hasGlyph(Stone.class, owner) ? evasion * 0.7f : evasion;
 	}
 	
 	public float speedFactor( Char owner, float speed ){

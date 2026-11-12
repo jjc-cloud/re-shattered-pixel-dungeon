@@ -95,6 +95,9 @@ public class ReShatteredChanges {
 				"\n邪眼的蓄力攻击会无视可破坏地形。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V011_ANKH, "重生十字架",
 				"\n遗物状态下不再限制物品的获取与使用。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V074_MAIL_ANTIMAGIC, "护甲刻印",
+				"\n-磐岩：护甲的防御成长提高一阶，且额外获得一级护甲强化的防御收益，但会使穿戴者的闪避降低30%。"
+				+ "\n-敌法：护甲和抵御物理伤害一样抵御法术伤害。"));
 
 		changes = new ChangeInfo("改动", false, null);
 		changes.hardlight(CharSprite.WARNING);

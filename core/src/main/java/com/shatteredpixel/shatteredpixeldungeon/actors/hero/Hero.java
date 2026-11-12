@@ -103,7 +103,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.KindOfWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClassArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClothArmor;
-import com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs.Stone;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs.Viscosity;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.AlchemistsToolkit;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.CapeOfThorns;
@@ -732,11 +731,6 @@ public class Hero extends Char {
 
 		if (belongings.armor() != null) {
 			evasion = belongings.armor().evasionFactor(this, evasion);
-
-			//stone specifically overrides to 0 always, guaranteed hit
-			if (belongings.armor().hasGlyph(Stone.class, this) && !Stone.testingEvasion()){
-				return 0;
-			}
 		}
 
 		Berserk berserk = buff(Berserk.class);
@@ -778,11 +772,7 @@ public class Hero extends Char {
 		int dr = super.drRoll();
 
 		if (belongings.armor() != null && subClass != HeroSubClass.BERSERKER) {
-			int armDr = Random.NormalIntRange( belongings.armor().DRMin(), belongings.armor().DRMax());
-			if (STR() < belongings.armor().STRReq()){
-				armDr -= 2*(belongings.armor().STRReq() - STR());
-			}
-			if (armDr > 0) dr += armDr;
+			dr += belongings.armor().drRoll(this);
 		}
 		if (belongings.weapon() != null && !RingOfForce.fightingUnarmed(this))  {
 			int wepDr = Random.NormalIntRange( 0 , belongings.weapon().defenseFactor( this ) );

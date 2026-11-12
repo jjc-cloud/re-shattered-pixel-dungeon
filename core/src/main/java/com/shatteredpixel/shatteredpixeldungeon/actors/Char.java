@@ -1093,7 +1093,7 @@ public abstract class Char extends Actor {
 		
 		//TODO improve this when I have proper damage source logic
 		if (AntiMagic.RESISTS.contains(srcClass)){
-			dmg -= AntiMagic.drRoll(this, glyphLevel(AntiMagic.class));
+			dmg -= Math.round(AntiMagic.drRoll(this, glyphLevel(AntiMagic.class)) * AscensionChallenge.statModifier(this));
 			if (buff(ArcaneArmor.class) != null) {
 				dmg -= Random.NormalIntRange(0, buff(ArcaneArmor.class).level());
 			}

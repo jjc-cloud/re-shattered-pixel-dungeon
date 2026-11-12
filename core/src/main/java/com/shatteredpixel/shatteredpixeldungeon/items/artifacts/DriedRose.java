@@ -748,7 +748,7 @@ public class DriedRose extends Artifact {
 		public int drRoll() {
 			int dr = super.drRoll();
 			if (armor() != null){
-				dr += Random.NormalIntRange( armor().DRMin(), armor().DRMax());
+				dr += armor().drRoll(this);
 			}
 			if (weapon() != null){
 				dr += Random.NormalIntRange( 0, weapon().defenseFactor( this ));

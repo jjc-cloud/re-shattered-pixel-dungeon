@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Charm;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Degrade;
@@ -29,23 +30,30 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicalSleep;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Petrification;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Vulnerable;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Weakness;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.duelist.ElementalStrike;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.mage.ElementalBlast;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.mage.WarpBeacon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.rogue.ShadowClone;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.GuidingLight;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.HolyLance;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.HolyWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.Judgement;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.Smite;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.Sunray;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.ArmoredStatue;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.CrystalWisp;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.DM100;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Eye;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Shaman;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Warlock;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.YogFist;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.PrismaticImage;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.ChaliceOfBlood;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
 import com.shatteredpixel.shatteredpixeldungeon.items.bombs.ArcaneBomb;
 import com.shatteredpixel.shatteredpixeldungeon.items.bombs.HolyBomb;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRetribution;
@@ -71,7 +79,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicJavel
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicMissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Skyfall;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.SunfireJavelin;
-import com.watabou.utils.Random;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.HolyDart;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.DisintegrationTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.GrimTrap;
@@ -154,13 +161,31 @@ public class AntiMagic extends Armor.Glyph {
 	}
 	
 	public static int drRoll( Char owner, int level ){
-		if (level == -1){
-			return 0;
-		} else {
-			return Random.NormalIntRange(
-					Math.round(level * genericProcChanceMultiplier(owner)),
-					Math.round((3 + (level * 1.5f)) * genericProcChanceMultiplier(owner)));
+		if (level == -1) return 0;
+
+		if (owner instanceof ArmoredStatue) {
+			Armor armor = ((ArmoredStatue) owner).armor();
+			return armor == null ? 0 : armor.drRoll(owner);
 		}
+		if (owner instanceof DriedRose.GhostHero) {
+			Armor armor = ((DriedRose.GhostHero) owner).armor();
+			return armor == null ? 0 : armor.drRoll(owner);
+		}
+
+		Hero hero;
+		if (owner instanceof Hero) {
+			hero = (Hero) owner;
+		} else if (owner instanceof PrismaticImage || owner instanceof ShadowClone.ShadowAlly) {
+			hero = Dungeon.hero;
+		} else {
+			return 0;
+		}
+		if (hero == null || hero.subClass == HeroSubClass.BERSERKER || hero.belongings.armor() == null) return 0;
+		int defense = hero.belongings.armor().drRoll(hero);
+		if (owner instanceof ShadowClone.ShadowAlly) {
+			defense = Math.round(0.12f * hero.pointsInTalent(Talent.CLONED_ARMOR) * defense);
+		}
+		return defense;
 	}
 
 	@Override
