@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.RunicBlade;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sickle;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sword;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Swiftthistle;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Skyfall;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
@@ -343,8 +344,12 @@ public class FrozenAttack implements Bundlable {
 				shot = new Ballistica(from, aim, Ballistica.WONT_STOP);
 				shot.collisionPos = cell;
 				shot.dist = shot.path.indexOf(cell);
-				MissileSprite missile = (MissileSprite) effects.recycle(MissileSprite.class);
-				missile.reset(source, shot.collisionPos, projectile, arrival);
+				if (projectile instanceof Skyfall) {
+					arrival.call();
+				} else {
+					MissileSprite missile = (MissileSprite) effects.recycle(MissileSprite.class);
+					missile.reset(source, shot.collisionPos, projectile, arrival);
+				}
 			}
 			arrivalTime = effects.travelTime();
 			// 飞弹粒子需要一次极短的更新才能成形，随后连同位移、旋转一起冻结。

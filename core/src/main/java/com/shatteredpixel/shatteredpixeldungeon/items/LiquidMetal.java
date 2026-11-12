@@ -30,6 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicMissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.Dart;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Catalog;
@@ -126,12 +127,12 @@ public class LiquidMetal extends Item {
 
 		@Override
 		public boolean itemSelectable(Item item) {
-			return item instanceof MissileWeapon && !(item instanceof Dart);
+			return item instanceof MissileWeapon && !(item instanceof Dart) && !(item instanceof MagicMissileWeapon);
 		}
 
 		@Override
 		public void onSelect( Item item ) {
-			if (item != null && item instanceof MissileWeapon) {
+			if (itemSelectable(item)) {
 				MissileWeapon m = (MissileWeapon)item;
 
 				float maxToUse = 5*(m.tier+1);

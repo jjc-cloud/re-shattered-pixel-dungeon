@@ -56,7 +56,7 @@ public class Fire extends Blob {
 				&& freezing.cur != null && freezing.cur[cell] > 0;
 		boolean hasBlizzard = blizzard != null && blizzard.volume > 0
 				&& blizzard.cur != null && blizzard.cur[cell] > 0;
-		if (hasFreezing || hasBlizzard) {
+		if (amount > 0 && (hasFreezing || hasBlizzard)) {
 			// 冰先处理新加入的火，不能先蒸发冰下面的水。
 			super.seed(level, cell, amount);
 			clear(cell);

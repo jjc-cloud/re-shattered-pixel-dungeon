@@ -21,58 +21,43 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 
-import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
-import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
+import com.watabou.utils.PathFinder;
 
-public class MagicSpear extends MissileWeapon {
+public class Detonation extends MagicMissileWeapon {
 
 	{
-		image = ItemSpriteSheet.MAGIC_SPEAR;
-		hitSound = Assets.Sounds.HIT_MAGIC;
-		tier = 3;
+		image = ItemSpriteSheet.DETONATION;
+		tier = 2;
 		sticky = false;
 	}
 
 	@Override
 	public int max(int lvl) {
-		return 16 + tier*lvl;
+		return 6 + tier*lvl;
 	}
 
 	@Override
-	public int STRReq(int lvl) {
-		return 0;
-	}
-
-	@Override
-	protected float adjacentAccFactor(Char owner, Char target) {
-		return owner instanceof Hero && ((Hero) owner).heroClass == HeroClass.HUNTRESS ? 1.5f : 1f;
-	}
-
-	@Override
-	public float durabilityPerUse(int level) {
-		return 0;
-	}
-
-	@Override
-	protected void rangedHit(Char enemy, int cell) {
-		parent = null;
-		extraThrownLeft = false;
-		if (!spawnedForEffect) {
-			if (collect(curUser.belongings.backpack)) {
-				GameScene.pickUp(this, cell);
-			} else {
-				Dungeon.level.drop(this, curUser.pos).sprite.drop();
+	protected void onThrow(int cell) {
+		super.onThrow(cell);
+		for (int offset : PathFinder.NEIGHBOURS8) {
+			int neighbor = cell + offset;
+			if (!Dungeon.level.insideMap(neighbor)) continue;
+			Char target = Actor.findChar(neighbor);
+			if (target != null) {
+				Ballistica push = new Ballistica(neighbor, neighbor + offset, Ballistica.MAGIC_BOLT);
+				WandOfBlastWave.throwChar(target, push, 2, false, false, this);
 			}
 		}
 	}
 
 	@Override
 	protected void rangedMiss(int cell) {
-		parent = null;
+		rangedHit(null, cell);
 	}
 }

@@ -142,7 +142,9 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Shocki
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Vorpal;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sickle;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicSpear;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicMissileWeapon;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Skyfall;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.SunfireJavelin;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.ShockingDart;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
@@ -424,11 +426,11 @@ public abstract class Char extends Actor {
 		}
 
 		boolean visibleFight = Dungeon.level.heroFOV[pos] || Dungeon.level.heroFOV[enemy.pos];
-		MagicSpear magicSpear = this instanceof Hero
-				&& ((Hero) this).belongings.attackingWeapon() instanceof MagicSpear
-				? (MagicSpear) ((Hero) this).belongings.attackingWeapon() : null;
+		MagicMissileWeapon magicWeapon = this instanceof Hero
+				&& ((Hero) this).belongings.attackingWeapon() instanceof MagicMissileWeapon
+				? (MagicMissileWeapon) ((Hero) this).belongings.attackingWeapon() : null;
 
-		if (enemy.isInvulnerable(magicSpear != null ? magicSpear.getClass() : getClass())) {
+		if (enemy.isInvulnerable(magicWeapon != null ? magicWeapon.getClass() : getClass())) {
 			if (enemy instanceof Hero) {
 				((Hero) enemy).interrupt();
 			}
@@ -443,7 +445,7 @@ public abstract class Char extends Actor {
 
 		} else if (hit( this, enemy, accMulti, false )) {
 			
-			int dr = magicSpear != null ? 0 : Math.round(enemy.drRoll() * AscensionChallenge.statModifier(enemy));
+			int dr = magicWeapon != null ? 0 : Math.round(enemy.drRoll() * AscensionChallenge.statModifier(enemy));
 			
 			if (this instanceof Hero){
 				Hero h = (Hero)this;
@@ -539,7 +541,7 @@ public abstract class Char extends Actor {
 				dmg *= 0.67f;
 			}
 
-			boolean attackDamageBlocked = blocksDomainDamage(magicSpear != null ? magicSpear : this, magicSpear == null);
+			boolean attackDamageBlocked = blocksDomainDamage(magicWeapon != null ? magicWeapon : this, magicWeapon == null);
 			int effectiveDamage = enemy.defenseProc(this, attackDamageBlocked ? 0 : Math.round(dmg));
 			//反击等命中机制照常触发，但被屏蔽的本体不消耗受击护盾。
 			//附魔仍按本次攻击的伤害计算自己的独立魔法段。
@@ -584,9 +586,9 @@ public abstract class Char extends Actor {
 				}
 				effectiveDamage = 0;
 			} else {
-				Object source = magicSpear != null ? magicSpear : this;
+				Object source = magicWeapon != null ? magicWeapon : this;
 				effectiveDamage = enemy.damageWithSource(effectiveDamage, source, this, source,
-						magicSpear == null, bullyMultiplier);
+						magicWeapon == null, bullyMultiplier);
 			}
 			//按本次攻击的伤害积怒，护盾吸收与剩余生命值不影响积累。
 			if (berserk != null) berserk.onAttackResolved(effectiveDamage);
@@ -970,9 +972,9 @@ public abstract class Char extends Actor {
 			return;
 		}
 
-		// 魔法标枪保留投掷者，附魔和受击机制仍按角色攻击处理。
+		// 魔法投掷武器保留投掷者，附魔和受击机制仍按角色攻击处理。
 		Char sourceAttacker = src instanceof Char ? (Char) src
-				: src instanceof MagicSpear ? domainDamageActor : null;
+				: src instanceof MagicMissileWeapon ? domainDamageActor : null;
 		boolean charAttacked = dmg > 0 && sourceAttacker != null && sourceAttacker != this;
 
 		if (!(this instanceof Hero) && src instanceof Wand && Dungeon.hero != null) {
@@ -1624,14 +1626,14 @@ public abstract class Char extends Actor {
 		DEMONIC,
 		INORGANIC ( new HashSet<Class>(),
 				new HashSet<Class>( Arrays.asList(Bleeding.class, ToxicGas.class, Poison.class, Petrification.class) )),
-		FIERY ( new HashSet<Class>( Arrays.asList(WandOfFireblast.class, Elemental.FireElemental.class)),
+		FIERY ( new HashSet<Class>( Arrays.asList(WandOfFireblast.class, Elemental.FireElemental.class, SunfireJavelin.class)),
 				new HashSet<Class>( Arrays.asList(Burning.class, Blazing.class, WaterVapor.class))),
 		ICY ( new HashSet<Class>( Arrays.asList(WandOfFrost.class, Elemental.FrostElemental.class)),
 				new HashSet<Class>( Arrays.asList(Frost.class, Chill.class))),
 		ACIDIC ( new HashSet<Class>( Arrays.asList(Corrosion.class)),
 				new HashSet<Class>( Arrays.asList(Ooze.class))),
 		ELECTRIC ( new HashSet<Class>( Arrays.asList(WandOfLightning.class, Shocking.class, Potential.class,
-										Electricity.class, ShockingDart.class, Elemental.ShockElemental.class )),
+										Electricity.class, ShockingDart.class, Elemental.ShockElemental.class, Skyfall.class )),
 				new HashSet<Class>()),
 		LARGE,
 		IMMOVABLE ( new HashSet<Class>(),

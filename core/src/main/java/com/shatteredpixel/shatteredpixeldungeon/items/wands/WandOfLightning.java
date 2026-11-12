@@ -36,7 +36,6 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Lightning;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
-import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
@@ -61,12 +60,7 @@ public class WandOfLightning extends DamageWand {
 		collisionProperties = Ballistica.MAGIC_BOLT | Ballistica.IGNORE_PROJECTILE_BARRIERS;
 	}
 	
-	private ArrayList<Char> affected = new ArrayList<>();
-
-	private ArrayList<Lightning.Arc> arcs = new ArrayList<>();
-	private TerrainPropagation conduction;
-	private boolean conducting;
-	private SparseArray<Char> conductorChars;
+	private final ArrayList<Char> affected = new ArrayList<>();
 	private int impactCell;
 	private boolean impactInWater;
 
@@ -92,9 +86,7 @@ public class WandOfLightning extends DamageWand {
 
 		//lightning deals less damage per-target, the more targets that are hit.
 		if (affected.isEmpty()) return;
-		float multiplier = 0.4f + (0.6f/affected.size());
-		//if the main target is in water, all affected take full damage
-		if (impactInWater) multiplier = 1f;
+		float multiplier = ArcChain.damageMultiplier(affected.size(), impactInWater);
 
 		for (Char ch : affected){
 			if (ch instanceof DwarfKing) Statistics.qualifiedForBossChallengeBadge = false;
@@ -154,112 +146,128 @@ public class WandOfLightning extends DamageWand {
 		}
 	}
 
-	private void arc( Char ch ) {
+	public static class ArcChain {
 
-		int dist = Dungeon.level.water[ch.pos] ? 2 : 1;
+		private final Char user;
+		private final ArrayList<Char> affected;
+		private final ArrayList<Lightning.Arc> arcs;
+		private final TerrainPropagation conduction;
 
-		if (curUser.buff(LightningCharge.class) != null){
-			dist++;
+		public ArcChain(Char user, ArrayList<Char> affected, ArrayList<Lightning.Arc> arcs) {
+			this.user = user;
+			this.affected = affected;
+			this.arcs = arcs;
+			conduction = TerrainPropagation.event(Dungeon.level, CellContent.CONDUCTIVE);
 		}
 
-		ArrayList<Char> hitThisArc = new ArrayList<>();
-		boolean[] arcPassable = BArray.not(Dungeon.level.solid, null);
-		int width = Dungeon.level.width();
-		for (int y = Math.max(0, ch.pos / width - dist); y <= Math.min(Dungeon.level.height() - 1, ch.pos / width + dist); y++) {
-			for (int x = Math.max(0, ch.pos % width - dist); x <= Math.min(width - 1, ch.pos % width + dist); x++) {
-				int cell = x + y * width;
-				if (!arcPassable[cell] && Dungeon.level.cellAt(cell).has(CellContent.PASSES_NON_PROJECTILES)) arcPassable[cell] = true;
+		public static float damageMultiplier(int targets, boolean hitWater) {
+			return hitWater ? 1f : 0.4f + 0.6f / targets;
+		}
+
+		public void arc( Char ch ) {
+
+			int dist = Dungeon.level.water[ch.pos] ? 2 : 1;
+
+			if (user.buff(LightningCharge.class) != null){
+				dist++;
 			}
-		}
-		PathFinder.buildDistanceMap(ch.pos, arcPassable, dist);
-		for (int i = 0; i < PathFinder.distance.length; i++) {
-			if (PathFinder.distance[i] < Integer.MAX_VALUE){
-				Char n = Actor.findChar( i );
-				if (n == Dungeon.hero && PathFinder.distance[i] > 1)
-					//the hero is only zapped if they are adjacent
-					continue;
-				else if (n != null && !affected.contains( n )) {
-					hitThisArc.add(n);
+
+			ArrayList<Char> hitThisArc = new ArrayList<>();
+			boolean[] arcPassable = BArray.not(Dungeon.level.solid, null);
+			int width = Dungeon.level.width();
+			for (int y = Math.max(0, ch.pos / width - dist); y <= Math.min(Dungeon.level.height() - 1, ch.pos / width + dist); y++) {
+				for (int x = Math.max(0, ch.pos % width - dist); x <= Math.min(width - 1, ch.pos % width + dist); x++) {
+					int cell = x + y * width;
+					if (!arcPassable[cell] && Dungeon.level.cellAt(cell).has(CellContent.PASSES_NON_PROJECTILES)) arcPassable[cell] = true;
 				}
 			}
-		}
-		
-		affected.addAll(hitThisArc);
-		for (Char hit : hitThisArc){
-			arcs.add(new Lightning.Arc(ch.sprite.center(), hit.sprite.center()));
-			if (conducting) {
-				Ballistica contact = new Ballistica(ch.pos, hit.pos,
-						Ballistica.STOP_TARGET | Ballistica.STOP_SOLID | Ballistica.IGNORE_PROJECTILE_BARRIERS);
-				for (int cell : contact.subPath(0, contact.dist)) conduction.seed(cell, cell);
-			}
-			arc(hit);
-		}
-		if (conducting) conduction.touch(ch.pos);
-	}
-
-	private void collectConduction() {
-		if (!conduction.hasNext()) return;
-		// 一次施法建立一次位置索引，避免每个导体都扫描 Actor 集合。
-		if (conductorChars == null) conductorChars = new SparseArray<>();
-		conductorChars.clear();
-		for (Char ch : Actor.chars()) conductorChars.put(ch.pos, ch);
-		while (conduction.hasNext()) {
-			int cell = conduction.next();
-			int from = conduction.parent();
-			if (from != cell && (Dungeon.level.heroFOV[from] || Dungeon.level.heroFOV[cell])) {
-				arcs.add(new Lightning.Arc(DungeonTilemap.raisedTileCenterToWorld(from),
-						DungeonTilemap.raisedTileCenterToWorld(cell)));
-			}
-			for (int offset : PathFinder.NEIGHBOURS9) {
-				int next = cell + offset;
-				if (next != cell && !Dungeon.level.adjacent(cell, next)) continue;
-				Char ch = conductorChars.get(next);
-				if (ch != null && !affected.contains(ch)) {
-					affected.add(ch);
-					if (Dungeon.level.heroFOV[cell] || Dungeon.level.heroFOV[next]) {
-						arcs.add(new Lightning.Arc(DungeonTilemap.raisedTileCenterToWorld(cell), ch.sprite.center()));
+			PathFinder.buildDistanceMap(ch.pos, arcPassable, dist);
+			for (int i = 0; i < PathFinder.distance.length; i++) {
+				if (PathFinder.distance[i] < Integer.MAX_VALUE){
+					Char n = Actor.findChar( i );
+					if (n == Dungeon.hero && PathFinder.distance[i] > 1)
+						//the hero is only zapped if they are adjacent
+						continue;
+					else if (n != null && !affected.contains( n )) {
+						hitThisArc.add(n);
 					}
-					arc(ch);
+				}
+			}
+
+			affected.addAll(hitThisArc);
+			for (Char hit : hitThisArc){
+				arcs.add(new Lightning.Arc(ch.sprite.center(), hit.sprite.center()));
+				if (conduction != null) {
+					Ballistica contact = new Ballistica(ch.pos, hit.pos,
+							Ballistica.STOP_TARGET | Ballistica.STOP_SOLID | Ballistica.IGNORE_PROJECTILE_BARRIERS);
+					for (int cell : contact.subPath(0, contact.dist)) conduction.seed(cell, cell);
+				}
+				arc(hit);
+			}
+			if (conduction != null) conduction.touch(ch.pos);
+		}
+
+		private void collectConduction() {
+			if (!conduction.hasNext()) return;
+			// 一次施法建立一次位置索引，避免每个导体都扫描 Actor 集合。
+			SparseArray<Char> conductorChars = new SparseArray<>();
+			for (Char ch : Actor.chars()) conductorChars.put(ch.pos, ch);
+			while (conduction.hasNext()) {
+				int cell = conduction.next();
+				int from = conduction.parent();
+				if (from != cell && (Dungeon.level.heroFOV[from] || Dungeon.level.heroFOV[cell])) {
+					arcs.add(new Lightning.Arc(DungeonTilemap.raisedTileCenterToWorld(from),
+							DungeonTilemap.raisedTileCenterToWorld(cell)));
+				}
+				for (int offset : PathFinder.NEIGHBOURS9) {
+					int next = cell + offset;
+					if (next != cell && !Dungeon.level.adjacent(cell, next)) continue;
+					Char ch = conductorChars.get(next);
+					if (ch != null && !affected.contains(ch)) {
+						affected.add(ch);
+						if (Dungeon.level.heroFOV[cell] || Dungeon.level.heroFOV[next]) {
+							arcs.add(new Lightning.Arc(DungeonTilemap.raisedTileCenterToWorld(cell), ch.sprite.center()));
+						}
+						arc(ch);
+					}
 				}
 			}
 		}
-		conductorChars.clear();
+
+		public void finish() {
+			if (conduction != null) {
+				collectConduction();
+				conduction.end();
+			}
+		}
 	}
-	
+
 	@Override
 	public void fx(Ballistica bolt, Callback callback) {
 
 		affected.clear();
-		arcs.clear();
-		conducting = Dungeon.level.terrainInteractions != null && Dungeon.level.terrainInteractions.hasEffects(CellContent.CONDUCTIVE);
-		if (conducting) {
-			if (conduction == null) conduction = new TerrainPropagation();
-			conduction.begin(Dungeon.level, CellContent.CONDUCTIVE);
-		}
+		ArrayList<Lightning.Arc> arcs = new ArrayList<>();
+		ArcChain chain = new ArcChain(curUser, affected, arcs);
 
 		int cell = TerrainPropagation.impactCell(Dungeon.level, bolt, CellContent.CONDUCTIVE);
 		impactCell = cell;
 		impactInWater = Dungeon.level.water[cell];
 		// 穿过导体也属于接触，不能只在最终落点和命中的生物附近启动导电。
-		if (conducting) {
-			for (int contact : bolt.subPath(0, bolt.path.indexOf(cell))) conduction.seed(contact, contact);
+		if (chain.conduction != null) {
+			for (int contact : bolt.subPath(0, bolt.path.indexOf(cell))) chain.conduction.seed(contact, contact);
 		}
 
 		Char ch = Actor.findChar( cell );
 		if (ch != null) {
 			affected.add( ch );
 			arcs.add( new Lightning.Arc(fxSource().center(), ch.sprite.center()));
-			arc(ch);
+			chain.arc(ch);
 		} else {
 			arcs.add( new Lightning.Arc(fxSource().center(), DungeonTilemap.raisedTileCenterToWorld(cell)));
 			CellEmitter.center( cell ).burst( SparkParticle.FACTORY, 3 );
-			if (conducting) conduction.touch(cell);
+			if (chain.conduction != null) chain.conduction.touch(cell);
 		}
-		if (conducting) {
-			collectConduction();
-			conduction.end();
-			conducting = false;
-		}
+		chain.finish();
 
 		//don't want to wait for the effect before processing damage.
 		fxSource().parent.addToFront( new Lightning( arcs, null ) );

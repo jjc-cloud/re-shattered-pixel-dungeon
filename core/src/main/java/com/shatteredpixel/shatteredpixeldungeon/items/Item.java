@@ -39,6 +39,7 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Skyfall;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.Dart;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.TippedDart;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Catalog;
@@ -793,6 +794,10 @@ public class Item implements Bundlable {
 				}
 			}
 		};
+		if (this instanceof Skyfall) {
+			onImpact.call();
+			return;
+		}
 		MissileSprite missile = (MissileSprite) user.sprite.parent.recycle(MissileSprite.class);
 		if (enemy != null) missile.reset(user.sprite, enemy.sprite, this, onImpact);
 		else missile.reset(user.sprite, cell, this, onImpact);

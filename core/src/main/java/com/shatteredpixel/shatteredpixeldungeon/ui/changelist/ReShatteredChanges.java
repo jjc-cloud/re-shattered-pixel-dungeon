@@ -72,7 +72,9 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V021_PRISON_STATUE, "监狱地图改造",
 				"\n重构监狱区域的地图生成逻辑。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V021_MAGICSPEAR, "新武器",
-				"\n-新增三阶投掷武器魔法长枪，魔法长枪造成魔法伤害，无限耐久，但只要未命中就会消失。\n-新增五阶武器斩龙，根据使用者的受伤程度提高伤害下限，替换巨剑。"));
+				"\n-新增二阶投掷武器爆破，爆破造成魔法伤害，会将周围单位击飞。\n-新增三阶投掷武器魔法长枪，魔法长枪造成魔法伤害，无限耐久，但只要未命中就会消失。"
+				+ "\n-新增四阶投掷武器落霄，落霄造成雷属性伤害，攻击沿途的所有单位。\n-新增五阶投掷武器阳炎标枪，阳炎标枪造成火焰伤害，点燃沿途所有物品，只要该武器仍然卡在单位身上就会陷入永久燃烧。"
+				+ "\n-新增五阶武器斩龙，根据使用者的受伤程度提高伤害下限，替换巨剑。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V22_KATANA, "剑气",
 				"\n移除武技弓步刺，新增武技剑气，剑气可对非相邻的单位使出，对相邻单位使出则只造成一次普通伤害。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V021_KEEN_HEARING, "新天赋与成就",

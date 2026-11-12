@@ -62,6 +62,13 @@ public class PinCushion extends Buff {
 		return item;
 	}
 
+	public boolean hasStuckItem(Class<? extends MissileWeapon> type) {
+		for (MissileWeapon item : items) {
+			if (type.isInstance(item)) return true;
+		}
+		return false;
+	}
+
 	public ArrayList<MissileWeapon> getStuckItems(){
 		return new ArrayList<>(items);
 	}

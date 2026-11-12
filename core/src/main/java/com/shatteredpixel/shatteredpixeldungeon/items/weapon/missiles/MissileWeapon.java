@@ -115,7 +115,7 @@ abstract public class MissileWeapon extends Weapon {
 	
 	@Override
 	public int min(int lvl) {
-		return  (this instanceof MagicSpear ? 8 : 2 * tier) + //base
+		return  (2 * tier) + //base
 				lvl;                            //level scaling
 	}
 	
@@ -215,13 +215,20 @@ abstract public class MissileWeapon extends Weapon {
 			}
 		}
 
-		if (projecting > 0
+		if (!(this instanceof Skyfall) && projecting > 0
 				&& (Dungeon.level.passable[dst] || Dungeon.level.avoid[dst] || Actor.findChar(dst) != null)
 				&& Dungeon.level.distance(from, dst) <= Math.round(projecting * Enchantment.genericProcChanceMultiplier(user))){
+			if (this instanceof SunfireJavelin) {
+				((SunfireJavelin) this).flight = new Ballistica(from, dst, Ballistica.STOP_TARGET);
+			}
 			return dst;
 		} else {
-			Ballistica shot = new Ballistica(from, dst, Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER
-					| Ballistica.IRON_DOOR_CHANCE);
+			int collision = Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER | Ballistica.IRON_DOOR_CHANCE;
+			if (this instanceof Skyfall) collision &= ~Ballistica.STOP_CHARS;
+			Ballistica shot = new Ballistica(from, dst, collision);
+			if (this instanceof SunfireJavelin || this instanceof Skyfall) {
+				((MagicMissileWeapon) this).flight = shot;
+			}
 			int surface = shot.collisionPos == dst && !Dungeon.level.solid[dst] ? shot.collisionPos
 					: TerrainPropagation.impactCell(Dungeon.level, shot, CellContent.BREAKABLE);
 			return surface;
@@ -259,7 +266,7 @@ abstract public class MissileWeapon extends Weapon {
 		if (((levelKnown && level() > 0) || hasGoodEnchant() || masteryPotionBonus || enchantHardened)
 				&& !extraThrownLeft && quantity() == 1 && durabilityLeft() <= durabilityPerUse()){
 			GameScene.show(new WndOptions(new ItemSprite(this), Messages.titleCase(title()),
-					Messages.get(MissileWeapon.class, "break_upgraded_warn_desc"),
+					Messages.get(this, "break_upgraded_warn_desc"),
 					Messages.get(MissileWeapon.class, "break_upgraded_warn_yes"),
 					Messages.get(MissileWeapon.class, "break_upgraded_warn_no")){
 				@Override
@@ -297,7 +304,7 @@ abstract public class MissileWeapon extends Weapon {
 		}
 		Char enemy = Actor.findChar( cell );
 		if (enemy == null || (enemy == curUser && !FrozenAttack.resolving())) {
-			parent = null;
+			if (!(this instanceof Detonation)) parent = null;
 
 			//metamorphed seer shot logic
 			if (curUser.hasTalent(Talent.SEER_SHOT)
@@ -312,7 +319,9 @@ abstract public class MissileWeapon extends Weapon {
 				}
 			}
 
-			if (!spawnedForEffect && !(this instanceof MagicSpear)) {
+			if (this instanceof Detonation) {
+				rangedHit(null, cell);
+			} else if (!spawnedForEffect && !(this instanceof MagicJavelin)) {
 				//投掷武器落在空地上同样会发出声音
 				Noise.emit(curUser, cell, Noise.THROW_RANGE, true);
 				super.onThrow( cell );
@@ -579,7 +588,7 @@ abstract public class MissileWeapon extends Weapon {
 		int damage = augment.damageFactor(super.damageRoll( owner ));
 		
 		if (owner instanceof Hero) {
-			int exStr = this instanceof MagicSpear ? 0 : ((Hero)owner).STR() - STRReq();
+			int exStr = this instanceof MagicMissileWeapon ? 0 : ((Hero)owner).STR() - STRReq();
 			if (exStr > 0) {
 				damage += Hero.heroDamageIntRange( 0, exStr );
 			}
@@ -707,7 +716,7 @@ abstract public class MissileWeapon extends Weapon {
 
 		if (levelKnown) {
 			info += "\n\n" + Messages.get(this, "stats_known", tier, augment.damageFactor(min()), augment.damageFactor(max()), STRReq());
-			if (Dungeon.hero != null && !(this instanceof MagicSpear)) {
+			if (Dungeon.hero != null && !(this instanceof MagicMissileWeapon)) {
 				if (STRReq() > Dungeon.hero.STR()) {
 					info += " " + Messages.get(Weapon.class, "too_heavy");
 				} else if (Dungeon.hero.STR() > STRReq()) {
@@ -737,8 +746,9 @@ abstract public class MissileWeapon extends Weapon {
 
 		info += "\n\n";
 		String statsInfo = statsInfo();
-		if (!statsInfo.equals("")) info += statsInfo + " ";
+		if (!statsInfo.isEmpty() && !(this instanceof MagicMissileWeapon)) info += statsInfo + " ";
 		info += Messages.get(this, "distance");
+		if (!statsInfo.isEmpty() && this instanceof MagicMissileWeapon) info += "\n\n" + statsInfo;
 
 		switch (augment) {
 			case SPEED:
@@ -766,6 +776,7 @@ abstract public class MissileWeapon extends Weapon {
 			}
 		}
 		
+		if (this instanceof MagicMissileWeapon) info += "\n\n" + Messages.get(this, "cannot_repair");
 		return info;
 	}
 

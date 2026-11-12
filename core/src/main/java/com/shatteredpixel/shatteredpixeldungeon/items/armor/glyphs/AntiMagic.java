@@ -66,12 +66,16 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Blazin
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Crystal;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Grim;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Shocking;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Detonation;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicJavelin;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicMissileWeapon;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Skyfall;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.SunfireJavelin;
+import com.watabou.utils.Random;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.HolyDart;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicSpear;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.DisintegrationTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.GrimTrap;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
-import com.watabou.utils.Random;
 
 import java.util.HashSet;
 
@@ -98,7 +102,11 @@ public class AntiMagic extends Armor.Glyph {
 		RESISTS.add( ScrollOfPsionicBlast.class );
 		RESISTS.add( ScrollOfTeleportation.class );
 		RESISTS.add( HolyDart.class );
-		RESISTS.add( MagicSpear.class );
+		RESISTS.add( MagicMissileWeapon.class );
+		RESISTS.add( Detonation.class );
+		RESISTS.add( MagicJavelin.class );
+		RESISTS.add( Skyfall.class );
+		RESISTS.add( SunfireJavelin.class );
 
 		RESISTS.add( GuidingLight.class );
 		RESISTS.add( HolyWeapon.class );

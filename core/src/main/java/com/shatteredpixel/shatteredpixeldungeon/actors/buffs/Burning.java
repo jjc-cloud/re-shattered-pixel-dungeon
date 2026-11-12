@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.SunfireJavelin;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Thief;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ElmoParticle;
@@ -98,7 +99,13 @@ public class Burning extends Buff implements Hero.Doom, Buff.DOTbuff {
 	@Override
 	public boolean act() {
 
-		if (acted && Dungeon.level.water[target.pos] && !target.flying){
+		PinCushion stuck = target.buff(PinCushion.class);
+		boolean sunfire = stuck != null && stuck.hasStuckItem(SunfireJavelin.class);
+		if (sunfire && Dungeon.level.water[target.pos] && !target.flying) {
+			Blob.seed(target.pos, 0, Fire.class);
+		}
+
+		if (!sunfire && acted && Dungeon.level.water[target.pos] && !target.flying){
 			detach();
 		} else if (target.isAlive() && !target.isImmune(getClass())) {
 
@@ -175,10 +182,14 @@ public class Burning extends Buff implements Hero.Doom, Buff.DOTbuff {
 		}
 		
 		spend( TICK );
-		left -= TICK;
-		
-		if (left <= 0 ||
-			(Dungeon.level.water[target.pos] && !target.flying)) {
+		if (sunfire) {
+			left = Math.max(left, DURATION);
+		} else {
+			left -= TICK;
+		}
+
+		if (!sunfire && (left <= 0 ||
+			(Dungeon.level.water[target.pos] && !target.flying))) {
 			
 			detach();
 		}
@@ -189,6 +200,11 @@ public class Burning extends Buff implements Hero.Doom, Buff.DOTbuff {
 
 	@Override
 	public void detach() {
+		PinCushion stuck = target.buff(PinCushion.class);
+		if (target.isAlive() && !target.isImmune(getClass())
+				&& stuck != null && stuck.hasStuckItem(SunfireJavelin.class)) {
+			return;
+		}
 		target.needsIncomingDOTUpdate = true;
 		super.detach();
 		if (target.sprite != null) Dungeon.observe();
