@@ -209,7 +209,7 @@ public class LiquidMetal extends Item {
 			Item result = sampleOutput(ingredients);
 			MissileWeapon m = (MissileWeapon) ingredients.get(0);
 			if (!m.levelKnown){
-				result.quantity(metalQuantity(m));
+				result.quantity(outputQuantity(m));
 			}
 
 			m.quantity(0);
@@ -222,19 +222,21 @@ public class LiquidMetal extends Item {
 		public Item sampleOutput(ArrayList<Item> ingredients) {
 			MissileWeapon m = (MissileWeapon) ingredients.get(0);
 
-			if (m.levelKnown){
-				return new LiquidMetal().quantity(metalQuantity(m));
-			} else {
-				return new LiquidMetal();
-			}
+			Item result = m instanceof MagicMissileWeapon ? new EnergyCrystal() : new LiquidMetal();
+			return m.levelKnown ? result.quantity(outputQuantity(m)) : result;
 		}
 
-		private int metalQuantity(MissileWeapon m){
-			float quantityPerWeapon = 5*(m.tier+1);
-			if (m.defaultQuantity() != 3){
-				quantityPerWeapon = 3f / m.defaultQuantity();
+		private int outputQuantity(MissileWeapon m){
+			float quantityPerWeapon;
+			if (m instanceof MagicMissileWeapon) {
+				quantityPerWeapon = m.tier * (2 + Math.max(0, m.level()));
+			} else {
+				quantityPerWeapon = 5 * (m.tier + 1);
+				if (m.defaultQuantity() != 3) {
+					quantityPerWeapon = 3f / m.defaultQuantity();
+				}
+				quantityPerWeapon *= Math.pow(1.35f, Math.min(5, m.level()));
 			}
-			quantityPerWeapon *= Math.pow(1.35f, Math.min(5, m.level()));
 
 			float quantity = m.quantity()-1;
 			quantity += 0.25f + 0.0075f*m.durabilityLeft();

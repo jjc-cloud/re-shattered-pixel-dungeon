@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.painters;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection.ConnectionRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection.PrisonHallRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.SpecialRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.ChasmBridgeRoom;
@@ -95,6 +96,20 @@ public class PrisonPainter extends RegularPainter {
 		// 按完整廊道铺边带，包含转弯外侧凸角，也不会因开门缺少邻墙而断砖。
 		for (int cell = w + 1; cell < l - w - 1; cell++) if (hallFloor[cell] && !centerLine[cell]) {
 			level.cellAt(cell).setGround(Terrain.EMPTY_SP);
+		}
+		if (level.feeling == Level.Feeling.CHASM) {
+			// 走廊四面围住的一格深渊改为有地面的支柱。
+			for (Room r : rooms) if (r instanceof ConnectionRoom) {
+				for (int y = r.top; y <= r.bottom; y++) {
+					for (int x = r.left; x <= r.right; x++) {
+						int cell = x + y * w;
+						if (map[cell] == Terrain.CHASM && isOpenFloor(map[cell - 1]) && isOpenFloor(map[cell + 1])
+								&& isOpenFloor(map[cell - w]) && isOpenFloor(map[cell + w])) {
+							level.cellAt(cell).reset(Terrain.EMPTY_SP, Terrain.WALL);
+						}
+					}
+				}
+			}
 		}
 		if (origin != -1) {
 			int[] distance = new int[l];

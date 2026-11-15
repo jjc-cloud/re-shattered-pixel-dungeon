@@ -33,7 +33,7 @@ public abstract class MagicMissileWeapon extends MissileWeapon {
 	protected Ballistica flight;
 
 	{
-		baseUses = 6;
+		baseUses = 5;
 		hitSound = Assets.Sounds.HIT_MAGIC;
 	}
 

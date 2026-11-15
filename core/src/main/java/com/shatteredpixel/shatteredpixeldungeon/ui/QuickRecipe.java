@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.items.ArcaneResin;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.EnergyCrystal;
 import com.shatteredpixel.shatteredpixeldungeon.items.LiquidMetal;
 import com.shatteredpixel.shatteredpixeldungeon.items.Recipe;
 import com.shatteredpixel.shatteredpixeldungeon.items.RealityWarp;
@@ -69,6 +70,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.spells.UnstableSpell;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.WildEnergy;
 import com.shatteredpixel.shatteredpixeldungeon.items.stones.Runestone;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicMissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
@@ -351,9 +353,21 @@ public class QuickRecipe extends Component {
 				addDiscoveredSpecialRecipes(result, pageIdx, Recipe.GUIDE_BOMB);
 				return result;
 			case 6:
-				result.add(new QuickRecipe( new LiquidMetal.Recipe(),
-						new ArrayList<Item>(Arrays.asList(new MissileWeapon.PlaceHolder())),
-						new LiquidMetal()));
+				LiquidMetal.Recipe dismantle = new LiquidMetal.Recipe();
+				result.add(new QuickRecipe(dismantle,
+						new ArrayList<Item>(Arrays.asList(new MissileWeapon.PlaceHolder() {
+							@Override
+							public boolean isSimilar(Item item) {
+								return super.isSimilar(item) && !(item instanceof MagicMissileWeapon);
+							}
+						})), new LiquidMetal()));
+				result.add(new QuickRecipe(dismantle,
+						new ArrayList<Item>(Arrays.asList(new MissileWeapon.PlaceHolder() {
+							@Override
+							public boolean isSimilar(Item item) {
+								return item instanceof MagicMissileWeapon;
+							}
+						})), new EnergyCrystal()));
 				result.add(new QuickRecipe( new ArcaneResin.Recipe(),
 						new ArrayList<Item>(Arrays.asList(new Wand.PlaceHolder())),
 						new ArcaneResin()));

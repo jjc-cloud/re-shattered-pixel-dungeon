@@ -40,6 +40,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Skyfall;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.SunfireJavelin;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.Dart;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.TippedDart;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Catalog;
@@ -801,6 +802,9 @@ public class Item implements Bundlable {
 		MissileSprite missile = (MissileSprite) user.sprite.parent.recycle(MissileSprite.class);
 		if (enemy != null) missile.reset(user.sprite, enemy.sprite, this, onImpact);
 		else missile.reset(user.sprite, cell, this, onImpact);
+		if (this instanceof SunfireJavelin) {
+			missile.setFlightProgress(((SunfireJavelin) this).flightProgress(cell));
+		}
 	}
 	
 	/** 物品已在时停期间从背包取出；这里仅执行命中，不重复扣物品或行动时间。 */

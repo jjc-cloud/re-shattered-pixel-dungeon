@@ -1025,7 +1025,9 @@ public class Dungeon {
 						&& (level.traps.get(outside) == null || !level.traps.get(outside).active)) {
 					// 先记一次性标记，避免物品落地引起的视野更新重复进入。
 					SPDSettings.put(SPDSettings.KEY_SUPER_SECRET_HINT, true);
-					level.drop(new Bomb(), outside).autoExplored = true;
+					Bomb bomb = new Bomb();
+					level.drop(bomb, outside).autoExplored = true;
+					Actor.addDelayed(bomb.fuse = new Bomb.Fuse().ignite(bomb), 2);
 				}
 			}
 		}

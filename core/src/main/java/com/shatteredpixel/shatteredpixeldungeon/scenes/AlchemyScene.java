@@ -927,7 +927,12 @@ public class AlchemyScene extends PixelScene {
 		Sample.INSTANCE.play( Assets.Sounds.PUFF );
 
 		int resultQuantity = result.quantity();
-		if (!result.collect()){
+		if (result instanceof EnergyCrystal) {
+			Dungeon.energy += resultQuantity;
+			Catalog.setSeen(EnergyCrystal.class);
+			Statistics.itemTypesDiscovered.add(EnergyCrystal.class);
+			refreshEnergyDisplay();
+		} else if (!result.collect()) {
 			Dungeon.level.drop(result, Dungeon.hero.pos);
 		}
 

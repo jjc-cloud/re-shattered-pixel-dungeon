@@ -218,15 +218,15 @@ abstract public class MissileWeapon extends Weapon {
 		if (!(this instanceof Skyfall) && projecting > 0
 				&& (Dungeon.level.passable[dst] || Dungeon.level.avoid[dst] || Actor.findChar(dst) != null)
 				&& Dungeon.level.distance(from, dst) <= Math.round(projecting * Enchantment.genericProcChanceMultiplier(user))){
-			if (this instanceof SunfireJavelin) {
-				((SunfireJavelin) this).flight = new Ballistica(from, dst, Ballistica.STOP_TARGET);
+			if (this instanceof SunfireJavelin || this instanceof Detonation) {
+				((MagicMissileWeapon) this).flight = new Ballistica(from, dst, Ballistica.STOP_TARGET);
 			}
 			return dst;
 		} else {
 			int collision = Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER | Ballistica.IRON_DOOR_CHANCE;
 			if (this instanceof Skyfall) collision &= ~Ballistica.STOP_CHARS;
 			Ballistica shot = new Ballistica(from, dst, collision);
-			if (this instanceof SunfireJavelin || this instanceof Skyfall) {
+			if (this instanceof SunfireJavelin || this instanceof Skyfall || this instanceof Detonation) {
 				((MagicMissileWeapon) this).flight = shot;
 			}
 			int surface = shot.collisionPos == dst && !Dungeon.level.solid[dst] ? shot.collisionPos

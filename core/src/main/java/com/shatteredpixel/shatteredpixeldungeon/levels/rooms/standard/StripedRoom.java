@@ -57,11 +57,11 @@ public class StripedRoom extends StandardRoom {
 			Painter.fill(level, this, 1, CellPlacement.reset(Terrain.EMPTY_SP));
 			if (width() > height() || (width() == height() && Random.Int(2) == 0)) {
 				for (int i = left + 2; i < right; i += 2) {
-					Painter.fill(level, i, top + 1, 1, height() - 2, CellPlacement.content(Terrain.HIGH_GRASS));
+					Painter.fill(level, i, top + 1, 1, height() - 2, CellPlacement.reset(Terrain.EMPTY, Terrain.HIGH_GRASS));
 				}
 			} else {
 				for (int i = top + 2; i < bottom; i += 2) {
-					Painter.fill(level, left + 1, i, width() - 2, 1, CellPlacement.content(Terrain.HIGH_GRASS));
+					Painter.fill(level, left + 1, i, width() - 2, 1, CellPlacement.reset(Terrain.EMPTY, Terrain.HIGH_GRASS));
 				}
 			}
 			

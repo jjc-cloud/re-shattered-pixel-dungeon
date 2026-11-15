@@ -436,7 +436,7 @@ public class Armor extends EquipableItem {
 		}
 		
 		evasion += augment.evasionFactor(buffedLvl());
-		return hasGlyph(Stone.class, owner) ? evasion * 0.7f : evasion;
+		return hasGlyph(Stone.class, owner) ? evasion * 0.5f : evasion;
 	}
 	
 	public float speedFactor( Char owner, float speed ){

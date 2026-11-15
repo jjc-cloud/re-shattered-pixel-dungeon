@@ -887,7 +887,8 @@ public abstract class Char extends Actor {
 	}
 	
 	public static Class<?> damageSourceClass(Object source) {
-		return source instanceof Class ? (Class<?>) source : source.getClass();
+		return source instanceof SunfireJavelin ? ((SunfireJavelin) source).damageType()
+				: source instanceof Class ? (Class<?>) source : source.getClass();
 	}
 
 	public boolean blocksDomainDamage(Object source, boolean physical) {

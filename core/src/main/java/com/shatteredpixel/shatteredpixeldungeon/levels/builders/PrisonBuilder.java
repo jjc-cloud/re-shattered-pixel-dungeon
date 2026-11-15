@@ -182,8 +182,17 @@ public class PrisonBuilder extends Builder {
 				if (route(room, h, placed, tunnels)) break;
 			}
 		}
-		// 紧凑布局允许房间共墙；为相邻的普通房间、支路和主廊补门。
 		findNeighbours(placed);
+		// 沿支路接入的房间若与主廊共墙，补一个直通主廊的门。
+		for (Room r : core) {
+			if (r.connected.keySet().stream().anyMatch(h -> h instanceof PrisonHallRoom)) continue;
+			ArrayList<Room> candidates = new ArrayList<>();
+			for (Room n : r.neigbours) {
+				if (n instanceof PrisonHallRoom && r.canConnect(n)) candidates.add(n);
+			}
+			if (!candidates.isEmpty()) r.connect(Random.element(candidates));
+		}
+		// 紧凑布局允许房间共墙；为相邻的普通房间、支路和主廊补门。
 		ArrayList<Rect> doorWalls = new ArrayList<>();
 		HashSet<Room> processed = new HashSet<>();
 		for (Room r : placed) {
@@ -208,6 +217,7 @@ public class PrisonBuilder extends Builder {
 						&& !(r instanceof TunnelRoom) && !(n instanceof TunnelRoom)) continue;
 				boolean hall = r instanceof PrisonHallRoom || n instanceof PrisonHallRoom;
 				Room other = r instanceof PrisonHallRoom ? n : r;
+				if (hall && core.contains(other)) continue;
 				int extras = extraHallConnections.getOrDefault(other, 0);
 				if (hall && extras >= MAX_EXTRA_HALL_CONNECTIONS_PER_ROOM) continue;
 				Rect wall = r.intersect(n);

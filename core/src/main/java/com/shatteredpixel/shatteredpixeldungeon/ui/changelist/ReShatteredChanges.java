@@ -96,7 +96,7 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V011_ANKH, "重生十字架",
 				"\n遗物状态下不再限制物品的获取与使用。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V074_MAIL_ANTIMAGIC, "护甲刻印",
-				"\n-磐岩：护甲的防御成长提高一阶，且额外获得一级护甲强化的防御收益，但会使穿戴者的闪避降低30%。"
+				"\n-磐岩：护甲的防御成长提高一阶，且额外获得一级护甲强化的防御收益，但会使穿戴者的闪避降低50%。"
 				+ "\n-敌法：护甲和抵御物理伤害一样抵御法术伤害。"));
 
 		changes = new ChangeInfo("改动", false, null);
@@ -114,7 +114,7 @@ public class ReShatteredChanges {
 				+ "\n-随机模式不再要求通关，首次开局即可设置随机天赋与随机挑战。"
 				+ "\n-踩到隐藏楼层入口时始终显示回响提示，不再要求关闭音效或将音效音量设为零。"
 				+ "\n-投矛类武器现在会对食人鱼造成额外伤害。"
-				+ "\n-移除了中文与英文以外的不支持语言。"
+				+ "\n-移除了中文与英文以外的不支持语言。\n-首次看见超级隐藏房入口时放下的炸弹为点燃状态。"
 			));
 		changes.addButton(new ChangeButton(ChangeIcons.V061_BUGFIX, "bug修复",
 				"\n-修复带有余烬的特殊地砖可以长草的问题。"

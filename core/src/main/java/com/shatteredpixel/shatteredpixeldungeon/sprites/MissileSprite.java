@@ -53,7 +53,16 @@ public class MissileSprite extends ItemSprite implements Tweener.Listener {
 
 	private static final float SPEED	= 240f;
 	
+	public interface FlightProgress {
+		void update(float progress);
+	}
+
 	private Callback callback;
+	private FlightProgress flightProgress;
+
+	public void setFlightProgress(FlightProgress progress) {
+		flightProgress = progress;
+	}
 	private float travelTime;
 
 	public float travelTime() {
@@ -136,6 +145,7 @@ public class MissileSprite extends ItemSprite implements Tweener.Listener {
 		to.y -= height()/2;
 
 		this.callback = listener;
+		flightProgress = null;
 
 		point( from );
 
@@ -187,13 +197,23 @@ public class MissileSprite extends ItemSprite implements Tweener.Listener {
 		}
 		
 		travelTime = d.length() / speed;
-		PosTweener tweener = new PosTweener( this, to, travelTime );
+		PosTweener tweener = new PosTweener(this, to, travelTime) {
+			@Override
+			protected void updateValues(float progress) {
+				super.updateValues(progress);
+				if (flightProgress != null) flightProgress.update(progress);
+			}
+		};
 		tweener.listener = this;
 		parent.add( tweener );
 	}
 
 	@Override
 	public void onComplete( Tweener tweener ) {
+		if (flightProgress != null) {
+			flightProgress.update(1f);
+			flightProgress = null;
+		}
 		kill();
 		if (callback != null) {
 			callback.call();

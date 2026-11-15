@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
@@ -29,8 +30,11 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.PinCushion;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
 import com.watabou.utils.PathFinder;
 
 public class SunfireJavelin extends MagicMissileWeapon {
@@ -45,17 +49,39 @@ public class SunfireJavelin extends MagicMissileWeapon {
 		return 20 + tier*lvl;
 	}
 
+	public Class<?> damageType() {
+		return Fire.class;
+	}
+
+	public MissileSprite.FlightProgress flightProgress(int landingCell) {
+		Ballistica path = flight;
+		int end = path == null ? -1 : path.path.indexOf(landingCell);
+		return new MissileSprite.FlightProgress() {
+			private int next = 1;
+
+			@Override
+			public void update(float progress) {
+				int reached = (int) (end * progress);
+				while (next <= reached) {
+					int cell = path.path.get(next++);
+					Heap heap = Dungeon.level.heaps.get(cell);
+					if (heap != null) heap.burn();
+					if (Dungeon.level.water[cell]) Blob.seed(cell, 0, Fire.class);
+				}
+				if (progress >= 1f && flight == path) flight = null;
+			}
+		};
+	}
+
 	@Override
 	protected void onThrow(int cell) {
-		if (flight != null) {
-			int end = flight.path.indexOf(cell);
-			for (int i = 1; i <= end; i++) {
-				int pathCell = flight.path.get(i);
-				Heap heap = Dungeon.level.heaps.get(pathCell);
-				if (heap != null) heap.burn();
-				if (Dungeon.level.water[pathCell]) Blob.seed(pathCell, 0, Fire.class);
-			}
+		Char target = Actor.findChar(cell);
+		if ((target == null || target == curUser && !FrozenAttack.resolving())
+				&& !Dungeon.level.pit[cell]) {
+			decrementDurability();
 		}
+
+		if (flight != null) flightProgress(cell).update(1f);
 
 		super.onThrow(cell);
 		for (int offset : PathFinder.NEIGHBOURS9) {
@@ -65,6 +91,12 @@ public class SunfireJavelin extends MagicMissileWeapon {
 				GameScene.add(Blob.seed(fireCell, 3, Fire.class));
 			}
 		}
+	}
+
+	@Override
+	protected void rangedMiss(int cell) {
+		decrementDurability();
+		super.rangedMiss(cell);
 	}
 
 	@Override

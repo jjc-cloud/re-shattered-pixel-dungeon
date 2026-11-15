@@ -21,13 +21,19 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 
+import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.TenguDartTrap;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
+import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.PathFinder;
+
+import java.util.ArrayList;
 
 public class Detonation extends MagicMissileWeapon {
 
@@ -44,14 +50,45 @@ public class Detonation extends MagicMissileWeapon {
 
 	@Override
 	protected void onThrow(int cell) {
+		Ballistica incoming = flight;
+		flight = null;
+		Char center = Actor.findChar(cell);
 		super.onThrow(cell);
+		WandOfBlastWave.BlastWave.blast(cell);
+		Sample.INSTANCE.play(Assets.Sounds.BLAST);
+
+		ArrayList<Integer> affectedCells = new ArrayList<>(PathFinder.NEIGHBOURS9.length);
+		for (int offset : PathFinder.NEIGHBOURS9) {
+			int affected = cell + offset;
+			if (Dungeon.level.insideMap(affected)) affectedCells.add(affected);
+		}
+		if (Dungeon.level.interactions().affectCells(affectedCells,
+				CellContent.BREAKABLE | CellContent.SHOCKWAVE_BREAKABLE)) {
+			Dungeon.observe();
+		}
+
+		for (int affected : affectedCells) {
+			if (!(Dungeon.level.traps.get(affected) instanceof TenguDartTrap)) {
+				Dungeon.level.pressCell(affected);
+			}
+		}
+
 		for (int offset : PathFinder.NEIGHBOURS8) {
 			int neighbor = cell + offset;
 			if (!Dungeon.level.insideMap(neighbor)) continue;
 			Char target = Actor.findChar(neighbor);
-			if (target != null) {
+			if (target != null && (target.isAlive() || target.flying || !Dungeon.level.pit[neighbor])) {
 				Ballistica push = new Ballistica(neighbor, neighbor + offset, Ballistica.MAGIC_BOLT);
-				WandOfBlastWave.throwChar(target, push, 2, false, false, this);
+				WandOfBlastWave.throwChar(target, push, 2, false, true, this);
+			}
+		}
+
+		if (center != null && center.pos == cell && Actor.findChar(cell) == center
+				&& (center.isAlive() || center.flying || !Dungeon.level.pit[cell]) && incoming != null) {
+			int impactIndex = incoming.path.indexOf(cell);
+			if (impactIndex >= 0 && impactIndex + 1 < incoming.path.size()) {
+				Ballistica push = new Ballistica(cell, incoming.path.get(impactIndex + 1), Ballistica.MAGIC_BOLT);
+				WandOfBlastWave.throwChar(center, push, 2, false, true, this);
 			}
 		}
 	}
