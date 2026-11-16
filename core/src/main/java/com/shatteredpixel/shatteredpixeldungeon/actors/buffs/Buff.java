@@ -33,6 +33,12 @@ import com.watabou.utils.Reflection;
 import java.util.HashSet;
 
 public class Buff extends Actor {
+
+	public interface AttackSnapshot {}
+
+	public boolean blocksAction() {
+		return false;
+	}
 	
 	public Char target;
 

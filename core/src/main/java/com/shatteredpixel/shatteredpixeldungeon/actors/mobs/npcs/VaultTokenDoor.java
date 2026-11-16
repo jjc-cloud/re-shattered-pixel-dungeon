@@ -52,6 +52,14 @@ public class VaultTokenDoor extends NPC {
 	public boolean battleSeal;
 
 	@Override
+	protected boolean occupiesCell(int cell) {
+		if (super.occupiesCell(cell)) return true;
+		if (Dungeon.level == null || cell < 0 || cell >= Dungeon.level.length()) return false;
+		int width = Dungeon.level.width();
+		return pos / width == cell / width && Math.abs(pos - cell) <= doorWidth / 2;
+	}
+
+	@Override
 	public boolean canInteract(Char c) {
 		for (int offset = -doorWidth / 2; offset <= doorWidth / 2; offset++) {
 			if (Dungeon.level.adjacent(pos + offset, c.pos)) return true;

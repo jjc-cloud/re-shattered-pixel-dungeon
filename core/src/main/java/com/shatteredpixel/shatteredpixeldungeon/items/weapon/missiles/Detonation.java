@@ -94,6 +94,11 @@ public class Detonation extends MagicMissileWeapon {
 	}
 
 	@Override
+	protected void onEmptyThrow(int cell) {
+		rangedHit(null, cell);
+	}
+
+	@Override
 	protected void rangedMiss(int cell) {
 		rangedHit(null, cell);
 	}

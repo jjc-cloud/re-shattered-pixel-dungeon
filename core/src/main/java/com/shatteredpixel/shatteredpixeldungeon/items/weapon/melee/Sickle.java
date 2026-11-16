@@ -122,6 +122,6 @@ public class Sickle extends MeleeWeapon {
 
 	}
 
-	public static class HarvestBleedTracker extends FlavourBuff{};
+	public static class HarvestBleedTracker extends FlavourBuff implements Buff.AttackSnapshot {}
 
 }

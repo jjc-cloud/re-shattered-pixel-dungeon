@@ -51,7 +51,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class Preparation extends Buff implements ActionIndicator.Action {
+public class Preparation extends Buff implements ActionIndicator.Action, Buff.AttackSnapshot {
 	
 	{
 		//always acts after other buffs, so invisibility effects can process first

@@ -6,7 +6,6 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Daze;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Preparation;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
@@ -20,13 +19,10 @@ import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfWarding;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Flail;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.RunicBlade;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sickle;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sword;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Swiftthistle;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Skyfall;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
@@ -133,9 +129,7 @@ public class FrozenAttack implements Bundlable {
 	}
 
 	public static boolean overridesBuff(Char user, Class<? extends Buff> type) {
-		return resolving != null && user == Dungeon.hero && (type == Preparation.class
-				|| type == RunicBlade.RunicSlashTracker.class || type == Sickle.HarvestBleedTracker.class
-				|| type == Flail.SpinAbilityTracker.class || type == Talent.PreciseAssaultTracker.class);
+		return resolving != null && user == Dungeon.hero && Buff.AttackSnapshot.class.isAssignableFrom(type);
 	}
 
 	public static <T extends Buff> T attackBuff(Class<T> type) {
@@ -150,10 +144,7 @@ public class FrozenAttack implements Bundlable {
 	private void captureAttackBuffs(Hero hero) {
 		invisible = hero.invisible > 0;
 		for (Buff buff : hero.buffs()) {
-			Class<? extends Buff> type = buff.getClass();
-			if (type == Preparation.class || type == RunicBlade.RunicSlashTracker.class
-					|| type == Sickle.HarvestBleedTracker.class || type == Flail.SpinAbilityTracker.class
-					|| type == Talent.PreciseAssaultTracker.class) {
+			if (buff instanceof Buff.AttackSnapshot) {
 				attackBuffs.add(buff);
 				buff.detach();
 			}
@@ -277,13 +268,13 @@ public class FrozenAttack implements Bundlable {
 		if (kind == MELEE && meleeEffect != SWORD_WAVE) return;
 		Game.runOnRenderThread(() -> {
 			if (Dungeon.hero.sprite != null && isFrozen(Dungeon.hero)) {
-				buildEffects();
+				buildEffects(false);
 				Dungeon.hero.sprite.parent.add(effects);
 			}
 		});
 	}
 
-	private void buildEffects() {
+	private void buildEffects(boolean applyFlightEffects) {
 		if (effects != null) effects.killAndErase();
 		effects = new Effects();
 		arrived = kind == MELEE && meleeEffect != SWORD_WAVE;
@@ -344,12 +335,7 @@ public class FrozenAttack implements Bundlable {
 				shot = new Ballistica(from, aim, Ballistica.WONT_STOP);
 				shot.collisionPos = cell;
 				shot.dist = shot.path.indexOf(cell);
-				if (projectile instanceof Skyfall) {
-					arrival.call();
-				} else {
-					MissileSprite missile = (MissileSprite) effects.recycle(MissileSprite.class);
-					missile.reset(source, shot.collisionPos, projectile, arrival);
-				}
+				projectile.throwAnimation(source, null, cell, arrival, applyFlightEffects);
 			}
 			arrivalTime = effects.travelTime();
 			// 飞弹粒子需要一次极短的更新才能成形，随后连同位移、旋转一起冻结。
@@ -435,11 +421,13 @@ public class FrozenAttack implements Bundlable {
 					((SpiritBow) item).resolveFrozenArrow(hero, shot.collisionPos);
 				} else {
 					// 闪现符石等物品仍复用自己的路径准备逻辑，不能沿用另一发的静态缓存。
-					Ballistica.Projectile previous = Ballistica.setProjectile(projectile);
-					try {
-						item.throwPos(hero, from, aim);
-					} finally {
-						Ballistica.setProjectile(previous);
+					if (!(item instanceof MissileWeapon)) {
+						Ballistica.Projectile previous = Ballistica.setProjectile(projectile);
+						try {
+							item.throwPos(hero, from, aim);
+						} finally {
+							Ballistica.setProjectile(previous);
+						}
 					}
 					item.resolveFrozenThrow(hero, shot.collisionPos);
 				}
@@ -459,7 +447,7 @@ public class FrozenAttack implements Bundlable {
 				Dungeon.hero.busy();
 				Actor gate = this;
 				Game.runOnRenderThread(() -> {
-					for (FrozenAttack attack : attacks) attack.buildEffects();
+					for (FrozenAttack attack : attacks) attack.buildEffects(true);
 					// 稳定排序：相同到达时间沿用发起顺序，不依赖特效在 Group 中的位置。
 					attacks.sort(Comparator.comparingDouble(a -> a.arrivalTime));
 					Group release = new Group() {
@@ -530,9 +518,6 @@ public class FrozenAttack implements Bundlable {
 		bundle.put("melee_effect", meleeEffect);
 		bundle.put("invisible", invisible);
 		bundle.put("attack_buffs", attackBuffs);
-		for (Buff buff : attackBuffs) {
-			if (buff instanceof RunicBlade.RunicSlashTracker) bundle.put("runic_boost", ((RunicBlade.RunicSlashTracker) buff).boost);
-		}
 		bundle.put("bow_special", bowSpecial);
 		bundle.put("bow_bonus", bowBonus);
 		bundle.put("wand_level", wandLevel);
@@ -562,9 +547,6 @@ public class FrozenAttack implements Bundlable {
 		meleeEffect = bundle.getInt("melee_effect");
 		invisible = bundle.getBoolean("invisible");
 		for (Bundlable buff : bundle.getCollection("attack_buffs")) attackBuffs.add((Buff) buff);
-		for (Buff buff : attackBuffs) {
-			if (buff instanceof RunicBlade.RunicSlashTracker) ((RunicBlade.RunicSlashTracker) buff).boost = bundle.getFloat("runic_boost");
-		}
 		bowSpecial = bundle.getBoolean("bow_special");
 		bowBonus = bundle.getFloat("bow_bonus");
 		wandLevel = bundle.getInt("wand_level");

@@ -95,6 +95,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfWarding;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.HeavyBoomerang;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Chasm;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.SewerBarrel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.HighGrass;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
@@ -164,6 +165,13 @@ public abstract class Level implements Bundlable {
 
 	/** 只在放置新门时选择默认材质；已有门改变状态不会重新调用工厂。 */
 	public Door createDoor(int terrain) { return new Door(terrain); }
+
+	public CellContent createCellContent(int terrain) {
+		if (Door.state(terrain) != null) return createDoor(terrain);
+		int region = region();
+		if (region == 0 && CellContent.family(terrain) == Terrain.REGION_DECO) return new SewerBarrel(terrain);
+		return new CellContent(terrain, region);
+	}
 
 	public CellState cellAt(int cell) { return cells[cell]; }
 	public int region() { return Dungeon.depth >= 1 ? (Dungeon.depth - 1) / 5 : -1; }

@@ -56,6 +56,11 @@ public class BlindingCrystal extends TargetedSpell {
 
 	public static class Recipe extends com.shatteredpixel.shatteredpixeldungeon.items.Recipe.SpecialRecipe {
 
+		@Override
+		public int guideSection() {
+			return GUIDE_SPELL_AFTER_TELEKINETIC_GRAB;
+		}
+
 		public static final int OUT_QUANTITY = 6;
 
 		public Recipe() {

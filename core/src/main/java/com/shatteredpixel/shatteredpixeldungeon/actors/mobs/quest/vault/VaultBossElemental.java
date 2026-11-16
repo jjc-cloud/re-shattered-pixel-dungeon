@@ -170,6 +170,72 @@ public class VaultBossElemental extends Mob {
 		return form;
 	}
 
+	/** Remains active across gaps between control effects until the hero can act. */
+	public static class ControlDamageTracker extends Hero.TurnDamageTracker {
+		private static final int HIT_LIMIT = 3;
+		private int hits;
+		private transient Object skillSource;
+
+		@Override
+		protected boolean tracksDamage(Object source) {
+			if (skillSource != null && source == skillSource) {
+				skillSource = null;
+				return true;
+			}
+			if (!(source instanceof VaultBossElemental)) return false;
+			ElementalForm form = ((VaultBossElemental) source).curForm();
+			return form == ElementalForm.FROST || form == ElementalForm.SHOCK;
+		}
+
+		@Override
+		protected boolean blocksDamage() {
+			return hits >= HIT_LIMIT;
+		}
+
+		@Override
+		protected void onDamage() {
+			hits++;
+		}
+
+		@Override
+		public void storeInBundle(Bundle bundle) {
+			super.storeInBundle(bundle);
+			bundle.put("hits", hits);
+		}
+
+		@Override
+		public void restoreFromBundle(Bundle bundle) {
+			super.restoreFromBundle(bundle);
+			hits = bundle.getInt("hits");
+		}
+	}
+
+	private static boolean controlLimitReached(Char target) {
+		ControlDamageTracker tracker = target == Dungeon.hero ? target.buff(ControlDamageTracker.class) : null;
+		return tracker != null && tracker.blocksDamage();
+	}
+
+	private static boolean controlDamage(Char target, int damage, Object source, Char attacker) {
+		ControlDamageTracker tracker = target == Dungeon.hero ? target.buff(ControlDamageTracker.class) : null;
+		Object previousSource = tracker == null ? null : tracker.skillSource;
+		int healthBefore = target.HP;
+		int shieldBefore = target.shielding();
+		if (tracker != null) tracker.skillSource = source;
+		try {
+			if (attacker == null) target.damage(damage, source);
+			else target.damage(damage, source, attacker);
+		} finally {
+			if (tracker != null) tracker.skillSource = previousSource;
+		}
+		return target.HP < healthBefore || target.shielding() < shieldBefore;
+	}
+
+	private static void trackControl(Char target, Class<? extends Buff> effect, boolean damaged) {
+		if (target == Dungeon.hero && target.buff(effect) != null && target.buff(ControlDamageTracker.class) == null) {
+			Buff.affect(target, ControlDamageTracker.class).hits = damaged ? 1 : 0;
+		}
+	}
+
 	public void setElementalForm( ElementalForm form ){
 		if (sprite == null) {
 			this.form = form;
@@ -471,12 +537,8 @@ public class VaultBossElemental extends Mob {
 			enemy.sprite.parent.addToFront( new Lightning( sprite.center(), enemy.sprite.center(), null ) );
 			TerrainPropagation.point(Dungeon.level, CellContent.CONDUCTIVE, enemy.pos,
 					enemy, this, target -> {
-				if (target instanceof VaultBossElemental) return;
-				if (target == Dungeon.hero) {
-					if (Dungeon.hero.vaultElementalControlled && Dungeon.hero.vaultElementalControlHits >= 3) return;
-					Dungeon.hero.vaultElementalDamage = true;
-				}
-				target.damage( Random.IntRange(5, 10), new Shocking() , VaultBossElemental.this);
+				if (target instanceof VaultBossElemental || controlLimitReached(target)) return;
+				controlDamage(target, Random.IntRange(5, 10), new Shocking(), VaultBossElemental.this);
 				Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);
 				PixelScene.shake( 2, 0.3f );
 				target.sprite.centerEmitter().burst(SparkParticle.FACTORY, 3);
@@ -1156,21 +1218,12 @@ public class VaultBossElemental extends Mob {
 					CellEmitter.get(cell).burst(MagicMissile.WhiteParticle.FACTORY, 10);
 					Char ch = Actor.findChar(cell);
 					if (ch != null && !(ch instanceof VaultBossElemental) && ch.buff(FrostResist.class) == null
-							&& (ch != Dungeon.hero || !Dungeon.hero.vaultElementalControlled
-							|| Dungeon.hero.vaultElementalControlHits < 3)){
-						int healthBefore = ch.HP;
-						int shieldBefore = ch.shielding();
-						if (ch == Dungeon.hero) Dungeon.hero.vaultElementalDamage = true;
-						ch.damage(Random.NormalIntRange(10, 15), new Frost());
-						if (ch != Dungeon.hero || !Dungeon.hero.vaultElementalControlled
-								|| Dungeon.hero.vaultElementalControlHits < 3) {
+							&& !controlLimitReached(ch)){
+						boolean damaged = controlDamage(ch, Random.NormalIntRange(10, 15), new Frost(), null);
+						if (!controlLimitReached(ch)) {
 							Buff.affect(ch, Frost.class, 5f);
 							Buff.affect(ch, FrostResist.class);
-							if (ch == Dungeon.hero && ch.buff(Frost.class) != null
-									&& !Dungeon.hero.vaultElementalControlled) {
-								Dungeon.hero.vaultElementalControlled = true;
-								Dungeon.hero.vaultElementalControlHits = (healthBefore > ch.HP || shieldBefore > ch.shielding()) ? 1 : 0;
-							}
+							trackControl(ch, Frost.class, damaged);
 						}
 						if (ch == Dungeon.hero){
 							Statistics.questScores[3] -= 100;
@@ -1370,15 +1423,10 @@ public class VaultBossElemental extends Mob {
 					CellEmitter.get(cell).burst(MagicMissile.WhiteParticle.FACTORY, 10);
 					Char ch = Actor.findChar(cell);
 					if (ch != null && !(ch instanceof VaultBossElemental) && ch.buff(FrostResist.class) == null
-							&& (ch != Dungeon.hero || !Dungeon.hero.vaultElementalControlled
-							|| Dungeon.hero.vaultElementalControlHits < 3)){
+							&& !controlLimitReached(ch)){
 						Buff.affect(ch, Frost.class, 5f);
 						Buff.affect(ch, FrostResist.class);
-						if (ch == Dungeon.hero && ch.buff(Frost.class) != null
-								&& !Dungeon.hero.vaultElementalControlled) {
-							Dungeon.hero.vaultElementalControlled = true;
-							Dungeon.hero.vaultElementalControlHits = 0;
-						}
+						trackControl(ch, Frost.class, false);
 						if (ch == Dungeon.hero){
 							Sample.INSTANCE.play(Assets.Sounds.SHATTER);
 							Statistics.questScores[3] -= 100;
@@ -1521,21 +1569,12 @@ public class VaultBossElemental extends Mob {
 		for (int c : affectedCells){
 			Char ch = Actor.findChar(c);
 			if (ch != null && !(ch instanceof VaultBossElemental) && ch.buff(ShockResist.class) == null
-					&& (ch != Dungeon.hero || !Dungeon.hero.vaultElementalControlled
-					|| Dungeon.hero.vaultElementalControlHits < 3)){
-				int healthBefore = ch.HP;
-				int shieldBefore = ch.shielding();
-				if (ch == Dungeon.hero) Dungeon.hero.vaultElementalDamage = true;
-				ch.damage(Random.NormalIntRange(20, 30), new Electricity());
-				if (ch != Dungeon.hero || !Dungeon.hero.vaultElementalControlled
-						|| Dungeon.hero.vaultElementalControlHits < 3) {
+					&& !controlLimitReached(ch)){
+				boolean damaged = controlDamage(ch, Random.NormalIntRange(20, 30), new Electricity(), null);
+				if (!controlLimitReached(ch)) {
 					Buff.prolong(ch, Paralysis.class, 1f);
 					Buff.affect(ch, ShockResist.class);
-					if (ch == Dungeon.hero && ch.buff(Paralysis.class) != null
-							&& !Dungeon.hero.vaultElementalControlled) {
-						Dungeon.hero.vaultElementalControlled = true;
-						Dungeon.hero.vaultElementalControlHits = (healthBefore > ch.HP || shieldBefore > ch.shielding()) ? 1 : 0;
-					}
+					trackControl(ch, Paralysis.class, damaged);
 				}
 				ch.sprite.centerEmitter().burst(SparkParticle.FACTORY, 3);
 				ch.sprite.flash();
@@ -1719,21 +1758,12 @@ public class VaultBossElemental extends Mob {
 		}
 
 		private void shockChar(Char ch){
-			if (ch == Dungeon.hero && Dungeon.hero.vaultElementalControlled
-					&& Dungeon.hero.vaultElementalControlHits >= 3) return;
-			int healthBefore = ch.HP;
-			int shieldBefore = ch.shielding();
-			if (ch == Dungeon.hero) Dungeon.hero.vaultElementalDamage = true;
-			ch.damage(Random.NormalIntRange(10, 15), new Electricity());
-			if (ch != Dungeon.hero || !Dungeon.hero.vaultElementalControlled
-					|| Dungeon.hero.vaultElementalControlHits < 3) {
+			if (controlLimitReached(ch)) return;
+			boolean damaged = controlDamage(ch, Random.NormalIntRange(10, 15), new Electricity(), null);
+			if (!controlLimitReached(ch)) {
 				Buff.prolong(ch, Paralysis.class, 1f);
 				Buff.affect(ch, ShockResist.class);
-				if (ch == Dungeon.hero && ch.buff(Paralysis.class) != null
-						&& !Dungeon.hero.vaultElementalControlled) {
-					Dungeon.hero.vaultElementalControlled = true;
-					Dungeon.hero.vaultElementalControlHits = (healthBefore > ch.HP || shieldBefore > ch.shielding()) ? 1 : 0;
-				}
+				trackControl(ch, Paralysis.class, damaged);
 			}
 			ch.sprite.centerEmitter().burst(SparkParticle.FACTORY, 3);
 			ch.sprite.flash();

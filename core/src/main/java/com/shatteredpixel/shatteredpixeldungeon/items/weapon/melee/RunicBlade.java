@@ -34,6 +34,7 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
+import com.watabou.utils.Bundle;
 import com.watabou.utils.Callback;
 
 public class RunicBlade extends MeleeWeapon {
@@ -118,9 +119,21 @@ public class RunicBlade extends MeleeWeapon {
 	}
 
 
-	public static class RunicSlashTracker extends FlavourBuff{
+	public static class RunicSlashTracker extends FlavourBuff implements Buff.AttackSnapshot {
 
 		public float boost = 2f;
+
+		@Override
+		public void storeInBundle(Bundle bundle) {
+			super.storeInBundle(bundle);
+			bundle.put("boost", boost);
+		}
+
+		@Override
+		public void restoreFromBundle(Bundle bundle) {
+			super.restoreFromBundle(bundle);
+			if (bundle.contains("boost")) boost = bundle.getFloat("boost");
+		}
 
 	};
 

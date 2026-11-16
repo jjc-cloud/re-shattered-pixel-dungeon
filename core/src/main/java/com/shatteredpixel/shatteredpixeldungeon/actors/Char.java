@@ -179,6 +179,17 @@ import java.util.LinkedHashSet;
 public abstract class Char extends Actor {
 	
 	public int pos = 0;
+
+	protected boolean occupiesCell(int cell) {
+		return pos == cell;
+	}
+
+	protected synchronized boolean blocksAction() {
+		for (Buff buff : buffs) {
+			if (buff.blocksAction()) return true;
+		}
+		return false;
+	}
 	
 	public CharSprite sprite;
 	
@@ -887,7 +898,7 @@ public abstract class Char extends Actor {
 	}
 	
 	public static Class<?> damageSourceClass(Object source) {
-		return source instanceof SunfireJavelin ? ((SunfireJavelin) source).damageType()
+		return source instanceof MagicMissileWeapon ? ((MagicMissileWeapon) source).damageType()
 				: source instanceof Class ? (Class<?>) source : source.getClass();
 	}
 
@@ -955,12 +966,7 @@ public abstract class Char extends Actor {
 				|| isImmune(Grim.class) || isInvulnerable(Grim.class)) return 0;
 		float chance = grim.maxChance * (float) Math.pow((HT - HP) / (float) HT, 2);
 		if (Random.Float() >= chance) return 0;
-		int damage = Math.round(HP * resist(Grim.class));
-		Petrification petrification = buff(Petrification.class);
-		if (damage > 0 && petrification != null && hasProp(this, Property.BOSS)) {
-			if (petrification.progress() >= 1f) damage = Math.round(damage * 1.5f);
-			petrification.detach();
-		}
+		int damage = Petrification.onDamage(this, Math.round(HP * resist(Grim.class)));
 		HP -= damage;
 		if (sprite != null) sprite.emitter().burst(ShadowParticle.UP, 5);
 		if (!isAlive() && grim.qualifiesForBadge) Badges.validateGrimWeapon();
@@ -1156,11 +1162,7 @@ public abstract class Char extends Actor {
 			}
 		}
 
-		Petrification petrification = buff(Petrification.class);
-		if (dmg > 0 && petrification != null && hasProp(this, Property.BOSS)) {
-			if (petrification.progress() >= 1f) dmg = Math.round(dmg * 1.5f);
-			petrification.detach();
-		}
+		dmg = Petrification.onDamage(this, dmg);
 
 		int shielded = dmg;
 		dmg = ShieldBuff.processDamage(this, dmg, src);

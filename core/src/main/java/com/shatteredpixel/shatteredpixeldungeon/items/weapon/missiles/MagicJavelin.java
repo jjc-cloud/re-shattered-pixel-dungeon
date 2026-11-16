@@ -46,6 +46,11 @@ public class MagicJavelin extends MagicMissileWeapon {
 	}
 
 	@Override
+	protected void onEmptyThrow(int cell) {
+		parent = null;
+	}
+
+	@Override
 	protected void rangedHit(Char enemy, int cell) {
 		parent = null;
 		extraThrownLeft = false;

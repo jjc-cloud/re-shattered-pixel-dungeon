@@ -1,24 +1,13 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.HermitCrab;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
-import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
-import com.shatteredpixel.shatteredpixeldungeon.items.Gem;
-import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
-import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.Game;
 import com.watabou.utils.Bundlable;
 import com.watabou.utils.Bundle;
-import com.watabou.utils.PathFinder;
-import com.watabou.utils.Random;
-
-import java.util.ArrayList;
 
 /** 格子中独立存在的内容。属性描述内容本身，不保存动作白名单或目标地形编号。 */
 public class CellContent implements Bundlable {
@@ -48,6 +37,7 @@ public class CellContent implements Bundlable {
 	public static final int PASSES_NON_PROJECTILES = 131072;
 	// 解离射线不破坏：雕像/台柱仍吃爆炸、冲击波、投射物等其他来源。
 	public static final int DISINTEGRATION_PROOF = 262144;
+	public static final int BLOCKS_SUMMONING = 524288;
 
 	protected volatile int type;
 	private volatile int properties;
@@ -148,36 +138,7 @@ public class CellContent implements Bundlable {
 		}
 		if ((burned && has(BURNABLE)) || has(LEAVES_EMBERS))
 			level.cellAt(cell).addContent(new CellContent(Terrain.EMBERS, level.region()));
-		if (family(type) == Terrain.REGION_DECO && level.region() == 0) {
-			if (type == Terrain.REGION_DECO || type == Terrain.SEWER_BARREL_MARKED) {
-				level.cellAt(cell).addContent(new CellContent(Terrain.WATER, level.region()));
-			}
-			if (level == Dungeon.level) Splash.at(cell, 0xFF8A5A2E, 8);
-			if (type == Terrain.SEWER_BARREL_MARKED || type == Terrain.SEWER_BARREL_MARKED_ALT) {
-				Heap heap = level.drop(Random.Int(4) == 0 ? Generator.random() : Gem.generateTreasure(), cell);
-				heap.autoExplored = true;
-				if (heap.sprite != null) heap.sprite.drop();
-			}
-			if (level == Dungeon.level && Random.Int(20) == 0) {
-				int spawn = cell;
-				if (!level.passable[cell] || Actor.findChar(cell) != null) {
-					ArrayList<Integer> candidates = new ArrayList<>();
-					for (int offset : PathFinder.NEIGHBOURS8) {
-						int next = cell + offset;
-						if (level.insideMap(next) && level.passable[next] && Actor.findChar(next) == null) {
-							candidates.add(next);
-						}
-					}
-					spawn = candidates.isEmpty() ? -1 : Random.element(candidates);
-				}
-				if (spawn != -1) {
-					HermitCrab crab = new HermitCrab();
-					crab.pos = spawn;
-					GameScene.add(crab);
-					GLog.w(Messages.get(SewerLevel.class, "barrel_crab"));
-				}
-			}
-		} else if (family(type) == Terrain.REGION_DECO && level.region() == 4 && level == Dungeon.level) {
+		if (family(type) == Terrain.REGION_DECO && level.region() == 4 && level == Dungeon.level) {
 			Splash.at(cell, 0xFF958472, 8);
 		}
 	}

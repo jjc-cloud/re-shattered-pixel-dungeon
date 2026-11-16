@@ -140,7 +140,7 @@ public class Flail extends MeleeWeapon {
 		return "+" + augment.damageFactor(8 + 2*level);
 	}
 
-	public static class SpinAbilityTracker extends FlavourBuff {
+	public static class SpinAbilityTracker extends FlavourBuff implements Buff.AttackSnapshot {
 
 		{
 			type = buffType.POSITIVE;

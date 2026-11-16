@@ -267,6 +267,7 @@ public abstract class Recipe {
 	public static final int GUIDE_BREW = 1;
 	public static final int GUIDE_ELIXIR = 2;
 	public static final int GUIDE_SPELL = 3;
+	public static final int GUIDE_SPELL_AFTER_TELEKINETIC_GRAB = 4;
 
 	public static class SpecialRecipe extends SimpleRecipe {
 

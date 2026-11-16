@@ -84,7 +84,6 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.HolyWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.Smite;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.quest.vault.VaultBossElemental;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Monk;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Snake;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
@@ -204,6 +203,7 @@ import com.watabou.utils.Random;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 
 public class Hero extends Char {
@@ -269,10 +269,6 @@ public class Hero extends Char {
 
 	public boolean ready = false;
 
-	// Shared frost/shock damage budget until the hero next gets an actionable turn.
-	public boolean vaultElementalControlled;
-	public int vaultElementalControlHits;
-	public transient boolean vaultElementalDamage;
 	public boolean damageInterrupt = true;
 	public HeroAction curAction = null;
 	public HeroAction lastAction = null;
@@ -389,8 +385,6 @@ public class Hero extends Char {
 		
 		bundle.put( HTBOOST, HTBoost );
 		bundle.put( JUST_MOVED, justMoved );
-		bundle.put("vault_elemental_controlled", vaultElementalControlled);
-		bundle.put("vault_elemental_control_hits", vaultElementalControlHits);
 
 		belongings.storeInBundle( bundle );
 	}
@@ -402,8 +396,6 @@ public class Hero extends Char {
 		exp = bundle.getInt( EXPERIENCE );
 
 		HTBoost = bundle.getInt(HTBOOST);
-		vaultElementalControlled = bundle.getBoolean("vault_elemental_controlled");
-		vaultElementalControlHits = bundle.getInt("vault_elemental_control_hits");
 
 		super.restoreFromBundle( bundle );
 
@@ -1001,10 +993,7 @@ public class Hero extends Char {
 			return false;
 		}
 		
-		// Preserve the budget through brief gaps between frost and paralysis effects.
-		// Reset only once this turn is able to accept or execute a hero action.
-		vaultElementalControlled = false;
-		vaultElementalControlHits = 0;
+		for (TurnDamageTracker tracker : buffs(TurnDamageTracker.class)) tracker.detach();
 
 		boolean actResult;
 		if (curAction == null) {
@@ -1816,13 +1805,11 @@ public class Hero extends Char {
 
 	@Override
 	public void damage( int dmg, Object src ) {
-		boolean elementalDamage = vaultElementalDamage
-				|| (src instanceof VaultBossElemental
-				&& (((VaultBossElemental)src).curForm() == VaultBossElemental.ElementalForm.FROST
-				|| ((VaultBossElemental)src).curForm() == VaultBossElemental.ElementalForm.SHOCK));
-		// Consume the skill source marker before any damage callbacks can run.
-		vaultElementalDamage = false;
-		if (elementalDamage && vaultElementalControlled && vaultElementalControlHits >= 3) return;
+		HashSet<TurnDamageTracker> damageTrackers = buffs(TurnDamageTracker.class);
+		damageTrackers.removeIf(tracker -> !tracker.tracksDamage(src));
+		for (TurnDamageTracker tracker : damageTrackers) {
+			if (tracker.blocksDamage()) return;
+		}
 
 		if (buff(TimekeepersHourglass.timeStasis.class) != null
 				|| buff(TimeStasis.class) != null) {
@@ -1880,22 +1867,22 @@ public class Hero extends Char {
 		//we ceil this one to avoid letting the player easily take 0 dmg from tenacity early
 		dmg = (int)Math.ceil(dmg * RingOfTenacity.damageMultiplier( this ));
 
-		int elementalHealthBefore = HP;
-		int elementalShieldBefore = shielding();
-		int preHP = HP + elementalShieldBefore;
+		int healthBefore = HP;
+		int shieldBefore = shielding();
+		int preHP = HP + shieldBefore;
 		if (src instanceof Hunger) preHP -= shielding();
 		try {
 			super.damage( dmg, src );
 		} finally {
 			if (berserk != null) berserk.resolvePendingDamageRage();
 		}
-		int postHP = HP + shielding();
+		int shieldAfter = shielding();
+		int postHP = HP + shieldAfter;
 		if (src instanceof Hunger) postHP -= shielding();
 		int effectiveDamage = preHP - postHP;
 
-		if (elementalDamage && vaultElementalControlled
-				&& (HP < elementalHealthBefore || shielding() < elementalShieldBefore)) {
-			vaultElementalControlHits++;
+		if (HP < healthBefore || shieldAfter < shieldBefore) {
+			for (TurnDamageTracker tracker : damageTrackers) tracker.onDamage();
 		}
 		if (effectiveDamage <= 0) return;
 
@@ -3030,6 +3017,13 @@ public class Hero extends Char {
 	public void next() {
 		if (isAlive())
 			super.next();
+	}
+
+	/** A damage tracker that lasts until the hero can act again. */
+	public abstract static class TurnDamageTracker extends Buff {
+		protected abstract boolean tracksDamage(Object source);
+		protected abstract boolean blocksDamage();
+		protected abstract void onDamage();
 	}
 
 	public static interface Doom {

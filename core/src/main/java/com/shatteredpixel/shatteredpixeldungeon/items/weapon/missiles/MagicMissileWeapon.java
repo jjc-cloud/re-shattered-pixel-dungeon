@@ -48,6 +48,15 @@ public abstract class MagicMissileWeapon extends MissileWeapon {
 	}
 
 	@Override
+	protected void prepareFlight(int from, int dst, Ballistica shot) {
+		flight = shot == null ? new Ballistica(from, dst, Ballistica.STOP_TARGET) : shot;
+	}
+
+	public Class<?> damageType() {
+		return getClass();
+	}
+
+	@Override
 	public Item split(int amount) {
 		Item split = super.split(amount);
 		if (split != null) ((MagicMissileWeapon) split).flight = flight;

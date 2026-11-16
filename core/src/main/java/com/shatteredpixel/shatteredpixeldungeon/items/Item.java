@@ -39,8 +39,6 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicPocket;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Skyfall;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.SunfireJavelin;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.Dart;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.TippedDart;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Catalog;
@@ -53,6 +51,7 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
+import com.watabou.noosa.Visual;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.noosa.particles.Emitter;
 import com.watabou.utils.Bundlable;
@@ -795,16 +794,18 @@ public class Item implements Bundlable {
 				}
 			}
 		};
-		if (this instanceof Skyfall) {
-			onImpact.call();
-			return;
-		}
-		MissileSprite missile = (MissileSprite) user.sprite.parent.recycle(MissileSprite.class);
-		if (enemy != null) missile.reset(user.sprite, enemy.sprite, this, onImpact);
-		else missile.reset(user.sprite, cell, this, onImpact);
-		if (this instanceof SunfireJavelin) {
-			missile.setFlightProgress(((SunfireJavelin) this).flightProgress(cell));
-		}
+		throwAnimation(user.sprite, enemy == null ? null : enemy.sprite, cell, onImpact, true);
+	}
+
+	public void throwAnimation(Visual source, Visual target, int cell, Callback onImpact, boolean applyFlightEffects) {
+		MissileSprite missile = (MissileSprite) source.parent.recycle(MissileSprite.class);
+		if (target != null) missile.reset(source, target, this, onImpact);
+		else missile.reset(source, cell, this, onImpact);
+		if (applyFlightEffects) missile.setFlightProgress(flightProgress(cell));
+	}
+
+	protected MissileSprite.FlightProgress flightProgress(int cell) {
+		return null;
 	}
 	
 	/** 物品已在时停期间从背包取出；这里仅执行命中，不重复扣物品或行动时间。 */

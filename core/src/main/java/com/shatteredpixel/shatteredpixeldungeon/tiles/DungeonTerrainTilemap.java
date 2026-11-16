@@ -34,6 +34,15 @@ import com.watabou.utils.PathFinder;
 public class DungeonTerrainTilemap extends DungeonTilemap {
 
 	static DungeonTerrainTilemap instance;
+	private static final int[] ALCHEMY_FLOORS = {
+			DungeonTileSheet.FLOOR, DungeonTileSheet.FLOOR_ALT_1, DungeonTileSheet.FLOOR_ALT_2,
+			DungeonTileSheet.FLOOR_DECO, DungeonTileSheet.FLOOR_DECO_ALT,
+			DungeonTileSheet.FLOOR_SP, DungeonTileSheet.FLOOR_SP_ALT,
+			DungeonTileSheet.MINE_FLOOR_DECO_HEAVY, DungeonTileSheet.MINE_FLOOR_DECO_HEAVY_ALT,
+			DungeonTileSheet.GRASS, DungeonTileSheet.GRASS_ALT,
+			DungeonTileSheet.EMBERS, DungeonTileSheet.EMBERS_ALT,
+			DungeonTileSheet.EMBERS_SP, DungeonTileSheet.EMBERS_SP_ALT
+	};
 	private final int alchemyFloorOffset;
 
 	public DungeonTerrainTilemap(){
@@ -41,20 +50,34 @@ public class DungeonTerrainTilemap extends DungeonTilemap {
 
 		Pixmap terrain = texture.bitmap;
 		int width = terrain.getWidth(), height = terrain.getHeight();
-		alchemyFloorOffset = width / SIZE * (height / SIZE);
-		int[] pixels = new int[width * (height + SIZE * 2)];
-		int potX = DungeonTileSheet.RAISED_ALCHEMY_POT % (width / SIZE) * SIZE;
-		int potY = DungeonTileSheet.RAISED_ALCHEMY_POT / (width / SIZE) * SIZE;
-		// 保留原地板及其变体，仅按旧炼金锅的透明锅口挖空，让底层动态水面透出。
-		for (int y = 0; y < height + SIZE * 2; y++) for (int x = 0; x < width; x++) {
-			int rgba = terrain.getPixel(x, y < height ? y : y - height);
-			if (y >= height && (terrain.getPixel(potX + x % SIZE, potY + (y - height) % SIZE) & 0xFF) == 0) {
-				rgba = 0;
+		int columns = width / SIZE;
+		alchemyFloorOffset = columns * (height / SIZE);
+		String textureKey = "alchemy-floor:" + Dungeon.level.tilesTex();
+		if (TextureCache.contains(textureKey)) {
+			texture = TextureCache.get(textureKey);
+		} else {
+			int extraRows = (ALCHEMY_FLOORS.length + columns - 1) / columns;
+			int atlasHeight = height + SIZE * extraRows;
+			int[] pixels = new int[width * atlasHeight];
+			for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) {
+				pixels[x + y * width] = terrain.getPixel(x, y);
 			}
-			pixels[x + y * width] = rgba;
+			int potX = DungeonTileSheet.RAISED_ALCHEMY_POT % columns * SIZE;
+			int potY = DungeonTileSheet.RAISED_ALCHEMY_POT / columns * SIZE;
+			// 只生成炼金台下方使用的地板变体，按透明锅口露出动态水面。
+			for (int i = 0; i < ALCHEMY_FLOORS.length; i++) {
+				int sourceX = ALCHEMY_FLOORS[i] % columns * SIZE;
+				int sourceY = ALCHEMY_FLOORS[i] / columns * SIZE;
+				int destX = i % columns * SIZE;
+				int destY = height + i / columns * SIZE;
+				for (int y = 0; y < SIZE; y++) for (int x = 0; x < SIZE; x++) {
+					if ((terrain.getPixel(potX + x, potY + y) & 0xFF) != 0) {
+						pixels[destX + x + (destY + y) * width] = terrain.getPixel(sourceX + x, sourceY + y);
+					}
+				}
+			}
+			texture = TextureCache.createPixels(textureKey, width, atlasHeight, pixels);
 		}
-		texture = TextureCache.createPixels("alchemy-floor:" + Dungeon.level.tilesTex(),
-				width, height + SIZE * 2, pixels);
 		tileset = new TextureFilm(texture, SIZE, SIZE);
 
 		map( Dungeon.level.terrainVisuals(), Dungeon.level.width() );
@@ -88,9 +111,11 @@ public class DungeonTerrainTilemap extends DungeonTilemap {
 				}
 			}
 			visual = DungeonTileSheet.getVisualWithAlts(visual, pos);
-			if (!flat && visual < 32 && !Dungeon.level.cellAt(pos).buried()
+			if (!flat && !Dungeon.level.cellAt(pos).buried()
 					&& Dungeon.level.cellAt(pos).hasTerrain(Terrain.ALCHEMY)) {
-				return alchemyFloorOffset + visual;
+				for (int i = 0; i < ALCHEMY_FLOORS.length; i++) {
+					if (ALCHEMY_FLOORS[i] == visual) return alchemyFloorOffset + i;
+				}
 			}
 			return visual;
 		}

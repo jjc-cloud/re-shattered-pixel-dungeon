@@ -33,7 +33,7 @@ public class IronDoor extends Door {
 	@Override public int properties() {
 		int properties = super.properties();
 		return state() == State.OPEN
-				? properties & ~BLOCKS_PROJECTILES
-				: properties | BLOCKS_PROJECTILES;
+				? properties & ~(BLOCKS_PROJECTILES | BLOCKS_SUMMONING)
+				: properties | BLOCKS_PROJECTILES | BLOCKS_SUMMONING;
 	}
 }

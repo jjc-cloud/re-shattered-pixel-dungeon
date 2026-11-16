@@ -65,7 +65,6 @@ import com.watabou.utils.PlatformSupport;
 import com.watabou.utils.Random;
 import com.watabou.utils.RectF;
 import com.watabou.utils.Signal;
-import com.badlogic.gdx.Gdx;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -111,7 +110,7 @@ public class InterlevelScene extends PixelScene {
 	private IconButton btnHideStory;
 	
 	private static Thread thread;
-	private static Throwable error = null;
+	private static volatile Throwable error;
 	private float waitingTime;
 
 	public static int lastRegion = -1;
@@ -570,67 +569,25 @@ public class InterlevelScene extends PixelScene {
 
 			}
 
-if (error != null) {
+			if (error != null) {
+				String errorMsg;
+				if (error instanceof FileNotFoundException)     errorMsg = Messages.get(this, "file_not_found");
+				else if (error instanceof IOException)          errorMsg = Messages.get(this, "io_error");
+				else if (error.getMessage() != null &&
+						error.getMessage().equals("old save")) errorMsg = Messages.get(this, "io_error");
 
-    Throwable captured = error;
-    String errorMsg;
+				else throw new RuntimeException("fatal error occurred while moving between floors. " +
+							"Seed:" + Dungeon.seed + " depth:" + Dungeon.depth, error);
 
-    if (captured instanceof FileNotFoundException) {
-        errorMsg = Messages.get(this, "file_not_found");
-
-    } else if (captured instanceof IOException) {
-        errorMsg = Messages.get(this, "io_error");
-
-    } else if (captured.getMessage() != null
-            && captured.getMessage().equals("old save")) {
-        errorMsg = Messages.get(this, "io_error");
-
-    } else {
-
-        StringBuilder msg = new StringBuilder();
-
-        msg.append("Seed: ").append(Dungeon.seed)
-                .append("\nDepth: ").append(Dungeon.depth)
-                .append("\n\n");
-
-        Throwable t = captured;
-        int causeCount = 0;
-
-        while (t != null && causeCount++ < 5) {
-
-            if (causeCount > 1) {
-                msg.append("\n\nCaused by:\n");
-            }
-
-            msg.append(t.getClass().getName());
-
-            if (t.getMessage() != null) {
-                msg.append(": ").append(t.getMessage());
-            }
-
-            StackTraceElement[] trace = t.getStackTrace();
-
-            for (int i = 0; i < trace.length && i < 30; i++) {
-                msg.append("\n    at ").append(trace[i].toString());
-            }
-
-            t = t.getCause();
-        }
-
-        errorMsg = msg.toString();
-    }
-	Gdx.app.getClipboard().setContents(errorMsg);
-    add(new WndError(errorMsg) {
-        @Override
-        public void onBackPressed() {
-            super.onBackPressed();
-            Game.switchScene(StartScene.class);
-        }
-    });
-
-    thread = null;
-    error = null;
-}else if (thread != null && (int)waitingTime == 10){
+				add( new WndError( errorMsg ) {
+					public void onBackPressed() {
+						super.onBackPressed();
+						Game.switchScene( StartScene.class );
+					}
+				} );
+				thread = null;
+				error = null;
+			} else if (thread != null && (int)waitingTime == 10){
 				waitingTime = 11f;
 				String s = "";
 				for (StackTraceElement t : thread.getStackTrace()){

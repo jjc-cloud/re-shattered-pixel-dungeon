@@ -28,10 +28,13 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Lightning;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLightning;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
+import com.watabou.noosa.Visual;
 import com.watabou.noosa.audio.Sample;
+import com.watabou.utils.Callback;
 
 import java.util.ArrayList;
 
@@ -46,6 +49,21 @@ public class Skyfall extends MagicMissileWeapon {
 	@Override
 	public int max(int lvl) {
 		return 16 + tier*lvl;
+	}
+
+	@Override
+	protected boolean canProject() {
+		return false;
+	}
+
+	@Override
+	protected int throwCollisionProperties() {
+		return super.throwCollisionProperties() & ~Ballistica.STOP_CHARS;
+	}
+
+	@Override
+	public void throwAnimation(Visual source, Visual target, int cell, Callback onImpact, boolean applyFlightEffects) {
+		onImpact.call();
 	}
 
 	@Override

@@ -397,7 +397,7 @@ public enum Talent {
 			object = bundle.getInt(OBJECT);
 		}
 	}
-	public static class PreciseAssaultTracker extends FlavourBuff{
+	public static class PreciseAssaultTracker extends FlavourBuff implements Buff.AttackSnapshot {
 		{ type = buffType.POSITIVE; }
 		public int icon() { return BuffIndicator.INVERT_MARK; }
 		public void tintIcon(Image icon) { icon.hardlight(1f, 1f, 0.0f); }

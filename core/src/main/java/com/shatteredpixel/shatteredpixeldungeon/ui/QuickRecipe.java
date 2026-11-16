@@ -58,7 +58,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ExoticScroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.Alchemize;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.BeaconOfReturning;
-import com.shatteredpixel.shatteredpixeldungeon.items.spells.BlindingCrystal;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.CurseInfusion;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.MagicalInfusion;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.PhaseShift;
@@ -399,6 +398,7 @@ public class QuickRecipe extends Component {
 				result.add(new QuickRecipe(new UnstableSpell.Recipe(), new ArrayList<>(Arrays.asList(new Scroll.PlaceHolder(), new  Runestone.PlaceHolder())), new UnstableSpell()));
 				result.add(new QuickRecipe(new WildEnergy.Recipe()));
 				result.add(new QuickRecipe(new TelekineticGrab.Recipe()));
+				addDiscoveredSpecialRecipes(result, pageIdx, Recipe.GUIDE_SPELL_AFTER_TELEKINETIC_GRAB);
 				result.add(new QuickRecipe(new PhaseShift.Recipe()));
 				result.add(new QuickRecipe(new Alchemize.Recipe(), new ArrayList<>(Arrays.asList(new Plant.Seed.PlaceHolder(), new Runestone.PlaceHolder())), new Alchemize().quantity(8)));
 				result.add(new QuickRecipe(new CurseInfusion.Recipe()));
@@ -424,16 +424,7 @@ public class QuickRecipe extends Component {
 		if (pageIdx == 5) result.add(null);
 		for (Recipe.SpecialRecipe recipe : special) {
 			ArrayList<Item> ingredients = recipe.getIngredients();
-			int insertAt = result.size();
-			if (pageIdx == 8 && recipe instanceof BlindingCrystal.Recipe) {
-				for (int i = 0; i < result.size(); i++) {
-					if (result.get(i) != null && result.get(i).output.item instanceof TelekineticGrab) {
-						insertAt = i + 1;
-						break;
-					}
-				}
-			}
-			result.add(insertAt, new QuickRecipe(recipe, ingredients, recipe.sampleOutput(ingredients),
+			result.add(new QuickRecipe(recipe, ingredients, recipe.sampleOutput(ingredients),
 					Recipe.discoveredSpecialCost(recipe)));
 		}
 	}

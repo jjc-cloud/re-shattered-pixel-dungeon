@@ -49,11 +49,13 @@ public class SunfireJavelin extends MagicMissileWeapon {
 		return 20 + tier*lvl;
 	}
 
+	@Override
 	public Class<?> damageType() {
 		return Fire.class;
 	}
 
-	public MissileSprite.FlightProgress flightProgress(int landingCell) {
+	@Override
+	protected MissileSprite.FlightProgress flightProgress(int landingCell) {
 		Ballistica path = flight;
 		int end = path == null ? -1 : path.path.indexOf(landingCell);
 		return new MissileSprite.FlightProgress() {

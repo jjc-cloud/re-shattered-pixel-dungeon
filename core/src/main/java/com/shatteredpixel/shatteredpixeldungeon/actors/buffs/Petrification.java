@@ -57,6 +57,20 @@ public class Petrification extends Buff implements Hero.Doom {
 	public float progress() { return progress; }
 	public float speedFactor() { return progress >= 1f ? 1f : Math.max(0.0001f, 1f - progress); }
 
+	@Override
+	public boolean blocksAction() {
+		return progress >= 1f;
+	}
+
+	public static int onDamage(Char victim, int damage) {
+		if (damage <= 0 || !Char.hasProp(victim, Char.Property.BOSS)) return damage;
+		Petrification buff = victim.buff(Petrification.class);
+		if (buff == null) return damage;
+		if (buff.blocksAction()) damage = Math.round(damage * 1.5f);
+		buff.detach();
+		return damage;
+	}
+
 	@Override public void fx(boolean on) {
 		if (progress < 1f) return;
 		if (on) target.sprite.add(CharSprite.State.PETRIFIED);

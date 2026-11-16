@@ -216,25 +216,30 @@ abstract public class MissileWeapon extends Weapon {
 			}
 		}
 
-		if (!(this instanceof Skyfall) && projecting > 0
+		if (canProject() && projecting > 0
 				&& (Dungeon.level.passable[dst] || Dungeon.level.avoid[dst] || Actor.findChar(dst) != null)
 				&& Dungeon.level.distance(from, dst) <= Math.round(projecting * Enchantment.genericProcChanceMultiplier(user))){
-			if (this instanceof SunfireJavelin || this instanceof Detonation) {
-				((MagicMissileWeapon) this).flight = new Ballistica(from, dst, Ballistica.STOP_TARGET);
-			}
+			prepareFlight(from, dst, null);
 			return dst;
 		} else {
-			int collision = Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER | Ballistica.IRON_DOOR_CHANCE;
-			if (this instanceof Skyfall) collision &= ~Ballistica.STOP_CHARS;
-			Ballistica shot = new Ballistica(from, dst, collision);
-			if (this instanceof SunfireJavelin || this instanceof Skyfall || this instanceof Detonation) {
-				((MagicMissileWeapon) this).flight = shot;
-			}
+			Ballistica shot = new Ballistica(from, dst, throwCollisionProperties());
+			prepareFlight(from, dst, shot);
 			int surface = shot.collisionPos == dst && !Dungeon.level.solid[dst] ? shot.collisionPos
 					: TerrainPropagation.impactCell(Dungeon.level, shot, CellContent.BREAKABLE);
 			return surface;
 		}
 	}
+
+	protected boolean canProject() {
+		return true;
+	}
+
+	protected int throwCollisionProperties() {
+		return Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER | Ballistica.IRON_DOOR_CHANCE;
+	}
+
+	/** A null shot indicates that Projecting bypassed the normal collisions. */
+	protected void prepareFlight(int from, int dst, Ballistica shot) {}
 
 	@Override
 	public float accuracyFactor(Char owner, Char target) {
@@ -305,8 +310,6 @@ abstract public class MissileWeapon extends Weapon {
 		}
 		Char enemy = Actor.findChar( cell );
 		if (enemy == null || (enemy == curUser && !FrozenAttack.resolving())) {
-			if (!(this instanceof Detonation)) parent = null;
-
 			//metamorphed seer shot logic
 			if (curUser.hasTalent(Talent.SEER_SHOT)
 					&& curUser.heroClass != HeroClass.HUNTRESS
@@ -320,13 +323,7 @@ abstract public class MissileWeapon extends Weapon {
 				}
 			}
 
-			if (this instanceof Detonation) {
-				rangedHit(null, cell);
-			} else if (!spawnedForEffect && !(this instanceof MagicJavelin)) {
-				//投掷武器落在空地上同样会发出声音
-				Noise.emit(curUser, cell, Noise.THROW_RANGE, true);
-				super.onThrow( cell );
-			}
+			onEmptyThrow(cell);
 		} else {
 			if (!curUser.shoot( enemy, this )) {
 				rangedMiss( cell );
@@ -335,6 +332,15 @@ abstract public class MissileWeapon extends Weapon {
 				rangedHit( enemy, cell );
 
 			}
+		}
+	}
+
+	protected void onEmptyThrow(int cell) {
+		parent = null;
+		if (!spawnedForEffect) {
+			//投掷武器落在空地上同样会发出声音
+			Noise.emit(curUser, cell, Noise.THROW_RANGE, true);
+			super.onThrow(cell);
 		}
 	}
 

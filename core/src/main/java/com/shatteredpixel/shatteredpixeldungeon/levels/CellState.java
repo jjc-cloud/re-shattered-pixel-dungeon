@@ -197,8 +197,7 @@ public class CellState implements Bundlable {
 					}
 				}
 			}
-			CellContent replacement = doorState == null
-					? new CellContent(terrain, level.region()) : level.createDoor(terrain);
+			CellContent replacement = level.createCellContent(terrain);
 			for (CellContent current : new ArrayList<>(contents)) {
 				if (CellContent.family(terrain) == Terrain.WALL && CellContent.family(current.type()) == Terrain.WALL) {
 					replacement.properties(current.properties(), 0);

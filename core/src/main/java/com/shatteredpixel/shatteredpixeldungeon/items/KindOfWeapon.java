@@ -31,7 +31,6 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Dragonslayer;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
@@ -261,12 +260,12 @@ abstract public class KindOfWeapon extends EquipableItem {
 	abstract public int min(int lvl);
 	abstract public int max(int lvl);
 
+	protected int damageRollMin(Char owner) {
+		return min();
+	}
+
 	public int damageRoll( Char owner ) {
-		int minDamage = min();
-		if (this instanceof Dragonslayer && owner.HT > 0) {
-			float missingHealth = Math.max(0f, Math.min(0.8f, (owner.HT - owner.HP) / (float) owner.HT));
-			minDamage += Math.round((max() - minDamage) * missingHealth);
-		}
+		int minDamage = damageRollMin(owner);
 		if (owner instanceof Hero){
 			return Hero.heroDamageIntRange(minDamage, max());
 		} else {
