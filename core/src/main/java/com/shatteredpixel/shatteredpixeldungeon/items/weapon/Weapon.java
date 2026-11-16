@@ -65,6 +65,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Elasti
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Grim;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Kinetic;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Lucky;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Loyalty;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Projecting;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Shocking;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Unstable;
@@ -376,7 +377,7 @@ abstract public class Weapon extends KindOfWeapon {
 
 		if (enchant){
 			if (enchantment == null){
-				enchant(Enchantment.random());
+				enchant(Enchantment.randomFor(this));
 			}
 		} else if (enchantment != null) {
 			//chance to lose harden buff is 10/20/40/80/100% when upgrading from +6/7/8/9/10
@@ -450,6 +451,7 @@ abstract public class Weapon extends KindOfWeapon {
 	}
 	
 	public Weapon enchant( Enchantment ench ) {
+		if (ench instanceof Loyalty && (!(this instanceof MissileWeapon) || this instanceof SpiritBow.SpiritArrow)) return this;
 		if (ench == null || !ench.curse()) curseInfusionBonus = false;
 		enchantment = ench;
 		updateQuickslot();
@@ -464,7 +466,7 @@ abstract public class Weapon extends KindOfWeapon {
 	public Weapon enchant() {
 
 		Class<? extends Enchantment> oldEnchantment = enchantment != null ? enchantment.getClass() : null;
-		Enchantment ench = Enchantment.random( oldEnchantment );
+		Enchantment ench = Enchantment.randomFor(this, oldEnchantment);
 
 		return enchant( ench );
 	}
@@ -524,6 +526,13 @@ abstract public class Weapon extends KindOfWeapon {
 
 		public static final Class<?>[] rare = new Class<?>[]{
 				Corrupting.class, Crystal.class, Grim.class, Vampiric.class
+		};
+
+		private static final Class<?>[][] weaponPool = {common, uncommon, rare};
+		private static final Class<?>[][] missilePool = {
+				common,
+				{Blooming.class, Elastic.class, Lucky.class, Loyalty.class, Projecting.class, Unstable.class, Vorpal.class},
+				{Corrupting.class, Crystal.class, Grim.class}
 		};
 
 		public static final float[] typeChances = new float[]{
@@ -607,47 +616,37 @@ abstract public class Weapon extends KindOfWeapon {
 		
 		@SuppressWarnings("unchecked")
 		public static Enchantment random( Class<? extends Enchantment> ... toIgnore ) {
-			switch(Random.chances(typeChances)){
-				case 0: default:
-					return randomCommon( toIgnore );
-				case 1:
-					return randomUncommon( toIgnore );
-				case 2:
-					return randomRare( toIgnore );
-			}
+			return randomFor(null, toIgnore);
 		}
 		
 		@SuppressWarnings("unchecked")
 		public static Enchantment randomCommon( Class<? extends Enchantment> ... toIgnore ) {
-			ArrayList<Class<?>> enchants = new ArrayList<>(Arrays.asList(common));
-			enchants.removeAll(Arrays.asList(toIgnore));
-			if (enchants.isEmpty()) {
-				return random();
-			} else {
-				return (Enchantment) Reflection.newInstance(Random.element(enchants));
-			}
+			return randomFor(null, 0, toIgnore);
 		}
 		
 		@SuppressWarnings("unchecked")
 		public static Enchantment randomUncommon( Class<? extends Enchantment> ... toIgnore ) {
-			ArrayList<Class<?>> enchants = new ArrayList<>(Arrays.asList(uncommon));
-			enchants.removeAll(Arrays.asList(toIgnore));
-			if (enchants.isEmpty()) {
-				return random();
-			} else {
-				return (Enchantment) Reflection.newInstance(Random.element(enchants));
-			}
+			return randomFor(null, 1, toIgnore);
 		}
 		
 		@SuppressWarnings("unchecked")
 		public static Enchantment randomRare( Class<? extends Enchantment> ... toIgnore ) {
-			ArrayList<Class<?>> enchants = new ArrayList<>(Arrays.asList(rare));
+			return randomFor(null, 2, toIgnore);
+		}
+
+		@SafeVarargs
+		public static Enchantment randomFor(Weapon weapon, Class<? extends Enchantment>... toIgnore) {
+			return randomFor(weapon, Random.chances(typeChances), toIgnore);
+		}
+
+		@SafeVarargs
+		public static Enchantment randomFor(Weapon weapon, int tier, Class<? extends Enchantment>... toIgnore) {
+			Class<?>[][] pool = weapon instanceof MissileWeapon && !(weapon instanceof SpiritBow.SpiritArrow)
+					? missilePool : weaponPool;
+			ArrayList<Class<?>> enchants = new ArrayList<>(Arrays.asList(pool[tier]));
 			enchants.removeAll(Arrays.asList(toIgnore));
-			if (enchants.isEmpty()) {
-				return random();
-			} else {
-				return (Enchantment) Reflection.newInstance(Random.element(enchants));
-			}
+			if (enchants.isEmpty()) return randomFor(weapon);
+			return (Enchantment) Reflection.newInstance(Random.element(enchants));
 		}
 
 		@SuppressWarnings("unchecked")

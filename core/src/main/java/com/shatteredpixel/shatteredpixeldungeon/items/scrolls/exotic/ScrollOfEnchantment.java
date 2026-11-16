@@ -122,12 +122,13 @@ public class ScrollOfEnchantment extends ExoticScroll {
 				
 				final Weapon.Enchantment enchants[] = new Weapon.Enchantment[3];
 				
-				Class<? extends Weapon.Enchantment> existing = ((Weapon) item).enchantment != null ? ((Weapon) item).enchantment.getClass() : null;
-				enchants[0] = Weapon.Enchantment.randomCommon( existing );
-				enchants[1] = Weapon.Enchantment.randomUncommon( existing );
-				enchants[2] = Weapon.Enchantment.random( existing, enchants[0].getClass(), enchants[1].getClass());
+				Weapon weapon = (Weapon) item;
+				Class<? extends Weapon.Enchantment> existing = weapon.enchantment != null ? weapon.enchantment.getClass() : null;
+				enchants[0] = Weapon.Enchantment.randomFor(weapon, 0, existing);
+				enchants[1] = Weapon.Enchantment.randomFor(weapon, 1, existing);
+				enchants[2] = Weapon.Enchantment.randomFor(weapon, existing, enchants[0].getClass(), enchants[1].getClass());
 
-				GameScene.show(new WndEnchantSelect((Weapon) item, enchants[0], enchants[1], enchants[2]));
+				GameScene.show(new WndEnchantSelect(weapon, enchants[0], enchants[1], enchants[2]));
 			
 			} else if (item instanceof Armor) {
 				if (!identifiedByUse) {

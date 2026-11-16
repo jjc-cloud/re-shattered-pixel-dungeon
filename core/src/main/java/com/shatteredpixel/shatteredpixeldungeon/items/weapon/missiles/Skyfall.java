@@ -88,16 +88,23 @@ public class Skyfall extends MagicMissileWeapon {
 			curUser.sprite.parent.addToFront(new Lightning(arcs, null));
 			Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);
 		}
+		boolean hit = false;
 		for (Char target : directHits) {
-			if (target.isAlive()) target.damage(damageRoll(curUser), this, curUser);
+			if (target.isAlive()) {
+				target.damage(damageRoll(curUser), this, curUser);
+				hit = true;
+			}
 		}
 		if (!affected.isEmpty()) {
 			float multiplier = WandOfLightning.ArcChain.damageMultiplier(directHits.size() + affected.size(), hitWater);
 			for (Char target : affected) {
-				if (target.isAlive()) target.damage(Math.round(damageRoll(curUser) * multiplier), this, curUser);
+				if (target.isAlive()) {
+					target.damage(Math.round(damageRoll(curUser) * multiplier), this, curUser);
+					hit = true;
+				}
 			}
 		}
 		Invisibility.dispel();
-		rangedHit(null, cell);
+		rangedHit(null, cell, hit);
 	}
 }

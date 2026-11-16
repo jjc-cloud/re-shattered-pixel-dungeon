@@ -30,6 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.SnipersMark;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Loyalty;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainInteractions;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
@@ -83,10 +84,13 @@ public class ForceCube extends MissileWeapon {
 			return;
 		}
 
-		//keep the parent reference for things like IDing
-		MissileWeapon parentTemp = parent;
-		rangedHit( null, cell );
-		parent = parentTemp;
+		boolean canReturn = !spawnedForEffect && hasEnchant(Loyalty.class, curUser);
+		if (!canReturn) {
+			// Keep the parent reference for identification during the blast.
+			MissileWeapon parentTemp = parent;
+			rangedHit(null, cell);
+			parent = parentTemp;
+		}
 		boolean terrainAffected = false;
 		ArrayList<Integer> affectedCells = new ArrayList<>();
 		for (int offset : PathFinder.NEIGHBOURS9) {
@@ -120,14 +124,16 @@ public class ForceCube extends MissileWeapon {
 			}
 		});
 		
+		boolean hit = false;
 		for (Char target : targets){
-			curUser.shoot(target, this);
+			hit |= curUser.shoot(target, this);
 			if (target == Dungeon.hero && !target.isAlive()){
 				Badges.validateDeathFromFriendlyMagic();
 				Dungeon.fail(this);
 				GLog.n(Messages.get(this, "ondeath"));
 			}
 		}
+		if (canReturn) rangedHit(null, cell, hit);
 
 		//if we're applying sniper's mark, prioritize giving it to the primary target of the attack
 		if (curUser.subClass == HeroSubClass.SNIPER && primaryTarget != null && primaryTarget.isActive()){

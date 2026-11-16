@@ -101,9 +101,10 @@ public class SunfireJavelin extends MagicMissileWeapon {
 
 	@Override
 	protected void rangedHit(Char enemy, int cell) {
-		super.rangedHit(enemy, cell);
+		boolean returning = rangedHit(enemy, cell, true);
 		PinCushion stuck = enemy.buff(PinCushion.class);
-		if (stuck != null && stuck.hasStuckItem(SunfireJavelin.class)) {
+		if ((returning && enemy.isActive() && enemy.alignment != Char.Alignment.ALLY)
+				|| (stuck != null && stuck.hasStuckItem(SunfireJavelin.class))) {
 			Buff.affect(enemy, Burning.class).reignite(enemy);
 		}
 	}

@@ -47,6 +47,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.curses.Explosive;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Crystal;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Loyalty;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Projecting;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.Dart;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -453,8 +454,13 @@ abstract public class MissileWeapon extends Weapon {
 	}
 	
 	protected void rangedHit( Char enemy, int cell ){
+		rangedHit(enemy, cell, enemy != null);
+	}
+
+	protected boolean rangedHit(Char enemy, int cell, boolean hit) {
 		decrementDurability();
 		if (durability > 0 && !spawnedForEffect){
+			if (hit && Loyalty.scheduleReturn(this, curUser)) return true;
 			//ALL projectiles stick to the vault boss elemental, as it has custom logic for it
 			boolean doesStick = sticky || enemy instanceof VaultBossElemental;
 			//attempt to stick the missile weapon to the enemy, just drop it if we can't.
@@ -462,13 +468,14 @@ abstract public class MissileWeapon extends Weapon {
 				PinCushion p = Buff.affect(enemy, PinCushion.class);
 				if (p.target == enemy){
 					p.stick(this);
-					return;
+					return false;
 				}
 			}
 			//投掷武器命中后落地同样会发出声音
 			Noise.emit(curUser, cell, Noise.THROW_RANGE, true);
 			Dungeon.level.drop( this, cell ).sprite.drop();
 		}
+		return false;
 	}
 
 	protected void rangedMiss( int cell ) {
@@ -540,6 +547,7 @@ abstract public class MissileWeapon extends Weapon {
 
 	@Override
 	public Weapon enchant(Enchantment ench) {
+		if (ench instanceof Loyalty && this instanceof SpiritBow.SpiritArrow) return this;
 		if (ench instanceof Crystal){
 			((Crystal) ench).setThrownWep();
 			//start repairing if thrown wep was already damaged

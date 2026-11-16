@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Loyalty;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
@@ -48,6 +49,7 @@ public class MagicJavelin extends MagicMissileWeapon {
 	protected void rangedHit(Char enemy, int cell) {
 		parent = null;
 		extraThrownLeft = false;
+		if (Loyalty.scheduleReturn(this, curUser)) return;
 		if (!spawnedForEffect && enemy.alignment == Char.Alignment.ENEMY) {
 			if (collect(curUser.belongings.backpack)) {
 				GameScene.pickUp(this, cell);
