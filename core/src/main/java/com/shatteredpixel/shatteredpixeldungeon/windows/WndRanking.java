@@ -37,6 +37,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.Trinket;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.HallOfHeroesScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.HeroSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
@@ -74,10 +75,16 @@ public class WndRanking extends WndTabbed {
 	
 	private String gameID;
 	private Rankings.Record record;
+	private final int hallPage;
 	
 	public WndRanking( final Rankings.Record rec ) {
+		this(rec, -1);
+	}
+
+	public WndRanking(final Rankings.Record rec, int hallPage) {
 		
 		super();
+		this.hallPage = hallPage;
 		resize( WIDTH, HEIGHT );
 
 		if (INSTANCE != null){
@@ -97,6 +104,82 @@ public class WndRanking extends WndTabbed {
 			Dungeon.hero = null;
 			createControls();
 		}
+	}
+
+	private void chooseHallPage() {
+		Rankings rankings = Rankings.INSTANCE;
+		int savedPage = rankings.hallPageOf(record);
+		if (hallPage < 0 && savedPage >= 0) {
+			ShatteredPixelDungeon.scene().addToFront(new WndMessage(Messages.get(HallOfHeroesScene.class,
+					"already_saved", savedPage + 1)));
+			return;
+		}
+		String[] pages = new String[Rankings.HALL_PAGES];
+		boolean[] available = new boolean[pages.length];
+		for (int i = 0; i < pages.length; i++) {
+			int count = rankings.hallPage(i).size();
+			pages[i] = Messages.get(HallOfHeroesScene.class, "page_option", i + 1, count, Rankings.HALL_PAGE_SIZE);
+			available[i] = i != hallPage && count < Rankings.HALL_PAGE_SIZE;
+		}
+		ShatteredPixelDungeon.scene().addToFront(new WndOptions(Messages.get(HallOfHeroesScene.class, "title"),
+				Messages.get(HallOfHeroesScene.class, hallPage < 0 ? "save_where" : "move_where"), pages) {
+			@Override
+			protected boolean enabled(int index) {
+				return available[index];
+			}
+
+			@Override
+			protected void onSelect(int index) {
+				if (!rankings.sendToHall(record, index, hallPage)) {
+					showHallError();
+				} else if (hallPage >= 0) {
+					ShatteredPixelDungeon.switchNoFade(HallOfHeroesScene.class);
+				} else {
+					ShatteredPixelDungeon.scene().addToFront(new WndMessage(Messages.get(HallOfHeroesScene.class,
+							"saved", index + 1)));
+				}
+			}
+		});
+	}
+
+	private void manageHallRecord() {
+		Class<HallOfHeroesScene> messages = HallOfHeroesScene.class;
+		ShatteredPixelDungeon.scene().addToFront(new WndOptions(Messages.get(messages, "title"), "",
+				Messages.get(messages, "move"), Messages.get(messages, "note"), Messages.get(messages, "remove")) {
+			@Override
+			protected void onSelect(int index) {
+				switch (index) {
+					case 0:
+						chooseHallPage();
+						break;
+					case 1:
+						ShatteredPixelDungeon.scene().addToFront(new WndTextInput(Messages.get(messages, "note"),
+								null, record.note, 2000, true, Messages.get(messages, "save_note"), Messages.get(messages, "cancel")) {
+							@Override
+							public void onSelect(boolean positive, String text) {
+								if (positive && !Rankings.INSTANCE.saveHallNote(record, text)) showHallError();
+							}
+						});
+						break;
+					case 2:
+						ShatteredPixelDungeon.scene().addToFront(new WndOptions(Messages.get(messages, "remove"),
+								Messages.get(messages, "remove_confirm"), Messages.get(messages, "remove"), Messages.get(messages, "cancel")) {
+							@Override
+							protected void onSelect(int choice) {
+								if (choice != 0) return;
+								if (Rankings.INSTANCE.removeFromHall(record, hallPage)) {
+									ShatteredPixelDungeon.switchNoFade(HallOfHeroesScene.class);
+								} else showHallError();
+							}
+						});
+						break;
+				}
+			}
+		});
+	}
+
+	private void showHallError() {
+		ShatteredPixelDungeon.scene().addToFront(new WndMessage(Messages.get(HallOfHeroesScene.class, "save_error")));
 	}
 	
 	@Override
@@ -264,9 +347,22 @@ public class WndRanking extends WndTabbed {
 			}
 
 			int buttontop = HEIGHT - 16;
+			boolean canCopySeed = Dungeon.hero != null && Dungeon.seed != -1 && !Dungeon.daily &&
+					(DeviceCompat.isDebug() || Badges.isUnlocked(Badges.Badge.VICTORY));
+			boolean hallAction = hallPage >= 0 || record.gameData == null || !record.gameData.getBoolean(Rankings.DAILY_REPLAY);
+			if (hallAction) {
+				RedButton btnHall = new RedButton(Messages.get(HallOfHeroesScene.class, hallPage < 0 ? "save_run" : "manage")) {
+					@Override
+					protected void onClick() {
+						if (hallPage < 0) chooseHallPage();
+						else manageHallRecord();
+					}
+				};
+				btnHall.setRect(0, buttontop, canCopySeed ? 55 : WIDTH, 16);
+				add(btnHall);
+			}
 
-			if (Dungeon.hero != null && Dungeon.seed != -1 && !Dungeon.daily &&
-					(DeviceCompat.isDebug() || Badges.isUnlocked(Badges.Badge.VICTORY))){
+			if (canCopySeed){
 				final Image icon = Icons.get(Icons.SEED);
 				RedButton btnSeed = new RedButton(Messages.get(this, "copy_seed")){
 					@Override
@@ -292,7 +388,8 @@ public class WndRanking extends WndTabbed {
 					icon.hardlight(1f, 1.5f, 0.67f);
 				}
 				btnSeed.icon(icon);
-				btnSeed.setRect(0, buttontop, 115, 16);
+				int seedLeft = hallAction ? 59 : 0;
+				btnSeed.setRect(seedLeft, buttontop, WIDTH - seedLeft, 16);
 				add(btnSeed);
 			}
 

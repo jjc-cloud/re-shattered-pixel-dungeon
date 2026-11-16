@@ -168,6 +168,19 @@ public class RankingsScene extends PixelScene {
 			left += 16;
 			add(btnDailies);
 		}
+		IconButton btnHall = new IconButton(new ItemSprite(ItemSpriteSheet.AMULET, null)) {
+			@Override
+			protected void onClick() {
+				ShatteredPixelDungeon.switchNoFade(HallOfHeroesScene.class);
+			}
+
+			@Override
+			protected String hoverText() {
+				return Messages.get(HallOfHeroesScene.class, "title");
+			}
+		};
+		btnHall.setRect(left, insets.top, 16, 20);
+		add(btnHall);
 
 		if (Dungeon.daily){
 			addToFront(new WndDailies());

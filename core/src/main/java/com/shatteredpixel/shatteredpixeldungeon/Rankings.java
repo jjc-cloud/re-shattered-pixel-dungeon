@@ -54,6 +54,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -66,6 +67,10 @@ public enum Rankings {
 	public static final int TABLE_SIZE	= 11;
 	
 	public static final String RANKINGS_FILE = "rankings.dat";
+	private static final String HALL_FILE = "hall.dat";
+	public static final int HALL_PAGES = 4;
+	public static final int HALL_PAGE_SIZE = 10;
+	private ArrayList<ArrayList<Record>> hallRecords;
 	
 	public ArrayList<Record> records;
 	public int lastRecord;
@@ -376,6 +381,87 @@ public enum Rankings {
 	public static final String DAILY_HISTORY_DATES  = "daily_history_dates";
 	public static final String DAILY_HISTORY_SCORES = "daily_history_scores";
 
+	public void loadHall() {
+		if (hallRecords != null) return;
+		hallRecords = new ArrayList<>(HALL_PAGES);
+		for (int page = 0; page < HALL_PAGES; page++) hallRecords.add(new ArrayList<>());
+		if (!FileUtils.fileExists(HALL_FILE)) return;
+		try {
+			Bundle bundle = FileUtils.bundleFromFile(HALL_FILE);
+			for (int page = 0; page < HALL_PAGES; page++) {
+				String key = RECORDS + page;
+				if (!bundle.contains(key)) continue;
+				for (Bundlable record : bundle.getCollection(key)) hallRecords.get(page).add((Record) record);
+			}
+		} catch (IOException e) {
+			ShatteredPixelDungeon.reportException(e);
+		}
+	}
+
+	public List<Record> hallPage(int page) {
+		loadHall();
+		return Collections.unmodifiableList(hallRecords.get(page));
+	}
+
+	public int hallPageOf(Record record) {
+		loadHall();
+		for (int page = 0; page < HALL_PAGES; page++) {
+			for (Record saved : hallRecords.get(page)) {
+				if (saved.gameID.equals(record.gameID)) return page;
+			}
+		}
+		return -1;
+	}
+
+	public boolean sendToHall(Record record, int page, int previousPage) {
+		loadHall();
+		if (hallPageOf(record) != previousPage || page == previousPage
+				|| hallRecords.get(page).size() >= HALL_PAGE_SIZE) return false;
+		ArrayList<ArrayList<Record>> pages = new ArrayList<>(hallRecords);
+		ArrayList<Record> destination = new ArrayList<>(pages.get(page));
+		destination.add(record);
+		destination.sort(scoreComparator);
+		pages.set(page, destination);
+		if (previousPage >= 0) {
+			ArrayList<Record> source = new ArrayList<>(pages.get(previousPage));
+			if (!source.remove(record)) return false;
+			pages.set(previousPage, source);
+		}
+		return saveHall(pages);
+	}
+
+	public boolean removeFromHall(Record record, int page) {
+		loadHall();
+		ArrayList<ArrayList<Record>> pages = new ArrayList<>(hallRecords);
+		ArrayList<Record> source = new ArrayList<>(pages.get(page));
+		if (!source.remove(record)) return false;
+		pages.set(page, source);
+		return saveHall(pages);
+	}
+
+	public boolean saveHallNote(Record record, String note) {
+		String previous = record.note;
+		record.note = note;
+		if (saveHall(hallRecords)) return true;
+		record.note = previous;
+		return false;
+	}
+
+	private boolean saveHall(ArrayList<ArrayList<Record>> pages) {
+		Bundle bundle = new Bundle();
+		for (int page = 0; page < HALL_PAGES; page++) {
+			if (!pages.get(page).isEmpty()) bundle.put(RECORDS + page, pages.get(page));
+		}
+		try {
+			FileUtils.bundleToFile(HALL_FILE, bundle);
+			hallRecords = pages;
+			return true;
+		} catch (IOException e) {
+			ShatteredPixelDungeon.reportException(e);
+			return false;
+		}
+	}
+
 	public void save() {
 		Bundle bundle = new Bundle();
 		bundle.put( RECORDS, records );
@@ -484,6 +570,7 @@ public enum Rankings {
 
 		public Bundle gameData;
 		public String gameID;
+		public String note = "";
 
 		//Note this is for summary purposes, visible score should be re-calculated from game data
 		public int score;
@@ -544,6 +631,7 @@ public enum Rankings {
 			if (bundle.contains(ID))   gameID = bundle.getString(ID);
 			
 			if (gameID == null) gameID = UUID.randomUUID().toString();
+			if (bundle.contains("note")) note = bundle.getString("note");
 
 		}
 		
@@ -568,6 +656,7 @@ public enum Rankings {
 
 			if (gameData != null) bundle.put( DATA, gameData );
 			bundle.put( ID, gameID );
+			if (!note.isEmpty()) bundle.put("note", note);
 		}
 	}
 
