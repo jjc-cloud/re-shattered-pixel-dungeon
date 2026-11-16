@@ -1,17 +1,24 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.HermitCrab;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gem;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.Game;
 import com.watabou.utils.Bundlable;
 import com.watabou.utils.Bundle;
+import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
+
+import java.util.ArrayList;
 
 /** 格子中独立存在的内容。属性描述内容本身，不保存动作白名单或目标地形编号。 */
 public class CellContent implements Bundlable {
@@ -150,6 +157,25 @@ public class CellContent implements Bundlable {
 				Heap heap = level.drop(Random.Int(4) == 0 ? Generator.random() : Gem.generateTreasure(), cell);
 				heap.autoExplored = true;
 				if (heap.sprite != null) heap.sprite.drop();
+			}
+			if (level == Dungeon.level && Random.Int(20) == 0) {
+				int spawn = cell;
+				if (!level.passable[cell] || Actor.findChar(cell) != null) {
+					ArrayList<Integer> candidates = new ArrayList<>();
+					for (int offset : PathFinder.NEIGHBOURS8) {
+						int next = cell + offset;
+						if (level.insideMap(next) && level.passable[next] && Actor.findChar(next) == null) {
+							candidates.add(next);
+						}
+					}
+					spawn = candidates.isEmpty() ? -1 : Random.element(candidates);
+				}
+				if (spawn != -1) {
+					HermitCrab crab = new HermitCrab();
+					crab.pos = spawn;
+					GameScene.add(crab);
+					GLog.w(Messages.get(SewerLevel.class, "barrel_crab"));
+				}
 			}
 		} else if (family(type) == Terrain.REGION_DECO && level.region() == 4 && level == Dungeon.level) {
 			Splash.at(cell, 0xFF958472, 8);
