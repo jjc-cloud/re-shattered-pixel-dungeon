@@ -42,6 +42,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.AmbitiousImpR
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ImpSprite;
+import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndQuest;
 import com.watabou.noosa.Game;
 import com.watabou.utils.Bundle;
@@ -142,6 +143,22 @@ public class Imp extends NPC {
 					});
 				}
 			});
+		} else if (!Quest.followUpShown) {
+			Quest.followUpShown = true;
+			Game.runOnRenderThread(new Callback() {
+				@Override
+				public void call() {
+					GameScene.show(new WndOptions(sprite(), Messages.titleCase(name()),
+							Messages.get(Imp.this, "quest_follow_up"),
+							Messages.get(Imp.this, "quest_follow_up_health"),
+							Messages.get(Imp.this, "quest_follow_up_busy")) {
+						@Override
+						protected void onSelect(int index) {
+							tell(Messages.get(Imp.this, index == 0 ? "quest_follow_up_health_reply" : "quest_follow_up_busy_reply"));
+						}
+					});
+				}
+			});
 		} else if (!Quest.isCompleted()) {
 			tell(Messages.get(Imp.this, "quest_in_progress_regular"));
 		} else {
@@ -183,6 +200,7 @@ public class Imp extends NPC {
 		private static boolean spawned;
 
 		private static boolean given;
+		private static boolean followUpShown;
 		private static boolean completed;
 		private static boolean vaultEntered;
 		public static boolean vaultGateOpened;
@@ -202,6 +220,7 @@ public class Imp extends NPC {
 		public static void reset() {
 			spawned = false;
 			given = false;
+			followUpShown = false;
 			completed = false;
 			vaultEntered = false;
 			vaultGateOpened = false;
@@ -220,6 +239,7 @@ public class Imp extends NPC {
 		private static final String REWARD      = "reward";
 
 		private static final String GIVEN       = "given";
+		private static final String FOLLOW_UP_SHOWN = "follow_up_shown";
 		private static final String COMPLETED   = "completed";
 
 		private static final String SCORE       = "score";
@@ -239,6 +259,7 @@ public class Imp extends NPC {
 				node.put("vault_remains_commented", vaultRemainsCommented);
 				node.put("return_outcome", returnOutcome);
 				node.put( GIVEN, given );
+				node.put(FOLLOW_UP_SHOWN, followUpShown);
 				node.put( COMPLETED, completed );
 				node.put( REWARD, reward );
 
@@ -265,6 +286,7 @@ public class Imp extends NPC {
 				reward = (Item)node.get( REWARD );
 				
 				given = node.getBoolean( GIVEN );
+				followUpShown = node.getBoolean(FOLLOW_UP_SHOWN);
 				completed = node.getBoolean( COMPLETED );
 				vaultEntered = node.getBoolean("vault_entered");
 			}
