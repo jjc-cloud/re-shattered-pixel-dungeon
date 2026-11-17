@@ -737,7 +737,7 @@ public class Item implements Bundlable {
 		if (FrozenAttack.isFrozen(user)) {
 			int cell = throwPos(user, dst);
 			float delay = castDelay(user, cell);
-			Item missile = detach(user.belongings.backpack);
+			Item missile = prepareThrownItem(user);
 			if (missile == null) return;
 			user.sprite.zap(cell);
 			user.busy();
@@ -769,7 +769,7 @@ public class Item implements Bundlable {
 			@Override
 			public void call() {
 				curUser = user;
-				Item i = Item.this.detach(user.belongings.backpack);
+				Item i = Item.this.prepareThrownItem(user);
 				if (enemy == null && !(Item.this instanceof MissileWeapon)) {
 					user.spend(delay);
 					Noise.emit(user, cell, Noise.THROW_RANGE, true);
@@ -795,6 +795,10 @@ public class Item implements Bundlable {
 			}
 		};
 		throwAnimation(user.sprite, enemy == null ? null : enemy.sprite, cell, onImpact, true);
+	}
+
+	protected Item prepareThrownItem(Hero user) {
+		return detach(user.belongings.backpack);
 	}
 
 	public void throwAnimation(Visual source, Visual target, int cell, Callback onImpact, boolean applyFlightEffects) {

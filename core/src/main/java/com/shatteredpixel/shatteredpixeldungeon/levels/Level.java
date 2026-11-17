@@ -830,7 +830,10 @@ public abstract class Level implements Bundlable {
 			}
 		}
 		for (HeavyBoomerang.CircleBack b : Dungeon.hero.buffs(HeavyBoomerang.CircleBack.class)){
-			if (b.activeDepth() == Dungeon.depth) items.add(b.cancel());
+			if (b.activeDepth() == Dungeon.depth) {
+				Item item = b.cancel();
+				if (item != null) items.add(item);
+			}
 		}
 		return items;
 	}

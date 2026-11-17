@@ -30,6 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.PinCushion;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Infinity;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.FrozenAttack;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -105,7 +106,8 @@ public class SunfireJavelin extends MagicMissileWeapon {
 	protected void rangedHit(Char enemy, int cell) {
 		boolean returning = rangedHit(enemy, cell, true);
 		PinCushion stuck = enemy.buff(PinCushion.class);
-		if ((returning && enemy.isActive() && enemy.alignment != Char.Alignment.ALLY)
+		if (((returning || (spawnedForEffect && enchantment instanceof Infinity))
+				&& enemy.isActive() && enemy.alignment != Char.Alignment.ALLY)
 				|| (stuck != null && stuck.hasStuckItem(SunfireJavelin.class))) {
 			Buff.affect(enemy, Burning.class).reignite(enemy);
 		}

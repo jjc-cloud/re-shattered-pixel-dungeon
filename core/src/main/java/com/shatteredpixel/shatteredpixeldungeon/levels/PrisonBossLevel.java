@@ -346,7 +346,8 @@ public class PrisonBossLevel extends Level {
 		for (HeavyBoomerang.CircleBack b : Dungeon.hero.buffs(HeavyBoomerang.CircleBack.class)){
 			if (b.activeDepth() == Dungeon.depth
 					&& (safeArea == null || !safeArea.inside(cellToPoint(b.returnPos())))){
-				storedItems.add(b.cancel());
+				Item item = b.cancel();
+				if (item != null) storedItems.add(item);
 			}
 		}
 		

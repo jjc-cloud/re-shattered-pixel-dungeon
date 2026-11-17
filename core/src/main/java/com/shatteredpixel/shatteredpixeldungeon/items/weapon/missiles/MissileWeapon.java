@@ -47,6 +47,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.curses.Explosive;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Crystal;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Infinity;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Loyalty;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Projecting;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.Dart;
@@ -269,7 +270,8 @@ abstract public class MissileWeapon extends Weapon {
 	@Override
 	public void doThrow(Hero hero) {
 		parent = null; //reset parent before throwing, just in case
-		if (((levelKnown && level() > 0) || hasGoodEnchant() || masteryPotionBonus || enchantHardened)
+		if (!hasEnchant(Infinity.class, hero)
+				&& ((levelKnown && level() > 0) || hasGoodEnchant() || masteryPotionBonus || enchantHardened)
 				&& !extraThrownLeft && quantity() == 1 && durabilityLeft() <= durabilityPerUse()){
 			GameScene.show(new WndOptions(new ItemSprite(this), Messages.titleCase(title()),
 					Messages.get(this, "break_upgraded_warn_desc"),
@@ -296,6 +298,19 @@ abstract public class MissileWeapon extends Weapon {
 		} else {
 			super.doThrow(hero);
 		}
+	}
+
+	@Override
+	protected Item prepareThrownItem(Hero user) {
+		if (quantity() <= 0 || !hasEnchant(Infinity.class, user)) return super.prepareThrownItem(user);
+		MissileWeapon projectile = (MissileWeapon) duplicate();
+		if (projectile != null) {
+			projectile.quantity(1);
+			projectile.durability = MAX_DURABILITY;
+			projectile.parent = this;
+			projectile.spawnedForEffect = true;
+		}
+		return projectile;
 	}
 
 	@Override
@@ -553,7 +568,7 @@ abstract public class MissileWeapon extends Weapon {
 
 	@Override
 	public Weapon enchant(Enchantment ench) {
-		if (ench instanceof Loyalty && this instanceof SpiritBow.SpiritArrow) return this;
+		if ((ench instanceof Loyalty || ench instanceof Infinity) && this instanceof SpiritBow.SpiritArrow) return this;
 		if (ench instanceof Crystal){
 			((Crystal) ench).setThrownWep();
 			//start repairing if thrown wep was already damaged
@@ -570,6 +585,10 @@ abstract public class MissileWeapon extends Weapon {
 	}
 
 	protected void decrementDurability(){
+		if (spawnedForEffect && enchantment instanceof Infinity) {
+			parent = null;
+			return;
+		}
 		//if this weapon was thrown from a source stack, degrade that stack.
 		//unless a weapon is about to break, then break the one being thrown
 		if (parent != null){

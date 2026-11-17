@@ -128,6 +128,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.spells.WildEnergy;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.TrinketCatalyst;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Infinity;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Loyalty;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Rapier;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WarriorsShortsword;
@@ -229,6 +230,7 @@ public enum Catalog {
 		ENCHANTMENTS.addItems(Weapon.Enchantment.uncommon);
 		ENCHANTMENTS.addItems(Loyalty.class);
 		ENCHANTMENTS.addItems(Weapon.Enchantment.rare);
+		ENCHANTMENTS.addItems(Infinity.class);
 		ENCHANTMENTS.addItems(Weapon.Enchantment.curses);
 
 		GLYPHS.addItems(Armor.Glyph.common);

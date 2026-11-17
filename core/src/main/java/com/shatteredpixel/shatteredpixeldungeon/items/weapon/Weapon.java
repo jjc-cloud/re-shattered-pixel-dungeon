@@ -63,6 +63,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Corrup
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Crystal;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Elastic;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Grim;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Infinity;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Kinetic;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Lucky;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Loyalty;
@@ -451,7 +452,8 @@ abstract public class Weapon extends KindOfWeapon {
 	}
 	
 	public Weapon enchant( Enchantment ench ) {
-		if (ench instanceof Loyalty && (!(this instanceof MissileWeapon) || this instanceof SpiritBow.SpiritArrow)) return this;
+		if ((ench instanceof Loyalty || ench instanceof Infinity)
+				&& (!(this instanceof MissileWeapon) || this instanceof SpiritBow.SpiritArrow)) return this;
 		if (ench == null || !ench.curse()) curseInfusionBonus = false;
 		enchantment = ench;
 		updateQuickslot();
@@ -532,7 +534,7 @@ abstract public class Weapon extends KindOfWeapon {
 		private static final Class<?>[][] missilePool = {
 				common,
 				{Blooming.class, Elastic.class, Lucky.class, Loyalty.class, Projecting.class, Unstable.class, Vorpal.class},
-				{Corrupting.class, Crystal.class, Grim.class}
+				{Corrupting.class, Crystal.class, Grim.class, Infinity.class}
 		};
 
 		public static final float[] typeChances = new float[]{
@@ -641,9 +643,13 @@ abstract public class Weapon extends KindOfWeapon {
 
 		@SafeVarargs
 		public static Enchantment randomFor(Weapon weapon, int tier, Class<? extends Enchantment>... toIgnore) {
-			Class<?>[][] pool = weapon instanceof MissileWeapon && !(weapon instanceof SpiritBow.SpiritArrow)
+			Class<?>[][] pool = weapon instanceof MissileWeapon || weapon instanceof SpiritBow
 					? missilePool : weaponPool;
 			ArrayList<Class<?>> enchants = new ArrayList<>(Arrays.asList(pool[tier]));
+			if (weapon instanceof SpiritBow || weapon instanceof SpiritBow.SpiritArrow) {
+				enchants.remove(Loyalty.class);
+				enchants.remove(Infinity.class);
+			}
 			enchants.removeAll(Arrays.asList(toIgnore));
 			if (enchants.isEmpty()) return randomFor(weapon);
 			return (Enchantment) Reflection.newInstance(Random.element(enchants));

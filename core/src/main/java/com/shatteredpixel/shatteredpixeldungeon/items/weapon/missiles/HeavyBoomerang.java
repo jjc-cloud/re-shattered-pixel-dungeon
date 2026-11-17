@@ -111,7 +111,7 @@ public class HeavyBoomerang extends MissileWeapon {
 		
 		public MissileWeapon cancel(){
 			detach();
-			return boomerang;
+			return boomerang.spawnedForEffect ? null : boomerang;
 		}
 
 		public int activeDepth(){
