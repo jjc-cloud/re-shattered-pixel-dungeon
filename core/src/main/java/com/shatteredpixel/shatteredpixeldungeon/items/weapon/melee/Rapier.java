@@ -95,12 +95,14 @@ public class Rapier extends MeleeWeapon {
 
 		Char selected = Actor.findChar(target);
 		if (target == hero.pos
-				|| (selected != null && (!selected.isAlive() || hero.isCharmedBy(selected)))) {
+				|| (selected != null && (!selected.isAlive() || hero.isCharmedBy(selected)
+						|| !Dungeon.level.heroFOV[target]))) {
 			GLog.w(Messages.get(wep, "ability_no_target"));
 			return;
 		}
 
-		boolean ranged = selected == null || !Dungeon.level.adjacent(hero.pos, target);
+		boolean ranged = selected == null || (!Dungeon.level.adjacent(hero.pos, target)
+				&& !wep.canReach(hero, target));
 		Ballistica shot = ranged ? Ballistica.projectile(hero, hero.pos, target,
 				Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER) : null;
 		int cell = shot == null ? target : shot.collisionPos;

@@ -68,7 +68,11 @@ public class RunicBlade extends MeleeWeapon {
 		}
 
 		Char enemy = Actor.findChar(target);
-		if (enemy == null || enemy == hero || hero.isCharmedBy(enemy) || !Dungeon.level.heroFOV[target]) {
+		if (enemy == null) {
+			Rapier.swordWaveAbility(hero, target, 1f, 0, this);
+			return;
+		}
+		if (enemy == hero || hero.isCharmedBy(enemy) || !Dungeon.level.heroFOV[target]) {
 			GLog.w(Messages.get(this, "ability_no_target"));
 			return;
 		}
@@ -78,9 +82,9 @@ public class RunicBlade extends MeleeWeapon {
 		tracker.boost = 3f + 0.50f*buffedLvl();
 		hero.belongings.abilityWeapon = this;
 		if (!hero.canAttack(enemy)){
-			GLog.w(Messages.get(this, "ability_target_range"));
 			tracker.detach();
 			hero.belongings.abilityWeapon = null;
+			Rapier.swordWaveAbility(hero, target, 1f, 0, this);
 			return;
 		}
 		hero.belongings.abilityWeapon = null;

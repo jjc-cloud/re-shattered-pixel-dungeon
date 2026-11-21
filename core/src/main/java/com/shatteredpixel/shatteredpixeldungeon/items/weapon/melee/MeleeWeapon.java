@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ArtifactRecharge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barrier;
@@ -133,11 +134,20 @@ public class MeleeWeapon extends Weapon {
 					updateQuickslot();
 				} else {
 					usesTargeting = useTargeting();
+					boolean swordWave = this instanceof Sword || this instanceof Shortsword
+							|| this instanceof Longsword || this instanceof WornShortsword
+							|| this instanceof Dragonslayer || this instanceof Glaive;
 					GameScene.selectCell(new CellSelector.Listener() {
 						@Override
 						public void onSelect(Integer cell) {
 							if (cell != null) {
+							Char enemy = Actor.findChar(cell);
+							if (swordWave && (enemy == null || (enemy != hero
+									&& !Dungeon.level.adjacent(hero.pos, cell) && !canReach(hero, cell)))) {
+								Rapier.swordWaveAbility(hero, cell, 1f, 0, MeleeWeapon.this);
+							} else {
 								duelistAbility(hero, cell);
+							}
 								updateQuickslot();
 							}
 						}
@@ -163,7 +173,9 @@ public class MeleeWeapon extends Weapon {
 
 	@Override
 	public int targetingPos(Hero user, int dst) {
-		if (this instanceof Rapier || this instanceof Katana) {
+		if (this instanceof Rapier || this instanceof Katana || this instanceof Sword
+				|| this instanceof Shortsword || this instanceof Longsword || this instanceof WornShortsword
+				|| this instanceof Dragonslayer || this instanceof Glaive || this instanceof RunicBlade) {
 			return new Ballistica(user.pos, dst, Ballistica.PROJECTILE | Ballistica.STOP_PROJECTILE_COVER
 					| Ballistica.IRON_DOOR_CHANCE).collisionPos;
 		}
