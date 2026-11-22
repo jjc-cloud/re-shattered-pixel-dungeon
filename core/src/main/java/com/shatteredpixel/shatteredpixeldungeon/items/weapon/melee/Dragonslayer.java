@@ -60,31 +60,31 @@ public class Dragonslayer extends MeleeWeapon {
 	}
 
 	@Override
-	protected int damageRollMin(Char owner) {
-		return minDamage(owner, min(), max());
-	}
-
-	private int minDamage(Char owner, int min, int max) {
-		if (owner == null || owner.HT <= 0) return min;
+	protected int intrinsicMinDamageBonus(Char owner, int baseMin, int baseMax) {
+		if (owner == null || owner.HT <= 0) return 0;
 		float missingHealth = Math.max(0f, Math.min(0.8f, (owner.HT - owner.HP) / (float) owner.HT));
-		return min + Math.round((max - min) * missingHealth);
+		return Math.round((baseMax - baseMin) * missingHealth);
 	}
 
 	@Override
 	public String abilityInfo() {
-		int dmgBoost = levelKnown ? 7 + buffedLvl() : 7;
-		int minDamage = levelKnown ? damageRollMin(Dungeon.hero) : minDamage(Dungeon.hero, min(0), max(0));
-		if (levelKnown){
-			return Messages.get(this, "ability_desc", augment.damageFactor(minDamage)+augment.damageFactor(dmgBoost), augment.damageFactor(max())+augment.damageFactor(dmgBoost));
-		} else {
-			return Messages.get(this, "typical_ability_desc", minDamage+dmgBoost, max(0)+dmgBoost);
-		}
+		int level = levelKnown ? buffedLvl() : 0;
+		int minDamage = damageRollMin(Dungeon.hero, level, false);
+		int maxDamage = max(level);
+		Augment previewAugment = levelKnown ? augment : Augment.NONE;
+		int dmgBoost = previewAugment.damageFactor(7 + level);
+		return Messages.get(this, levelKnown ? "ability_desc" : "typical_ability_desc",
+				previewAugment.damageFactor(Math.min(minDamage, maxDamage)) + dmgBoost,
+				previewAugment.damageFactor(Math.max(minDamage, maxDamage)) + dmgBoost);
 	}
 
+	@Override
 	public String upgradeAbilityStat(int level){
-		int dmgBoost = 7 + level;
-		int minDamage = minDamage(Dungeon.hero, min(level), max(level));
-		return (augment.damageFactor(minDamage)+augment.damageFactor(dmgBoost)) + "-" + (augment.damageFactor(max(level))+augment.damageFactor(dmgBoost));
+		int dmgBoost = augment.damageFactor(7 + level);
+		int minDamage = damageRollMin(Dungeon.hero, level, false);
+		int maxDamage = max(level);
+		return (augment.damageFactor(Math.min(minDamage, maxDamage)) + dmgBoost) + "-"
+				+ (augment.damageFactor(Math.max(minDamage, maxDamage)) + dmgBoost);
 	}
 
 }

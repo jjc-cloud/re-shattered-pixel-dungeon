@@ -44,6 +44,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfForce;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRecharging;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Crystal;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Valiant;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.CellSelector;
@@ -294,6 +295,24 @@ public class MeleeWeapon extends Weapon {
 			}
 		}
 		return super.buffedLvl();
+	}
+
+	@Override
+	protected int damageRollMin(Char owner) {
+		return damageRollMin(owner, buffedLvl(), true);
+	}
+
+	protected int damageRollMin(Char owner, int level, boolean consumeBoosts) {
+		int baseMin = min(level);
+		int bonus = intrinsicMinDamageBonus(owner, baseMin, max(level));
+		if (owner != null && hasEnchant(Valiant.class, owner)) {
+			bonus += Valiant.minDamageBonus(owner, baseMin, level, consumeBoosts);
+		}
+		return baseMin + bonus;
+	}
+
+	protected int intrinsicMinDamageBonus(Char owner, int baseMin, int baseMax) {
+		return 0;
 	}
 
 	@Override

@@ -266,10 +266,13 @@ abstract public class KindOfWeapon extends EquipableItem {
 
 	public int damageRoll( Char owner ) {
 		int minDamage = damageRollMin(owner);
+		int maxDamage = max();
+		int lower = Math.min(minDamage, maxDamage);
+		int upper = Math.max(minDamage, maxDamage);
 		if (owner instanceof Hero){
-			return Hero.heroDamageIntRange(minDamage, max());
+			return Hero.heroDamageIntRange(lower, upper);
 		} else {
-			return Random.NormalIntRange(minDamage, max());
+			return Random.NormalIntRange(lower, upper);
 		}
 	}
 	

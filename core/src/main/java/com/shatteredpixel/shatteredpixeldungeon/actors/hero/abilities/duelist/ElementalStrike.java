@@ -85,6 +85,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Lucky;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Projecting;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Shocking;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Unstable;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Valiant;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Vampiric;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Vorpal;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
@@ -116,6 +117,7 @@ public class ElementalStrike extends ArmorAbility {
 		effectTypes.put(Chilling.class,     MagicMissile.FROST_CONE);
 		effectTypes.put(Kinetic.class,      MagicMissile.FORCE_CONE);
 		effectTypes.put(Shocking.class,     MagicMissile.SPARK_CONE);
+		effectTypes.put(Valiant.class,      MagicMissile.WARD_CONE);
 		effectTypes.put(Blocking.class,     MagicMissile.WARD_CONE);
 		effectTypes.put(Blooming.class,     MagicMissile.FOLIAGE_CONE);
 		effectTypes.put(Elastic.class,      MagicMissile.FORCE_CONE);
@@ -199,6 +201,12 @@ public class ElementalStrike extends ArmorAbility {
 		hero.sprite.attack(target, new Callback() {
 			@Override
 			public void call() {
+				if (finalEnchantment instanceof Valiant) {
+					valiantStrike(cone, hero, target);
+					Invisibility.dispel();
+					hero.spendAndNext(hero.attackDelay());
+					return;
+				}
 
 				Char enemy = Actor.findChar(target);
 
@@ -234,6 +242,42 @@ public class ElementalStrike extends ArmorAbility {
 		Sample.INSTANCE.play(Assets.Sounds.CHARGEUP);
 		hero.busy();
 
+	}
+
+	private void valiantStrike(ConeAOE cone, Hero hero, int targetCell) {
+		ArrayList<Char> enemies = new ArrayList<>();
+		for (Char ch : Actor.chars()) {
+			if (ch.isAlive() && ch.alignment == Char.Alignment.ENEMY && cone.cells.contains(ch.pos)) {
+				enemies.add(ch);
+			}
+		}
+
+		float strikingForce = 0.30f * hero.pointsInTalent(Talent.STRIKING_FORCE);
+		Char primary = Actor.findChar(targetCell);
+		int enemyCount = enemies.size();
+		if (enemies.remove(primary) && !hero.isCharmedBy(primary)) {
+			AttackIndicator.target(primary);
+			float directedPower = 0.30f * enemyCount * hero.pointsInTalent(Talent.DIRECTED_POWER);
+			if (valiantAttack(hero, primary, strikingForce + directedPower)) {
+				Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
+			}
+		}
+		for (Char enemy : enemies) {
+			if (!hero.isAlive()) break;
+			if (enemy.isAlive() && enemy.alignment == Char.Alignment.ENEMY && !hero.isCharmedBy(enemy)) {
+				valiantAttack(hero, enemy, strikingForce);
+			}
+		}
+	}
+
+	private boolean valiantAttack(Hero hero, Char enemy, float enchantPowerBonus) {
+		Valiant.StrikePowerTracker power = Buff.append(hero, Valiant.StrikePowerTracker.class);
+		power.bonus = enchantPowerBonus;
+		try {
+			return hero.attack(enemy, 1f, 0f, Char.INFINITE_ACCURACY);
+		} finally {
+			if (hero.buff(Valiant.StrikePowerTracker.class) == power) power.detach();
+		}
 	}
 
 	//effects that trigger before the attack

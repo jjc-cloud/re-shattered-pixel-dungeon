@@ -69,6 +69,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Lucky;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Loyalty;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Projecting;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Shocking;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Valiant;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Unstable;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Vampiric;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Vorpal;
@@ -452,6 +453,7 @@ abstract public class Weapon extends KindOfWeapon {
 	}
 	
 	public Weapon enchant( Enchantment ench ) {
+		if (ench instanceof Valiant && !(this instanceof MeleeWeapon)) return this;
 		if ((ench instanceof Loyalty || ench instanceof Infinity)
 				&& (!(this instanceof MissileWeapon) || this instanceof SpiritBow.SpiritArrow)) return this;
 		if (ench == null || !ench.curse()) curseInfusionBonus = false;
@@ -518,7 +520,7 @@ abstract public class Weapon extends KindOfWeapon {
 	public static abstract class Enchantment implements Bundlable {
 
 		public static final Class<?>[] common = new Class<?>[]{
-				Blazing.class, Chilling.class, Kinetic.class, Shocking.class
+				Blazing.class, Chilling.class, Kinetic.class, Shocking.class, Valiant.class
 		};
 
 		public static final Class<?>[] uncommon = new Class<?>[]{
@@ -555,6 +557,10 @@ abstract public class Weapon extends KindOfWeapon {
 		}
 
 		public static float genericProcChanceMultiplier( Char attacker ){
+			return genericProcChanceMultiplier(attacker, true);
+		}
+
+		protected static float genericProcChanceMultiplier( Char attacker, boolean consumeBoosts ){
 			float multi = RingOfArcana.enchantPowerMultiplier(attacker);
 			Berserk rage = attacker.buff(Berserk.class);
 			if (rage != null) {
@@ -563,7 +569,7 @@ abstract public class Weapon extends KindOfWeapon {
 
 			if (attacker.buff(RunicBlade.RunicSlashTracker.class) != null){
 				multi += attacker.buff(RunicBlade.RunicSlashTracker.class).boost;
-				attacker.buff(RunicBlade.RunicSlashTracker.class).detach();
+				if (consumeBoosts) attacker.buff(RunicBlade.RunicSlashTracker.class).detach();
 			}
 
 			if (attacker.buff(Smite.SmiteTracker.class) != null){
@@ -572,7 +578,7 @@ abstract public class Weapon extends KindOfWeapon {
 
 			if (attacker.buff(ElementalStrike.DirectedPowerTracker.class) != null){
 				multi += attacker.buff(ElementalStrike.DirectedPowerTracker.class).enchBoost;
-				attacker.buff(ElementalStrike.DirectedPowerTracker.class).detach();
+				if (consumeBoosts) attacker.buff(ElementalStrike.DirectedPowerTracker.class).detach();
 			}
 
 			if (attacker.buff(Talent.SpiritBladesTracker.class) != null
@@ -646,6 +652,7 @@ abstract public class Weapon extends KindOfWeapon {
 			Class<?>[][] pool = weapon instanceof MissileWeapon || weapon instanceof SpiritBow
 					? missilePool : weaponPool;
 			ArrayList<Class<?>> enchants = new ArrayList<>(Arrays.asList(pool[tier]));
+			if (!(weapon instanceof MeleeWeapon)) enchants.remove(Valiant.class);
 			if (weapon instanceof SpiritBow || weapon instanceof SpiritBow.SpiritArrow) {
 				enchants.remove(Loyalty.class);
 				enchants.remove(Infinity.class);

@@ -145,6 +145,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLivingEarth;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfWarding;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Valiant;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Crossbow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Flail;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
@@ -1898,12 +1899,18 @@ public class Hero extends Char {
 		//if the intensity is very low don't flash at all
 		if (flashIntensity >= 0.05f){
 			flashIntensity = Math.min(1/3f, flashIntensity); //cap intensity at 1/3
-			GameScene.flash( (int)(0xFF*flashIntensity) << 16 );
+			KindOfWeapon weapon = belongings.attackingWeapon();
+			boolean valiant = weapon instanceof MeleeWeapon && ((MeleeWeapon) weapon).hasEnchant(Valiant.class, this);
+			if (!valiant) {
+				GameScene.flash( (int)(0xFF*flashIntensity) << 16 );
+			}
 			if (isAlive()) {
-				if (flashIntensity >= 1/6f) {
-					Sample.INSTANCE.play(Assets.Sounds.HEALTH_CRITICAL, 1/3f + flashIntensity * 2f);
-				} else {
-					Sample.INSTANCE.play(Assets.Sounds.HEALTH_WARN, 1/3f + flashIntensity * 4f);
+				if (!valiant) {
+					if (flashIntensity >= 1/6f) {
+						Sample.INSTANCE.play(Assets.Sounds.HEALTH_CRITICAL, 1/3f + flashIntensity * 2f);
+					} else {
+						Sample.INSTANCE.play(Assets.Sounds.HEALTH_WARN, 1/3f + flashIntensity * 4f);
+					}
 				}
 				//hero gets interrupted on taking serious damage, regardless of any other factor
 				interrupt();

@@ -352,7 +352,7 @@ public class Ghost extends NPC {
 
 				// 20% base chance to be enchanted, stored separately so status isn't revealed early
 				//we generate first so that the outcome doesn't affect the number of RNG rolls
-				enchant = Weapon.Enchantment.random();
+				enchant = Weapon.Enchantment.randomFor(weapon);
 				glyph = Armor.Glyph.random();
 
 				float enchantRoll = Random.Float();

@@ -68,7 +68,7 @@ public class Statue extends Mob {
 		}
 		levelGenStatue = useDecks;
 		weapon.cursed = false;
-		weapon.enchant( Enchantment.random() );
+		weapon.enchant( Enchantment.randomFor(weapon) );
 	}
 
 	public Weapon weapon(){
