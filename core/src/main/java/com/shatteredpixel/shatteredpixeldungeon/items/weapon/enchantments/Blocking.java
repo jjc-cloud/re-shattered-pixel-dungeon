@@ -24,7 +24,6 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barrier;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.HoldFast;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ShieldBuff;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
@@ -34,7 +33,6 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.watabou.noosa.Image;
-import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
 public class Blocking extends Weapon.Enchantment {
@@ -53,14 +51,31 @@ public class Blocking extends Weapon.Enchantment {
 		if (Random.Float() < procChance){
 			float powerMulti = Math.max(1f, procChance);
 
-			BlockBuff b = Buff.affect(attacker, BlockBuff.class);
 			int shield = Math.round(powerMulti * (2 + weapon.buffedLvl()));
-			b.setShield(shield);
-			attacker.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(shield), FloatingText.SHIELDING);
-			attacker.sprite.emitter().burst(Speck.factory(Speck.LIGHT), 5);
+			if (grantShield(attacker, shield) && attacker.sprite != null) {
+				attacker.sprite.emitter().burst(Speck.factory(Speck.LIGHT), 5);
+			}
 		}
 		
 		return damage;
+	}
+
+	public static boolean grantShield(Char target, int amount) {
+		BlockBuff shield = target.buff(BlockBuff.class);
+		int current = shield == null ? 0 : shield.shielding();
+		int gained = Math.min(amount, maxShielding(target) - current);
+		if (gained <= 0) return false;
+
+		if (shield == null) shield = Buff.affect(target, BlockBuff.class);
+		shield.incShield(gained);
+		if (target.sprite != null) {
+			target.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(gained), FloatingText.SHIELDING);
+		}
+		return true;
+	}
+
+	private static int maxShielding(Char target) {
+		return (int) (target.HT * 3L / 5);
 	}
 	
 	@Override
@@ -73,26 +88,12 @@ public class Blocking extends Weapon.Enchantment {
 		{
 			type = buffType.POSITIVE;
 
-			shieldUsePriority = 2;
+			shieldUsePriority = -1;
 		}
 
-		private float left = 5f;
-
-		@Override
-		public boolean act() {
-			left -= HoldFast.buffDecayFactor(target);
-			if (left <= 0) {
-				detach();
-			} else {
-				spend(TICK);
-			}
-			return true;
-		}
-
-		@Override
-		public void setShield(int shield) {
-			super.setShield(shield);
-			left = 5f;
+		public void trimToMaxHealth() {
+			int excess = shielding() - maxShielding(target);
+			if (excess > 0) absorbDamage(excess);
 		}
 
 		@Override
@@ -115,32 +116,8 @@ public class Blocking extends Weapon.Enchantment {
 		}
 
 		@Override
-		public float iconFadePercent() {
-			return Math.max(0, (5f - left) / 5f);
-		}
-
-		@Override
-		public String iconTextDisplay() {
-			return Integer.toString((int)left);
-		}
-
-		@Override
 		public String desc() {
-			return Messages.get(this, "desc", shielding(), dispTurns(left));
-		}
-
-		public static String LEFT = "left";
-
-		@Override
-		public void storeInBundle(Bundle bundle) {
-			super.storeInBundle(bundle);
-			bundle.put(LEFT, left);
-		}
-
-		@Override
-		public void restoreFromBundle(Bundle bundle) {
-			super.restoreFromBundle(bundle);
-			left = bundle.getFloat(LEFT);
+			return Messages.get(this, "desc", shielding());
 		}
 	}
 }

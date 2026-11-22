@@ -36,9 +36,10 @@ public abstract class ShieldBuff extends Buff {
 
 	//higher priority shielding buffs are consumed first if multiple exist
 	//currently we have the following:
-	// 2: relatively weak and short term shields like blocking buff
+	// 2: Warrior's shield
 	// 1: larger but still short-term shields from Cleric's ascended form
 	// 0: everything else, mostly the various sources of generic barrier
+	// -1: persistent shielding from the Blocking enchantment
 	protected int shieldUsePriority = 0;
 	protected boolean detachesAtZero = true;
 	
