@@ -74,12 +74,15 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.V021_MAGICSPEAR, "新武器",
 				"\n-新增二阶投掷武器爆破，爆破造成魔法伤害，会将周围单位击飞。\n-新增三阶投掷武器魔法长枪，魔法长枪造成魔法伤害，无限耐久，但只要未命中就会消失。"
 				+ "\n-新增四阶投掷武器落霄，落霄造成雷属性伤害，攻击沿途的所有单位。\n-新增五阶投掷武器阳炎标枪，阳炎标枪造成火焰伤害，点燃沿途所有物品，只要该武器仍然卡在单位身上就会陷入永久燃烧。"
+				+ "\n-三阶魔法投掷武器最早出现在第二区域，四阶及五阶魔法投掷武器最早出现在第三区域。"
 				+ "\n-新增五阶武器斩龙，根据使用者的受伤程度提高伤害下限，替换巨剑。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V22_KATANA, "剑气",
 				"\n-移除武技弓步刺，新增武技剑气，剑气可对非相邻的单位使出，能够触发武器附魔，对相邻单位使出则只造成一次普通伤害。"
 				+ "\n-符合条件的刀剑类武器指定范围外目标时也能够使用剑气，但只会造成普通攻击伤害。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V021_KEEN_HEARING, "新天赋与成就",
 				"\n-天赋敏锐听觉：感知周围非睡眠怪物的声音。\n-天赋恃强凌弱：对孤立的敌人造成额外伤害，反之降低伤害。\n-成就财货两空：没能追上偷走物品的水晶宝箱怪。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V021_INFINITY_DART, "新附魔",
+				"\n-忠诚：你的投掷武器会在命中后的下一回合返回你的手中。\n-无限：你的投掷武器永远不会减少。\n-神勇：生命值越低，持有该附魔的武器造成的伤害越高。"));
 
 
 		changes = new ChangeInfo("增强", false, null);
@@ -96,9 +99,9 @@ public class ReShatteredChanges {
 				"\n邪眼的蓄力攻击会无视可破坏地形。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V011_ANKH, "重生十字架",
 				"\n遗物状态下不再限制物品的获取与使用。"));
-		changes.addButton(new ChangeButton(ChangeIcons.V074_MAIL_ANTIMAGIC, "护甲刻印",
+		changes.addButton(new ChangeButton(ChangeIcons.V074_MAIL_ANTIMAGIC, "刻印与附魔",
 				"\n-磐岩：护甲的防御成长提高一阶，且额外获得一级护甲强化的防御收益，但会使穿戴者的闪避降低50%。"
-				+ "\n-敌法：护甲和抵御物理伤害一样抵御法术伤害。"));
+				+ "\n-敌法：护甲和抵御物理伤害一样抵御法术伤害。\n-招架附魔获得的护盾不再消失且可叠加。"));
 
 		changes = new ChangeInfo("改动", false, null);
 		changes.hardlight(CharSprite.WARNING);
@@ -110,12 +113,15 @@ public class ReShatteredChanges {
 				"\n伤害性动作不再打断时间停止类效果。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V064_CHALLENGES, "集群智能",
 				"\n集群智能调整，现在集群智能只会在首次发现敌方单位时触发，且非怪物发出的声音会让怪物前往声源检查。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V021_INFINITY_DART, "近战武器与投掷武器附魔池独立",
+				"\n-近战武器仍拥有所有附魔。\n-投掷武器现在不在会获得招架、血饮附魔，同时新增忠诚，无限附魔。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V081_MISC, "杂项改动",
 				"\n-取消强制新手流程，首次开局即可自由选择英雄与挑战，无需先进入地牢取得手册。"
 				+ "\n-随机模式不再要求通关，首次开局即可设置随机天赋与随机挑战。"
 				+ "\n-踩到隐藏楼层入口时始终显示回响提示，不再要求关闭音效或将音效音量设为零。"
 				+ "\n-投矛类武器现在会对食人鱼造成额外伤害。"
-				+ "\n-移除了中文与英文以外的不支持语言。\n-首次看见超级隐藏房入口时放下的炸弹为点燃状态。"
+				+ "\n-移除了中文与英文以外的不支持语言。\n-首次看见超级隐藏房入口时放下的炸弹为点燃状态。\n-打破任何木桶都有概率生成一只寄居蟹。"
+				+ "\n-重新加入英雄殿堂。\n-移除法杖隐藏房内石化法杖的50%生成权重，现在为随机法杖。"
 			));
 		changes.addButton(new ChangeButton(ChangeIcons.V061_BUGFIX, "bug修复",
 				"\n-修复带有余烬的特殊地砖可以长草的问题。"

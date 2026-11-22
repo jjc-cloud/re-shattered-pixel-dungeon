@@ -187,6 +187,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Javelin;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicJavelin;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Kunai;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicMissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Shuriken;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Detonation;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingClub;
@@ -858,12 +859,13 @@ public class Generator {
 		
 		floorSet = (int)GameMath.gate(0, floorSet, floorSetTierProbs.length-1);
 
+		Category tier = misTiers[Random.chances(floorSetTierProbs[floorSet])];
 		MissileWeapon w;
-		if (useDefaults){
-			w = (MissileWeapon)randomUsingDefaults(misTiers[Random.chances(floorSetTierProbs[floorSet])]);
-		} else {
-			w = (MissileWeapon)random(misTiers[Random.chances(floorSetTierProbs[floorSet])]);
-		}
+		do {
+			w = (MissileWeapon)(useDefaults ? randomUsingDefaults(tier) : random(tier));
+		} while (w instanceof MagicMissileWeapon
+				&& ((w.tier == 3 && Dungeon.depth < 6)
+				|| (w.tier >= 4 && Dungeon.depth < 11)));
 		return w;
 	}
 

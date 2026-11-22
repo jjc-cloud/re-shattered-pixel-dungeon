@@ -8,7 +8,6 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.MobSpawner;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.PetrifiedStatue;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
-import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfPetrification;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
@@ -137,9 +136,7 @@ public class SecretPetrifiedRoom extends SecretRoom {
 			}
 		}
 
-		Wand prize = Random.Int(2) == 0
-				? (Wand)new WandOfPetrification().random()
-				: (Wand)Generator.random(Generator.Category.WAND);
+		Wand prize = (Wand) Generator.random(Generator.Category.WAND);
 		prize.level(Random.chances(new float[]{3, 2, 1}) + 1);
 		prize.curCharges = prize.maxCharges;
 		prize.cursed = false;
