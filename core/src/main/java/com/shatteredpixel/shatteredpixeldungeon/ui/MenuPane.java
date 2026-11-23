@@ -26,12 +26,16 @@ import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.SPDAction;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.Torch;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Document;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndChallenges;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndGame;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndJournal;
@@ -68,6 +72,7 @@ public class MenuPane extends Component {
 	private NinePatch versionOverflowBG;
 
 	private DangerIndicator danger;
+	private TorchButton torchButton;
 
 	public static final int WIDTH = 31;
 
@@ -150,6 +155,9 @@ public class MenuPane extends Component {
 		danger = new DangerIndicator();
 		add( danger );
 
+		torchButton = new TorchButton();
+		add(torchButton);
+
 		add( pickedUp = new Toolbar.PickedUpItem());
 	}
 
@@ -207,8 +215,89 @@ public class MenuPane extends Component {
 			challengeButton.setRect(challengeIcon.x, challengeIcon.y, challengeIcon.width(), challengeIcon.height() + challengeText.height());
 		}
 
-		danger.setPos( x + WIDTH - danger.width(), y + bg.height + 1 );
-		danger.setSize( camera.width - danger.width(), danger.height());
+		torchButton.setPos(x + WIDTH - torchButton.width(), y + bg.height + 1);
+		danger.setRect(x + WIDTH - Tag.SIZE,
+				torchButton.visible ? torchButton.bottom() + 1 : torchButton.top(),
+				camera.width - Tag.SIZE, danger.height());
+	}
+
+	@Override
+	public void update() {
+		boolean wasVisible = torchButton.visible;
+		super.update();
+		if (wasVisible != torchButton.visible) {
+			danger.setPos(danger.left(), torchButton.visible ? torchButton.bottom() + 1 : torchButton.top());
+		}
+	}
+
+	private static class TorchButton extends Tag {
+
+		private ItemSprite icon;
+		private BitmapText turns;
+		private int lastTurns = -1;
+		private Torch torch;
+
+		TorchButton() {
+			super(0);
+			setColor(0x003ea3);
+			visible = false;
+			setSize(WIDTH, 16);
+		}
+
+		@Override
+		protected void createChildren() {
+			super.createChildren();
+			icon = new ItemSprite(ItemSpriteSheet.TORCH);
+			add(icon);
+			turns = new BitmapText(PixelScene.pixelFont);
+			add(turns);
+		}
+
+		@Override
+		protected void layout() {
+			super.layout();
+			icon.x = x + 2;
+			icon.y = y + (height - icon.height()) / 2;
+			PixelScene.align(icon);
+
+			turns.x = right() - 2 - turns.width();
+			turns.y = y + (height - turns.baseLine()) / 2;
+			PixelScene.align(turns);
+		}
+
+		@Override
+		public void update() {
+			if (!Dungeon.hero.isAlive()) {
+				torch = null;
+			} else if (Dungeon.hero.ready || !Actor.processing()) {
+				torch = Torch.forShortcut(Dungeon.hero);
+			}
+			visible = torch != null;
+			if (visible) {
+				icon.alpha(Torch.AC_EXTINGUISH.equals(torch.defaultAction()) ? 1f : 0.55f);
+				int remaining = torch.remainingTurns();
+				if (remaining != lastTurns) {
+					lastTurns = remaining;
+					turns.text(Integer.toString(remaining));
+					turns.measure();
+					layout();
+				}
+			}
+			super.update();
+		}
+
+		@Override
+		protected void onClick() {
+			if (Dungeon.hero.isAlive() && Dungeon.hero.ready && !GameScene.cancel()) {
+				Torch selected = Torch.forShortcut(Dungeon.hero);
+				if (selected != null) selected.execute(Dungeon.hero);
+			}
+		}
+
+		@Override
+		protected String hoverText() {
+			return torch == null ? null : torch.actionName(torch.defaultAction(), Dungeon.hero);
+		}
 	}
 
 	public void pickup(Item item, int cell) {

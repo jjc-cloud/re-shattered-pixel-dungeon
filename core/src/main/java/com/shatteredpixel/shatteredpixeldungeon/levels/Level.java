@@ -1562,11 +1562,11 @@ public abstract class Level implements Bundlable {
 		float distance = viewer.viewDistance;
 		if (viewer == Dungeon.hero) {
 			distance = this instanceof VaultLevel ? Math.min(8, viewDistance) : viewDistance;
-			if (viewer.buff(Light.class) != null) {
+			if (Light.isActive(viewer)) {
 				distance = Math.max(distance, this instanceof VaultLevel ? 8 : Light.DISTANCE);
 			}
 			viewer.viewDistance = Math.round(distance);
-		} else if (viewer.buff(Light.class) != null) {
+		} else if (Light.isActive(viewer)) {
 			distance = Math.max(distance, Light.DISTANCE);
 		}
 		if (viewer instanceof Hero) {

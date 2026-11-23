@@ -22,11 +22,14 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.SmokeScreen;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.WaterVapor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.items.Torch;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.ShadowCaster;
 
 import java.util.Arrays;
@@ -128,8 +131,13 @@ public final class LevelLighting {
 			dirty.set(0, blocks);
 			initialized = true;
 		}
-		// 燃烧状态和火属性角色只照亮自身；移动、熄灭和形态变化只重算变化格所在块。
+		// 角色光源只照亮自身；移动、熄灭和形态变化只重算变化格所在块。
 		nextCharacterLight.clear();
+		Hero hero = Dungeon.hero;
+		if (level == Dungeon.level && hero != null && hero.isAlive() && level.insideMap(hero.pos)
+				&& hero.buff(Torch.BurningTorch.class) != null) {
+			nextCharacterLight.set(hero.pos);
+		}
 		for (Char ch : level.mobs) {
 			if (ch.isAlive() && level.insideMap(ch.pos)
 					&& (ch.buff(Burning.class) != null || Char.hasProp(ch, Char.Property.FIERY))) {

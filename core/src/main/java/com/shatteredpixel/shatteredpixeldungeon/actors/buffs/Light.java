@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.items.Torch;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 
@@ -34,6 +35,10 @@ public class Light extends FlavourBuff {
 
 	public static final float DURATION	= 250f;
 	public static final int DISTANCE	= 6;
+
+	public static boolean isActive(Char target) {
+		return target.buff(Light.class) != null || target.buff(Torch.BurningTorch.class) != null;
+	}
 	
 	@Override
 	public boolean attachTo( Char target ) {
@@ -70,6 +75,6 @@ public class Light extends FlavourBuff {
 	@Override
 	public void fx(boolean on) {
 		if (on) target.sprite.add(CharSprite.State.ILLUMINATED);
-		else target.sprite.remove(CharSprite.State.ILLUMINATED);
+		else if (!isActive(target)) target.sprite.remove(CharSprite.State.ILLUMINATED);
 	}
 }

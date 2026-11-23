@@ -115,6 +115,8 @@ public class ReShatteredChanges {
 				"\n集群智能调整，现在集群智能只会在首次发现敌方单位时触发，且非怪物发出的声音会让怪物前往声源检查。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V021_INFINITY_DART, "近战武器与投掷武器附魔池独立",
 				"\n-近战武器仍拥有所有附魔。\n-投掷武器现在不在会获得招架、血饮附魔，同时新增忠诚，无限附魔。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V060_TORCH, "火把",
+				"\n火把不再一次性消耗，可以随时点燃熄灭，但熄灭后再次点燃会额外消耗5回合发光时间。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V081_MISC, "杂项改动",
 				"\n-取消强制新手流程，首次开局即可自由选择英雄与挑战，无需先进入地牢取得手册。"
 				+ "\n-随机模式不再要求通关，首次开局即可设置随机天赋与随机挑战。"

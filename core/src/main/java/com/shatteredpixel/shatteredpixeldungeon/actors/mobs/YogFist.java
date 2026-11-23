@@ -578,8 +578,7 @@ public abstract class YogFist extends Mob {
 
 				enemy.damage( Random.NormalIntRange(10, 20), new DarkBolt() , this);
 
-				Light l = enemy.buff(Light.class);
-				if (l != null){
+				for (Light l : enemy.buffs(Light.class)){
 					l.weaken(50);
 				}
 
@@ -603,10 +602,7 @@ public abstract class YogFist extends Mob {
 			if (isAlive() && beforeHP > HT/2 && HP <= HT/2){
 				hasTeleported = true;
 				HP = HT/2;
-				Light l = Dungeon.hero.buff(Light.class);
-				if (l != null){
-					l.detach();
-				}
+				Buff.detach(Dungeon.hero, Light.class);
 				int i;
 				do {
 					i = Random.Int(Dungeon.level.length());
@@ -619,10 +615,7 @@ public abstract class YogFist extends Mob {
 				GameScene.flash(0, false);
 				GLog.w( Messages.get( this, "teleport" ));
 			} else if (!isAlive()){
-				Light l = Dungeon.hero.buff(Light.class);
-				if (l != null){
-					l.detach();
-				}
+				Buff.detach(Dungeon.hero, Light.class);
 				GameScene.flash(0, false);
 			}
 		}
