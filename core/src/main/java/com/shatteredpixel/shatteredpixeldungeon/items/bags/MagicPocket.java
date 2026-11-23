@@ -40,6 +40,11 @@ public class MagicPocket extends Bag {
 	}
 
 	@Override
+	public ItemSprite.Glowing glowing() {
+		return ItemSprite.Glowing.rainbow(2f);
+	}
+
+	@Override
 	public int capacity() { return 19; }
 
 	@Override

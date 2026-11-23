@@ -12,15 +12,21 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.ExitButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.IconButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
+import com.shatteredpixel.shatteredpixeldungeon.ui.ScrollPane;
 import com.shatteredpixel.shatteredpixeldungeon.windows.IconTitle;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndRanking;
 import com.watabou.noosa.Camera;
 import com.watabou.noosa.audio.Music;
+import com.watabou.noosa.ui.Component;
 import com.watabou.utils.RectF;
 
 import java.util.List;
 
 public class HallOfHeroesScene extends PixelScene {
+
+	private static final int ROW_HEIGHT = 20;
+	private static final int PAGE_BUTTON_SIZE = 20;
+	private static final int PAGE_BUTTON_GAP = 8;
 
 	private static int page;
 
@@ -36,6 +42,7 @@ public class HallOfHeroesScene extends PixelScene {
 		RectF insets = getCommonInsets();
 		float width = Camera.main.width - insets.left - insets.right;
 		float height = Camera.main.height - insets.top - insets.bottom;
+		float footerTop = insets.top + height - PAGE_BUTTON_SIZE - 4;
 
 		IconTitle title = new IconTitle(new ItemSprite(ItemSpriteSheet.AMULET, null), Messages.get(this, "title"));
 		title.setSize(200, 0);
@@ -51,21 +58,29 @@ public class HallOfHeroesScene extends PixelScene {
 			align(empty);
 			add(empty);
 		} else {
-			float rowHeight = Math.min(20, (height - 40) / records.size());
-			float rowWidth = Math.min(160, width) - 8;
-			float left = insets.left + (width - rowWidth) / 2;
-			float top = insets.top + (height - rowHeight * records.size()) / 2;
-			for (int index = 0; index < records.size(); index++) {
-				Rankings.Record record = records.get(index);
-				RankingsScene.Record row = new RankingsScene.Record(index, false, record) {
-					@Override
-					protected void onClick() {
-						HallOfHeroesScene.this.addToFront(new WndRanking(record, page));
+			int listWidth = (int)Math.min(160, width) - 8;
+			int rowWidth = listWidth - 2;
+			float left = align(insets.left + (width - listWidth) / 2);
+			float top = align(Math.max(insets.top + 24, title.bottom() + 6));
+			Component content = new Component();
+			content.active = false;
+			ScrollPane list = new ScrollPane(content) {
+				@Override
+				public void onClick(float x, float y) {
+					int index = (int)(y / ROW_HEIGHT);
+					if (x >= 0 && x < rowWidth && y >= 0 && index < records.size()) {
+						HallOfHeroesScene.this.addToFront(new WndRanking(records.get(index), page));
 					}
-				};
-				row.setRect(left, top + rowHeight * index, rowWidth, rowHeight);
-				add(row);
+				}
+			};
+			for (int index = 0; index < records.size(); index++) {
+				RankingsScene.Record row = new RankingsScene.Record(index, false, records.get(index));
+				row.setRect(0, (float)ROW_HEIGHT * index, rowWidth, ROW_HEIGHT);
+				content.add(row);
 			}
+			content.setSize(listWidth, (float)ROW_HEIGHT * records.size());
+			add(list);
+			list.setRect(left, top, listWidth, (int)(footerTop - top - 6));
 		}
 
 		ExitButton exit = new ExitButton() {
@@ -77,14 +92,14 @@ public class HallOfHeroesScene extends PixelScene {
 		exit.setPos(insets.left + width - exit.width(), insets.top);
 		add(exit);
 
-		float bottom = insets.top + height;
 		RenderedTextBlock indicator = renderTextBlock(Messages.get(this, "page", page + 1, Rankings.HALL_PAGES), 8);
 		indicator.hardlight(0x3399FF);
-		indicator.setPos(insets.left + (width - indicator.width()) / 2, bottom - indicator.height() - 8);
+		indicator.setPos(insets.left + (width - indicator.width()) / 2,
+				footerTop + (PAGE_BUTTON_SIZE - indicator.height()) / 2);
 		align(indicator);
 		add(indicator);
-		addPageButton(Icons.LEFTARROW, -1, insets.left + 8, bottom - 21);
-		addPageButton(Icons.RIGHTARROW, 1, insets.left + width - 28, bottom - 21);
+		addPageButton(Icons.LEFTARROW, -1, indicator.left() - PAGE_BUTTON_GAP - PAGE_BUTTON_SIZE, footerTop);
+		addPageButton(Icons.RIGHTARROW, 1, indicator.right() + PAGE_BUTTON_GAP, footerTop);
 		fadeIn();
 	}
 
@@ -97,7 +112,7 @@ public class HallOfHeroesScene extends PixelScene {
 				ShatteredPixelDungeon.switchNoFade(HallOfHeroesScene.class);
 			}
 		};
-		button.setRect(x, y, 20, 20);
+		button.setRect(x, y, PAGE_BUTTON_SIZE, PAGE_BUTTON_SIZE);
 		add(button);
 	}
 

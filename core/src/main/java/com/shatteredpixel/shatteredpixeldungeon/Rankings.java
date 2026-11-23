@@ -37,6 +37,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.Trinket;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
+import com.shatteredpixel.shatteredpixeldungeon.levels.RegularLevel;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Toolbar;
@@ -68,8 +69,7 @@ public enum Rankings {
 	
 	public static final String RANKINGS_FILE = "rankings.dat";
 	private static final String HALL_FILE = "hall.dat";
-	public static final int HALL_PAGES = 4;
-	public static final int HALL_PAGE_SIZE = 10;
+	public static final int HALL_PAGES = 6;
 	private ArrayList<ArrayList<Record>> hallRecords;
 	
 	public ArrayList<Record> records;
@@ -178,66 +178,113 @@ public enum Rankings {
 
 	//assumes a ranking is loaded, or game is ending
 	public int calculateScore(){
+		ScoreBreakdown score = calculateScore(false);
+		Statistics.progressScore = score.progress;
+		Statistics.treasureScore = score.treasure;
+		Statistics.exploreScore = score.exploration;
+		Statistics.totalBossScore = score.bosses;
+		Statistics.totalQuestScore = score.quests;
+		Statistics.winMultiplier = score.winMultiplier;
+		Statistics.chalMultiplier = score.challengeMultiplier;
+		Statistics.totalScore = score.total;
+		return score.total;
+	}
+
+	public ScoreBreakdown previewScore() {
+		return calculateScore(true);
+	}
+
+	private ScoreBreakdown calculateScore(boolean preview) {
+		int progress, treasure;
+		int exploration = 0, bosses = 0, quests = 0;
+		float winMultiplier;
 
 		if (Dungeon.initialVersion > ShatteredPixelDungeon.v1_2_3){
-			Statistics.progressScore = Dungeon.hero.lvl * Statistics.deepestFloor * 65;
-			Statistics.progressScore = Math.min(Statistics.progressScore, 50_000);
+			progress = Math.min(Dungeon.hero.lvl * Statistics.deepestFloor * 65, 50_000);
 
-			if (Statistics.heldItemValue == 0) {
+			int heldItemValue = preview ? 0 : Statistics.heldItemValue;
+			boolean corpseDustBonus = false;
+			if (heldItemValue == 0) {
 				for (Item i : Dungeon.hero.belongings) {
-					Statistics.heldItemValue += i.value();
+					heldItemValue += i.value();
 					if (i instanceof CorpseDust && Statistics.deepestFloor >= 10){
 						// in case player kept the corpse dust, for a necromancer run
 						//we also override the score here, ignoring penalties
-						Statistics.questScores[1] = 2000;
+						corpseDustBonus = true;
 					}
 				}
 			}
-			Statistics.treasureScore = Statistics.goldCollected + Statistics.heldItemValue;
-			Statistics.treasureScore = Math.min(Statistics.treasureScore, 20_000);
+			if (!preview) {
+				Statistics.heldItemValue = heldItemValue;
+				if (corpseDustBonus) Statistics.questScores[1] = 2000;
+			}
+			treasure = Math.min(Statistics.goldCollected + heldItemValue, 20_000);
 
-			Statistics.exploreScore = 0;
-			int scorePerFloor = Statistics.floorsExplored.size * 50;
-			for (float percentExplored : Statistics.floorsExplored.valueList()){
-				Statistics.exploreScore += Math.round(percentExplored*scorePerFloor);
+			boolean includeCurrentFloor = preview && Dungeon.branch == 0
+					&& Dungeon.level instanceof RegularLevel && !Dungeon.bossLevel();
+			int floorCount = Statistics.floorsExplored.size;
+			if (includeCurrentFloor && !Statistics.floorsExplored.containsKey(Dungeon.depth)) floorCount++;
+			int scorePerFloor = floorCount * 50;
+			for (int depth : Statistics.floorsExplored.keyArray()) {
+				if (includeCurrentFloor && depth == Dungeon.depth) continue;
+				float percentExplored = Statistics.floorsExplored.get(depth, 0f);
+				exploration += Math.round(percentExplored * scorePerFloor);
+			}
+			if (includeCurrentFloor) {
+				exploration += Math.round(Dungeon.level.levelExplorePercent(Dungeon.depth) * scorePerFloor);
 			}
 
-			Statistics.totalBossScore = 0;
 			for (int i : Statistics.bossScores){
-				if (i > 0) Statistics.totalBossScore += i;
+				if (i > 0) bosses += i;
 			}
 
-			Statistics.totalQuestScore = 0;
-			for (int i : Statistics.questScores){
-				if (i > 0) Statistics.totalQuestScore += i;
+			for (int i = 0; i < Statistics.questScores.length; i++) {
+				int questScore = i == 1 && corpseDustBonus ? 2000 : Statistics.questScores[i];
+				if (questScore > 0) quests += questScore;
 			}
 
-			Statistics.winMultiplier = 1f;
-			if (Statistics.gameWon)         Statistics.winMultiplier += 1f;
-			if (Statistics.ascended)        Statistics.winMultiplier += 0.5f;
+			winMultiplier = 1f;
+			if (Statistics.gameWon)  winMultiplier += 1f;
+			if (Statistics.ascended) winMultiplier += 0.5f;
 
 		//pre v1.3.0 runs have different score calculations
 		//only progress and treasure score, and they are each up to 50% bigger
 		//win multiplier is a simple 2x if run was a win, challenge multi is the same as 1.3.0
 		} else {
-			Statistics.progressScore = Dungeon.hero.lvl * Statistics.deepestFloor * 100;
-			Statistics.treasureScore = Math.min(Statistics.goldCollected, 30_000);
-
-			Statistics.exploreScore = Statistics.totalBossScore = Statistics.totalQuestScore = 0;
-
-			Statistics.winMultiplier = Statistics.gameWon ? 2 : 1;
-
+			progress = Dungeon.hero.lvl * Statistics.deepestFloor * 100;
+			treasure = Math.min(Statistics.goldCollected, 30_000);
+			winMultiplier = Statistics.gameWon ? 2 : 1;
 		}
 
-		Statistics.chalMultiplier = (float)Math.pow(1.25, Challenges.activeChallenges());
-		Statistics.chalMultiplier = Math.round(Statistics.chalMultiplier*20f)/20f;
+		float challengeMultiplier = (float)Math.pow(1.25, Challenges.activeChallenges());
+		challengeMultiplier = Math.round(challengeMultiplier * 20f) / 20f;
+		int total = progress + treasure + exploration + bosses + quests;
+		total *= winMultiplier * challengeMultiplier;
+		return new ScoreBreakdown(progress, treasure, exploration, bosses, quests,
+				winMultiplier, challengeMultiplier, total);
+	}
 
-		Statistics.totalScore = Statistics.progressScore + Statistics.treasureScore + Statistics.exploreScore
-					+ Statistics.totalBossScore + Statistics.totalQuestScore;
+	public static final class ScoreBreakdown {
+		public final int progress, treasure, exploration, bosses, quests, total;
+		public final float winMultiplier, challengeMultiplier;
 
-		Statistics.totalScore *= Statistics.winMultiplier * Statistics.chalMultiplier;
+		public ScoreBreakdown() {
+			this(Statistics.progressScore, Statistics.treasureScore, Statistics.exploreScore,
+					Statistics.totalBossScore, Statistics.totalQuestScore, Statistics.winMultiplier,
+					Statistics.chalMultiplier, Statistics.totalScore);
+		}
 
-		return Statistics.totalScore;
+		private ScoreBreakdown(int progress, int treasure, int exploration, int bosses, int quests,
+							   float winMultiplier, float challengeMultiplier, int total) {
+			this.progress = progress;
+			this.treasure = treasure;
+			this.exploration = exploration;
+			this.bosses = bosses;
+			this.quests = quests;
+			this.winMultiplier = winMultiplier;
+			this.challengeMultiplier = challengeMultiplier;
+			this.total = total;
+		}
 	}
 
 	public static final String HERO         = "hero";
@@ -415,8 +462,7 @@ public enum Rankings {
 
 	public boolean sendToHall(Record record, int page, int previousPage) {
 		loadHall();
-		if (hallPageOf(record) != previousPage || page == previousPage
-				|| hallRecords.get(page).size() >= HALL_PAGE_SIZE) return false;
+		if (hallPageOf(record) != previousPage || page == previousPage) return false;
 		ArrayList<ArrayList<Record>> pages = new ArrayList<>(hallRecords);
 		ArrayList<Record> destination = new ArrayList<>(pages.get(page));
 		destination.add(record);

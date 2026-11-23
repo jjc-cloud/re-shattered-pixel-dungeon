@@ -35,7 +35,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 
-/** 固定的四向连通危险区；墙被清空后立即重新填满，不参与逐回合调度。 */
+/** 固定的四向连通危险区；支撑墙被清空后立即结算，不参与逐回合调度。 */
 public final class CaveCollapse implements Hero.Doom {
 
 	private final Level level;
@@ -226,6 +226,7 @@ public final class CaveCollapse implements Hero.Doom {
 				ArrayList<Integer> supports = new ArrayList<>();
 				int supportCount = Random.IntRange(1, 2);
 				for (int cell : cells) {
+					if (level.cellAt(cell).has(CellContent.OVERHEAD)) continue;
 					// 初始支撑墙的八邻格与其他墙体留出间隔，也不贴另一格支撑墙。
 					boolean nearWall = false;
 					for (int offset : PathFinder.NEIGHBOURS8) {
@@ -293,6 +294,10 @@ public final class CaveCollapse implements Hero.Doom {
 		collapsing = true;
 		try {
 			int[] cells = regions.get(index);
+			IntSet affectedCells = new IntSet();
+			for (int cell : cells) {
+				if (!level.cellAt(cell).has(CellContent.OVERHEAD)) affectedCells.add(cell);
+			}
 			LinkedHashSet<Char> victims = new LinkedHashSet<>(Actor.chars());
 			victims.addAll(level.mobs);
 			if (Dungeon.hero != null) victims.add(Dungeon.hero);
@@ -300,13 +305,14 @@ public final class CaveCollapse implements Hero.Doom {
 			Iterator<Char> iterator = victims.iterator();
 			while (iterator.hasNext()) {
 				Char ch = iterator.next();
-				if (!ch.isAlive() || !contains(ch.pos) || regionAt[ch.pos] != index) iterator.remove();
+				if (!ch.isAlive() || !affectedCells.contains(ch.pos)) iterator.remove();
 			}
 			boolean killHero = victims.remove(Dungeon.hero);
 			// 英雄最后结算，避免终局先保存成绩/删除存档，其他单位尚未完成掉落。
 			for (Char ch : victims) { ch.HP = 0; ch.die(this); }
 			boolean seen = false;
 			for (int cell : cells) {
+				if (!affectedCells.contains(cell)) continue;
 				goldVeins.remove(cell);
 				Level.set(cell, Terrain.COLLAPSE_WALL, level);
 				for (int offset : PathFinder.NEIGHBOURS9) {
@@ -319,7 +325,7 @@ public final class CaveCollapse implements Hero.Doom {
 					seen = true;
 				}
 			}
-			walls.set(index, cells.length);
+			walls.set(index, affectedCells.size);
 			if (seen) {
 				PixelScene.shake(3, 0.7f);
 				Sample.INSTANCE.play(Assets.Sounds.ROCKS);

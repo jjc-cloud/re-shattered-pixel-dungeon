@@ -105,7 +105,8 @@ public class RankingsScene extends PixelScene {
 			int pos = 0;
 			
 			for (Rankings.Record rec : Rankings.INSTANCE.records) {
-				Record row = new Record( pos, pos == Rankings.INSTANCE.lastRecord, rec );
+				int rankedPosition = pos == Rankings.TABLE_SIZE - 1 ? -1 : pos;
+				Record row = new Record( rankedPosition, pos == Rankings.INSTANCE.lastRecord, rec );
 				float offset = 0;
 				if (rowHeight <= 14){
 					offset = (pos % 2 == 1) ? 5 : -5;
@@ -236,7 +237,7 @@ public class RankingsScene extends PixelScene {
 				addToBack( flare );
 			}
 
-			if (pos != Rankings.TABLE_SIZE-1) {
+			if (pos >= 0) {
 				position.text(Integer.toString(pos + 1));
 			} else
 				position.text(" ");
@@ -244,7 +245,7 @@ public class RankingsScene extends PixelScene {
 			
 			desc.text( Messages.titleCase(rec.desc()) );
 
-			int odd = pos % 2;
+			int odd = pos & 1;
 			
 			if (rec.win) {
 				shield.copy( new ItemSprite(ItemSpriteSheet.AMULET, null) );
@@ -324,7 +325,8 @@ public class RankingsScene extends PixelScene {
 			
 			super.layout();
 			
-			shield.x = x + (16 - shield.width) / 2f;
+			float rankWidth = Math.max(16, position.width() + 2);
+			shield.x = x + (rankWidth - shield.width) / 2f;
 			shield.y = y + (height - shield.height) / 2f;
 			align(shield);
 			
@@ -352,8 +354,8 @@ public class RankingsScene extends PixelScene {
 			depth.y = steps.y + (steps.height - depth.height()) / 2f + 1;
 			align(depth);
 
-			desc.maxWidth((int)(steps.x - (x + 16 + GAP)));
-			desc.setPos(x + 16 + GAP, shield.y + (shield.height - desc.height()) / 2f + 1);
+			desc.maxWidth((int)(steps.x - (x + rankWidth + GAP)));
+			desc.setPos(x + rankWidth + GAP, shield.y + (shield.height - desc.height()) / 2f + 1);
 			align(desc);
 		}
 		

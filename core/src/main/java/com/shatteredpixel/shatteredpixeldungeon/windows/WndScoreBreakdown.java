@@ -22,8 +22,8 @@
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Rankings;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
-import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
@@ -40,7 +40,10 @@ public class WndScoreBreakdown extends Window {
 	private int GAP	= 4;
 
 	public WndScoreBreakdown(){
+		this(new Rankings.ScoreBreakdown());
+	}
 
+	public WndScoreBreakdown(Rankings.ScoreBreakdown score) {
 		IconTitle title = new IconTitle( Icons.get(Icons.INFO), Messages.get(this, "title"));
 		title.setRect(0, 0, WIDTH, 16);
 		add(title);
@@ -50,36 +53,36 @@ public class WndScoreBreakdown extends Window {
 		NumberFormat num = NumberFormat.getInstance(Messages.locale());
 		if (Dungeon.initialVersion > ShatteredPixelDungeon.v1_2_3) {
 			pos = statSlot(this, Messages.get(this, "progress_title"),
-					num.format(Statistics.progressScore), pos, Statistics.progressScore >= 50_000);
+					num.format(score.progress), pos, score.progress >= 50_000);
 			pos = addInfo(this, Messages.get(this, "progress_desc"), pos);
 			pos = statSlot(this, Messages.get(this, "treasure_title"),
-					num.format(Statistics.treasureScore), pos, Statistics.treasureScore >= 20_000);
+					num.format(score.treasure), pos, score.treasure >= 20_000);
 			pos = addInfo(this, Messages.get(this, "treasure_desc"), pos);
 			pos = statSlot(this, Messages.get(this, "explore_title"),
-					num.format(Statistics.exploreScore), pos, Statistics.exploreScore >= 20_000);
+					num.format(score.exploration), pos, score.exploration >= 20_000);
 			pos = addInfo(this, Messages.get(this, "explore_desc"), pos);
 			pos = statSlot(this, Messages.get(this, "bosses_title"),
-					num.format(Statistics.totalBossScore), pos, Statistics.totalBossScore >= 15_000);
+					num.format(score.bosses), pos, score.bosses >= 15_000);
 			pos = addInfo(this, Messages.get(this, "bosses_desc"), pos);
 			pos = statSlot(this, Messages.get(this, "quests_title"),
-					num.format(Statistics.totalQuestScore), pos, Statistics.totalQuestScore >= 10_000);
+					num.format(score.quests), pos, score.quests >= 10_000);
 			pos = addInfo(this, Messages.get(this, "quests_desc"), pos);
 		} else {
 			pos = statSlot(this, Messages.get(this, "progress_title"),
-					num.format(Statistics.progressScore), pos, Statistics.progressScore >= 78_000);
+					num.format(score.progress), pos, score.progress >= 78_000);
 			pos = addInfo(this, Messages.get(this, "progress_desc"), pos);
 			pos = statSlot(this, Messages.get(this, "treasure_title"),
-					num.format(Statistics.treasureScore), pos, Statistics.treasureScore >= 30_000);
+					num.format(score.treasure), pos, score.treasure >= 30_000);
 			pos = addInfo(this, Messages.get(this, "treasure_desc_old"), pos);
 		}
 
-		if (Statistics.winMultiplier > 1) {
-			pos = statSlot(this, Messages.get(this, "win_multiplier"), Messages.decimalFormat("#.##", Statistics.winMultiplier) + "x", pos, false);
+		if (score.winMultiplier > 1) {
+			pos = statSlot(this, Messages.get(this, "win_multiplier"), Messages.decimalFormat("#.##", score.winMultiplier) + "x", pos, false);
 		}
-		if (Statistics.chalMultiplier > 1) {
-			pos = statSlot(this, Messages.get(this, "challenge_multiplier"), Messages.decimalFormat("#.##", Statistics.chalMultiplier) + "x", pos, false);
+		if (score.challengeMultiplier > 1) {
+			pos = statSlot(this, Messages.get(this, "challenge_multiplier"), Messages.decimalFormat("#.##", score.challengeMultiplier) + "x", pos, false);
 		}
-		pos = statSlot(this, Messages.get(this, "total"), num.format(Statistics.totalScore), pos, false);
+		pos = statSlot(this, Messages.get(this, "total"), num.format(score.total), pos, false);
 
 		if (Dungeon.initialVersion <= ShatteredPixelDungeon.v1_2_3){
 			pos = addInfo(this, Messages.get(this, "old_score_desc"), pos);

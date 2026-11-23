@@ -22,13 +22,16 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels.painters;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Patch;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection.ConnectionRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection.PrisonHallRoom;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection.TunnelRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.SpecialRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.ChasmBridgeRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.FissureRoom;
+import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
@@ -58,6 +61,7 @@ public class PrisonPainter extends RegularPainter {
 		// 按实际廊段重建中心线，装饰间距沿弯曲主廊计算，不按直线坐标取模。
 		boolean[] hallFloor = new boolean[l];
 		boolean[] centerLine = new boolean[l];
+		boolean[] hallEntrances = new boolean[l];
 		int origin = -1;
 		for (Room r : rooms) if (r instanceof PrisonHallRoom) {
 			int cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2;
@@ -70,7 +74,12 @@ public class PrisonPainter extends RegularPainter {
 				if (!(n instanceof PrisonHallRoom)) {
 					// 门只覆盖内容，脚下仍是主廊特殊地砖。
 					Room.Door door = r.connected.get(n);
-					if (door != null) level.cellAt(door.x + door.y * w).setGround(Terrain.EMPTY_SP);
+					if (door != null) {
+						int doorCell = level.pointToCell(door);
+						level.cellAt(doorCell).setGround(Terrain.EMPTY_SP);
+						int inward = door.x == r.left ? 1 : door.x == r.right ? -1 : door.y == r.top ? w : -w;
+						hallEntrances[doorCell] = hallEntrances[doorCell + inward] = true;
+					}
 					continue;
 				}
 				arms++;
@@ -133,6 +142,12 @@ public class PrisonPainter extends RegularPainter {
 				level.cellAt(cell).setGround(Terrain.EMPTY_SP);
 				level.cellAt(cell).place(Terrain.REGION_DECO);
 			}
+			if (level.feeling != Level.Feeling.CHASM) {
+				paintHallChasms(level, hallFloor, hallEntrances);
+			}
+		}
+		if (level.feeling != Level.Feeling.CHASM) {
+			paintTunnelChasm(level, rooms);
 		}
 		
 		for (int i=w + 1; i < l - w - 1; i++) {
@@ -204,6 +219,101 @@ public class PrisonPainter extends RegularPainter {
 					level.cellAt(cell).place(Terrain.WALL_DECO);
 				}
 			}
+		}
+	}
+
+	private static void paintHallChasms(Level level, boolean[] hallFloor, boolean[] hallEntrances) {
+		int[] map = level.terrainVisuals();
+		boolean[] passable = new boolean[map.length];
+		ArrayList<Integer> floorCells = new ArrayList<>();
+		int anchor = -1;
+		for (int cell = 0; cell < map.length; cell++) {
+			if (hallFloor[cell] && isOpenFloor(map[cell])) {
+				passable[cell] = true;
+				floorCells.add(cell);
+				if (anchor == -1 && hallEntrances[cell]) anchor = cell;
+			}
+		}
+		if (floorCells.isEmpty()) return;
+		if (anchor == -1) anchor = floorCells.get(0);
+
+		PathFinder.buildDistanceMap(anchor, passable);
+		for (int cell : floorCells) {
+			if (PathFinder.distance[cell] == Integer.MAX_VALUE) passable[cell] = false;
+		}
+
+		boolean[] patch = Patch.generate(level.width(), level.height(), 0.15f, 1, true);
+		Random.shuffle(floorCells);
+		for (int cell : floorCells) {
+			if (!patch[cell] || !passable[cell] || hallEntrances[cell] || cell == anchor) continue;
+
+			passable[cell] = false;
+			PathFinder.buildDistanceMap(anchor, passable);
+			boolean connected = true;
+			for (int other : floorCells) {
+				if (passable[other] && PathFinder.distance[other] == Integer.MAX_VALUE) {
+					connected = false;
+					break;
+				}
+			}
+			if (connected) level.cellAt(cell).setGround(Terrain.CHASM);
+			else passable[cell] = true;
+		}
+	}
+
+	private static void paintTunnelChasm(Level level, ArrayList<Room> rooms) {
+		int w = level.width();
+		int[] map = level.terrainVisuals();
+		boolean[] tunnelFloor = new boolean[map.length];
+		boolean[] reserved = new boolean[map.length];
+		for (Room room : rooms) {
+			boolean tunnel = room instanceof TunnelRoom;
+			for (int y = room.top; y <= room.bottom; y++) {
+				for (int x = room.left; x <= room.right; x++) {
+					int cell = x + y * w;
+					if (!tunnel) reserved[cell] = true;
+					else if (isOpenFloor(map[cell])) tunnelFloor[cell] = true;
+				}
+			}
+		}
+
+		boolean[] rock = new boolean[map.length];
+		ArrayList<Integer> corners = new ArrayList<>();
+		ArrayList<Integer> edges = new ArrayList<>();
+		for (int cell = w + 1; cell < map.length - w - 1; cell++) {
+			if (!level.insideMap(cell) || reserved[cell] || !isWall(map[cell])) continue;
+			rock[cell] = true;
+			boolean horizontal = tunnelFloor[cell - 1] || tunnelFloor[cell + 1];
+			boolean vertical = tunnelFloor[cell - w] || tunnelFloor[cell + w];
+			if (horizontal && vertical) corners.add(cell);
+			else if (horizontal || vertical) edges.add(cell);
+		}
+
+		Random.shuffle(corners);
+		Random.shuffle(edges);
+		corners.addAll(edges);
+		int[] visited = new int[map.length];
+		for (int seed : corners) {
+			int target = Random.IntRange(10, 22);
+			int visit = seed + 1;
+			ArrayList<Integer> cells = new ArrayList<>();
+			ArrayList<Integer> frontier = new ArrayList<>();
+			frontier.add(seed);
+			visited[seed] = visit;
+			while (!frontier.isEmpty() && cells.size() < target) {
+				int cell = frontier.remove(Random.Int(frontier.size()));
+				cells.add(cell);
+				for (int offset : PathFinder.NEIGHBOURS4) {
+					int next = cell + offset;
+					if (rock[next] && visited[next] != visit && level.distance(seed, next) <= 4) {
+						visited[next] = visit;
+						frontier.add(next);
+					}
+				}
+			}
+			if (cells.size() < 6) continue;
+			for (int cell : cells) level.cellAt(cell).reset(Terrain.CHASM);
+			return;
 		}
 	}
 

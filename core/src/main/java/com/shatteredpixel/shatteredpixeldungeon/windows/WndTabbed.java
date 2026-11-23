@@ -33,7 +33,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.bags.VelvetPouch;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Button;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
@@ -268,7 +267,10 @@ public class WndTabbed extends Window {
 	
 	public static Image bagIcon(Bag bag) {
 		if (bag instanceof MagicPocket) {
-			return new ItemSprite(ItemSpriteSheet.MAGIC_POCKET);
+			ItemSprite icon = new ItemSprite();
+			icon.copy(Icons.get(Icons.BACKPACK));
+			icon.glow(bag.glowing());
+			return icon;
 		} else if (bag instanceof VelvetPouch) {
 			return Icons.get( Icons.SEED_POUCH );
 		} else if (bag instanceof ScrollHolder) {
@@ -326,6 +328,11 @@ public class WndTabbed extends Window {
 		public IconTab( Image icon ){
 			super();
 			
+			if (icon instanceof ItemSprite) {
+				remove(this.icon);
+				this.icon = new ItemSprite();
+				add(this.icon);
+			}
 			this.icon.copy(icon);
 			this.defaultFrame = icon.frame();
 		}

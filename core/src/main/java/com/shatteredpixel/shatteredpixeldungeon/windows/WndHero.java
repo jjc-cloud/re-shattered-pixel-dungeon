@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Rankings;
 import com.shatteredpixel.shatteredpixeldungeon.SPDAction;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
@@ -161,8 +162,25 @@ public class WndHero extends WndTabbed {
 			else
 				title.label((hero.name() + "\n" + Messages.get(this, "title", hero.lvl, hero.className())).toUpperCase(Locale.ENGLISH));
 			title.color(Window.TITLE_COLOR);
-			title.setRect( 0, 0, WIDTH-16, 0 );
+			int buttonSize = 16;
+			int buttonGap = 4;
+			title.setRect(0, 0, WIDTH - 2 * buttonSize - buttonGap, 0);
 			add(title);
+
+			IconButton scoreButton = new IconButton(Icons.get(Icons.MAGNIFY)) {
+				@Override
+				protected void onClick() {
+					super.onClick();
+					GameScene.show(new WndScoreBreakdown(Rankings.INSTANCE.previewScore()));
+				}
+
+				@Override
+				protected String hoverText() {
+					return Messages.get(WndScoreBreakdown.class, "title");
+				}
+			};
+			scoreButton.setRect(title.right(), 0, buttonSize, buttonSize);
+			add(scoreButton);
 
 			IconButton infoButton = new IconButton(Icons.get(Icons.INFO)){
 				@Override
@@ -181,7 +199,7 @@ public class WndHero extends WndTabbed {
 				}
 
 			};
-			infoButton.setRect(title.right(), 0, 16, 16);
+			infoButton.setRect(WIDTH - buttonSize, 0, buttonSize, buttonSize);
 			add(infoButton);
 
 			pos = title.bottom() + 2*GAP;
