@@ -117,6 +117,8 @@ public class ReShatteredChanges {
 				"\n-近战武器仍拥有所有附魔。\n-投掷武器现在不在会获得招架、血饮附魔，同时新增忠诚，无限附魔。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V060_TORCH, "火把",
 				"\n火把不再一次性消耗，可以随时点燃熄灭，但熄灭后再次点燃会额外消耗5回合发光时间。"));
+		changes.addButton(new ChangeButton(ChangeIcons.V021_MAGICAL_CATALYST, "炼金饰品",
+				"\n-现在所有的炼金饰品在升级时消耗的能量均一致。\n-以往消耗更多的饰品被划分为了罕见饰品，出现的概率更低。\n-苔藓丛簇生成的流水或草木氛围等概率出现，草木层露珠掉落概率不再减半。"));
 		changes.addButton(new ChangeButton(ChangeIcons.V081_MISC, "杂项改动",
 				"\n-取消强制新手流程，首次开局即可自由选择英雄与挑战，无需先进入地牢取得手册。"
 				+ "\n-随机模式不再要求通关，首次开局即可设置随机天赋与随机挑战。"

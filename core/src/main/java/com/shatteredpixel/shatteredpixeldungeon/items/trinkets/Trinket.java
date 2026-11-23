@@ -32,6 +32,8 @@ import java.util.ArrayList;
 
 public abstract class Trinket extends Item {
 
+	public static final float RARE_CHANCE = 0.05f;
+
 	{
 		levelKnown = true;
 
@@ -43,7 +45,9 @@ public abstract class Trinket extends Item {
 		return false;
 	}
 
-	protected abstract int upgradeEnergyCost();
+	protected int upgradeEnergyCost() {
+		return 6 + 2 * level();
+	}
 
 	protected static int trinketLevel(Class<? extends Trinket> trinketType ){
 		if (Dungeon.hero == null || Dungeon.hero.belongings == null){

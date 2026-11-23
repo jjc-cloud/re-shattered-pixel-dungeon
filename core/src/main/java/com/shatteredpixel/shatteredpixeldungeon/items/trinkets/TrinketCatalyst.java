@@ -47,6 +47,7 @@ import com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoItem;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndSadGhost;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
+import com.watabou.utils.Random;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -175,7 +176,9 @@ public class TrinketCatalyst extends Item {
 
 			//roll new trinkets if trinkets were not already rolled
 			while (cata.rolledTrinkets.size() < NUM_TRINKETS){
-				cata.rolledTrinkets.add((Trinket) Generator.random(Generator.Category.TRINKET));
+				Generator.Category category = Random.Float() < Trinket.RARE_CHANCE
+						? Generator.Category.RARE_TRINKET : Generator.Category.TRINKET;
+				cata.rolledTrinkets.add((Trinket) Generator.random(category));
 			}
 
 			for (int i = 0; i < NUM_TRINKETS; i++){
@@ -213,7 +216,9 @@ public class TrinketCatalyst extends Item {
 
 						Item result = item;
 						if (result instanceof RandomTrinket){
-							result = Generator.random(Generator.Category.TRINKET);
+							Generator.Category category = Random.Float() < Trinket.RARE_CHANCE
+									? Generator.Category.RARE_TRINKET : Generator.Category.TRINKET;
+							result = Generator.random(category);
 						}
 
 						TrinketCatalyst cata = Dungeon.hero.belongings.getItem(TrinketCatalyst.class);

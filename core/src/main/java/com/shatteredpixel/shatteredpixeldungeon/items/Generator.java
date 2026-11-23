@@ -258,7 +258,9 @@ public class Generator {
 		SCROLL	( 8, 8, Scroll.class ),
 		STONE   ( 1, 1, Runestone.class),
 		
-		GOLD	( 10, 10,   Gold.class );
+		GOLD	( 10, 10,   Gold.class ),
+
+		RARE_TRINKET ( 0, 0, Trinket.class );
 		
 		public Class<?>[] classes;
 
@@ -309,6 +311,7 @@ public class Generator {
 		public static int order( Item item ) {
 			int catResult = -1, subResult = 0;
 			for (int i=0; i < values().length; i++) {
+				if (values()[i] == RARE_TRINKET) continue;
 				ArrayList<Class> subOrdering = subOrderings.get(values()[i].superClass);
 				if (subOrdering != null){
 					for (int j=0; j < subOrdering.size(); j++){
@@ -593,15 +596,12 @@ public class Generator {
 			//So we don't need the same enforcement of uniqueness
 			TRINKET.classes = new Class<?>[]{
 					RatSkull.class,
-					ParchmentScrap.class,
 					PetrifiedSeed.class,
 					ExoticCrystals.class,
-					MossyClump.class,
 					DimensionalSundial.class,
 					ThirteenLeafClover.class,
 					TrapMechanism.class,
 					MimicTooth.class,
-					WondrousResin.class,
 					EyeOfNewt.class,
 					SaltCube.class,
 					VialOfBlood.class,
@@ -610,8 +610,15 @@ public class Generator {
 					FerretTuft.class,
 					CrackedSpyglass.class
 			};
-			TRINKET.defaultProbs = new float[]{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+			TRINKET.defaultProbs = new float[TRINKET.classes.length];
+			Arrays.fill(TRINKET.defaultProbs, 1);
 			TRINKET.probs = TRINKET.defaultProbs.clone();
+
+			RARE_TRINKET.classes = new Class<?>[]{
+					ParchmentScrap.class, MossyClump.class, WondrousResin.class
+			};
+			RARE_TRINKET.defaultProbs = new float[]{1, 1, 1};
+			RARE_TRINKET.probs = RARE_TRINKET.defaultProbs.clone();
 
 			for (Category cat : Category.values()){
 				if (cat.defaultProbs2 != null){
@@ -947,7 +954,7 @@ public class Generator {
 
 		if (bundle.contains(GENERAL_PROBS)){
 			float[] probs = bundle.getFloatArray(GENERAL_PROBS);
-			if (probs.length == Category.values().length) {
+			if (probs.length == Category.values().length || probs.length == Category.RARE_TRINKET.ordinal()) {
 				for (int i = 0; i < probs.length; i++) {
 					categoryProbs.put(Category.values()[i], probs[i]);
 				}

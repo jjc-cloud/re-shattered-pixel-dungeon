@@ -55,6 +55,7 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
+import com.watabou.utils.Random;
 import com.watabou.utils.Reflection;
 
 public class ScrollOfTransmutation extends InventoryScroll {
@@ -326,9 +327,11 @@ public class ScrollOfTransmutation extends InventoryScroll {
 	}
 
 	private static Trinket changeTrinket( Trinket t ){
+		Generator.Category category = Random.Float() < Trinket.RARE_CHANCE
+				? Generator.Category.RARE_TRINKET : Generator.Category.TRINKET;
 		Trinket n;
 		do {
-			n = (Trinket)Generator.random(Generator.Category.TRINKET);
+			n = (Trinket)Generator.random(category);
 		} while ( Challenges.isItemBlocked(n) || n.getClass() == t.getClass());
 
 		n.level(t.trueLevel());

@@ -25,21 +25,12 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
-import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
-
-import java.util.ArrayList;
 
 public class TrapMechanism extends Trinket {
 
 	{
 		image = ItemSpriteSheet.TRAP_MECHANISM;
-	}
-
-	@Override
-	protected int upgradeEnergyCost() {
-		//6 -> 6(12) -> 8(20) -> 10(30)
-		return 6+2*level();
 	}
 
 	@Override
@@ -75,65 +66,14 @@ public class TrapMechanism extends Trinket {
 		}
 	}
 
-	//true for traps, false for chasm
-	//ensures a little consistency of RNG
-	private ArrayList<Boolean> levelFeels = new ArrayList<>();
-	private int shuffles = 0;
-
 	public static Level.Feeling getNextFeeling(){
-		TrapMechanism mech = Dungeon.hero.belongings.getItem(TrapMechanism.class);
-		if (mech == null) {
+		if (Dungeon.hero.belongings.getItem(TrapMechanism.class) == null) {
 			return Level.Feeling.NONE;
 		}
-		if (mech.levelFeels.isEmpty()){
-			Random.pushGenerator(Dungeon.seed+1);
-				mech.levelFeels.add(true);
-				mech.levelFeels.add(true);
-				mech.levelFeels.add(true);
-				mech.levelFeels.add(false);
-				mech.levelFeels.add(false);
-				mech.levelFeels.add(false);
-				for (int i = 0; i <= mech.shuffles; i++) {
-					Random.shuffle(mech.levelFeels);
-				}
-				mech.shuffles++;
-			Random.popGenerator();
-		}
-
-		// 仍正常消费本次轮换，避免洞穴层的限制把后续饰品类型顺序错位。
-		boolean traps = mech.levelFeels.remove(0);
 		if (Dungeon.branch == 0 && Dungeon.depth >= 11 && Dungeon.depth <= 14) {
 			return Level.Feeling.TRAPS;
 		}
-		return traps ? Level.Feeling.TRAPS : Level.Feeling.CHASM;
-	}
-
-	private static final String FEELS = "feels";
-	private static final String SHUFFLES = "shuffles";
-
-	@Override
-	public void storeInBundle(Bundle bundle) {
-		super.storeInBundle(bundle);
-		if (!levelFeels.isEmpty()){
-			boolean[] storeFeels = new boolean[levelFeels.size()];
-			for (int i = 0; i < storeFeels.length; i++){
-				storeFeels[i] = levelFeels.get(i);
-			}
-			bundle.put(FEELS, storeFeels);
-		}
-		bundle.put( SHUFFLES, shuffles );
-	}
-
-	@Override
-	public void restoreFromBundle(Bundle bundle) {
-		super.restoreFromBundle(bundle);
-		levelFeels.clear();
-		if (bundle.contains(FEELS)){
-			for (boolean b : bundle.getBooleanArray(FEELS)){
-				levelFeels.add(b);
-			}
-		}
-		shuffles = bundle.getInt( SHUFFLES );
+		return Random.Int(2) == 0 ? Level.Feeling.TRAPS : Level.Feeling.CHASM;
 	}
 
 }

@@ -245,6 +245,7 @@ public enum Catalog {
 		ARTIFACTS.addItems(Generator.Category.ARTIFACT.classes);
 
 		TRINKETS.addItems(Generator.Category.TRINKET.classes);
+		TRINKETS.addItems(Generator.Category.RARE_TRINKET.classes);
 
 		MISC_EQUIPMENT.addItems(BrokenSeal.class, SpiritBow.class, Waterskin.class, VelvetPouch.class,
 				PotionBandolier.class, ScrollHolder.class, MagicalHolster.class, Amulet.class);
