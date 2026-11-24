@@ -540,6 +540,7 @@ public class YogDzewa extends Mob {
 			Statistics.qualifiedForBossChallengeBadge = false;
 		}
 		Statistics.bossScores[4] += 5000 + 1250*Statistics.spawnersAlive;
+		if (Dungeon.branch == 0 && Dungeon.depth == 25) Statistics.yogDefeated = true;
 
 		Badges.validateBossSlain();
 		Badges.validateTakingTheMick(cause);

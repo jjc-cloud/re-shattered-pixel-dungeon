@@ -110,7 +110,7 @@ public class BadgesGrid extends Component {
 			this.badge = badge;
 			this.unlocked = unlocked;
 
-			icon = BadgeBanner.image(badge.image);
+			icon = BadgeBanner.image(badge.image(unlocked));
 			if (!unlocked) {
 				icon.brightness(0.4f);
 			}
@@ -144,7 +144,7 @@ public class BadgesGrid extends Component {
 
 		@Override
 		protected String hoverText() {
-			return badge.title();
+			return badge.title(unlocked);
 		}
 	}
 

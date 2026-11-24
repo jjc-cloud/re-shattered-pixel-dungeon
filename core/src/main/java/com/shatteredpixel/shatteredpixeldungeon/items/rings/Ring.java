@@ -132,6 +132,7 @@ public class Ring extends KindofMisc {
 		}
 		buff = buff();
 		buff.attachTo( ch );
+		if (ch == Dungeon.hero) Badges.validateRingCollection(Dungeon.hero);
 	}
 
 	@Override

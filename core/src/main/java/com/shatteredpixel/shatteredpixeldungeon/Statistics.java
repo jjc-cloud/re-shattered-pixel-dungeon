@@ -74,6 +74,7 @@ public class Statistics {
 
 	
 	public static boolean amuletObtained = false;
+	public static boolean yogDefeated = false;
 	public static boolean gameWon = false;
 	public static boolean ascended = false;
 	
@@ -119,6 +120,7 @@ public class Statistics {
 
 		
 		amuletObtained = false;
+		yogDefeated = false;
 		gameWon = false;
 		ascended = false;
 		
@@ -164,6 +166,7 @@ public class Statistics {
 	private static final String RANDOM_VICTORY_QUALIFIED= "qualifiedForRandomVictory";
 	
 	private static final String AMULET          = "amuletObtained";
+	private static final String YOG_DEFEATED    = "yogDefeated";
 	private static final String WON		        = "won";
 	private static final String ASCENDED		= "ascended";
 	
@@ -211,6 +214,7 @@ public class Statistics {
 		bundle.put(RANDOM_VICTORY_QUALIFIED, qualifiedForRandomVictoryBadge);
 		
 		bundle.put( AMULET,		amuletObtained );
+		bundle.put( YOG_DEFEATED, yogDefeated );
 		bundle.put( WON,        gameWon );
 		bundle.put( ASCENDED,   ascended );
 	}
@@ -267,6 +271,7 @@ public class Statistics {
 		qualifiedForRandomVictoryBadge = bundle.getBoolean( RANDOM_VICTORY_QUALIFIED );
 		
 		amuletObtained	= bundle.getBoolean( AMULET );
+		yogDefeated = bundle.contains(YOG_DEFEATED) ? bundle.getBoolean(YOG_DEFEATED) : amuletObtained;
 		gameWon         = bundle.getBoolean( WON );
 		ascended        = bundle.getBoolean( ASCENDED );
 	}

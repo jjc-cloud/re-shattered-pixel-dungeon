@@ -39,19 +39,19 @@ public class WndBadge extends Window {
 		
 		super();
 		
-		Image icon = BadgeBanner.image( badge.image );
+		Image icon = BadgeBanner.image(badge.image(unlocked));
 		icon.scale.set( 2 );
 		if (!unlocked) icon.brightness(0.4f);
 		add( icon );
 
-		RenderedTextBlock title = PixelScene.renderTextBlock( badge.title(), 9 );
+		RenderedTextBlock title = PixelScene.renderTextBlock(badge.title(unlocked), 9);
 		title.maxWidth(MAX_WIDTH - MARGIN * 2);
 		title.align(RenderedTextBlock.CENTER_ALIGN);
 		title.hardlight(TITLE_COLOR);
 		if (!unlocked) title.hardlight( 0x888822 );
 		add(title);
 
-		String desc = badge.desc();
+		String desc = badge.desc(unlocked);
 		String unlock = Badges.showCompletionProgress(badge);
 
 		if (unlock != null){

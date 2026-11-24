@@ -24,10 +24,14 @@ package com.shatteredpixel.shatteredpixeldungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Belongings;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.YogFist;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
+import com.shatteredpixel.shatteredpixeldungeon.items.Amulet;
+import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
@@ -37,6 +41,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.bags.VelvetPouch;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.Pickaxe;
 import com.shatteredpixel.shatteredpixeldungeon.items.remains.RemainsItem;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.curses.Explosive;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
@@ -177,6 +182,7 @@ public class Badges {
 		VICTORY_NO_TALENTS          ( 146 ),
 		VICTORY_MANY_TALENTS        ( 147 ),
 		BOSS_SLAIN_YOG_REMAINS      ( 151 ),
+		SURFACE_WITHOUT_AMULET      ( 153 ),
 
 		//platinum
 		MANY_BUFFS                  ( 96 ),
@@ -214,6 +220,7 @@ public class Badges {
 		HIGH_SCORE_4                ( 110 ),
 		CHAMPION_1                  ( 111 ),
 		SPEEDRUN_2                  ( 141 ),
+		RING_COLLECTOR              ( 154 ),
 
 		//diamond
 		PACIFIST_ASCENT             ( 120 ),
@@ -247,6 +254,24 @@ public class Badges {
 		Badge( int image, BadgeType type ) {
 			this.image = image;
 			this.type = type;
+		}
+
+		private static final int HIDDEN_BADGE_IMAGE = 128;
+
+		private boolean concealed(boolean unlocked){
+			return this == RING_COLLECTOR && !unlocked;
+		}
+
+		public int image(boolean unlocked){
+			return concealed(unlocked) ? HIDDEN_BADGE_IMAGE : image;
+		}
+
+		public String title(boolean unlocked){
+			return concealed(unlocked) ? Messages.get(Badges.class, "hidden_title") : title();
+		}
+
+		public String desc(boolean unlocked){
+			return concealed(unlocked) ? Messages.get(Badges.class, "hidden_desc") : desc();
 		}
 
 		public String title(){
@@ -1265,9 +1290,27 @@ public class Badges {
 		displayBadge( badge );
 	}
 	
+	public static void validateRingCollection(Hero hero){
+		if (hero == null || hero != Dungeon.hero || !hero.isAlive() || Belongings.bundleRestoring
+				|| local.contains(Badge.RING_COLLECTOR)) return;
+
+		HashSet<Class<? extends Ring>> rings = new HashSet<>();
+		for (Ring ring : hero.belongings.getAllItems(Ring.class)){
+			rings.add(ring.getClass());
+		}
+		for (Class<?> ringType : Generator.Category.RING.classes){
+			if (!rings.contains(ringType)) return;
+		}
+
+		local.add(Badge.RING_COLLECTOR);
+		displayBadge(Badge.RING_COLLECTOR);
+	}
+
 	public static void validateHappyEnd() {
-		local.add( Badge.HAPPY_END );
-		displayBadge( Badge.HAPPY_END );
+		Badge ending = Dungeon.hero.belongings.getItem(Amulet.class) != null
+				? Badge.HAPPY_END : Badge.SURFACE_WITHOUT_AMULET;
+		local.add(ending);
+		displayBadge(ending);
 
 		if( Dungeon.hero.belongings.getItem(RemainsItem.class) != null ){
 			local.add( Badge.HAPPY_END_REMAINS );

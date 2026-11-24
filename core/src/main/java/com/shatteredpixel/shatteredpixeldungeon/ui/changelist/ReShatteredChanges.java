@@ -64,6 +64,9 @@ public class ReShatteredChanges {
 		changes.addButton(new ChangeButton(ChangeIcons.v022_RING_ZIRCON, "奥法戒指",
 			"\n-新增奥法戒指，奥法戒指会提升法杖的伤害与效果。\n-现在诅咒戒指的诅咒效果由戒指本身的强度决定，越高品质的戒指诅咒效果越强力。"
 		));
+		changes.addButton(new ChangeButton(ChangeIcons.V061_BADGE, "新徽章",
+			"\n-淡泊名利：不携带Yendor护符离开地牢。\n-一个隐藏成就。"
+		));
 
 
 		changes = new ChangeInfo("增强", false, null);
