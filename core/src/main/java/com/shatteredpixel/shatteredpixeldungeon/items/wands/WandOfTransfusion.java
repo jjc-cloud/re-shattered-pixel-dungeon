@@ -89,6 +89,7 @@ public class WandOfTransfusion extends DamageWand {
 			
 			wandProc(ch, chargesPerCast());
 			
+			double power = spellPower();
 			//this wand does different things depending on the target.
 			
 			//heals/shields an ally or a charmed enemy while damaging self
@@ -97,8 +98,8 @@ public class WandOfTransfusion extends DamageWand {
 				// 5% of max hp
 				int selfDmg = Math.round(curUser.HT*0.05f);
 				
-				int healing = selfDmg + 3*buffedLvl();
-				int shielding = (ch.HP + healing) - ch.HT;
+				int healing = scaleSpellEffect(selfDmg + 3 * buffedLvl(), power);
+				int shielding = healing - Math.max(0, ch.HT - ch.HP);
 				if (shielding > 0){
 					healing -= shielding;
 					Buff.affect(ch, Barrier.class).setShield(shielding);
@@ -127,19 +128,24 @@ public class WandOfTransfusion extends DamageWand {
 			} else if (ch.alignment == Char.Alignment.ENEMY || ch instanceof Mimic) {
 
 				//grant a self-shield, and...
-				Buff.affect(curUser, Barrier.class).setShield((5 + buffedLvl()));
-				curUser.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(5+buffedLvl()), FloatingText.SHIELDING);
+				int shield = scaleSpellEffect(5 + buffedLvl(), power);
+				if (shield > 0){
+					Buff.affect(curUser, Barrier.class).setShield(shield);
+					curUser.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(shield), FloatingText.SHIELDING);
+				}
 				
 				//charms living enemies
 				if (!ch.properties().contains(Char.Property.UNDEAD)) {
-					Charm charm = Buff.affect(ch, Charm.class, Charm.DURATION/2f);
+					int duration = scaleSpellEffect(Charm.DURATION / 2f, power);
+					if (duration == 0) return;
+					Charm charm = Buff.affect(ch, Charm.class, duration);
 					charm.object = curUser.id();
 					charm.ignoreHeroAllies = true;
 					ch.sprite.centerEmitter().start( Speck.factory( Speck.HEART ), 0.2f, 3 );
 				
 				//harms the undead
 				} else {
-					ch.damage(damageRoll(), this, curUser);
+					ch.damage(scaleSpellEffect(damageRoll(), power), this, curUser);
 					ch.sprite.emitter().start(ShadowParticle.UP, 0.05f, 10 + buffedLvl());
 					Sample.INSTANCE.play(Assets.Sounds.BURNING);
 				}
@@ -197,20 +203,22 @@ public class WandOfTransfusion extends DamageWand {
 	public String statsDesc() {
 		int selfDMG = Dungeon.hero != null ? Math.round(Dungeon.hero.HT*0.05f): 1;
 		if (levelKnown)
-			return Messages.get(this, "stats_desc", selfDMG, selfDMG + 3*buffedLvl(), 5+buffedLvl(), min(), max());
+			return Messages.get(this, "stats_desc", selfDMG, previewSpellEffect(selfDMG + 3 * buffedLvl()),
+					previewSpellEffect(5 + buffedLvl()), previewSpellEffect(min()), previewSpellEffect(max()));
 		else
-			return Messages.get(this, "stats_desc", selfDMG, selfDMG, 5, min(0), max(0));
+			return Messages.get(this, "stats_desc", selfDMG, previewSpellEffect(selfDMG),
+					previewSpellEffect(5), previewSpellEffect(min(0)), previewSpellEffect(max(0)));
 	}
 
 	@Override
 	public String upgradeStat1(int level) {
 		int selfDMG = Dungeon.hero != null ? Math.round(Dungeon.hero.HT*0.05f): 1;
-		return Integer.toString(selfDMG + 3*level);
+		return Integer.toString(previewSpellEffect(selfDMG + 3 * level));
 	}
 
 	@Override
 	public String upgradeStat2(int level) {
-		return Integer.toString(5 + level);
+		return Integer.toString(previewSpellEffect(5 + level));
 	}
 
 	@Override

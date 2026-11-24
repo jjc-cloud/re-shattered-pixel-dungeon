@@ -37,6 +37,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.Stasis;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.NPC;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
@@ -106,6 +107,7 @@ public class WandOfWarding extends Wand {
 		}
 		int maxWardEnergy = 0;
 		for (WandOfWarding wand : wardingWands) maxWardEnergy += 2 + wand.level();
+		maxWardEnergy = scaleSpellEffect(maxWardEnergy, RingOfSpellpower.powerMultiplier(owner));
 		
 		wardAvailable = (currentWardEnergy < maxWardEnergy);
 		
@@ -144,9 +146,9 @@ public class WandOfWarding extends Wand {
 		if (ch != null){
 			if (ch instanceof Ward){
 				if (wardAvailable) {
-					((Ward) ch).upgrade( buffedLvl() );
+					((Ward) ch).upgrade(buffedLvl(), spellPower());
 				} else {
-					((Ward) ch).wandHeal( buffedLvl() );
+					((Ward) ch).wandHeal(buffedLvl(), 1f, spellPower());
 				}
 				ch.sprite.emitter().burst(MagicMissile.WardParticle.UP, ((Ward) ch).tier);
 			} else {
@@ -218,19 +220,19 @@ public class WandOfWarding extends Wand {
 	@Override
 	public String statsDesc() {
 		if (levelKnown)
-			return Messages.get(this, "stats_desc", level()+2);
+			return Messages.get(this, "stats_desc", previewSpellEffect(level() + 2));
 		else
-			return Messages.get(this, "stats_desc", 2);
+			return Messages.get(this, "stats_desc", previewSpellEffect(2));
 	}
 
 	@Override
 	public String upgradeStat1(int level) {
-		return 2+level + "-" + (8+4*level);
+		return previewSpellEffect(2 + level) + "-" + previewSpellEffect(8 + 4 * level);
 	}
 
 	@Override
 	public String upgradeStat2(int level) {
-		return Integer.toString(level+2);
+		return Integer.toString(previewSpellEffect(level + 2));
 	}
 
 	public static class Ward extends NPC {
@@ -257,7 +259,11 @@ public class WandOfWarding extends Wand {
 			return Messages.get(this, "name_" + tier );
 		}
 
-		public void upgrade(int wandLevel ){
+		public void upgrade(int wandLevel){
+			upgrade(wandLevel, 1);
+		}
+
+		private void upgrade(int wandLevel, double power){
 			if (this.wandLevel < wandLevel){
 				this.wandLevel = wandLevel;
 			}
@@ -278,7 +284,7 @@ public class WandOfWarding extends Wand {
 					HP += 30;
 					break;
 				case 6:
-					wandHeal(wandLevel);
+					wandHeal(wandLevel, 1f, power);
 					break;
 			}
 
@@ -301,11 +307,11 @@ public class WandOfWarding extends Wand {
 		//this class is used so that wards and sentries can have two entries in the Bestiary
 		public static class WardSentry extends Ward{};
 
-		public void wandHeal( int wandLevel ){
-			wandHeal( wandLevel, 1f );
+		public void wandHeal(int wandLevel, float healFactor){
+			wandHeal(wandLevel, healFactor, 1);
 		}
 
-		public void wandHeal( int wandLevel, float healFactor ){
+		private void wandHeal(int wandLevel, float healFactor, double power){
 			if (this.wandLevel < wandLevel){
 				this.wandLevel = wandLevel;
 			}
@@ -331,6 +337,7 @@ public class WandOfWarding extends Wand {
 					break;
 			}
 
+			heal = scaleSpellEffect(heal, power);
 			if (tier <= 3){
 				totalZaps = (Math.max(0, totalZaps-heal));
 			} else {
@@ -379,7 +386,8 @@ public class WandOfWarding extends Wand {
 			spend( 1f );
 
 			//always hits
-			int dmg = Hero.heroDamageIntRange( 2 + wandLevel, 8 + 4*wandLevel );
+			int dmg = scaleSpellEffect(Hero.heroDamageIntRange(2 + wandLevel, 8 + 4 * wandLevel),
+					RingOfSpellpower.powerMultiplier(Dungeon.hero));
 			Char enemy = this.enemy;
 			enemy.damage( dmg, this , this);
 			if (enemy.isAlive()){
@@ -487,7 +495,7 @@ public class WandOfWarding extends Wand {
 					return Messages.get(this, "desc_generic_sentry");
 				}
 			} else {
-				return Messages.get(this, "desc_" + tier, 2 + wandLevel, 8 + 4 * wandLevel, tier);
+				return Messages.get(this, "desc_" + tier, previewSpellEffect(2 + wandLevel), previewSpellEffect(8 + 4 * wandLevel), tier);
 			}
 		}
 		

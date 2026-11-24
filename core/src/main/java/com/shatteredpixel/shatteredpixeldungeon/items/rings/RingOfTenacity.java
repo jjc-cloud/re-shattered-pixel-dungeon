@@ -48,8 +48,8 @@ public class RingOfTenacity extends Ring {
 	}
 
 	public String upgradeStat1(int level){
-		if (cursed && cursedKnown) level = Math.min(-1, level-3);
-		return Messages.decimalFormat("#.##", 100f * (1f - Math.pow(0.85f, level+1))) + "%";
+		int bonusLevel = effectiveBonus(level, visiblyCursed());
+		return Messages.decimalFormat("#.##", 100f * (1f - Math.pow(0.85f, bonusLevel))) + "%";
 	}
 
 	@Override

@@ -28,7 +28,8 @@ public class WandOfPetrification extends Wand {
 		Char ch = Actor.findChar(bolt.collisionPos);
 		if (ch != null) {
 			wandProc(ch, chargesPerCast());
-			Petrification.apply(ch, ZAP_PROGRESS);
+			float progress = scaleSpellEffect(100 * ZAP_PROGRESS, spellPower()) / 100f;
+			if (progress > 0) Petrification.apply(ch, progress);
 		} else {
 			Dungeon.level.pressCell(bolt.collisionPos);
 		}

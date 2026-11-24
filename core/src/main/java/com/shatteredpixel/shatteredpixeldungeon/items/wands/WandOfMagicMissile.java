@@ -59,15 +59,17 @@ public class WandOfMagicMissile extends DamageWand {
 		if (ch != null) {
 
 			wandProc(ch, chargesPerCast());
-			ch.damage(damageRoll(), this, curUser);
+			double power = spellPower();
+			ch.damage(scaleSpellEffect(damageRoll(), power), this, curUser);
 			Sample.INSTANCE.play( Assets.Sounds.HIT_MAGIC, 1, Random.Float(0.87f, 1.15f) );
 
 			ch.sprite.burst(0xFFFFFFFF, buffedLvl() / 2 + 2);
 
+			int duration = scaleSpellEffect(MagicCharge.DURATION, power);
 			//apply the magic charge buff if we have another wand in inventory of a lower level, or already have the buff
 			for (Wand.Charger wandCharger : curUser.buffs(Wand.Charger.class)){
-				if (wandCharger.wand().buffedLvl() < buffedLvl() || curUser.buff(MagicCharge.class) != null){
-					Buff.prolong(curUser, MagicCharge.class, MagicCharge.DURATION).setup(this);
+				if (duration > 0 && (wandCharger.wand().buffedLvl() < buffedLvl() || curUser.buff(MagicCharge.class) != null)){
+					Buff.prolong(curUser, MagicCharge.class, duration).setup(this);
 					break;
 				}
 			}

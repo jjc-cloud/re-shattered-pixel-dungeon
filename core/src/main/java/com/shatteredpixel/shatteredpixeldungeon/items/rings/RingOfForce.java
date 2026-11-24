@@ -151,24 +151,24 @@ public class RingOfForce extends Ring {
 
 	@Override
 	public String upgradeStat1(int level) {
-		if (cursed && cursedKnown) level = Math.min(-1, level-3);
+		int bonusLevel = effectiveBonus(level, visiblyCursed());
 		float tier = tier(Dungeon.hero != null ? Dungeon.hero.STR() : 10);
-		return min(level+1, tier) + "-" + max(level+1, tier);
+		return min(bonusLevel, tier) + "-" + max(bonusLevel, tier);
 	}
 
 	@Override
 	public String upgradeStat2(int level) {
-		if (cursed && cursedKnown) level = Math.min(-1, level-3);
-		return Integer.toString(level+1);
+		int bonusLevel = effectiveBonus(level, visiblyCursed());
+		return Integer.toString(bonusLevel);
 	}
 
 	@Override
 	public String upgradeStat3(int level) {
-		if (cursed && cursedKnown) level = Math.min(-1, level-3);
+		int bonusLevel = effectiveBonus(level, visiblyCursed());
 		if (Dungeon.hero != null && Dungeon.hero.heroClass == HeroClass.DUELIST){
 			float tier = tier(Dungeon.hero != null ? Dungeon.hero.STR() : 10);
-			int bonus = Math.round(3+tier+(level*((4+2*tier)/8f)));
-			return (min(level+1, tier) + bonus) + "-" + (max(level+1, tier) + bonus);
+			int bonus = Math.round(3+tier+(bonusLevel*((4+2*tier)/8f)));
+			return Math.max(0, min(bonusLevel, tier) + bonus) + "-" + Math.max(0, max(bonusLevel, tier) + bonus);
 		} else {
 			return null;
 		}
@@ -252,7 +252,8 @@ public class RingOfForce extends Ring {
 			float tier = tier(Dungeon.hero.STR());
 			int dmgBoost = Math.round(3+tier+(level*((4+2*tier)/8f)));
 			if (isIdentified()) {
-				info += "\n\n" + Messages.get(this, "ability_desc", min(level, tier)+dmgBoost, max(level, tier)+dmgBoost);
+				info += "\n\n" + Messages.get(this, "ability_desc",
+						Math.max(0, min(level, tier) + dmgBoost), Math.max(0, max(level, tier) + dmgBoost));
 			} else {
 				info += "\n\n" + Messages.get(this, "typical_ability_desc",  min(level, tier)+dmgBoost, max(level, tier)+dmgBoost);
 			}

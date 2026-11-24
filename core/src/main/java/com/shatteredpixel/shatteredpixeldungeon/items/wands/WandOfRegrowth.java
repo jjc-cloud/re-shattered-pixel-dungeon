@@ -104,7 +104,9 @@ public class WandOfRegrowth extends Wand {
 		}
 
 		int chrgUsed = chargesPerCast();
-		int grassToPlace = Math.round((3.67f+buffedLvl()/3f)*chrgUsed);
+		double power = spellPower();
+		int grassToPlace = scaleSpellEffect(Math.round((3.67f + buffedLvl()/3f) * chrgUsed), power);
+		int rootsDuration = scaleSpellEffect(4 * chrgUsed, power);
 
 		//ignore cells which can't have anything grow in them.
 		for (Iterator<Integer> i = cells.iterator(); i.hasNext();) {
@@ -127,7 +129,7 @@ public class WandOfRegrowth extends Wand {
 						Statistics.qualifiedForBossChallengeBadge = false;
 					}
 					wandProc(ch, chargesPerCast());
-					Buff.prolong( ch, Roots.class, 4f * chrgUsed );
+					if (rootsDuration > 0) Buff.prolong(ch, Roots.class, rootsDuration);
 				}
 			}
 		}
@@ -310,7 +312,7 @@ public class WandOfRegrowth extends Wand {
 
 	@Override
 	public String upgradeStat1(int level) {
-		return Messages.decimalFormat("#.##", 3 + (2+level)/3f);
+		return Messages.decimalFormat("#.##", previewSpellEffect(Math.round((3.67f + level / 3f) * chargesPerCast())) / (float)chargesPerCast());
 	}
 
 	@Override

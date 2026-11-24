@@ -87,6 +87,8 @@ public class WandOfFireblast extends DamageWand {
 
 	@Override
 	public void onZap(Ballistica bolt) {
+		double power = spellPower();
+		int fireVolume = scaleSpellEffect(1 + chargesPerCast(), power);
 
 		ArrayList<Char> affectedChars = new ArrayList<>();
 		ArrayList<Integer> adjacentCells = new ArrayList<>();
@@ -111,8 +113,8 @@ public class WandOfFireblast extends DamageWand {
 				if (Dungeon.level.heaps.get(cell) != null){
 					Dungeon.level.heaps.get(cell).burn();
 				}
-			} else {
-				GameScene.add( Blob.seed( cell, 1+chargesPerCast(), Fire.class ) );
+			} else if (fireVolume > 0){
+				GameScene.add(Blob.seed(cell, fireVolume, Fire.class));
 			}
 
 			Char ch = Actor.findChar( cell );
@@ -130,27 +132,31 @@ public class WandOfFireblast extends DamageWand {
 		//This prevents short-range casts not igniting barricades or bookshelves
 		for (int cell : adjacentCells){
 			for (int i : PathFinder.NEIGHBOURS8){
-				if (Dungeon.level.trueDistance(cell+i, bolt.collisionPos) < Dungeon.level.trueDistance(cell, bolt.collisionPos)
+				if (fireVolume > 0
+						&& Dungeon.level.trueDistance(cell+i, bolt.collisionPos) < Dungeon.level.trueDistance(cell, bolt.collisionPos)
 						&& Dungeon.level.flamable[cell+i]
 						&& Fire.volumeAt(cell+i, Fire.class) == 0){
-					GameScene.add( Blob.seed( cell+i, 1+chargesPerCast(), Fire.class ) );
+					GameScene.add(Blob.seed(cell + i, fireVolume, Fire.class));
 				}
 			}
 		}
 
+		int burningDuration = scaleSpellEffect(Burning.DURATION, power);
+		int controlDuration = scaleSpellEffect(4, power);
 		for ( Char ch : affectedChars ){
 			wandProc(ch, chargesPerCast());
-			ch.damage(damageRoll(), this, curUser);
+			ch.damage(scaleSpellEffect(damageRoll(), power), this, curUser);
 			if (ch.isActive()) {
-				Buff.affect(ch, Burning.class).reignite(ch);
+				if (burningDuration > 0) Buff.affect(ch, Burning.class).reignite(ch, burningDuration);
+				if (controlDuration == 0) continue;
 				switch (chargesPerCast()) {
 					case 1:
 						break; //no effects
 					case 2:
-						Buff.affect(ch, Cripple.class, 4f);
+						Buff.affect(ch, Cripple.class, controlDuration);
 						break;
 					case 3:
-						Buff.affect(ch, Paralysis.class, 4f);
+						Buff.affect(ch, Paralysis.class, controlDuration);
 						break;
 				}
 			}
@@ -263,24 +269,24 @@ public class WandOfFireblast extends DamageWand {
 	@Override
 	public String statsDesc() {
 		if (levelKnown)
-			return Messages.get(this, "stats_desc", chargesPerCast(), min(), max());
+			return Messages.get(this, "stats_desc", chargesPerCast(), previewSpellEffect(min()), previewSpellEffect(max()));
 		else
-			return Messages.get(this, "stats_desc", chargesPerCast(), min(0), max(0));
+			return Messages.get(this, "stats_desc", chargesPerCast(), previewSpellEffect(min(0)), previewSpellEffect(max(0)));
 	}
 
 	@Override
 	public String upgradeStat1(int level) {
-		return (1+level) + "-" + (2+2*level);
+		return previewSpellEffect(1 + level) + "-" + previewSpellEffect(2 + 2 * level);
 	}
 
 	@Override
 	public String upgradeStat2(int level) {
-		return (2+2*level) + "-" + 2*(4+2*level);
+		return previewSpellEffect(2 + 2 * level) + "-" + previewSpellEffect(2 * (4 + 2 * level));
 	}
 
 	@Override
 	public String upgradeStat3(int level) {
-		return (3+3*level) + "-" + 3*(6+2*level);
+		return previewSpellEffect(3 + 3 * level) + "-" + previewSpellEffect(3 * (6 + 2 * level));
 	}
 
 	@Override

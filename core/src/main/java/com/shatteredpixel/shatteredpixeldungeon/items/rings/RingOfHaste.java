@@ -48,8 +48,8 @@ public class RingOfHaste extends Ring {
 	}
 
 	public String upgradeStat1(int level){
-		if (cursed && cursedKnown) level = Math.min(-1, level-3);
-		return Messages.decimalFormat("#.##", 100f * (Math.pow(1.15f, level+1)-1f)) + "%";
+		int bonusLevel = effectiveBonus(level, visiblyCursed());
+		return Messages.decimalFormat("#.##", 100f * (Math.pow(1.15f, bonusLevel)-1f)) + "%";
 	}
 	
 	@Override

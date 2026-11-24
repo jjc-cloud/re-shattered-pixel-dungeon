@@ -36,6 +36,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Beam;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.PurpleParticle;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
@@ -65,7 +66,14 @@ public class WandOfDisintegration extends DamageWand {
 	
 	@Override
 	public int targetingPos(Hero user, int dst) {
-		return super.targetingPos(user, dst);
+		double power = RingOfSpellpower.powerMultiplier(user);
+		if (visiblyCursed() || power == 1) {
+			return super.targetingPos(user, dst);
+		}
+		Ballistica beam = prepareZap(user, dst);
+		int distance = Math.min(beam.dist, scaleSpellEffect(6 + buffedLvl() * 2, power));
+		int targetDistance = beam.path.indexOf(dst);
+		return targetDistance >= 0 && targetDistance <= distance ? dst : beam.path.get(distance);
 	}
 
 	@Override
@@ -127,7 +135,7 @@ public class WandOfDisintegration extends DamageWand {
 		int lvl = level + (chars.size()-1) + terrainBonus;
 		for (Char ch : chars) {
 			wandProc(ch, chargesPerCast());
-			ch.damage( damageRoll(lvl), this , curUser);
+			ch.damage(scaleSpellEffect(damageRoll(lvl), spellPower()), this, curUser);
 			ch.sprite.centerEmitter().burst( PurpleParticle.BURST, Random.IntRange( 1, 2 ) );
 			ch.sprite.flash();
 		}
@@ -139,12 +147,12 @@ public class WandOfDisintegration extends DamageWand {
 	}
 
 	int distance() {
-		return buffedLvl()*2 + 6;
+		return scaleSpellEffect(6 + buffedLvl() * 2, spellPower());
 	}
 
 	@Override
 	public String upgradeStat2(int level) {
-		return Integer.toString(6 + level*2);
+		return Integer.toString(previewSpellEffect(6 + level * 2));
 	}
 
 	@Override

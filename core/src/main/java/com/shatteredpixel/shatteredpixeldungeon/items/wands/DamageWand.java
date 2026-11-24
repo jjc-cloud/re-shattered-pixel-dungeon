@@ -69,13 +69,13 @@ public abstract class DamageWand extends Wand{
 	@Override
 	public String statsDesc() {
 		if (levelKnown)
-			return Messages.get(this, "stats_desc", min(), max());
+			return Messages.get(this, "stats_desc", previewSpellEffect(min()), previewSpellEffect(max()));
 		else
-			return Messages.get(this, "stats_desc", min(0), max(0));
+			return Messages.get(this, "stats_desc", previewSpellEffect(min(0)), previewSpellEffect(max(0)));
 	}
 
 	@Override
 	public String upgradeStat1(int level) {
-		return min(level) + "-" + max(level);
+		return previewSpellEffect(min(level)) + "-" + previewSpellEffect(max(level));
 	}
 }

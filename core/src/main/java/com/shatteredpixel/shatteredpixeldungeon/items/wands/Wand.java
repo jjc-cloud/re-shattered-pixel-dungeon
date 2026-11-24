@@ -60,6 +60,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TalismanOfForesi
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfEnergy;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRecharging;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ShardOfOblivion;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.WondrousResin;
@@ -434,6 +435,20 @@ public abstract class Wand extends Item implements ChargeItem {
 		}
 
 		return desc;
+	}
+
+	protected static int scaleSpellEffect(double base, double power){
+		double amount = base * power;
+		// Correct floating-point error at integer results, e.g. 100 * 1.15.
+		return (int)Math.max(0, Math.floor(amount + 4 * Math.ulp(amount)));
+	}
+
+	protected static int previewSpellEffect(double base){
+		return scaleSpellEffect(base, RingOfSpellpower.powerMultiplier(Dungeon.hero));
+	}
+
+	protected static double spellPower(){
+		return RingOfSpellpower.powerMultiplier(curUser);
 	}
 
 	public String statsDesc(){

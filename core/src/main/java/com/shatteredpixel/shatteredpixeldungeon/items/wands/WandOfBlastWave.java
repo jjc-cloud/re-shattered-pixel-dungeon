@@ -101,13 +101,13 @@ public class WandOfBlastWave extends DamageWand {
 
 			if (ch != null){
 				wandProc(ch, chargesPerCast());
-				if (ch.alignment != Char.Alignment.ALLY) ch.damage(damageRoll(), this, curUser);
+				if (ch.alignment != Char.Alignment.ALLY) ch.damage(scaleSpellEffect(damageRoll(), spellPower()), this, curUser);
 
 				//do not push chars that are dieing over a pit, or that move due to the damage
 				if ((ch.isAlive() || ch.flying || !Dungeon.level.pit[ch.pos])
 						&& ch.pos == bolt.collisionPos + i) {
 					Ballistica trajectory = new Ballistica(ch.pos, ch.pos + i, Ballistica.MAGIC_BOLT);
-					int strength = Math.round(1.5f + buffedLvl() / 2f);
+					int strength = scaleSpellEffect(Math.round(1.5f + buffedLvl() / 2f), spellPower());
 					throwChar(ch, trajectory, strength, false, true, this);
 				}
 
@@ -118,13 +118,13 @@ public class WandOfBlastWave extends DamageWand {
 		Char ch = Actor.findChar(bolt.collisionPos);
 		if (ch != null){
 			wandProc(ch, chargesPerCast());
-			ch.damage(damageRoll(), this, curUser);
+			ch.damage(scaleSpellEffect(damageRoll(), spellPower()), this, curUser);
 
 			//do not push chars that are dieing over a pit, or that move due to the damage
 			if ((ch.isAlive() || ch.flying || !Dungeon.level.pit[ch.pos])
 					&& bolt.path.size() > bolt.dist+1 && ch.pos == bolt.collisionPos) {
 				Ballistica trajectory = new Ballistica(ch.pos, bolt.path.get(bolt.dist + 1), Ballistica.MAGIC_BOLT);
-				int strength = buffedLvl() + 3;
+				int strength = scaleSpellEffect(buffedLvl() + 3, spellPower());
 				throwChar(ch, trajectory, strength, false, true, this);
 			}
 		}
@@ -227,7 +227,7 @@ public class WandOfBlastWave extends DamageWand {
 
 	@Override
 	public String upgradeStat2(int level) {
-		return Integer.toString(3 + level);
+		return Integer.toString(previewSpellEffect(3 + level));
 	}
 
 	@Override

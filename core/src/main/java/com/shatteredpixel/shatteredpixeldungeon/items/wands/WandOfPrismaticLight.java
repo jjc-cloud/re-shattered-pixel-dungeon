@@ -70,11 +70,9 @@ public class WandOfPrismaticLight extends DamageWand {
 		affectMap(beam);
 		
 		if (Dungeon.level.viewDistance < 6 ){
-			if (Dungeon.isChallenged(Challenges.DARKNESS)){
-				Buff.prolong( curUser, Light.class, 2f + buffedLvl());
-			} else {
-				Buff.prolong( curUser, Light.class, 10f+buffedLvl()*5);
-			}
+			int level = buffedLvl();
+			int duration = scaleSpellEffect(Dungeon.isChallenged(Challenges.DARKNESS) ? 2 + level : 10 + level * 5, spellPower());
+			if (duration > 0) Buff.prolong(curUser, Light.class, duration);
 		}
 		
 		Char ch = Actor.findChar(beam.collisionPos);
@@ -87,9 +85,15 @@ public class WandOfPrismaticLight extends DamageWand {
 	private void affectTarget(Char ch){
 		int dmg = damageRoll();
 
-		//three in (5+lvl) chance of failing
-		if (Random.Int(5+buffedLvl()) >= 3) {
-			Buff.prolong(ch, Blindness.class, 2f + (buffedLvl() * 0.333f));
+		double power = spellPower();
+		int level = buffedLvl();
+		//three in (5+lvl) chance of failing before amplification
+		boolean blinded = power == 1 ? Random.Int(5 + level) >= 3
+				: Random.Int(100) < Math.min(100, scaleSpellEffect(100d * (level + 2) / (level + 5), power));
+		float duration = 2f + level * 0.333f;
+		if (power != 1) duration = scaleSpellEffect(duration, power);
+		if (blinded && duration > 0) {
+			Buff.prolong(ch, Blindness.class, duration);
 			ch.sprite.emitter().burst(Speck.factory(Speck.LIGHT), 6 );
 		}
 
@@ -97,11 +101,11 @@ public class WandOfPrismaticLight extends DamageWand {
 			ch.sprite.emitter().start( ShadowParticle.UP, 0.05f, 10+buffedLvl() );
 			Sample.INSTANCE.play(Assets.Sounds.BURNING);
 
-			ch.damage(Math.round(dmg*1.333f), this, curUser);
+			ch.damage(scaleSpellEffect(Math.round(dmg * 1.333f), power), this, curUser);
 		} else {
 			ch.sprite.centerEmitter().burst( RainbowParticle.BURST, 10+buffedLvl() );
 
-			ch.damage(dmg, this, curUser);
+			ch.damage(scaleSpellEffect(dmg, power), this, curUser);
 		}
 
 	}
@@ -140,15 +144,15 @@ public class WandOfPrismaticLight extends DamageWand {
 
 	@Override
 	public String upgradeStat2(int level) {
-		return Messages.decimalFormat("#", 100*(1-(3/(float)(5+level)))) + "%";
+		return Math.min(100, previewSpellEffect(100d * (level + 2) / (level + 5))) + "%";
 	}
 
 	@Override
 	public String upgradeStat3(int level) {
 		if (Dungeon.isChallenged(Challenges.DARKNESS)){
-			return Integer.toString(2 + level);
+			return Integer.toString(previewSpellEffect(2 + level));
 		} else {
-			return Integer.toString(10 + 5*level);
+			return Integer.toString(previewSpellEffect(10 + 5 * level));
 		}
 	}
 

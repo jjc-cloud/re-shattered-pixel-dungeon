@@ -56,10 +56,16 @@ public class WandOfCorrosion extends Wand {
 
 	@Override
 	public void onZap(Ballistica bolt) {
-		CorrosiveGas gas = Blob.seed(bolt.collisionPos, 50 + 10 * buffedLvl(), CorrosiveGas.class);
-		CellEmitter.get(bolt.collisionPos).burst(Speck.factory(Speck.CORROSION), 10 );
-		gas.setStrength(2 + buffedLvl(), getClass());
-		GameScene.add(gas);
+		double power = spellPower();
+		int level = buffedLvl();
+		int volume = scaleSpellEffect(50 + 10 * level, power);
+		int strength = scaleSpellEffect(2 + level, power);
+		if (volume > 0 && strength > 0){
+			CorrosiveGas gas = Blob.seed(bolt.collisionPos, volume, CorrosiveGas.class);
+			CellEmitter.get(bolt.collisionPos).burst(Speck.factory(Speck.CORROSION), 10 );
+			gas.setStrength(strength, getClass());
+			GameScene.add(gas);
+		}
 		Sample.INSTANCE.play(Assets.Sounds.GAS);
 
 		for (int i : PathFinder.NEIGHBOURS9) {
@@ -120,18 +126,18 @@ public class WandOfCorrosion extends Wand {
 	@Override
 	public String statsDesc() {
 		if (levelKnown)
-			return Messages.get(this, "stats_desc", 2+buffedLvl());
+			return Messages.get(this, "stats_desc", previewSpellEffect(2 + buffedLvl()));
 		else
-			return Messages.get(this, "stats_desc", 2);
+			return Messages.get(this, "stats_desc", previewSpellEffect(2));
 	}
 
 	@Override
 	public String upgradeStat1(int level) {
-		return Integer.toString(level+2);
+		return Integer.toString(previewSpellEffect(level + 2));
 	}
 
 	@Override
 	public String upgradeStat2(int level) {
-		return Messages.decimalFormat("#.##x", 1+.2f*level);
+		return Messages.decimalFormat("#.##x", previewSpellEffect(50 + 10 * level) / 50f);
 	}
 }

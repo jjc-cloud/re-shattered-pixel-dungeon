@@ -92,14 +92,14 @@ public class RingOfMight extends Ring {
 
 	@Override
 	public String upgradeStat1(int level) {
-		if (cursed && cursedKnown) level = Math.min(-1, level-3);
-		return Integer.toString(level+1);
+		int bonusLevel = effectiveBonus(level, visiblyCursed());
+		return Integer.toString(bonusLevel);
 	}
 
 	@Override
 	public String upgradeStat2(int level) {
-		if (cursed && cursedKnown) level = Math.min(-1, level-3);
-		return Messages.decimalFormat("#.##", 100f * (Math.pow(1.035, level+1)-1f)) + "%";
+		int bonusLevel = effectiveBonus(level, visiblyCursed());
+		return Messages.decimalFormat("#.##", 100f * (Math.pow(1.035, bonusLevel)-1f)) + "%";
 	}
 
 	@Override

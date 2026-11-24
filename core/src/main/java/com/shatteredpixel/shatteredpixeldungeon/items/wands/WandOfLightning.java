@@ -34,6 +34,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.DwarfKing;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Lightning;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.levels.TerrainPropagation;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
@@ -96,14 +97,14 @@ public class WandOfLightning extends DamageWand {
 
 			wandProc(ch, chargesPerCast());
 			if (ch == curUser && ch.isAlive()) {
-				ch.damage(Math.round(damageRoll() * multiplier * 0.5f), this, curUser);
+				ch.damage(scaleSpellEffect(Math.round(damageRoll() * multiplier * 0.5f), spellPower()), this, curUser);
 				if (!curUser.isAlive()) {
 					Badges.validateDeathFromFriendlyMagic();
 					Dungeon.fail( this );
 					GLog.n(Messages.get(this, "ondeath"));
 				}
 			} else {
-				ch.damage(Math.round(damageRoll() * multiplier), this, curUser);
+				ch.damage(scaleSpellEffect(Math.round(damageRoll() * multiplier), spellPower()), this, curUser);
 			}
 		}
 	}
@@ -152,9 +153,11 @@ public class WandOfLightning extends DamageWand {
 		private final ArrayList<Char> affected;
 		private final ArrayList<Lightning.Arc> arcs;
 		private final TerrainPropagation conduction;
+		private final double spellPower;
 
 		public ArcChain(Char user, ArrayList<Char> affected, ArrayList<Lightning.Arc> arcs) {
 			this.user = user;
+			spellPower = RingOfSpellpower.powerMultiplier(user);
 			this.affected = affected;
 			this.arcs = arcs;
 			conduction = TerrainPropagation.event(Dungeon.level, CellContent.CONDUCTIVE);
@@ -171,6 +174,9 @@ public class WandOfLightning extends DamageWand {
 			if (user.buff(LightningCharge.class) != null){
 				dist++;
 			}
+
+			dist = scaleSpellEffect(dist, spellPower);
+			dist = Math.min(dist, Math.max(Dungeon.level.width(), Dungeon.level.height()));
 
 			ArrayList<Char> hitThisArc = new ArrayList<>();
 			boolean[] arcPassable = BArray.not(Dungeon.level.solid, null);

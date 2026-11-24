@@ -36,6 +36,7 @@ public class ReShatteredChanges {
 		switch (page) {
 			case 0:
 				add_02_ImportantChanges(changeInfos);
+				add_v0_2_2_Changes(changeInfos);
 				add_v0_2_1_Changes(changeInfos);
 				add_v0_2_0_Changes(changeInfos);
 				break;
@@ -49,6 +50,29 @@ public class ReShatteredChanges {
 				addDevelopmentPreview(changeInfos);
 				break;
 		}
+	}
+
+	public static void add_v0_2_2_Changes(ArrayList<ChangeInfo> changeInfos) {
+	    ChangeInfo changes = new ChangeInfo("v0.2.2", true, "");
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+
+		changes = new ChangeInfo("新内容", false, null);
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+
+		changes.addButton(new ChangeButton(ChangeIcons.v022_RING_ZIRCON, "奥法戒指",
+			"\n-新增奥法戒指，奥法戒指会提升法杖的伤害与效果。\n-现在诅咒戒指的诅咒效果由戒指本身的强度决定，越高品质的戒指诅咒效果越强力。"
+		));
+
+
+		changes = new ChangeInfo("增强", false, null);
+		changes.hardlight(CharSprite.POSITIVE);
+		changeInfos.add(changes);
+
+		changes.addButton(new ChangeButton(ChangeIcons.V061_RING_GARNET, "狂怒戒指",
+				"\n狂怒戒指的强化效果由9.05%提升至12%。"));
+
 	}
 
 	public static void add_v0_2_1_Changes(ArrayList<ChangeInfo> changeInfos) {

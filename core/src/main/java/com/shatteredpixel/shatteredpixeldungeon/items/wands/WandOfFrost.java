@@ -81,7 +81,8 @@ public class WandOfFrost extends DamageWand {
 		Char ch = Actor.findChar(bolt.collisionPos);
 		if (ch != null){
 
-			int damage = damageRoll();
+			double damage = damageRoll();
+			double power = spellPower();
 
 			if (ch.buff(Frost.class) != null){
 				return; //do nothing, can't affect a frozen target
@@ -89,20 +90,21 @@ public class WandOfFrost extends DamageWand {
 			if (ch.buff(Chill.class) != null){
 				//6.67% less damage per turn of chill remaining, to a max of 10 turns (50% dmg)
 				float chillturns = Math.min(10, ch.buff(Chill.class).cooldown());
-				damage = (int)Math.round(damage * Math.pow(0.9333f, chillturns));
+				double reduction = 1 - Math.pow(0.9333f, chillturns);
+				double ignoredReduction = Math.max(0, power - 1) / 10;
+				damage *= 1 - Math.max(0, reduction - ignoredReduction);
 			} else {
 				ch.sprite.burst( 0xFF99CCFF, buffedLvl() / 2 + 2 );
 			}
 
 			wandProc(ch, chargesPerCast());
-			ch.damage(damage, this, curUser);
+			int damageDealt = power == 1 ? (int)Math.round(damage) : scaleSpellEffect(damage, power);
+			ch.damage(damageDealt, this, curUser);
 			Sample.INSTANCE.play( Assets.Sounds.HIT_MAGIC, 1, 1.1f * Random.Float(0.87f, 1.15f) );
 
 			if (ch.isAlive()){
-				if (Dungeon.level.water[ch.pos])
-					Buff.affect(ch, Chill.class, 4+buffedLvl());
-				else
-					Buff.affect(ch, Chill.class, 2+buffedLvl());
+				int chillDuration = scaleSpellEffect((Dungeon.level.water[ch.pos] ? 4 : 2) + buffedLvl(), power);
+				if (chillDuration > 0) Buff.affect(ch, Chill.class, chillDuration);
 			}
 		} else {
 			Dungeon.level.pressCell(bolt.collisionPos);
@@ -111,7 +113,7 @@ public class WandOfFrost extends DamageWand {
 
 	@Override
 	public String upgradeStat2(int level) {
-		return Integer.toString(2 + level);
+		return Integer.toString(previewSpellEffect(2 + level));
 	}
 
 	@Override

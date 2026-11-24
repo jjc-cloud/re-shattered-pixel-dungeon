@@ -139,7 +139,8 @@ public class WandOfCorruption extends Wand {
 				Statistics.qualifiedForBossChallengeBadge = false;
 			}
 
-			float corruptingPower = 3 + buffedLvl()/3f;
+			double power = spellPower();
+			double corruptingPower = power == 1 ? 3 + buffedLvl()/3f : scaleSpellEffect(300 + buffedLvl() * (100d / 3), power) / 100d;
 			
 			//base enemy resistance is usually based on their exp, but in special cases it is based on other criteria
 			float enemyResist;
@@ -176,7 +177,7 @@ public class WandOfCorruption extends Wand {
 			if (corruptingPower > enemyResist){
 				corruptEnemy( enemy );
 			} else {
-				float debuffChance = corruptingPower / enemyResist;
+				double debuffChance = corruptingPower / enemyResist;
 				if (Random.Float() < debuffChance){
 					debuffEnemy( enemy, MAJOR_DEBUFFS);
 				} else {
@@ -211,7 +212,8 @@ public class WandOfCorruption extends Wand {
 		Class<?extends FlavourBuff> debuffCls = (Class<? extends FlavourBuff>) Random.chances(debuffs);
 		
 		if (debuffCls != null){
-			Buff.append(enemy, debuffCls, 6 + buffedLvl()*3);
+			int duration = scaleSpellEffect(6 + buffedLvl() * 3, spellPower());
+			if (duration > 0) Buff.append(enemy, debuffCls, duration);
 		} else {
 			//if no debuff can be applied (all are present), then go up one tier
 			if (category == MINOR_DEBUFFS)          debuffEnemy( enemy, MAJOR_DEBUFFS);
@@ -253,12 +255,12 @@ public class WandOfCorruption extends Wand {
 
 	@Override
 	public String upgradeStat1(int level) {
-		return Messages.decimalFormat("#.##", 3f + level/3f);
+		return Messages.decimalFormat("#.##", previewSpellEffect(300 + level * (100d / 3)) / 100d);
 	}
 
 	@Override
 	public String upgradeStat2(int level) {
-		return Integer.toString(6 + 3*level);
+		return Integer.toString(previewSpellEffect(6 + 3 * level));
 	}
 
 	@Override

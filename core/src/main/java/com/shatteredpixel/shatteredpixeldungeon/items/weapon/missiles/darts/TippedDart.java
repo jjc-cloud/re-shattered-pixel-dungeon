@@ -211,7 +211,7 @@ public abstract class TippedDart extends Dart {
 		if (usages >= 100f) return 0;
 
 		//add a tiny amount to account for rounding error for calculations like 1/3
-		return (MAX_DURABILITY/usages) + 0.001f;
+		return (MAX_DURABILITY/Math.max(1f, usages)) + 0.001f;
 	}
 	
 	@Override

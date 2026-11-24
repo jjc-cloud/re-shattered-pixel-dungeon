@@ -66,6 +66,7 @@ public class Ring extends KindofMisc {
 			put("quartz",ItemSpriteSheet.RING_QUARTZ);
 			put("agate",ItemSpriteSheet.RING_AGATE);
 			put("diamond",ItemSpriteSheet.RING_DIAMOND);
+			put("zircon",ItemSpriteSheet.RING_ZIRCON);
 		}
 	};
 	
@@ -385,22 +386,17 @@ public class Ring extends KindofMisc {
 		return bonus;
 	}
 
-	//just used for ring descriptions
-	public int soloBonus(){
-		if (cursed){
-			return Math.min( 0, Ring.this.level()-2 );
-		} else {
-			return Ring.this.level()+1;
-		}
+	protected static int effectiveBonus(int level, boolean cursed){
+		int bonus = level + 1;
+		return cursed ? -Math.max(1, bonus) : bonus;
 	}
 
-	//just used for ring descriptions
+	public int soloBonus(){
+		return effectiveBonus(level(), cursed);
+	}
+
 	public int soloBuffedBonus(){
-		if (cursed){
-			return Math.min( 0, Ring.this.buffedLvl()-2 );
-		} else {
-			return Ring.this.buffedLvl()+1;
-		}
+		return effectiveBonus(buffedLvl(), cursed);
 	}
 
 	//just used for ring descriptions
