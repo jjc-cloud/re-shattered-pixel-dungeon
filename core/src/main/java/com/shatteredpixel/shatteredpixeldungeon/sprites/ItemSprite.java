@@ -23,6 +23,8 @@ package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
@@ -308,6 +310,21 @@ public class ItemSprite extends MovieClip {
 
 	@Override
 	public void draw() {
+		Level level = Dungeon.level;
+		boolean underFrame = heap != null && level != null && heap.pos >= 0 && heap.pos < level.length()
+				&& level.cellAt(heap.pos).has(CellContent.OVERHEAD);
+		if (underFrame && GameScene.deferOverheadContent(this)) return;
+		float originalAm = am, originalAa = aa;
+		if (underFrame) { am *= 0.5f; aa *= 0.5f; }
+		try {
+			drawItem();
+		} finally {
+			am = originalAm;
+			aa = originalAa;
+		}
+	}
+
+	private void drawItem() {
 		if (gemPile != null) {
 			if (gemLayers == null) gemLayers = new Image[Gem.Type.values().length];
 			for (int i = 0; i < gemLayers.length; i++) {

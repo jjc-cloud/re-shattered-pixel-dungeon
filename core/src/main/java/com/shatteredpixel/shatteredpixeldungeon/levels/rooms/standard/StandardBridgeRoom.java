@@ -170,7 +170,7 @@ public abstract class StandardBridgeRoom extends StandardRoom {
 		}
 
 		Painter.fill(level, spaceRect, spaceTile());
-		Painter.fill(level, bridgeRect, CellPlacement.reset(bridgeTile()));
+		Painter.fill(level, bridgeRect, bridgeTile(level));
 
 	}
 
@@ -179,8 +179,8 @@ public abstract class StandardBridgeRoom extends StandardRoom {
 	protected abstract CellPlacement spaceTile();
 
 	//defaults to special terrain
-	protected int bridgeTile(){
-		return Terrain.EMPTY_SP;
+	protected CellPlacement bridgeTile(Level level) {
+		return CellPlacement.reset(Terrain.EMPTY_SP);
 	}
 
 }

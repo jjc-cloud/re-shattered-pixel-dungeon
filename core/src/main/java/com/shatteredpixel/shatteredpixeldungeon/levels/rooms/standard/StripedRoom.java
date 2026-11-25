@@ -68,7 +68,7 @@ public class StripedRoom extends StandardRoom {
 		} else if (sizeCat == SizeCategory.LARGE){
 			int layers = (Math.min(width(), height())-1)/2;
 			for (int i = 1; i <= layers; i++){
-				Painter.fill(level, this, i, (i % 2 == 1) ? CellPlacement.reset(Terrain.EMPTY_SP) : CellPlacement.content(Terrain.HIGH_GRASS));
+				Painter.fill(level, this, i, (i % 2 == 1) ? CellPlacement.reset(Terrain.EMPTY_SP) : CellPlacement.reset(Terrain.EMPTY, Terrain.HIGH_GRASS));
 			}
 		}
 	}

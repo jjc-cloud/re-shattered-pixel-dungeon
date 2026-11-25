@@ -54,6 +54,19 @@ public final class TerrainInteractions {
 
     public Result interact(int cell, int property) {
         if (!level.insideMap(cell) || (property & DESTRUCTIVE) == 0) return Result.UNCHANGED;
+        CellContent clicked = level.cellAt(cell).firstWith(property);
+        if (property == CellContent.CLICK_BREAKABLE && clicked != null
+                && CellContent.family(clicked.type()) == Terrain.WALL) {
+            ArrayList<Integer> walls = new ArrayList<>();
+            for (int offset : PathFinder.NEIGHBOURS9) {
+                int next = cell + offset;
+                if (!level.insideMap(next) || level.distance(cell, next) > 1) continue;
+                CellContent wall = level.cellAt(next).firstWith(property);
+                if (wall != null && CellContent.family(wall.type()) == Terrain.WALL) walls.add(next);
+            }
+            // 只处理攻击开始时的岩壁；不外扩，也不再次摧毁塌方新填回的岩壁。
+            return affectCells(walls, property) ? Result.CHANGED : Result.UNCHANGED;
+        }
         return interact(cell, property, level.cellAt(cell).targets(property));
     }
 

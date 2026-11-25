@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
@@ -72,9 +73,8 @@ public class FungalSentry extends Mob {
 	}
 
 	@Override
-	//TODO attack is a little permissive atm?
 	protected boolean canAttack( Char enemy ) {
-		return super.canAttack(enemy)
+		return Dungeon.level.adjacent(pos, enemy.pos)
 				|| new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT | Ballistica.STOP_PROJECTILE_COVER).collisionPos == enemy.pos;
 	}
 

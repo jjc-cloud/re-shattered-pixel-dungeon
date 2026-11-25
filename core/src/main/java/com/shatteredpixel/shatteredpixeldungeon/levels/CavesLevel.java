@@ -30,9 +30,12 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.Pickaxe;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.builders.Builder;
+import com.shatteredpixel.shatteredpixeldungeon.levels.builders.CavesBuilder;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CavesPainter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.CavesStairRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.BurningTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ConfusionTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.CorrosionTrap;
@@ -67,11 +70,43 @@ import java.util.ArrayList;
 
 public class CavesLevel extends RegularLevel {
 
+	/** 区域所在方位；下楼口朝向区域内侧，以本层上楼口为原点。 */
+	public enum Orientation {
+		NORTH(0, 1), EAST(-1, 0), SOUTH(0, -1), WEST(1, 0);
+
+		private final int inwardX, inwardY;
+
+		Orientation(int inwardX, int inwardY) {
+			this.inwardX = inwardX;
+			this.inwardY = inwardY;
+		}
+
+		public boolean accepts(int dx, int dy) {
+			int forward = dx * inwardX + dy * inwardY;
+			int sideways = dx * inwardY - dy * inwardX;
+			return forward > 0 && Math.abs(sideways) <= forward * Math.tan(Math.PI / 8);
+		}
+	}
+
+	public static Orientation orientation() {
+		// 独立随机流保证同一局的各矿洞层共用方位，且不消耗楼层生成随机数。
+		Random.pushGenerator(Dungeon.seed ^ 0x43415645534CL);
+		try {
+			return Orientation.values()[Random.Int(4)];
+		} finally {
+			Random.popGenerator();
+		}
+	}
+
 	@Override
 	protected boolean build() {
 		if (!super.build()) return false;
 		if (Dungeon.branch == 0 && Dungeon.depth >= 11 && Dungeon.depth <= 14) {
-			return caveCollapse.generate(rooms);
+			int entrance = entrance(), exit = exit();
+			// 绘制后核对固定楼梯的方位，防止后续地形处理破坏端点约束。
+			if (entrance < 0 || exit < 0 || !orientation().accepts(
+					exit % width() - entrance % width(), exit / width() - entrance / width())) return false;
+			caveCollapse.generate(rooms);
 		}
 		return true;
 	}
@@ -97,7 +132,19 @@ public class CavesLevel extends RegularLevel {
 
 	@Override
 	protected ArrayList<Room> initRooms() {
-		return Blacksmith.Quest.spawn(super.initRooms());
+		ArrayList<Room> rooms = super.initRooms();
+		rooms.remove(roomEntrance);
+		rooms.remove(roomExit);
+		rooms.add(roomEntrance = new CavesStairRoom(true));
+		rooms.add(roomExit = new CavesStairRoom(false));
+		return Blacksmith.Quest.spawn(rooms);
+	}
+
+	@Override
+	protected Builder builder() {
+		CavesBuilder builder = new CavesBuilder(feeling == Feeling.LARGE);
+		builder.chasm = feeling == Feeling.CHASM;
+		return builder;
 	}
 	
 	@Override
@@ -117,8 +164,8 @@ public class CavesLevel extends RegularLevel {
 	@Override
 	public Painter painter() {
 		return new CavesPainter()
-				.setWater(feeling == Feeling.WATER ? 0.85f : 0.30f, 6)
-				.setGrass(feeling == Feeling.GRASS ? 0.65f : 0.15f, 3)
+				.setWater(feeling == Feeling.WATER ? 0.75f : 0.15f, 6)
+				.setGrass(feeling == Feeling.GRASS ? 0.85f : 0.40f, 3)
 				.setTraps(nTraps(), trapClasses(), trapChances());
 	}
 	

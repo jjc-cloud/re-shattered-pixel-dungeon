@@ -121,11 +121,16 @@ public class DungeonTerrainTilemap extends DungeonTilemap {
 		}
 
 		if (tile == Terrain.WATER) {
+			int top = pos + PathFinder.CIRCLE4[0];
+			int right = pos + PathFinder.CIRCLE4[1];
+			int bottom = pos + PathFinder.CIRCLE4[2];
+			int left = pos + PathFinder.CIRCLE4[3];
+			// 架构等上层物件不截断底层水面；实体门仍保留原有岸边表现。
 			return DungeonTileSheet.stitchWaterTile(
-					map[pos + PathFinder.CIRCLE4[0]],
-					map[pos + PathFinder.CIRCLE4[1]],
-					map[pos + PathFinder.CIRCLE4[2]],
-					map[pos + PathFinder.CIRCLE4[3]]
+					Dungeon.level.hasTerrain(top, Terrain.WATER) && !DungeonTileSheet.doorTile(map[top]) ? Terrain.WATER : map[top],
+					Dungeon.level.hasTerrain(right, Terrain.WATER) && !DungeonTileSheet.doorTile(map[right]) ? Terrain.WATER : map[right],
+					Dungeon.level.hasTerrain(bottom, Terrain.WATER) && !DungeonTileSheet.doorTile(map[bottom]) ? Terrain.WATER : map[bottom],
+					Dungeon.level.hasTerrain(left, Terrain.WATER) && !DungeonTileSheet.doorTile(map[left]) ? Terrain.WATER : map[left]
 			);
 
 		} else if (tile == Terrain.CHASM) {

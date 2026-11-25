@@ -23,7 +23,6 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.builders;
 
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection.ConnectionRoom;
-import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection.MazeConnectionRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SuperSecretRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.ShopRoom;
@@ -171,9 +170,9 @@ public abstract class RegularBuilder extends Builder {
 				curr = Random.element(candidates);
 			} while( r instanceof SecretRoom && !superSecret && curr instanceof ConnectionRoom);
 			
-			// 超级隐藏房自带两格直道，直接接在可容纳它的位置。
+			// 普通隐藏房不再额外插入迷宫连接房；超级隐藏房沿用原有直连规则。
 			int connectingRooms = 0;
-			if (!superSecret) {
+			if (!(r instanceof SecretRoom)) {
 				connectingRooms = Random.chances(connectionChances);
 				if (connectingRooms == -1){
 					connectionChances = connChances.clone();
@@ -183,7 +182,7 @@ public abstract class RegularBuilder extends Builder {
 			}
 			
 			for (int j = 0; j < connectingRooms; j++){
-				ConnectionRoom t = r instanceof SecretRoom ? new MazeConnectionRoom() : ConnectionRoom.createRoom();
+				ConnectionRoom t = ConnectionRoom.createRoom();
 				tries = 3;
 				
 				do {

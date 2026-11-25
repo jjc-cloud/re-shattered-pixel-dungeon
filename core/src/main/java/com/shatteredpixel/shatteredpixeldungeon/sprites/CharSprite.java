@@ -503,7 +503,24 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 				if (aura != null)   aura.killAndErase();
 				float size = Math.max(width(), height());
 				size = Math.max(size+4, 16);
-				aura = new Flare(auraRays, size);
+				aura = new Flare(auraRays, size) {
+					@Override public void draw() {
+						Level level = Dungeon.level;
+						int cell = ch == null ? -1 : ch.pos;
+						boolean underFrame = level != null && cell >= 0 && cell < level.length()
+								&& level.cellAt(cell).has(CellContent.OVERHEAD);
+						// 光环与所属单位共用架构内的绘制顺序和透明系数。
+						if (underFrame && GameScene.deferOverheadContent(this)) return;
+						float originalAm = am, originalAa = aa;
+						if (underFrame) { am *= 0.5f; aa *= 0.5f; }
+						try {
+							super.draw();
+						} finally {
+							am = originalAm;
+							aa = originalAa;
+						}
+					}
+				};
 				aura.angularSpeed = 90;
 				aura.color(auraColor, true);
 				aura.visible = visible;
@@ -852,7 +869,9 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 		Level level = Dungeon.level;
 		int cell = ch == null ? -1 : ch.pos;
 		float opacity = level != null && cell >= 0 && cell < level.length()
-				&& level.cellAt(cell).has(CellContent.OVERHEAD) ? 0.2f : 1f;
+				&& level.cellAt(cell).has(CellContent.OVERHEAD) ? 0.5f : 1f;
+		// 在墙体前景之后再画入架构的单位，避免透明效果被上沿再次截断。
+		if (opacity != 1f && GameScene.deferOverheadContent(this)) return;
 
 		if (renderShadow) {
 			if (dirty) {

@@ -24,6 +24,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.items.keys.IronKey;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -346,12 +347,7 @@ public abstract class Level implements Bundlable {
 			}
 			
 			if (Dungeon.depth > 1) {
-				// 洞穴 11～14 层不生成悬空类型，重抽仍使用本层种子的随机序列。
-				int feelingRoll;
-				do {
-					feelingRoll = Random.Int(14);
-				} while (feelingRoll == 0 && Dungeon.depth >= 11 && Dungeon.depth <= 14);
-				switch (feelingRoll) {
+				switch (Random.Int(14)) {
 					case 0:
 						feeling = Feeling.CHASM;
 						break;
@@ -659,7 +655,7 @@ public abstract class Level implements Bundlable {
 	}
 	
 	public int tunnelTile() {
-		return feeling == Feeling.CHASM ? Terrain.EMPTY_SP : Terrain.EMPTY;
+		return Terrain.EMPTY;
 	}
 
 	public int width() {
@@ -985,6 +981,8 @@ public abstract class Level implements Bundlable {
 	}
 	
 	public void addItemToSpawn( Item item ) {
+		// 矿洞只保留水晶门，原特殊房间附带的铁钥匙不再生成。
+		if (Dungeon.branch == 0 && Dungeon.depth >= 11 && Dungeon.depth <= 14 && item instanceof IronKey) return;
 		if (item != null) {
 			itemsToSpawn.add( item );
 		}
@@ -1057,41 +1055,27 @@ public abstract class Level implements Bundlable {
 			losBlocking[i + width()-1] = solid[i + width()-1] = true;
 		}
 
-		//an open space is large enough to fit large mobs. A space is open when it is not solid
-		// and there is an open corner with both adjacent cells opens
 		for (int i=0; i < length(); i++) {
-			if (solid[i]){
-				openSpace[i] = false;
-			} else {
-				for (int j = 1; j < PathFinder.CIRCLE8.length; j += 2){
-					if (solid[i+PathFinder.CIRCLE8[j]]) {
-						openSpace[i] = false;
-					} else if (!solid[i+PathFinder.CIRCLE8[(j+1)%8]]
-							&& !solid[i+PathFinder.CIRCLE8[(j+2)%8]]){
-						openSpace[i] = true;
-						break;
-					}
-				}
-			}
+			updateOpenSpace(i);
 		}
 
 	}
 
-	//updates open space both on the cell itself and adjacent cells
-	public void updateOpenSpace(int cell){
-		for (int i : PathFinder.NEIGHBOURS9) {
-			if (solid[cell+i]){
-				openSpace[cell+i] = false;
-			} else {
-				for (int j = 1; j < PathFinder.CIRCLE8.length; j += 2){
-					if (solid[cell+i+PathFinder.CIRCLE8[j]]) {
-						openSpace[cell+i] = false;
-					} else if (!solid[cell+i+PathFinder.CIRCLE8[(j+1)%8]]
-							&& !solid[cell+i+PathFinder.CIRCLE8[(j+2)%8]]){
-						openSpace[cell+i] = true;
-						break;
-					}
-				}
+	// 巨型角色需要一块没有实体障碍或低矮架构的两乘两空间。
+	private void updateOpenSpace(int cell) {
+		openSpace[cell] = false;
+		if (solid[cell] || cells[cell].has(CellContent.OVERHEAD)) return;
+
+		for (int j = 1; j < PathFinder.CIRCLE8.length; j += 2) {
+			int side = cell + PathFinder.CIRCLE8[j];
+			int corner = cell + PathFinder.CIRCLE8[(j + 1) % 8];
+			int otherSide = cell + PathFinder.CIRCLE8[(j + 2) % 8];
+			if (!solid[side] && !solid[corner] && !solid[otherSide]
+					&& !cells[side].has(CellContent.OVERHEAD)
+					&& !cells[corner].has(CellContent.OVERHEAD)
+					&& !cells[otherSide].has(CellContent.OVERHEAD)) {
+				openSpace[cell] = true;
+				return;
 			}
 		}
 	}
@@ -1167,7 +1151,9 @@ public abstract class Level implements Bundlable {
 			b.onUpdateCellFlags(this, cell);
 		}
 
-		if (insideMap(cell)) updateOpenSpace(cell);
+		if (insideMap(cell)) {
+			for (int offset : PathFinder.NEIGHBOURS9) updateOpenSpace(cell + offset);
+		}
 
 		if (lighting != null) lighting.terrainChanged(cell);
 	}
@@ -1322,6 +1308,9 @@ public abstract class Level implements Bundlable {
 		}
 		trap.set( pos );
 		traps.put( pos, trap );
+		cellAt(pos).removeTerrain(Terrain.GRASS);
+		cellAt(pos).removeTerrain(Terrain.HIGH_GRASS);
+		cellAt(pos).removeTerrain(Terrain.FURROWED_GRASS);
 		cellAt(pos).removeTerrain(Terrain.TRAP);
 		cellAt(pos).removeTerrain(Terrain.SECRET_TRAP);
 		cellAt(pos).removeTerrain(Terrain.INACTIVE_TRAP);

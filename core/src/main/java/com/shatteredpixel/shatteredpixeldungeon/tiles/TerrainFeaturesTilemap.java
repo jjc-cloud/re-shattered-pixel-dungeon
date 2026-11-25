@@ -25,7 +25,6 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.LastShopLevel;
-import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
@@ -40,7 +39,6 @@ import com.watabou.utils.RectF;
 import com.watabou.utils.SparseArray;
 
 public class TerrainFeaturesTilemap extends DungeonTilemap {
-	public static final int OVERHEAD_TOP = -5;
 
 	private static TerrainFeaturesTilemap instance;
 
@@ -58,10 +56,6 @@ public class TerrainFeaturesTilemap extends DungeonTilemap {
 		this.contentType = contentType;
 		this.plants = plants;
 		this.traps = traps;
-		if (contentType == OVERHEAD_TOP) {
-			texture = TextureCache.get(Dungeon.level.tilesTex());
-			tileset = new TextureFilm(texture, SIZE, SIZE);
-		}
 		if (contentType == Terrain.STATUE || contentType == Terrain.STATUE_SP) {
 			texture = contentImage(0, contentType).texture;
 			tileset = new TextureFilm(texture, SIZE, SIZE);
@@ -71,19 +65,10 @@ public class TerrainFeaturesTilemap extends DungeonTilemap {
 			map(Dungeon.level.terrainVisuals(), Dungeon.level.width());
 		}
 
-		if (contentType != Terrain.STATUE && contentType != Terrain.STATUE_SP
-				&& contentType != OVERHEAD_TOP) instance = this;
+		if (contentType != Terrain.STATUE && contentType != Terrain.STATUE_SP) instance = this;
 	}
 
 	protected int getTileVisual(int pos, int tile, boolean flat){
-		if (contentType == OVERHEAD_TOP) {
-			int cell = pos + mapWidth;
-			if (cell >= size) return -1;
-			CellContent frame = Dungeon.level.cellAt(cell).firstWith(CellContent.OVERHEAD);
-			if (frame == null) return -1;
-			return frame.type() == Terrain.REGION_DECO_ALT
-					? DungeonTileSheet.REGION_DECO_ALT_OVERHANG : DungeonTileSheet.REGION_DECO_OVERHANG;
-		}
 		if (Dungeon.level.cellAt(pos).buried()) return -1;
 		if (contentType >= 0) {
 			if (!Dungeon.level.cellAt(pos).hasTerrain(contentType)) return -1;

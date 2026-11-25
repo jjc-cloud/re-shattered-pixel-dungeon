@@ -175,6 +175,17 @@ import java.util.Locale;
 
 public class GameScene extends PixelScene {
 
+	// 架构内的半透明内容保留原组的更新和生命周期，只把绘制延后。
+	private final ArrayList<Gizmo> overheadContents = new ArrayList<>();
+	private boolean drawingOverheadContents;
+
+	public static boolean deferOverheadContent(Gizmo visual) {
+		if (scene == null || scene.drawingOverheadContents
+				|| (visual.parent != scene.mobs && visual.parent != scene.heaps)) return false;
+		scene.overheadContents.add(visual);
+		return true;
+	}
+
 	static GameScene scene;
 
 	//运行时改地形后待重建的自定义图层所在格：自定义图层只在场景建立时创建一次，
@@ -360,6 +371,20 @@ public class GameScene extends PixelScene {
 
 		levelWallVisuals = Dungeon.level.addWallVisuals();
 		add( levelWallVisuals );
+
+		add(new Gizmo() {
+			@Override public void draw() {
+				drawingOverheadContents = true;
+				try {
+					for (Gizmo visual : overheadContents) {
+						if (visual.exists && visual.isVisible()) visual.draw();
+					}
+				} finally {
+					overheadContents.clear();
+					drawingOverheadContents = false;
+				}
+			}
+		});
 
 		wallBlocking = new WallBlockingTilemap();
 		add (wallBlocking);

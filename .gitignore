@@ -12,6 +12,7 @@
 build/
 release/
 test/
+!/core/src/test/
 
 # Local configuration file (sdk path, etc)
 local.properties

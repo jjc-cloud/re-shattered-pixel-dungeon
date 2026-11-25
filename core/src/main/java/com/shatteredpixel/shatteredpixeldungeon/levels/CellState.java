@@ -91,7 +91,11 @@ public class CellState implements Bundlable {
 	}
 
 	public boolean supports(int property) {
-		for (CellContent content : contents) if ((content.flags() & Terrain.LIQUID) != 0) return false;
+		if (property == CellContent.GROWABLE && level != null && level.traps != null && level.traps.get(cell) != null) return false;
+		for (CellContent content : contents) {
+			if ((content.flags() & Terrain.LIQUID) != 0
+					|| (property == CellContent.GROWABLE && CellContent.family(content.type()) == Terrain.TRAP)) return false;
+		}
 		int flags = Terrain.flags[ground];
 		if (property == CellContent.SUPPORTS_COVER) return (flags & Terrain.SUPPORTS_COVER) != 0;
 		if (property == CellContent.GROWABLE) return (flags & Terrain.GROWABLE) != 0;
@@ -126,6 +130,13 @@ public class CellState implements Bundlable {
 		mutations++;
 		try {
 			if (isGround(content.type())) throw new IllegalArgumentException("地面应通过 setGround 设置");
+			// 运行时生长也遵守格子的承载规则，不能绕过 canPlace 覆盖陷阱。
+			if (CellContent.family(content.type()) == Terrain.GRASS && !supports(CellContent.GROWABLE)) return false;
+			if (CellContent.family(content.type()) == Terrain.TRAP) {
+				removeTerrain(Terrain.GRASS);
+				removeTerrain(Terrain.HIGH_GRASS);
+				removeTerrain(Terrain.FURROWED_GRASS);
+			}
 			if (content.type() == Terrain.EMBERS) {
 				if (!supports(CellContent.SUPPORTS_COVER)) return false;
 				// 灰烬不铺在水面和楼梯口上

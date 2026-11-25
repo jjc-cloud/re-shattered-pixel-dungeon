@@ -21,6 +21,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard;
 
+import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.CellPlacement;
 
@@ -41,7 +42,8 @@ public class RegionDecoBridgeRoom extends StandardBridgeRoom {
 	}
 
 	@Override
-	protected int bridgeTile() {
-		return Terrain.EMPTY_SP;
+	protected CellPlacement bridgeTile(Level level) {
+		// 矿洞架构下方可以步行，保留贯穿房间的整条架构。
+		return level.region() == 2 ? CellPlacement.NONE : super.bridgeTile(level);
 	}
 }

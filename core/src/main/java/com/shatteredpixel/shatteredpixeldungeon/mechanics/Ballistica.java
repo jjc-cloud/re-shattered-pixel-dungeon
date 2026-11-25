@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellState;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.IronDoor;
 import com.watabou.utils.Bundlable;
@@ -152,8 +153,8 @@ public class Ballistica {
 		int w = Dungeon.level.width();
 		boolean passDisintegrable = (collisionProperties & PASS_DISINTEGRABLE) > 0;
 		boolean passProjectileBarriers = (collisionProperties & IGNORE_PROJECTILE_BARRIERS) != 0;
-		boolean stopProjectileCover = (collisionProperties & STOP_PROJECTILE_COVER) != 0
-				&& !Dungeon.level.cellAt(from).has(CellContent.BLOCKS_PROJECTILES);
+		boolean stopProjectileCover = (collisionProperties & STOP_PROJECTILE_COVER) != 0;
+		boolean inSourceCover = stopProjectileCover && Dungeon.level.cellAt(from).has(CellContent.OVERHEAD);
 
 		int x0 = from % w;
 		int x1 = to % w;
@@ -194,18 +195,20 @@ public class Ballistica {
 
 		int err = dA / 2;
 		while (Dungeon.level.insideMap(cell)) {
-			boolean passBarrier = passProjectileBarriers && Dungeon.level.cellAt(cell).has(CellContent.PASSES_NON_PROJECTILES);
+			CellState state = Dungeon.level.cellAt(cell);
+			boolean passBarrier = passProjectileBarriers && state.has(CellContent.PASSES_NON_PROJECTILES);
+			inSourceCover = inSourceCover && state.has(CellContent.OVERHEAD);
 			if (collisionPos == null && cell != sourcePos && !passBarrier
 					&& (stopTerrain || stopProjectileCover)
 					&& (collisionProperties & IRON_DOOR_CHANCE) != 0
-					&& Dungeon.level.cellAt(cell).has(CellContent.BLOCKS_PROJECTILES)
+					&& state.has(CellContent.BLOCKS_PROJECTILES)
 					&& Door.at(Dungeon.level, cell) instanceof IronDoor
 					&& !Door.is(Dungeon.level, cell, Door.State.SECRET)) {
 				passBarrier = projectile == null || projectile.passesIronDoor();
 			}
-			// 从外侧射来的投射物停在架构前，不能命中同格内的角色；内部发射不受架构限制。
-			if (collisionPos == null && cell != sourcePos && stopProjectileCover && !passBarrier
-					&& Dungeon.level.cellAt(cell).has(CellContent.BLOCKS_PROJECTILES)) {
+			// 可以从发射点所在的架构内打出去，离开这段后仍会被下一段架构挡住。
+			if (collisionPos == null && cell != sourcePos && stopProjectileCover && !inSourceCover
+					&& !passBarrier && state.has(CellContent.BLOCKS_PROJECTILES)) {
 				collide(path.get(path.size() - 1));
 			}
 

@@ -31,9 +31,6 @@ public class CellFeatures extends Group {
 			add(layer);
 		}
 		plants = (TerrainFeaturesTilemap) layers.get(layers.size() - 1);
-		TerrainFeaturesTilemap top = new TerrainFeaturesTilemap(null, null, TerrainFeaturesTilemap.OVERHEAD_TOP);
-		layers.add(top);
-		add(top);
 	}
 
 	public void map(int[] map, int width) { for (DungeonTilemap layer : layers) layer.map(map, width); }

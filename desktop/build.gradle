@@ -1,3 +1,5 @@
+import org.gradle.api.attributes.LibraryElements
+
 plugins {
     id 'org.beryx.runtime' version '2.0.1'
 }
@@ -20,7 +22,13 @@ def desktopArchiveName    = 'ReShatteredPD'
 def osName = System.getProperty('os.name').toLowerCase(Locale.ROOT)
 
 tasks.register('debug', JavaExec) {
-    classpath = sourceSets.main.runtimeClasspath
+    // 直接加载项目的 class 目录，避免游戏运行时重打项目 JAR 导致延迟加载的内部类丢失。
+    classpath = sourceSets.main.output + configurations.runtimeClasspath.incoming.artifactView {
+        attributes {
+            attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
+                    objects.named(LibraryElements, LibraryElements.CLASSES))
+        }
+    }.files
     ignoreExitValue = true
 
     mainClass = appMainClass

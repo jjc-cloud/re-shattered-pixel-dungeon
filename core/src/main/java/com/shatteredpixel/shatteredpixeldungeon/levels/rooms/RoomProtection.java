@@ -1,8 +1,10 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels.rooms;
 
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection.MazeConnectionRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.CrystalPathRoom;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.CrystalChoiceRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MagicalFireRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.PoolRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.SacrificeRoom;
@@ -35,6 +37,12 @@ public final class RoomProtection {
 	private RoomProtection() {}
 
 	public static boolean isProtected(Room room) {
+		// 矿洞取消普通特殊房间的保护，隐藏房和水晶门房间的墙体仍完整保留。
+		if (Dungeon.branch == 0 && Dungeon.depth >= 11 && Dungeon.depth <= 14) {
+			Room.Door entrance = room instanceof SpecialRoom ? ((SpecialRoom) room).entrance() : null;
+			return room instanceof SecretRoom || room instanceof CrystalPathRoom || room instanceof CrystalChoiceRoom
+					|| entrance != null && entrance.type == Room.Door.Type.CRYSTAL;
+		}
 		for (Class<? extends Room> type : PROTECTED_TYPES) {
 			if (type.isInstance(room)) return true;
 		}
