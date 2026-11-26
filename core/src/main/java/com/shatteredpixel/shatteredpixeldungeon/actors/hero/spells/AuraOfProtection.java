@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
@@ -64,7 +66,7 @@ public class AuraOfProtection extends ClericSpell {
 	@Override
 	public void onCast(HolyTome tome, Hero hero) {
 
-		Buff.affect(hero,AuraBuff.class, AuraBuff.DURATION);
+		Buff.affect(hero,AuraBuff.class, scaleEffect(hero, AuraBuff.DURATION));
 
 		Sample.INSTANCE.play(Assets.Sounds.READ);
 

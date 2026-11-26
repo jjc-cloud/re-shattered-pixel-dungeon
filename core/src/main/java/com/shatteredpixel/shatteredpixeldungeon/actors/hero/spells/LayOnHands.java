@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -105,7 +107,7 @@ public class LayOnHands extends TargetedClericSpell {
 	}
 
 	private void affectChar(Hero hero, Char ch){
-		int totalHeal = 10 + 5*hero.pointsInTalent(Talent.LAY_ON_HANDS);
+		int totalHeal = scaleEffect(hero, 10 + 5*hero.pointsInTalent(Talent.LAY_ON_HANDS));
 		int totalBarrier = 0;
 		if (ch == hero){
 			Barrier barrier = Buff.affect(ch, Barrier.class);

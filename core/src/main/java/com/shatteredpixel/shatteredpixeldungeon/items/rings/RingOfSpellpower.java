@@ -65,6 +65,24 @@ public class RingOfSpellpower extends Ring {
 		return target == null ? 1 : Math.pow(POWER_PER_LEVEL, getBuffedBonus(target, Spellpower.class));
 	}
 
+	public static float magicPenetration(Char caster) {
+		return (float) Math.max(0, Math.min(1, (powerMultiplier(caster) - 1) / 10));
+	}
+
+	public static int scaleEffect(Char caster, int base) {
+		return scaleEffect(base, powerMultiplier(caster));
+	}
+
+	public static float scaleEffect(Char caster, float base) {
+		return (float) (base * powerMultiplier(caster));
+	}
+
+	public static int scaleEffect(double base, double power) {
+		double amount = base * power;
+		// Correct floating-point error at integer results, e.g. 100 * 1.15.
+		return (int) Math.max(0, Math.floor(amount + 4 * Math.ulp(amount)));
+	}
+
 	public class Spellpower extends RingBuff {
 	}
 }

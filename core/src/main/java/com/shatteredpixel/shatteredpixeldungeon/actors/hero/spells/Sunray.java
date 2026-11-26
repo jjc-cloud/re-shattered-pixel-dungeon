@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -99,25 +101,25 @@ public class Sunray extends TargetedClericSpell {
 
 			if (Char.hasProp(ch, Char.Property.UNDEAD) || Char.hasProp(ch, Char.Property.DEMONIC)){
 				if (hero.pointsInTalent(Talent.SUNRAY) == 2) {
-					ch.damage(12, Sunray.this, hero);
+					ch.damageMagic(12, Sunray.this, hero);
 				} else {
-					ch.damage(8, Sunray.this, hero);
+					ch.damageMagic(8, Sunray.this, hero);
 				}
 			} else {
 				if (hero.pointsInTalent(Talent.SUNRAY) == 2) {
-					ch.damage(Hero.heroDamageIntRange(6, 12), Sunray.this, hero);
+					ch.damageMagic(Hero.heroDamageIntRange(6, 12), Sunray.this, hero);
 				} else {
-					ch.damage(Hero.heroDamageIntRange(4, 8), Sunray.this, hero);
+					ch.damageMagic(Hero.heroDamageIntRange(4, 8), Sunray.this, hero);
 				}
 			}
 
 			if (ch.isAlive()) {
 				if (ch.buff(Blindness.class) != null && ch.buff(SunRayRecentlyBlindedTracker.class) != null) {
-					Buff.prolong(ch, Paralysis.class, 2f + 2f*hero.pointsInTalent(Talent.SUNRAY));
+					Buff.prolong(ch, Paralysis.class, scaleEffect(hero, 2f + 2f*hero.pointsInTalent(Talent.SUNRAY)));
 					ch.buff(SunRayRecentlyBlindedTracker.class).detach();
 				} else if (ch.buff(SunRayUsedTracker.class) == null) {
-					Buff.prolong(ch, Blindness.class, 2f + 2f*hero.pointsInTalent(Talent.SUNRAY));
-					Buff.prolong(ch, SunRayRecentlyBlindedTracker.class, 2f + 2f*hero.pointsInTalent(Talent.SUNRAY));
+					Buff.prolong(ch, Blindness.class, scaleEffect(hero, 2f + 2f*hero.pointsInTalent(Talent.SUNRAY)));
+					Buff.prolong(ch, SunRayRecentlyBlindedTracker.class, scaleEffect(hero, 2f + 2f*hero.pointsInTalent(Talent.SUNRAY)));
 					Buff.affect(ch, SunRayUsedTracker.class);
 				}
 				if (hero.subClass == HeroSubClass.PRIEST){

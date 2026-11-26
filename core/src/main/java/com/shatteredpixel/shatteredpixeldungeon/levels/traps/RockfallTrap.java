@@ -70,7 +70,7 @@ public class RockfallTrap extends Trap {
 			int cell;
 			for (Point p : r.getPoints()){
 				cell = Dungeon.level.pointToCell(p);
-				if (!Dungeon.level.solid[cell]){
+				if (!Dungeon.level.solid[cell] && !Dungeon.level.isProtectedFromRockfall(cell, false)){
 					rockCells.add(cell);
 				}
 			}
@@ -79,7 +79,7 @@ public class RockfallTrap extends Trap {
 		} else {
 			PathFinder.buildDistanceMap( pos, BArray.not( Dungeon.level.solid, null ), 2 );
 			for (int i = 0; i < PathFinder.distance.length; i++) {
-				if (PathFinder.distance[i] < Integer.MAX_VALUE) {
+				if (PathFinder.distance[i] < Integer.MAX_VALUE && !Dungeon.level.isProtectedFromRockfall(i, false)) {
 					rockCells.add(i);
 				}
 			}

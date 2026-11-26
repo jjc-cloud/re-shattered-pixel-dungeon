@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -100,12 +102,12 @@ public class BlessSpell extends TargetedClericSpell {
 	private void affectChar(Hero hero, Char ch){
 		new Flare(6, 32).color(0xFFFF00, true).show(ch.sprite, 2f);
 		if (ch == hero){
-			Buff.prolong(ch, Bless.class, 2f + 4*hero.pointsInTalent(Talent.BLESS));
-			Buff.affect(ch, Barrier.class).setShield(5 + 5*hero.pointsInTalent(Talent.BLESS));
+			Buff.prolong(ch, Bless.class, scaleEffect(hero, 2f + 4*hero.pointsInTalent(Talent.BLESS)));
+			Buff.affect(ch, Barrier.class).setShield(scaleEffect(hero, 5 + 5*hero.pointsInTalent(Talent.BLESS)));
 			ch.sprite.showStatusWithIcon( CharSprite.POSITIVE, Integer.toString(5 + 5*hero.pointsInTalent(Talent.BLESS)), FloatingText.SHIELDING );
 		} else {
-			Buff.prolong(ch, Bless.class, 5f + 5*hero.pointsInTalent(Talent.BLESS));
-			int totalHeal = 5 + 5*hero.pointsInTalent(Talent.BLESS);
+			Buff.prolong(ch, Bless.class, scaleEffect(hero, 5f + 5*hero.pointsInTalent(Talent.BLESS)));
+			int totalHeal = scaleEffect(hero, 5 + 5*hero.pointsInTalent(Talent.BLESS));
 			if (ch.HT - ch.HP < totalHeal){
 				int barrier = totalHeal - (ch.HT - ch.HP);
 				barrier = Math.max(barrier, 0);

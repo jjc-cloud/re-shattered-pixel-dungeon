@@ -21,13 +21,16 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.levels.painters;
 
+import com.badlogic.gdx.utils.IntSet;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CaveCollapse;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellState;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.RoomProtection;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.connection.ConnectionRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.SpecialRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretRoom;
@@ -39,7 +42,10 @@ import com.watabou.utils.Random;
 import com.watabou.utils.Point;
 import com.watabou.utils.PathFinder;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 
 public class CavesPainter extends RegularPainter {
 
@@ -156,17 +162,16 @@ public class CavesPainter extends RegularPainter {
 
 	private void paintMetalConnections(Level level, ArrayList<Room> rooms) {
 		int width = level.width();
+		CellContent metal = level.createCellContent(Terrain.REGION_DECO);
 		for (Room room : rooms) {
 			if (room instanceof SuperSecretRoom) continue;
 			if (room instanceof ConnectionRoom) {
-				// 只替换现有通路，保留桥下深渊和相邻房间的墙体。
+				// 在现有通路上叠放架构，保留底层地形和相邻房间的墙体。
 				for (int y = room.top + 1; y < room.bottom; y++) {
 					for (int x = room.left + 1; x < room.right; x++) {
 						int cell = x + y * width;
-						int terrain = level.terrainAt(cell);
-						if (terrain == Terrain.EMPTY || terrain == Terrain.EMPTY_SP || terrain == Terrain.EMPTY_DECO) {
-							level.cellAt(cell).place(Terrain.REGION_DECO);
-						}
+						CellState state = level.cellAt(cell);
+						if (state.canPlace(metal)) state.place(Terrain.REGION_DECO);
 					}
 				}
 			}
@@ -188,7 +193,10 @@ public class CavesPainter extends RegularPainter {
 				switch (door.type) {
 					case EMPTY: case TUNNEL: case REGULAR: case UNLOCKED:
 					case HIDDEN: case LOCKED: case WATER:
-						level.cellAt(doorway).reset(Terrain.EMPTY, Terrain.REGION_DECO);
+						CellState doorwayState = level.cellAt(doorway);
+						Door paintedDoor = Door.at(level, doorway);
+						if (paintedDoor != null) doorwayState.removeContent(paintedDoor);
+						doorwayState.place(Terrain.REGION_DECO);
 						door.type = Room.Door.Type.EMPTY;
 						// 在门口两侧的岩墙内侧补一层墙，增加墙体厚度，保留中间通路。
 						int dx = door.x == room.left ? 1 : door.x == room.right ? -1 : 0;
@@ -222,7 +230,7 @@ public class CavesPainter extends RegularPainter {
 						Point opening = new Point(door.x + dx, door.y + dy);
 						if (thickened && room.inside(opening)) {
 							int cell = level.pointToCell(opening);
-							if (level.getTransition(cell) == null && (level.cellAt(cell).flags() & Terrain.SOLID) == 0) {
+							if (level.getTransition(cell) == null) {
 								level.cellAt(cell).place(Terrain.REGION_DECO);
 							}
 						}
@@ -238,28 +246,187 @@ public class CavesPainter extends RegularPainter {
 		for (int cell = 0; cell < level.length(); cell++) {
 			Door door = Door.at(level, cell);
 			if (door != null && door.state() != Door.State.CRYSTAL) {
-				level.cellAt(cell).reset(Terrain.EMPTY, Terrain.REGION_DECO);
+				CellState state = level.cellAt(cell);
+				state.removeContent(door);
+				state.place(Terrain.REGION_DECO);
 			}
 		}
+		IntSet crystalClearance = new IntSet();
 		for (int cell = 0; cell < level.length(); cell++) {
 			if (Door.is(level, cell, Door.State.CRYSTAL)) {
-				// 所有架构绘制结束后清理门口，防止其他入口的延伸贴到水晶门旁。
+				// 清理水晶门周围的连接架构，并把门口留给房内散落时避开。
 				for (int offset : PathFinder.NEIGHBOURS9) {
 					int next = cell + offset;
 					if (level.insideMap(next) && level.distance(cell, next) <= 1) {
+						crystalClearance.add(next);
 						level.cellAt(next).removeTerrain(Terrain.REGION_DECO);
 						level.cellAt(next).removeTerrain(Terrain.REGION_DECO_ALT);
 					}
 				}
 			}
 		}
-		// 架构不能悬在深渊上；只补基础地板，保留同格的其他内容。
+		// 连通房间的架构需要可步行的地板，保留同格的其他内容。
 		for (int cell = 0; cell < level.length(); cell++) {
 			if ((level.hasTerrain(cell, Terrain.REGION_DECO) || level.hasTerrain(cell, Terrain.REGION_DECO_ALT))
 					&& level.cellAt(cell).ground() == Terrain.CHASM) {
 				level.cellAt(cell).setGround(Terrain.EMPTY);
 			}
 		}
+		paintScatteredMetal(level, rooms, crystalClearance);
+	}
+
+	private void paintScatteredMetal(Level level, ArrayList<Room> rooms, IntSet crystalClearance) {
+		CellContent metal = level.createCellContent(Terrain.REGION_DECO);
+		int width = level.width();
+		for (Room room : rooms) {
+			if (!(room instanceof StandardRoom || room instanceof SpecialRoom)
+					|| room instanceof BlacksmithRoom || RoomProtection.isProtected(room)) continue;
+
+			int area = (room.width() - 2) * (room.height() - 2);
+			if (area < 70 || (area < 110 && Random.Int(2) == 0)) continue;
+
+			int remaining = area / 10;
+			HashSet<Integer> candidates = new HashSet<>();
+			IntSet groundedMetal = new IntSet();
+			IntSet bridgeBanks = new IntSet();
+			HashSet<Integer> chasmCells = new HashSet<>();
+			for (int y = room.top + 1; y < room.bottom; y++) {
+				for (int x = room.left + 1; x < room.right; x++) {
+					int cell = x + y * width;
+					if (crystalClearance.contains(cell)) continue;
+					CellState state = level.cellAt(cell);
+					if (state.has(CellContent.OVERHEAD)) {
+						remaining--;
+						if (state.ground() != Terrain.CHASM) {
+							groundedMetal.add(cell);
+							bridgeBanks.add(cell);
+						}
+						continue;
+					}
+					if (level.getTransition(cell) != null || level.heaps.get(cell) != null || level.findMob(cell) != null) continue;
+					if (state.ground() == Terrain.CHASM) {
+						if (state.contents().isEmpty() && level.traps.get(cell) == null && level.plants.get(cell) == null) {
+							chasmCells.add(cell);
+						}
+					} else if (state.canPlace(metal)) {
+						candidates.add(cell);
+						bridgeBanks.add(cell);
+					}
+				}
+			}
+			while (!chasmCells.isEmpty()) {
+				ArrayList<Integer> crossing = findChasmCrossing(level, chasmCells, bridgeBanks);
+				if (crossing.isEmpty()) break;
+				for (int cell : crossing) {
+					if (!groundedMetal.contains(cell)) {
+						CellState state = level.cellAt(cell);
+						if (state.ground() == Terrain.CHASM) state.setGround(Terrain.EMPTY);
+						state.place(Terrain.REGION_DECO);
+						remaining--;
+					}
+					// 下一条路线与这条路线的桥身和落脚点都至少隔一格。
+					for (int offset : PathFinder.NEIGHBOURS9) {
+						chasmCells.remove(cell + offset);
+						bridgeBanks.remove(cell + offset);
+						candidates.remove(cell + offset);
+					}
+				}
+			}
+			int[] directions = PathFinder.NEIGHBOURS4.clone();
+			while (remaining > 0 && !candidates.isEmpty()) {
+				int groupSize = remaining <= 5 ? remaining : Random.IntRange(3, Math.min(5, remaining - 3));
+				ArrayList<Integer> seeds = new ArrayList<>(candidates);
+				Random.shuffle(seeds);
+				ArrayList<Integer> bestGroup = new ArrayList<>();
+				for (int seed : seeds) {
+					ArrayList<Integer> group = new ArrayList<>();
+					group.add(seed);
+					while (group.size() < groupSize) {
+						int end = group.get(group.size() - 1);
+						int nextCell = -1;
+						Random.shuffle(directions);
+						for (int offset : directions) {
+							int next = end + offset;
+							if (!candidates.contains(next) || group.contains(next)) continue;
+							int contacts = 0;
+							for (int neighbor : PathFinder.NEIGHBOURS4) {
+								if (group.contains(next + neighbor)) contacts++;
+							}
+							if (contacts == 1) {
+								nextCell = next;
+								break;
+							}
+						}
+						if (nextCell == -1) break;
+						group.add(nextCell);
+					}
+					if (group.size() > bestGroup.size()) bestGroup = group;
+					if (bestGroup.size() == groupSize) break;
+				}
+				for (int cell : bestGroup) {
+					level.cellAt(cell).place(Terrain.REGION_DECO);
+					for (int offset : PathFinder.NEIGHBOURS9) candidates.remove(cell + offset);
+				}
+				remaining -= bestGroup.size();
+			}
+		}
+	}
+
+	private ArrayList<Integer> findChasmCrossing(Level level, HashSet<Integer> chasmCells, IntSet bridgeBanks) {
+		HashMap<Integer, Integer> banks = new HashMap<>();
+		IntSet interior = new IntSet();
+		for (int cell : chasmCells) {
+			int bank = -1;
+			int shoreNeighbors = 0;
+			for (int offset : PathFinder.NEIGHBOURS4) {
+				int next = cell + offset;
+				if (level.cellAt(next).ground() != Terrain.CHASM) {
+					shoreNeighbors++;
+					bank = next;
+				}
+			}
+			// 只有进出口可以贴岸，路径中段必须穿过深渊内部。
+			if (shoreNeighbors == 0) interior.add(cell);
+			else if (shoreNeighbors == 1 && bridgeBanks.contains(bank)) banks.put(cell, bank);
+		}
+
+		ArrayList<Integer> crossing = new ArrayList<>();
+		if (banks.size() < 2 || interior.size == 0) return crossing;
+		ArrayList<Integer> starts = new ArrayList<>(banks.keySet());
+		Random.shuffle(starts);
+		int[] directions = PathFinder.NEIGHBOURS4.clone();
+		for (int start : starts) {
+			int startBank = banks.get(start);
+			HashMap<Integer, Integer> previous = new HashMap<>();
+			ArrayDeque<Integer> queue = new ArrayDeque<>();
+			queue.add(start);
+			while (!queue.isEmpty()) {
+				int cell = queue.removeFirst();
+				Random.shuffle(directions);
+				for (int offset : directions) {
+					int next = cell + offset;
+					if (interior.contains(next) && !previous.containsKey(next)) {
+						previous.put(next, cell);
+						queue.addLast(next);
+					}
+					Integer endBank = banks.get(next);
+					if (cell == start || endBank == null || endBank == startBank
+							|| endBank - next == startBank - start) continue;
+					int separation = Math.abs(next - start);
+					int bankSeparation = Math.abs(endBank - startBank);
+					if (separation == 0 || separation == 1 || separation == level.width()
+							|| bankSeparation == 1 || bankSeparation == level.width()) continue;
+
+					crossing.add(endBank);
+					crossing.add(next);
+					for (int step = cell; step != start; step = previous.get(step)) crossing.add(step);
+					crossing.add(start);
+					crossing.add(startBank);
+					return crossing;
+				}
+			}
+		}
+		return crossing;
 	}
 
 	private void paintMetalExtension(Level level, Room room, Room.Door door) {
@@ -285,11 +452,10 @@ public class CavesPainter extends RegularPainter {
 				if (!room.inside(next)) continue;
 				int cell = level.pointToCell(next);
 				if (level.getTransition(cell) != null || level.heaps.get(cell) != null
-						|| level.findMob(cell) != null || level.traps.get(cell) != null
-						|| level.plants.get(cell) != null) continue;
-				if ((level.cellAt(cell).flags() & Terrain.SOLID) != 0) continue;
-				// 保留原地面、水、草及其他覆盖物；深渊由连接绘制结束后统一补地板。
-				level.cellAt(cell).place(Terrain.REGION_DECO);
+						|| level.findMob(cell) != null || level.plants.get(cell) != null) continue;
+				CellState state = level.cellAt(cell);
+				state.place(Terrain.REGION_DECO);
+				if (!state.has(CellContent.OVERHEAD)) continue;
 				point = next;
 				dx = moveX;
 				dy = moveY;

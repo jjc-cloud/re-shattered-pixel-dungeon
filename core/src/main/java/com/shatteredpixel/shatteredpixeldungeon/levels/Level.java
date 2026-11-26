@@ -183,6 +183,18 @@ public abstract class Level implements Bundlable {
 		CellContent content = state.content(terrain);
 		return CellState.isGround(terrain) || (content != null ? state.exposed(content) : !state.buried());
 	}
+
+	public boolean isProtectedFromRockfall(int cell, boolean protectEntrance) {
+		if (cellAt(cell).has(CellContent.OVERHEAD)) return true;
+		for (int offset : PathFinder.NEIGHBOURS9) {
+			int nearby = cell + offset;
+			if (nearby < 0 || nearby >= length() || distance(cell, nearby) > 1) continue;
+			if (hasTerrain(nearby, Terrain.BARRICADE)
+					|| (protectEntrance && terrainAt(nearby) == Terrain.ENTRANCE)) return true;
+		}
+		return false;
+	}
+
 	/** 只供地图素材拼接使用，不是可写的世界状态。 */
 	public int[] terrainVisuals() { return terrainVisuals; }
 
@@ -1939,7 +1951,7 @@ public abstract class Level implements Bundlable {
 			case Terrain.LOCKED_EXIT:
 				return Messages.get(Level.class, "locked_exit_desc");
 			case Terrain.BARRICADE:
-				return Messages.get(Level.class, "barricade_desc");
+				return Messages.get(region() == 2 ? MiningLevel.class : Level.class, "barricade_desc");
 			case Terrain.INACTIVE_TRAP:
 				return Messages.get(Level.class, "inactive_trap_desc");
 			case Terrain.STATUE:

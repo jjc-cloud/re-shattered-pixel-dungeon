@@ -31,7 +31,6 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GnollSapperSprite;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.GameMath;
-import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 public class GnollSapper extends Mob {
@@ -178,20 +177,13 @@ public class GnollSapper extends Mob {
 				}
 
 				if (abilityCooldown-- <= 0){
-					boolean targetNextToBarricade = false;
-					for (int i : PathFinder.NEIGHBOURS8){
-						if (Dungeon.level.hasTerrain(enemy.pos+i, Terrain.BARRICADE)
-							|| Dungeon.level.terrainAt(enemy.pos+i) == Terrain.ENTRANCE){
-							targetNextToBarricade = true;
-							break;
-						}
-					}
+					boolean targetProtected = Dungeon.level.isProtectedFromRockfall(enemy.pos, true);
 
 					// 50/50 to either throw a rock or do rockfall, but never do rockfall twice
-					// unless target is next to a barricade, then always try to throw
+					// unless the target is protected from rockfall, then always try to throw
 					// unless nothing to throw, then always rockfall
 					Ballistica aim = GnollGeomancer.prepRockThrowAttack(enemy, GnollSapper.this);
-					if (aim != null && (targetNextToBarricade || lastAbilityWasRockfall || Random.Int(2) == 0)) {
+					if (aim != null && (targetProtected || lastAbilityWasRockfall || Random.Int(2) == 0)) {
 
 						lastAbilityWasRockfall = false;
 						throwingRockFromPos = aim.sourcePos;

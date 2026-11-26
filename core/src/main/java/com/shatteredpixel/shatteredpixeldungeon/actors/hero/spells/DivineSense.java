@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -58,7 +60,7 @@ public class DivineSense extends ClericSpell {
 
 	@Override
 	public void onCast(HolyTome tome, Hero hero) {
-		Buff.prolong(hero, DivineSenseTracker.class, DivineSenseTracker.DURATION);
+		Buff.prolong(hero, DivineSenseTracker.class, scaleEffect(hero, DivineSenseTracker.DURATION));
 		Dungeon.observe();
 
 		Sample.INSTANCE.play(Assets.Sounds.READ);
@@ -69,7 +71,7 @@ public class DivineSense extends ClericSpell {
 
 		Char ally = PowerOfMany.getPoweredAlly();
 		if (ally != null && ally.buff(LifeLinkSpell.LifeLinkSpellBuff.class) != null){
-			Buff.prolong(ally, DivineSenseTracker.class, DivineSenseTracker.DURATION);
+			Buff.prolong(ally, DivineSenseTracker.class, scaleEffect(hero, DivineSenseTracker.DURATION));
 			SpellSprite.show(ally, SpellSprite.VISION);
 		}
 

@@ -468,8 +468,9 @@ public class DM300 extends Mob {
 					pos++;
 					continue;
 				}
-				//add rock cell to pos, if it is not solid, and isn't the safecell
-				if (!Dungeon.level.solid[pos] && pos != safeCell && Random.Int(Dungeon.level.distance(rockCenter, pos)) == 0) {
+				if (!Dungeon.level.solid[pos] && pos != safeCell
+						&& !Dungeon.level.isProtectedFromRockfall(pos, false)
+						&& Random.Int(Dungeon.level.distance(rockCenter, pos)) == 0) {
 					rockCells.add(pos);
 				}
 				pos++;

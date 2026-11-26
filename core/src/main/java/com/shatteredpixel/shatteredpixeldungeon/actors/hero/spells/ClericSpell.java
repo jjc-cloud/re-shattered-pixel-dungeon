@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barrier;
@@ -76,7 +78,7 @@ public abstract class ClericSpell {
 	public void onSpellCast(HolyTome tome, Hero hero){
 		Invisibility.dispel();
 		if (hero.hasTalent(Talent.SATIATED_SPELLS) && hero.buff(Talent.SatiatedSpellsTracker.class) != null){
-			int amount = 1 + 2*hero.pointsInTalent(Talent.SATIATED_SPELLS);
+			int amount = scaleEffect(hero, 1 + 2*hero.pointsInTalent(Talent.SATIATED_SPELLS));
 			Buff.affect(hero, Barrier.class).setShield(amount);
 			Char ally = PowerOfMany.getPoweredAlly();
 			if (ally != null && ally.buff(LifeLinkSpell.LifeLinkSpellBuff.class) != null){
@@ -88,16 +90,16 @@ public abstract class ClericSpell {
 		Talent.onArtifactUsed(hero);
 		if (hero.subClass == HeroSubClass.PALADIN){
 			if (this != HolyWeapon.INSTANCE && hero.buff(HolyWeapon.HolyWepBuff.class) != null){
-				hero.buff(HolyWeapon.HolyWepBuff.class).extend(10*chargeUse(hero));
+				hero.buff(HolyWeapon.HolyWepBuff.class).extend(scaleEffect(hero, 10*chargeUse(hero)));
 			}
 			if (this != HolyWard.INSTANCE && hero.buff(HolyWard.HolyArmBuff.class) != null){
-				hero.buff(HolyWard.HolyArmBuff.class).extend(10*chargeUse(hero));
+				hero.buff(HolyWard.HolyArmBuff.class).extend(scaleEffect(hero, 10*chargeUse(hero)));
 			}
 		}
 
 		if (hero.buff(AscendedForm.AscendBuff.class) != null){
 			hero.buff(AscendedForm.AscendBuff.class).spellCasts++;
-			hero.buff(AscendedForm.AscendBuff.class).incShield((int)(10*chargeUse(hero)));
+			hero.buff(AscendedForm.AscendBuff.class).incShield(scaleEffect(hero, (int)(10*chargeUse(hero))));
 		}
 	}
 

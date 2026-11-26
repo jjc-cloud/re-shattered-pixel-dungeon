@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -147,7 +149,7 @@ public class WandOfFrost extends DamageWand {
 					}
 
 					public boolean act() {
-						Buff.affect(target, Frost.class, Math.round(Frost.DURATION * powerMulti));
+						Buff.affect(target, Frost.class, Math.round(scaleEffect(attacker, Frost.DURATION * powerMulti)));
 						return super.act();
 					}
 				}.attachTo(defender);

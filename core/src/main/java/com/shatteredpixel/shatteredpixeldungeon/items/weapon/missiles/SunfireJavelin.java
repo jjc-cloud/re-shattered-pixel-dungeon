@@ -52,7 +52,7 @@ public class SunfireJavelin extends MagicMissileWeapon {
 
 	@Override
 	public Class<?> damageType() {
-		return Fire.class;
+		return Burning.class;
 	}
 
 	@Override

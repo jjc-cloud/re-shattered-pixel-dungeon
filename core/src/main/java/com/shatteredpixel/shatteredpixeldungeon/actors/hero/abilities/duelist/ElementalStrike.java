@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.duelist;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -168,7 +170,7 @@ public class ElementalStrike extends ArmorAbility {
 
 		Ballistica aim = new Ballistica(hero.pos, target, Ballistica.WONT_STOP);
 
-		int maxDist = 4 + hero.pointsInTalent(Talent.ELEMENTAL_REACH);
+		int maxDist = scaleEffect(hero, 4 + hero.pointsInTalent(Talent.ELEMENTAL_REACH));
 		int dist = Math.min(aim.dist, maxDist);
 
 		ConeAOE cone = new ConeAOE(aim,
@@ -304,12 +306,12 @@ public class ElementalStrike extends ArmorAbility {
 
 		//*** Blocking ***
 		} else if (ench instanceof Blocking){
-			Blocking.grantShield(hero, Math.round(6f*targetsHit*powerMulti));
+			Blocking.grantShield(hero, Math.round(scaleEffect(hero, 6f*targetsHit*powerMulti)));
 
 		//*** Vampiric ***
 		} else if (ench instanceof Vampiric){
 			if (targetsHit > 0){
-				int heal = Math.round(2.5f*targetsHit*powerMulti);
+				int heal = Math.round(scaleEffect(hero, 2.5f*targetsHit*powerMulti));
 				heal = Math.min( heal, hero.HT - hero.HP );
 				if (heal > 0){
 					hero.HP += heal;
@@ -417,7 +419,8 @@ public class ElementalStrike extends ArmorAbility {
 	//effects that affect the characters within the cone AOE
 	private void perCharEffect(ConeAOE cone, Hero hero, Char primaryTarget, Weapon.Enchantment ench) {
 
-		float powerMulti = 1f + 0.30f * Dungeon.hero.pointsInTalent(Talent.STRIKING_FORCE);
+		float talentPower = 1f + 0.30f * hero.pointsInTalent(Talent.STRIKING_FORCE);
+		float powerMulti = scaleEffect(hero, talentPower);
 
 		ArrayList<Char> affected = new ArrayList<>();
 
@@ -430,7 +433,7 @@ public class ElementalStrike extends ArmorAbility {
 		//*** no enchantment ***
 		if (ench == null) {
 			for (Char ch : affected){
-				ch.damage(Math.round(powerMulti* Hero.heroDamageIntRange(6, 12)), ElementalStrike.this, hero);
+				ch.damageMagic(Math.round(talentPower* Hero.heroDamageIntRange(6, 12)), ElementalStrike.this, hero);
 			}
 
 		//*** Kinetic ***
@@ -438,7 +441,7 @@ public class ElementalStrike extends ArmorAbility {
 			if (storedKineticDamage > 0) {
 				for (Char ch : affected) {
 					if (ch != primaryTarget) {
-						ch.damagePhysical(Math.round(storedKineticDamage * 0.4f * powerMulti), ench, hero);
+						ch.damagePhysical(Math.round(storedKineticDamage * 0.4f * talentPower), ench, hero);
 					}
 				}
 				storedKineticDamage = 0;
@@ -494,7 +497,7 @@ public class ElementalStrike extends ArmorAbility {
 		} else if (ench instanceof Projecting){
 			for (Char ch : affected){
 				if (ch != primaryTarget) {
-					ch.damage(Math.round(hero.damageRoll() * 0.3f * powerMulti), ench, hero);
+					ch.damageMagic(Math.round(hero.damageRoll() * 0.3f * talentPower), ench, hero);
 				}
 			}
 
@@ -513,7 +516,7 @@ public class ElementalStrike extends ArmorAbility {
 		} else if (ench instanceof Vorpal){
 			for (Char ch : affected){
 				if (ch != primaryTarget) {
-					Buff.affect(ch, Bleeding.class).set(powerMulti*10);
+					Buff.affect(ch, Bleeding.class).set(talentPower*10);
 				}
 			}
 
@@ -538,7 +541,7 @@ public class ElementalStrike extends ArmorAbility {
 		} else if (ench instanceof Crystal){
 			for (Char ch : affected){
 				if (ch != primaryTarget) {
-					ch.damage(Math.round(powerMulti* Hero.heroDamageIntRange(10, 20)), ElementalStrike.this, hero);
+					ch.damageMagic(Math.round(talentPower* Hero.heroDamageIntRange(10, 20)), ElementalStrike.this, hero);
 					((Crystal) ench).repair(null, false, 4f*powerMulti);
 				}
 			}
@@ -550,7 +553,7 @@ public class ElementalStrike extends ArmorAbility {
 					float hpMissing = 1f - (ch.HP / (float)ch.HT);
 					float chance = 0.06f + 0.24f*hpMissing; //6-30%
 					if (Random.Float() < chance*powerMulti){
-						ch.damage( ch.HP, Grim.class , hero);
+						ch.damageMagic( ch.HP, Grim.class , hero);
 						ch.sprite.emitter().burst( ShadowParticle.UP, 5 );
 					}
 				}
@@ -561,7 +564,7 @@ public class ElementalStrike extends ArmorAbility {
 			for (Char ch : affected){
 				if (Random.Float() < 0.2f*powerMulti){
 					//TODO totally should add a bit of dialogue here
-					Buff.affect(ch, Amok.class, 6f);
+					Buff.affect(ch, Amok.class, scaleEffect(hero, 6f));
 				}
 			}
 
@@ -586,7 +589,7 @@ public class ElementalStrike extends ArmorAbility {
 		} else if (ench instanceof Dazzling){
 			for (Char ch : affected){
 				if (Random.Float() < 0.5f*powerMulti){
-					Buff.affect(ch, Blindness.class, 6f);
+					Buff.affect(ch, Blindness.class, scaleEffect(hero, 6f));
 				}
 			}
 
@@ -600,14 +603,14 @@ public class ElementalStrike extends ArmorAbility {
 		//*** Sacrificial ***
 		} else if (ench instanceof Sacrificial){
 			for (Char ch : affected){
-				Buff.affect(ch, Bleeding.class).set(12f*powerMulti);
+				Buff.affect(ch, Bleeding.class).set(12f*talentPower);
 			}
 
 		//*** Wayward ***
 		} else if (ench instanceof Wayward){
 			for (Char ch : affected){
 				if (Random.Float() < 0.5f*powerMulti){
-					Buff.affect(ch, Hex.class, 6f);
+					Buff.affect(ch, Hex.class, scaleEffect(hero, 6f));
 				}
 			}
 
@@ -615,7 +618,7 @@ public class ElementalStrike extends ArmorAbility {
 		} else if (ench instanceof Polarized){
 			for (Char ch : affected){
 				if (Random.Float() < 0.5f*powerMulti){
-					ch.damage(Hero.heroDamageIntRange(24, 36), ElementalStrike.this, hero);
+					ch.damageMagic(Hero.heroDamageIntRange(24, 36), ElementalStrike.this, hero);
 				}
 			}
 
@@ -623,7 +626,7 @@ public class ElementalStrike extends ArmorAbility {
 		} else if (ench instanceof Friendly){
 			for (Char ch : affected){
 				if (Random.Float() < 0.5f*powerMulti){
-					Buff.affect(ch, Charm.class, 6f).object = hero.id();
+					Buff.affect(ch, Charm.class, scaleEffect(hero, 6f)).object = hero.id();
 				}
 			}
 

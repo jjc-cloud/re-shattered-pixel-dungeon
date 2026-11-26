@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.armor;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
@@ -533,7 +535,7 @@ public class Armor extends EquipableItem {
 					damage = trinityGlyph.proc( this, attacker, defender, damage );
 				}
 				int blocking = ((Hero) defender).subClass == HeroSubClass.PALADIN ? 3 : 1;
-				damage -= Math.round(blocking * Glyph.genericProcChanceMultiplier(defender));
+				damage -= Math.round(scaleEffect(defender, blocking * Glyph.genericProcChanceMultiplier(defender)));
 
 			} else {
 				if (glyph != null) {
@@ -551,7 +553,7 @@ public class Armor extends EquipableItem {
 						&& (Dungeon.level.distance(defender.pos, Dungeon.hero.pos) <= 2 || defender.buff(LifeLinkSpell.LifeLinkSpellBuff.class) != null)
 						&& Dungeon.hero.buff(HolyWard.HolyArmBuff.class) != null) {
 					int blocking = Dungeon.hero.subClass == HeroSubClass.PALADIN ? 3 : 1;
-					damage -= Math.round(blocking * Glyph.genericProcChanceMultiplier(defender));
+					damage -= Math.round(scaleEffect(Dungeon.hero, blocking * Glyph.genericProcChanceMultiplier(defender)));
 				}
 			}
 			damage = Math.max(damage, 0);

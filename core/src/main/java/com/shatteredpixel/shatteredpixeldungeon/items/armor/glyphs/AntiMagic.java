@@ -78,7 +78,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Detonation
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicJavelin;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicMissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Skyfall;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.SunfireJavelin;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.HolyDart;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.DisintegrationTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.GrimTrap;
@@ -113,7 +112,6 @@ public class AntiMagic extends Armor.Glyph {
 		RESISTS.add( Detonation.class );
 		RESISTS.add( MagicJavelin.class );
 		RESISTS.add( Skyfall.class );
-		RESISTS.add( SunfireJavelin.class );
 
 		RESISTS.add( GuidingLight.class );
 		RESISTS.add( HolyWeapon.class );

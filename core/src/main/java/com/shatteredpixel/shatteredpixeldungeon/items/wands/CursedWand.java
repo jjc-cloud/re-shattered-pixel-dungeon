@@ -78,6 +78,8 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.EquipableItem;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower;
+import com.shatteredpixel.shatteredpixeldungeon.items.spells.WildEnergy;
 import com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMirrorImage;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRecharging;
@@ -490,11 +492,15 @@ public class CursedWand {
 					toHeal = target;
 					toDamage = user;
 				}
-				toHeal.HP = Math.min(toHeal.HT, toHeal.HP + damage/2);
+				boolean spellpowerApplies = !(origin instanceof WildEnergy);
+				int healing = spellpowerApplies ? RingOfSpellpower.scaleEffect(user, damage/2) : damage/2;
+				toHeal.HP = Math.min(toHeal.HT, toHeal.HP + healing);
 				toHeal.sprite.emitter().burst(Speck.factory(Speck.HEALING), 3);
-				toHeal.sprite.showStatusWithIcon( CharSprite.POSITIVE, Integer.toString(damage/2), FloatingText.HEALING );
+				toHeal.sprite.showStatusWithIcon( CharSprite.POSITIVE, Integer.toString(healing), FloatingText.HEALING );
 
-				toDamage.damage(damage, new CursedWand(), user);
+				CursedWand source = new CursedWand();
+				if (spellpowerApplies) toDamage.damageMagic(damage, source, user);
+				else toDamage.damage(damage, source, user);
 				toDamage.sprite.emitter().start(ShadowParticle.UP, 0.05f, 10);
 
 				if (toDamage == Dungeon.hero){

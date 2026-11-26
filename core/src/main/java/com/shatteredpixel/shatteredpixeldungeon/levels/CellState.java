@@ -105,6 +105,12 @@ public class CellState implements Bundlable {
 
 	/** 随机布置检查承载和占用；不通过最上层的贴图编号判断空地。 */
 	public boolean canPlace(CellContent incoming) {
+		if (incoming.has(CellContent.OVERHEAD)) {
+			return (ground == Terrain.EMPTY || ground == Terrain.EMPTY_DECO || ground == Terrain.EMPTY_SP
+					|| ground == Terrain.CUSTOM_DECO_EMPTY)
+					&& (level == null || level.plants == null || level.plants.get(cell) == null)
+					&& !has(CellContent.OVERHEAD) && canPlaceOverhead();
+		}
 		if (CellContent.family(incoming.type()) == Terrain.TRAP
 				&& (ground != Terrain.EMPTY || !contents.isEmpty())) return false;
 		if ((Terrain.flags[ground] & (Terrain.RESERVED | Terrain.SCATTERABLE)) != Terrain.SCATTERABLE
@@ -113,8 +119,20 @@ public class CellState implements Bundlable {
 				|| (level.plants != null && level.plants.get(cell) != null)) return false;
 		for (CellContent existing : contents) {
 			if (CellContent.family(existing.type()) == CellContent.family(incoming.type())) return false;
-			if (existing.has(CellContent.OCCUPIES_SPACE)) return false;
+			if (existing.has(CellContent.OCCUPIES_SPACE)
+					&& !(existing.has(CellContent.OVERHEAD) && incoming.has(CellContent.SURFACE_COVER))) return false;
 			if (existing.has(CellContent.SURFACE_COVER) && incoming.has(CellContent.SURFACE_COVER | CellContent.OCCUPIES_SPACE)) return false;
+		}
+		return true;
+	}
+
+	private boolean canPlaceOverhead() {
+		if ((Terrain.flags[ground] & (Terrain.PASSABLE | Terrain.PIT)) == 0
+				|| (level != null && level.traps != null && level.traps.get(cell) != null)) return false;
+		for (CellContent existing : contents) {
+			if (CellContent.family(existing.type()) == Terrain.TRAP
+					|| (!existing.has(CellContent.OVERHEAD)
+					&& existing.has(CellContent.OCCUPIES_SPACE | CellContent.COVERS_CONTENTS))) return false;
 		}
 		return true;
 	}
@@ -130,6 +148,7 @@ public class CellState implements Bundlable {
 		mutations++;
 		try {
 			if (isGround(content.type())) throw new IllegalArgumentException("地面应通过 setGround 设置");
+			if (content.has(CellContent.OVERHEAD) && (!canPlaceOverhead() || has(CellContent.OVERHEAD))) return false;
 			// 运行时生长也遵守格子的承载规则，不能绕过 canPlace 覆盖陷阱。
 			if (CellContent.family(content.type()) == Terrain.GRASS && !supports(CellContent.GROWABLE)) return false;
 			if (CellContent.family(content.type()) == Terrain.TRAP) {
@@ -209,6 +228,7 @@ public class CellState implements Bundlable {
 				}
 			}
 			CellContent replacement = level.createCellContent(terrain);
+			if (replacement.has(CellContent.OVERHEAD) && !canPlaceOverhead()) return;
 			for (CellContent current : new ArrayList<>(contents)) {
 				if (CellContent.family(terrain) == Terrain.WALL && CellContent.family(current.type()) == Terrain.WALL) {
 					replacement.properties(current.properties(), 0);

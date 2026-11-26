@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
@@ -120,7 +122,7 @@ public class WandOfLightning extends DamageWand {
 
 			float powerMulti = Math.max(1f, procChance);
 
-			FlavourBuff.prolong(attacker, LightningCharge.class, powerMulti*LightningCharge.DURATION);
+			FlavourBuff.prolong(attacker, LightningCharge.class, scaleEffect(attacker, powerMulti*LightningCharge.DURATION));
 			attacker.sprite.centerEmitter().burst( SparkParticle.FACTORY, 10 );
 			attacker.sprite.flash();
 			Sample.INSTANCE.play( Assets.Sounds.LIGHTNING );

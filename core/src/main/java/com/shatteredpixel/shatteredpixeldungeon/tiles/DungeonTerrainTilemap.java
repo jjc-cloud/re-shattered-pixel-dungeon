@@ -23,6 +23,8 @@ package com.shatteredpixel.shatteredpixeldungeon.tiles;
 
 import com.badlogic.gdx.graphics.Pixmap;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
+import com.shatteredpixel.shatteredpixeldungeon.levels.CellState;
 import com.shatteredpixel.shatteredpixeldungeon.levels.MiningLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
@@ -85,6 +87,15 @@ public class DungeonTerrainTilemap extends DungeonTilemap {
 		instance = this;
 	}
 
+	private int terrainForStitching(int pos) {
+		if (pos < 0 || pos >= size) return -1;
+		int tile = map[pos];
+		if (DungeonTileSheet.doorTile(tile)) return tile;
+		if (Dungeon.level.hasTerrain(pos, Terrain.WATER)) return Terrain.WATER;
+		CellState state = Dungeon.level.cellAt(pos);
+		return state.has(CellContent.OVERHEAD) ? state.ground() : tile;
+	}
+
 	@Override
 	protected int getTileVisual(int pos, int tile, boolean flat) {
         if (!flat && !DungeonTileSheet.wallStitcheable(tile) && !DungeonTileSheet.doorTile(tile)) {
@@ -125,16 +136,13 @@ public class DungeonTerrainTilemap extends DungeonTilemap {
 			int right = pos + PathFinder.CIRCLE4[1];
 			int bottom = pos + PathFinder.CIRCLE4[2];
 			int left = pos + PathFinder.CIRCLE4[3];
-			// 架构等上层物件不截断底层水面；实体门仍保留原有岸边表现。
 			return DungeonTileSheet.stitchWaterTile(
-					Dungeon.level.hasTerrain(top, Terrain.WATER) && !DungeonTileSheet.doorTile(map[top]) ? Terrain.WATER : map[top],
-					Dungeon.level.hasTerrain(right, Terrain.WATER) && !DungeonTileSheet.doorTile(map[right]) ? Terrain.WATER : map[right],
-					Dungeon.level.hasTerrain(bottom, Terrain.WATER) && !DungeonTileSheet.doorTile(map[bottom]) ? Terrain.WATER : map[bottom],
-					Dungeon.level.hasTerrain(left, Terrain.WATER) && !DungeonTileSheet.doorTile(map[left]) ? Terrain.WATER : map[left]
+					terrainForStitching(top), terrainForStitching(right),
+					terrainForStitching(bottom), terrainForStitching(left)
 			);
 
 		} else if (tile == Terrain.CHASM) {
-			return DungeonTileSheet.stitchChasmTile( pos > mapWidth ? map[pos - mapWidth] : -1);
+			return DungeonTileSheet.stitchChasmTile(terrainForStitching(pos - mapWidth));
 		}
 
 		if (!flat) {

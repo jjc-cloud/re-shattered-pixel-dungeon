@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite.Glowing;
@@ -36,7 +37,8 @@ public class Grim extends Weapon.Enchantment {
 	@Override
 	public int proc( Weapon weapon, Char attacker, Char defender, int damage ) {
 
-		if (defender.isImmune(Grim.class) || attacker.blocksDomainDamage(Grim.class, false)) {
+		if (attacker.blocksDomainDamage(Grim.class, false)
+				|| defender.magicDamageMultiplier(Grim.class, RingOfSpellpower.magicPenetration(attacker)) <= 0f) {
 			return damage;
 		}
 
@@ -44,7 +46,7 @@ public class Grim extends Weapon.Enchantment {
 
 		//scales from 0 - 50% based on how low hp the enemy is, plus 0-5% per level
 		float maxChance = 0.5f + .05f*level;
-		maxChance *= procChanceMultiplier(attacker);
+		maxChance = RingOfSpellpower.scaleEffect(attacker, maxChance * procChanceMultiplier(attacker));
 
 		//we defer logic using a buff here so we can know the true final damage
 		//see Char.damage

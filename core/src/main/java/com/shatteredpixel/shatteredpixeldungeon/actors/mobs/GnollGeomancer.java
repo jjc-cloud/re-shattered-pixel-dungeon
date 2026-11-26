@@ -591,17 +591,10 @@ public class GnollGeomancer extends Mob {
 
 				if (abilityCooldown-- <= 0){
 
-					boolean targetNextToBarricade = false;
-					for (int i : PathFinder.NEIGHBOURS8){
-						if (Dungeon.level.hasTerrain(enemy.pos+i, Terrain.BARRICADE)
-								|| Dungeon.level.terrainAt(enemy.pos+i) == Terrain.ENTRANCE){
-							targetNextToBarricade = true;
-							break;
-						}
-					}
+					boolean targetProtected = Dungeon.level.isProtectedFromRockfall(enemy.pos, true);
 
 					// 50/50 to either throw a rock or do rockfall, but never do rockfall twice
-					// unless target is next to a barricade, then always try to throw
+					// unless the target is protected from rockfall, then always try to throw
 					// unless nothing to throw, then always rockfall
 					int hpBracket = HT / 3;
 
@@ -609,7 +602,7 @@ public class GnollGeomancer extends Mob {
 					if (curbracket == 3) curbracket--; //full HP isn't its own bracket
 
 					Ballistica aim = GnollGeomancer.prepRockThrowAttack(enemy, GnollGeomancer.this);
-					if (aim != null && (targetNextToBarricade || lastAbilityWasRockfall || Random.Int(2) == 0)) {
+					if (aim != null && (targetProtected || lastAbilityWasRockfall || Random.Int(2) == 0)) {
 
 						lastAbilityWasRockfall = false;
 						throwingRocksFromPos = new int[]{-1, -1, -1};
@@ -768,7 +761,7 @@ public class GnollGeomancer extends Mob {
 	}
 
 	//similar overall logic as DM-300's rock fall attack, but with more parameters
-	public static boolean prepRockFallAttack( Char target, Char source, int range, boolean avoidBarricades ){
+	public static boolean prepRockFallAttack( Char target, Char source, int range, boolean protectEntrance ){
 		final int rockCenter = target.pos;
 
 		//collect the cells around the rockfall that are actually safe to stand in, and
@@ -803,22 +796,9 @@ public class GnollGeomancer extends Mob {
 					pos++;
 					continue;
 				}
-				if (avoidBarricades){
-					boolean barricade = false;
-					for (int j : PathFinder.NEIGHBOURS9){
-						if (Dungeon.level.hasTerrain(pos+j, Terrain.BARRICADE)
-								|| Dungeon.level.terrainAt(pos+j) == Terrain.ENTRANCE){
-							barricade = true;
-						}
-					}
-					if (barricade){
-						pos++;
-						continue;
-					}
-				}
-				//add rock cell to pos, if it is not solid, isn't the safecell, and isn't where geomancer is standing
 				if (!Dungeon.level.solid[pos]
 						&& pos != safeCell
+						&& !Dungeon.level.isProtectedFromRockfall(pos, protectEntrance)
 						&& !(Actor.findChar(pos) instanceof GnollGeomancer)
 						&& !(source instanceof GnollGeomancer && Actor.findChar(pos) instanceof GnollSapper)
 						&& Random.Int(1+Dungeon.level.distance(rockCenter, pos)/2) == 0) {

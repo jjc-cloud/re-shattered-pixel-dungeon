@@ -346,7 +346,7 @@ public abstract class Wand extends Item implements ChargeItem {
 
 		if (Dungeon.hero.subClass == HeroSubClass.PRIEST && target.buff(GuidingLight.Illuminated.class) != null) {
 			target.buff(GuidingLight.Illuminated.class).detach();
-			target.damage(Dungeon.hero.lvl+5, GuidingLight.INSTANCE, Dungeon.hero);
+			target.damageMagic(Dungeon.hero.lvl+5, GuidingLight.INSTANCE, Dungeon.hero);
 		}
 
 		if (target.alignment != Char.Alignment.ALLY
@@ -438,9 +438,7 @@ public abstract class Wand extends Item implements ChargeItem {
 	}
 
 	protected static int scaleSpellEffect(double base, double power){
-		double amount = base * power;
-		// Correct floating-point error at integer results, e.g. 100 * 1.15.
-		return (int)Math.max(0, Math.floor(amount + 4 * Math.ulp(amount)));
+		return RingOfSpellpower.scaleEffect(base, power);
 	}
 
 	protected static int previewSpellEffect(double base){

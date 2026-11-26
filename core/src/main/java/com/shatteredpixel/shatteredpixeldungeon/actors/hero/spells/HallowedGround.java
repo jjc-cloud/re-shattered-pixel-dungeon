@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -124,7 +126,7 @@ public class HallowedGround extends TargetedClericSpell {
 		}
 
 		for (Char ch : affected){
-			affectChar(ch);
+			affectChar(hero, ch);
 		}
 
 		Sample.INSTANCE.play(Assets.Sounds.MELD);
@@ -135,18 +137,19 @@ public class HallowedGround extends TargetedClericSpell {
 
 	}
 
-	private void affectChar( Char ch ){
+	private void affectChar(Hero hero, Char ch) {
 		if (ch.alignment == Char.Alignment.ALLY){
 
-			if (ch == Dungeon.hero || ch.HP == ch.HT){
-				int barrierToGive = Math.min(15, 30 - ch.shielding());
+			int amount = scaleEffect(hero, 15);
+			if (ch == hero || ch.HP == ch.HT){
+				int barrierToGive = Math.max(0, Math.min(amount, scaleEffect(hero, 30) - ch.shielding()));
 				Buff.affect(ch, Barrier.class).incShield(barrierToGive);
 				ch.sprite.showStatusWithIcon( CharSprite.POSITIVE, Integer.toString(barrierToGive), FloatingText.SHIELDING );
 			} else {
-				int barrier = 15 - (ch.HT - ch.HP);
+				int barrier = amount - (ch.HT - ch.HP);
 				barrier = Math.max(barrier, 0);
-				ch.HP += 15 - barrier;
-				ch.sprite.showStatusWithIcon( CharSprite.POSITIVE, Integer.toString(15-barrier), FloatingText.HEALING );
+				ch.HP += amount - barrier;
+				ch.sprite.showStatusWithIcon( CharSprite.POSITIVE, Integer.toString(amount - barrier), FloatingText.HEALING );
 				if (barrier > 0){
 					Buff.affect(ch, Barrier.class).incShield(barrier);
 					ch.sprite.showStatusWithIcon( CharSprite.POSITIVE, Integer.toString(barrier), FloatingText.SHIELDING );
@@ -154,7 +157,7 @@ public class HallowedGround extends TargetedClericSpell {
 			}
 		} else if (!ch.flying) {
 			Buff.affect(ch, GuidingLight.Illuminated.class);
-			Buff.affect(ch, Roots.class, 2f);
+			Buff.affect(ch, Roots.class, scaleEffect(hero, 2f));
 		}
 	}
 

@@ -61,7 +61,8 @@ public final class CaveCollapse implements Hero.Doom {
 
 	/** 单格岩壁只允许挖开；只有多格区域存在塌方危险。 */
 	public boolean isDangerous(int cell) {
-		return contains(cell) && regions.get(regionAt[cell]).length > 1;
+		return contains(cell) && regions.get(regionAt[cell]).length > 1
+				&& !level.isProtectedFromRockfall(cell, false);
 	}
 
 	public boolean hasGold(int cell) {
@@ -219,7 +220,7 @@ public final class CaveCollapse implements Hero.Doom {
 				ArrayList<Integer> supports = new ArrayList<>();
 				int supportCount = Random.IntRange(1, 2);
 				for (int cell : cells) {
-					if (level.cellAt(cell).has(CellContent.OVERHEAD)) continue;
+					if (level.isProtectedFromRockfall(cell, false)) continue;
 					// 初始支撑墙的八邻格与其他墙体留出间隔，也不贴另一格支撑墙。
 					boolean nearWall = false;
 					for (int offset : PathFinder.NEIGHBOURS8) {
@@ -288,7 +289,7 @@ public final class CaveCollapse implements Hero.Doom {
 			int[] cells = regions.get(index);
 			IntSet affectedCells = new IntSet();
 			for (int cell : cells) {
-				if (!level.cellAt(cell).has(CellContent.OVERHEAD)) affectedCells.add(cell);
+				if (!level.isProtectedFromRockfall(cell, false)) affectedCells.add(cell);
 			}
 			LinkedHashSet<Char> victims = new LinkedHashSet<>(Actor.chars());
 			victims.addAll(level.mobs);

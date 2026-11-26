@@ -64,6 +64,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invulnerability;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LifeLink;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LostInventory;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicalSleep;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicImmune;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Momentum;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MonkEnergy;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Ooze;
@@ -124,6 +125,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourg
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.PotionOfCleansing;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.Pickaxe;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfElements;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRetribution;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfChallenge;
@@ -144,7 +146,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sickle;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MagicMissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Skyfall;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.SunfireJavelin;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.ShockingDart;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
@@ -498,7 +499,7 @@ public abstract class Char extends Actor {
 					dmg += 1 + 2*Dungeon.hero.pointsInTalent(Talent.SEARING_LIGHT);
 				}
 				if (this != Dungeon.hero && Dungeon.hero.subClass == HeroSubClass.PRIEST){
-					enemy.damage(5+Dungeon.hero.lvl, GuidingLight.INSTANCE, Dungeon.hero);
+					enemy.damageMagic(5+Dungeon.hero.lvl, GuidingLight.INSTANCE, Dungeon.hero);
 				}
 			}
 
@@ -598,8 +599,10 @@ public abstract class Char extends Actor {
 				effectiveDamage = 0;
 			} else {
 				Object source = magicWeapon != null ? magicWeapon : this;
+				boolean spellDamage = magicWeapon != null && AntiMagic.RESISTS.contains(magicWeapon.damageType());
+				if (spellDamage && effectiveDamage > 0) effectiveDamage = RingOfSpellpower.scaleEffect(this, effectiveDamage);
 				effectiveDamage = enemy.damageWithSource(effectiveDamage, source, this, source,
-						magicWeapon == null, bullyMultiplier);
+						magicWeapon == null, spellDamage, bullyMultiplier);
 			}
 			//按本次攻击的伤害积怒，护盾吸收与剩余生命值不影响积累。
 			if (berserk != null) berserk.onAttackResolved(effectiveDamage);
@@ -904,8 +907,10 @@ public abstract class Char extends Actor {
 
 	public boolean blocksDomainDamage(Object source, boolean physical) {
 		if (source == null) return false;
-		Class<?> sourceClass = damageSourceClass(source);
-		boolean magic = AntiMagic.RESISTS.contains(sourceClass);
+		return blocksDamageDomain(physical, AntiMagic.RESISTS.contains(damageSourceClass(source)));
+	}
+
+	private boolean blocksDamageDomain(boolean physical, boolean magic) {
 		if (!magic && !physical) return false;
 		for (DamageDomain domain : buffs(DamageDomain.class)) {
 			if (magic ? domain.blocksMagic : domain.blocksPhysical) return true;
@@ -916,15 +921,23 @@ public abstract class Char extends Actor {
 	protected Char domainDamageActor;
 	protected Object domainDamageOrigin;
 	protected boolean domainPhysicalDamage;
+	private boolean domainSpellDamage;
 
 	//保留原伤害来源供抗性、死亡记录和怪物逻辑使用，另行传递实际施法者。
 	public final void damage(int dmg, Object source, Char attacker) {
 		float bullyMultiplier = dmg > 0 && source instanceof Wand ? bullyDamageMultiplier(attacker) : 1f;
-		damageWithSource(dmg, source, attacker, source, false, bullyMultiplier);
+		damageWithSource(dmg, source, attacker, source, false, source instanceof Wand, bullyMultiplier);
+	}
+
+	/** Applies spellpower to raw spell damage. Wands that already scale their rolls use damage instead. */
+	public final void damageMagic(int dmg, Object source, Char caster) {
+		if (dmg > 0) dmg = RingOfSpellpower.scaleEffect(caster, dmg);
+		float bullyMultiplier = dmg > 0 && source instanceof Wand ? bullyDamageMultiplier(caster) : 1f;
+		damageWithSource(dmg, source, caster, source, false, true, bullyMultiplier);
 	}
 
 	public final void damagePhysical(int dmg, Object source, Char attacker) {
-		damageWithSource(dmg, source, attacker, source, true, 1f);
+		damageWithSource(dmg, source, attacker, source, true, false, 1f);
 	}
 
 	private float bullyDamageMultiplier(Char attacker) {
@@ -941,21 +954,26 @@ public abstract class Char extends Actor {
 		return 1f + modifier;
 	}
 
-	private int damageWithSource(int dmg, Object source, Char attacker, Object origin, boolean physical, float bullyMultiplier) {
-		if (dmg >= 0 && attacker != null && attacker.blocksDomainDamage(origin, physical)) return dmg;
+	private int damageWithSource(int dmg, Object source, Char attacker, Object origin, boolean physical,
+								 boolean spellDamage, float bullyMultiplier) {
+		if (dmg >= 0 && attacker != null && (spellDamage ? attacker.blocksDamageDomain(physical, true)
+				: attacker.blocksDomainDamage(origin, physical))) return dmg;
 		if (dmg > 0 && bullyMultiplier != 1f) dmg = Math.round(dmg * bullyMultiplier);
 		Char previousActor = domainDamageActor;
 		Object previousOrigin = domainDamageOrigin;
 		boolean previousPhysical = domainPhysicalDamage;
+		boolean previousSpellDamage = domainSpellDamage;
 		domainDamageActor = attacker;
 		domainDamageOrigin = origin;
 		domainPhysicalDamage = physical;
+		domainSpellDamage = spellDamage;
 		try {
 			damage(dmg, source);
 		} finally {
 			domainDamageActor = previousActor;
 			domainDamageOrigin = previousOrigin;
 			domainPhysicalDamage = previousPhysical;
+			domainSpellDamage = previousSpellDamage;
 		}
 		return dmg;
 	}
@@ -963,10 +981,14 @@ public abstract class Char extends Actor {
 	private int resolveGrimDamage(Char attacker) {
 		Grim.GrimTracker grim = attacker.buff(Grim.GrimTracker.class);
 		if (HP <= 0 || grim == null || attacker.blocksDomainDamage(Grim.class, false)
-				|| isImmune(Grim.class) || isInvulnerable(Grim.class)) return 0;
+				|| isInvulnerable(Grim.class)) return 0;
+		float effectiveness = magicDamageMultiplier(Grim.class, RingOfSpellpower.magicPenetration(attacker));
+		if (effectiveness <= 0) return 0;
 		float chance = grim.maxChance * (float) Math.pow((HT - HP) / (float) HT, 2);
 		if (Random.Float() >= chance) return 0;
-		int damage = Petrification.onDamage(this, Math.round(HP * resist(Grim.class)));
+		int damage = Math.round(RingOfSpellpower.scaleEffect(attacker, HP) * effectiveness);
+		if (isImmune(Grim.class)) damage = reduceChampionDamage(damage);
+		damage = Petrification.onDamage(this, damage);
 		HP -= damage;
 		if (sprite != null) sprite.emitter().burst(ShadowParticle.UP, 5);
 		if (!isAlive() && grim.qualifiesForBadge) Badges.validateGrimWeapon();
@@ -1008,7 +1030,7 @@ public abstract class Char extends Actor {
 				Char ch = (Char)Actor.findById(link.object);
 				if (ch != null) {
 					ch.damageWithSource(dmg, link, domainDamageActor,
-							domainDamageOrigin != null ? domainDamageOrigin : src, domainPhysicalDamage, 1f);
+							domainDamageOrigin != null ? domainDamageOrigin : src, domainPhysicalDamage, false, 1f);
 					if (!ch.isAlive()) {
 						link.detach();
 						if (ch == Dungeon.hero){
@@ -1084,7 +1106,13 @@ public abstract class Char extends Actor {
 			sourceAttacker.buff(Vorpal.VorpalTracker.class).detach();
 		}
 
-		if (isImmune( srcClass )) {
+		boolean spellDamage = domainSpellDamage && domainDamageOrigin == src;
+		boolean magic = spellDamage || AntiMagic.RESISTS.contains(srcClass);
+		if (magic) {
+			float penetration = spellDamage && domainDamageActor != this
+					? RingOfSpellpower.magicPenetration(domainDamageActor) : 0f;
+			damage *= magicDamageMultiplier(srcClass, penetration);
+		} else if (isImmune(srcClass)) {
 			damage = 0;
 		} else {
 			damage *= resist( srcClass );
@@ -1092,14 +1120,9 @@ public abstract class Char extends Actor {
 
 		dmg = Math.round(damage);
 
-		//we ceil these specifically to favor the player vs. champ dmg reduction
-		// most important vs. giant champions in the earlygame
-		for (ChampionEnemy buff : buffs(ChampionEnemy.class)){
-			dmg = (int) Math.ceil(dmg * buff.damageTakenFactor());
-		}
+		dmg = reduceChampionDamage(dmg);
 		
-		//TODO improve this when I have proper damage source logic
-		if (AntiMagic.RESISTS.contains(srcClass)){
+		if (magic){
 			dmg -= Math.round(AntiMagic.drRoll(this, glyphLevel(AntiMagic.class)) * AscensionChallenge.statModifier(this));
 			if (buff(ArcaneArmor.class) != null) {
 				dmg -= Random.NormalIntRange(0, buff(ArcaneArmor.class).level());
@@ -1196,7 +1219,7 @@ public abstract class Char extends Actor {
 			//defaults to normal damage icon if no other ones apply
 			int                                                         icon = FloatingText.PHYS_DMG;
 			if (NO_ARMOR_PHYSICAL_SOURCES.contains(srcClass))            icon = FloatingText.PHYS_DMG_NO_BLOCK;
-			if (AntiMagic.RESISTS.contains(srcClass))                    icon = FloatingText.MAGIC_DMG;
+			if (magic)                                                 icon = FloatingText.MAGIC_DMG;
 			if (src instanceof Pickaxe)                                 icon = FloatingText.PICK_DMG;
 
 			//special case for sniper when using ranged attacks
@@ -1583,11 +1606,16 @@ public abstract class Char extends Actor {
 	protected final HashSet<Class> immunities = new HashSet<>();
 	
 	public boolean isImmune(Class effect ){
+		return isImmune(effect, true);
+	}
+
+	private boolean isImmune(Class effect, boolean includeMagicImmunity) {
 		HashSet<Class> immunes = new HashSet<>(immunities);
 		for (Property p : properties()){
 			immunes.addAll(p.immunities());
 		}
 		for (Buff b : buffs()){
+			if (!includeMagicImmunity && (b instanceof ChampionEnemy.AntiMagic || b instanceof MagicImmune)) continue;
 			immunes.addAll(b.immunities());
 		}
 		if (glyphLevel(Brimstone.class) >= 0){
@@ -1600,6 +1628,25 @@ public abstract class Char extends Actor {
 			}
 		}
 		return false;
+	}
+
+	public final float magicDamageMultiplier(Class<?> effect, float penetration) {
+		boolean magicImmune = buff(ChampionEnemy.AntiMagic.class) != null || buff(MagicImmune.class) != null;
+		if (magicImmune ? isImmune(effect, false) : isImmune(effect)) return 0f;
+		float multiplier = magicImmune ? 0f : resist(effect) * magicDamageTakenFactor();
+		return multiplier < 1f ? Math.min(1f, multiplier + penetration) : multiplier;
+	}
+
+	protected float magicDamageTakenFactor() {
+		return 1f;
+	}
+
+	private int reduceChampionDamage(int damage) {
+		// Round in the player's favor, especially against early giant champions.
+		for (ChampionEnemy buff : buffs(ChampionEnemy.class)) {
+			damage = (int) Math.ceil(damage * buff.damageTakenFactor());
+		}
+		return damage;
 	}
 
 	//similar to isImmune, but only factors in damage.
@@ -1629,7 +1676,7 @@ public abstract class Char extends Actor {
 		DEMONIC,
 		INORGANIC ( new HashSet<Class>(),
 				new HashSet<Class>( Arrays.asList(Bleeding.class, ToxicGas.class, Poison.class, Petrification.class) )),
-		FIERY ( new HashSet<Class>( Arrays.asList(WandOfFireblast.class, Elemental.FireElemental.class, SunfireJavelin.class)),
+		FIERY ( new HashSet<Class>( Arrays.asList(WandOfFireblast.class, Elemental.FireElemental.class)),
 				new HashSet<Class>( Arrays.asList(Burning.class, Blazing.class, WaterVapor.class))),
 		ICY ( new HashSet<Class>( Arrays.asList(WandOfFrost.class, Elemental.FrostElemental.class)),
 				new HashSet<Class>( Arrays.asList(Frost.class, Chill.class))),

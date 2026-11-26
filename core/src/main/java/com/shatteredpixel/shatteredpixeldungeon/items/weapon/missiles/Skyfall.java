@@ -109,7 +109,7 @@ public class Skyfall extends MagicMissileWeapon {
 		boolean hit = false;
 		for (Char target : directHits) {
 			if (target.isAlive()) {
-				target.damage(damageRoll(curUser), this, curUser);
+				target.damageMagic(damageRoll(curUser), this, curUser);
 				hit = true;
 			}
 		}
@@ -117,7 +117,7 @@ public class Skyfall extends MagicMissileWeapon {
 			float multiplier = WandOfLightning.ArcChain.damageMultiplier(directHits.size() + affected.size(), hitWater);
 			for (Char target : affected) {
 				if (target.isAlive()) {
-					target.damage(Math.round(damageRoll(curUser) * multiplier), this, curUser);
+					target.damageMagic(Math.round(damageRoll(curUser) * multiplier), this, curUser);
 					hit = true;
 				}
 			}

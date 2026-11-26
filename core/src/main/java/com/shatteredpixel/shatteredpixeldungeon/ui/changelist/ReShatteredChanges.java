@@ -61,7 +61,10 @@ public class ReShatteredChanges {
 		changes.hardlight(Window.TITLE_COLOR);
 		changeInfos.add(changes);
 
-		changes.addButton(new ChangeButton(ChangeIcons.v022_RING_ZIRCON, "奥法戒指",
+		changes.addButton(new ChangeButton(ChangeIcons.V022_CAVE_STATUE, "矿洞地形改造",
+			"\n-移除了绝大部分的门。\n-现在房间之间通过钢铁架构连接。"
+		));
+		changes.addButton(new ChangeButton(ChangeIcons.V022_RING_ZIRCON, "奥法戒指",
 			"\n-新增奥法戒指，奥法戒指会提升法杖的伤害与效果。\n-现在诅咒戒指的诅咒效果由戒指本身的强度决定，越高品质的戒指诅咒效果越强力。"
 		));
 		changes.addButton(new ChangeButton(ChangeIcons.V061_BADGE, "新徽章",

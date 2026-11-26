@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -98,7 +100,7 @@ public class MnemonicPrayer extends TargetedClericSpell {
 
 		QuickSlotButton.target(ch);
 
-		float extension = 2 + hero.pointsInTalent(Talent.MNEMONIC_PRAYER);
+		float extension = scaleEffect(hero, 2f + hero.pointsInTalent(Talent.MNEMONIC_PRAYER));
 		affectChar(ch, extension);
 
 		Char ally = PowerOfMany.getPoweredAlly();

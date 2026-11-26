@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Adrenaline;
@@ -45,7 +47,7 @@ public class Corrupting extends Weapon.Enchantment {
 		// lvl 1 ~ 28.5%
 		// lvl 2 ~ 32%
 		float procChance = (level+5f)/(level+20f) * procChanceMultiplier(attacker);
-		if (Random.Float() < procChance
+		if (Random.Float() < scaleEffect(attacker, procChance)
 				&& attacker.alignment == Char.Alignment.ALLY //enemies cannot inflict corruption
 				&& !defender.isImmune(Corruption.class)
 				&& defender.buff(Corruption.class) == null

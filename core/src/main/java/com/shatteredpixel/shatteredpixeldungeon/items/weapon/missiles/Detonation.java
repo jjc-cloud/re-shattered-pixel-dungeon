@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -53,6 +55,7 @@ public class Detonation extends MagicMissileWeapon {
 		Ballistica incoming = flight;
 		flight = null;
 		Char center = Actor.findChar(cell);
+		int knockback = scaleEffect(curUser, 2);
 		super.onThrow(cell);
 		WandOfBlastWave.BlastWave.blast(cell);
 		Sample.INSTANCE.play(Assets.Sounds.BLAST);
@@ -79,7 +82,7 @@ public class Detonation extends MagicMissileWeapon {
 			Char target = Actor.findChar(neighbor);
 			if (target != null && (target.isAlive() || target.flying || !Dungeon.level.pit[neighbor])) {
 				Ballistica push = new Ballistica(neighbor, neighbor + offset, Ballistica.MAGIC_BOLT);
-				WandOfBlastWave.throwChar(target, push, 2, false, true, this);
+				WandOfBlastWave.throwChar(target, push, knockback, false, true, this);
 			}
 		}
 
@@ -88,7 +91,7 @@ public class Detonation extends MagicMissileWeapon {
 			int impactIndex = incoming.path.indexOf(cell);
 			if (impactIndex >= 0 && impactIndex + 1 < incoming.path.size()) {
 				Ballistica push = new Ballistica(cell, incoming.path.get(impactIndex + 1), Ballistica.MAGIC_BOLT);
-				WandOfBlastWave.throwChar(center, push, 2, false, true, this);
+				WandOfBlastWave.throwChar(center, push, knockback, false, true, this);
 			}
 		}
 	}

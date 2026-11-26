@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
@@ -69,7 +71,7 @@ public class BodyForm extends ClericSpell {
 	}
 
 	public static int duration(){
-		return Math.round(13.33f + 6.67f* Dungeon.hero.pointsInTalent(Talent.BODY_FORM));
+		return Math.round(scaleEffect(Dungeon.hero, 13.33f + 6.67f*Dungeon.hero.pointsInTalent(Talent.BODY_FORM)));
 	}
 
 	public static class BodyFormBuff extends FlavourBuff {

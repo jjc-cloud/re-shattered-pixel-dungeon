@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.levels.CellContent;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
@@ -251,7 +253,7 @@ public class WandOfRegrowth extends Wand {
 			// lvl 1 - 21%
 			// lvl 2 - 25%
 			int healing = Math.round(damage * (level + 2f) / (level + 6f) / 2f);
-			healing = Math.round(healing * procChanceMultiplier(attacker));
+			healing = Math.round(scaleEffect(attacker, healing * procChanceMultiplier(attacker)));
 			Buff.affect(attacker, Sungrass.Health.class).boost(healing);
 		}
 

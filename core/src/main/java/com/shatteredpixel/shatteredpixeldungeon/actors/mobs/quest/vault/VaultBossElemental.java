@@ -561,7 +561,6 @@ public class VaultBossElemental extends Mob {
 		//fire form is resistant to magic and weak to thrown weapons
 		if (form == ElementalForm.FIRE){
 			if (AntiMagic.RESISTS.contains(damageSourceClass(src))){
-				dmg /= 4;
 				//prompts faster attacks, only do this if it's from the hero
 				if (src instanceof Wand || src instanceof ClericSpell){
 					GLog.w(Messages.get(this, "fire_resist"));
@@ -710,6 +709,11 @@ public class VaultBossElemental extends Mob {
 			return 1; //shock form doesn't resist wand of lightning as it's a wand, and wands are effective vs. shock form
 		}
 		return super.resist(effect);
+	}
+
+	@Override
+	protected float magicDamageTakenFactor() {
+		return form == ElementalForm.FIRE ? 0.25f : super.magicDamageTakenFactor();
 	}
 
 	@Override

@@ -1,5 +1,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -48,7 +50,7 @@ public class WandOfPetrification extends Wand {
 	@Override
 	public void onHit(MagesStaff staff, Char attacker, Char defender, int damage) {
 		float progress = (0.1f + staff.buffedLvl() * 0.05f) * procChanceMultiplier(attacker);
-		Petrification.apply(defender, progress);
+		Petrification.apply(defender, scaleEffect(attacker, progress));
 	}
 
 	@Override

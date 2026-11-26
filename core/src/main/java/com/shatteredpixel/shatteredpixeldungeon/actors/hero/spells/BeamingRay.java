@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -115,7 +117,7 @@ public class BeamingRay extends TargetedClericSpell {
 			ally = Stasis.getStasisAlly();
 		}
 
-		int range = 4*hero.pointsInTalent(Talent.BEAMING_RAY);
+		int range = scaleEffect(hero, 4*hero.pointsInTalent(Talent.BEAMING_RAY));
 		if (Char.hasProp(ally, Char.Property.IMMOVABLE)){
 			range /= 2;
 		}
@@ -168,13 +170,13 @@ public class BeamingRay extends TargetedClericSpell {
 			} else if (ally instanceof Mob) {
 				((Mob) ally).aggro(chTarget);
 			}
-			FlavourBuff.prolong(ally, BeamingRayBoost.class, BeamingRayBoost.DURATION).object = chTarget.id();
+			FlavourBuff.prolong(ally, BeamingRayBoost.class, scaleEffect(hero, BeamingRayBoost.DURATION)).object = chTarget.id();
 		} else {
 			if (ally instanceof DirectableAlly) {
 				((DirectableAlly) ally).clearDefensingPos();
 			}
 			//just the buff with no target
-			FlavourBuff.prolong(ally, BeamingRayBoost.class, BeamingRayBoost.DURATION);
+			FlavourBuff.prolong(ally, BeamingRayBoost.class, scaleEffect(hero, BeamingRayBoost.DURATION));
 		}
 
 		hero.spendAndNext(Actor.TICK);

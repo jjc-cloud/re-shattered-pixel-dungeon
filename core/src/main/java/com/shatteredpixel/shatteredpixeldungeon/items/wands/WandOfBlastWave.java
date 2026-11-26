@@ -214,7 +214,7 @@ public class WandOfBlastWave extends DamageWand {
 		if (defender.buff(Paralysis.class) != null && defender.buff(BWaveOnHitTracker.class) == null){
 			defender.buff(Paralysis.class).detach();
 			int dmg = Hero.heroDamageIntRange(8+2*buffedLvl(), 12+3*buffedLvl());
-			defender.damage(Math.round(procChanceMultiplier(attacker) * dmg), this, attacker);
+			defender.damageMagic(Math.round(procChanceMultiplier(attacker) * dmg), this, attacker);
 			BlastWave.blast(defender.pos);
 			Sample.INSTANCE.play( Assets.Sounds.BLAST );
 

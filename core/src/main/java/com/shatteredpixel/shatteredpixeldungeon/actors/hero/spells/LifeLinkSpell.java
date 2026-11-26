@@ -21,6 +21,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells;
 
+import static com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSpellpower.scaleEffect;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -68,7 +70,7 @@ public class LifeLinkSpell extends ClericSpell {
 	@Override
 	public void onCast(HolyTome tome, Hero hero) {
 
-		int duration = Math.round(6.67f + 3.33f*Dungeon.hero.pointsInTalent(Talent.LIFE_LINK));
+		int duration = Math.round(scaleEffect(Dungeon.hero, 6.67f + 3.33f*Dungeon.hero.pointsInTalent(Talent.LIFE_LINK)));
 
 		Char ally = PowerOfMany.getPoweredAlly();
 
@@ -114,7 +116,7 @@ public class LifeLinkSpell extends ClericSpell {
 
 		@Override
 		public float iconFadePercent() {
-			int duration = Math.round(6.67f + 3.33f*Dungeon.hero.pointsInTalent(Talent.LIFE_LINK));
+			int duration = Math.round(scaleEffect(Dungeon.hero, 6.67f + 3.33f*Dungeon.hero.pointsInTalent(Talent.LIFE_LINK)));
 			return Math.max(0, (duration - visualcooldown()) / duration);
 		}
 	}
